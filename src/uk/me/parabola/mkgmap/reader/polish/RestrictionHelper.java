@@ -38,7 +38,7 @@ public class RestrictionHelper {
         Map<Long, CoordNode> allNodes = roadHelper.getNodeCoords();
 
         for (PolishTurnRestriction tr : allRestrictions) {
-        	GeneralRouteRestriction rr = new GeneralRouteRestriction("not", tr.getExceptMask());
+        	GeneralRouteRestriction rr = new GeneralRouteRestriction("not", tr.getExceptMask(),Long.toString(tr.getNodId()));
         	rr.setFromNode(allNodes.get(tr.getFromNodId()));
         	rr.setFromWayId(tr.getRoadIdA());
         	rr.setToNode(allNodes.get(tr.getToNodId()));

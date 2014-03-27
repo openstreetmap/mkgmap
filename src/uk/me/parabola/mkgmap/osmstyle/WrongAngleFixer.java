@@ -54,7 +54,7 @@ public class WrongAngleFixer {
 	static private final double MAX_DIFF_ANGLE_STRAIGHT_LINE = 3;
 	
 	private Area bbox;
-	private String gpxPath;
+	private String gpxPath = null;
 	static final int MODE_ROADS = 0;
 	static final int MODE_LINES = 1;
 	private int mode = MODE_ROADS;
@@ -413,9 +413,6 @@ public class WrongAngleFixer {
 					if (p.isViaNodeOfRestriction()){
 						// make sure that we find the restriction with the new coord instance
 						replacement.setViaNodeOfRestriction(true);
-						for (RestrictionRelation rr: restrictions){
-							rr.replaceViaCoord(p,replacement);
-						}
 						p.setViaNodeOfRestriction(false);
 					}
 					p = replacement;
@@ -511,6 +508,16 @@ public class WrongAngleFixer {
 				}
 			}
 		}
+		
+		for (RestrictionRelation rr: restrictions){
+			for (Coord p: rr.getViaCoords()){ 
+				Coord replacement = getReplacement(p, null, replacements);
+				if (p != replacement){
+					rr.replaceViaCoord(p, replacement);
+				}
+			}
+		}
+		
 		if (gpxPath != null) {
 			GpxCreator.createGpx(gpxPath + "solved_badAngles", bbox.toCoords(),
 					new ArrayList<Coord>(changedPlaces));

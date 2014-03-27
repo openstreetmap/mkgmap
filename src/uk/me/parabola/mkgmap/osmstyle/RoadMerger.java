@@ -29,7 +29,6 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
-import uk.me.parabola.mkgmap.reader.osm.RestrictionRelation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.util.MultiIdentityHashMap;
 
@@ -420,9 +419,6 @@ public class RoadMerger {
 		if (c.isViaNodeOfRestriction())
 			return true;
 		List<Long> wayRestrictions = restrictions.get(c);
-		if (wayRestrictions.isEmpty() == false){
-			long dd = 4;
-		}
 		return wayRestrictions.contains(w.getId());
 	}
 

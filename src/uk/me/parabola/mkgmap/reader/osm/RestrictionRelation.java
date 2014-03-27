@@ -13,6 +13,7 @@
 
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,11 +56,9 @@ public class RestrictionRelation extends Relation {
 	 * @param other The relation to base this one on.
 	 */
 	public RestrictionRelation(Relation other) {
-		
 		setId(other.getId());
 		valid = true;
 		final String browseURL = toBrowseURL();
-
 		messagePrefix = "Turn restriction " + browseURL;
 
 		for (Map.Entry<String, Element> pair : other.getElements()) {
@@ -167,10 +166,14 @@ public class RestrictionRelation extends Relation {
 					log.warn(messagePrefix, "ignoring unsupported vehicle class '" + e + "' in turn restriction exception");
 			}
 		}
-		if (valid && viaWay != null){
+		if (!valid)
+			return;
+		if (viaWay != null){
 			viaWay.getPoints().get(0).setViaNodeOfRestriction(true);
 			viaWay.getPoints().get(viaWay.getPoints().size()-1).setViaNodeOfRestriction(true);
-		}
+		} else if (viaCoord != null)
+			viaCoord.setViaNodeOfRestriction(true);
+			
 	}
 
 	public Way getFromWay() {
@@ -189,11 +192,14 @@ public class RestrictionRelation extends Relation {
 		this.toWay = toWay;
 	}
 
-	@Deprecated
-	public Coord getViaCoord() {
-		return viaCoord;
+	public Way getViaWay() {
+		return viaWay;
 	}
 	
+	public void setViaWay(Way way) {
+		viaWay = way;
+	}
+
 	public void replaceViaCoord(Coord oldP, Coord newP) {
 		if (viaCoord == oldP)
 			this.viaCoord = newP;
@@ -284,6 +290,9 @@ public class RestrictionRelation extends Relation {
 
 	public void addRestriction(MapCollector collector, IdentityHashMap<Coord, CoordNode> nodeIdMap) {
 		viaNode = nodeIdMap.get(viaCoord);
+		if (viaNode == null && viaWay == null){
+			log.error(messagePrefix,"via node is not a routing node");
+		}
 		fromNode = findNextNode(fromWay, viaNode);
 		if (viaWay != null){
 			if (viaWay.getPoints().get(0).getId() == 0 || viaWay.getPoints().get(viaWay.getPoints().size()-1).getId() == 0){
@@ -305,13 +314,14 @@ public class RestrictionRelation extends Relation {
 			toNode = findNextNode(toWay, via2Node);		
 		} else
 			toNode = findNextNode(toWay, viaNode);		
-
+/*
 		if ("no_u_turn".equals(restriction)){
 			if (toNode != null && fromNode == null)
 				fromNode = toNode;
 			else if (fromNode != null && toNode == null)
 				toNode = fromNode;
 		}
+		*/
 		if(restriction == null || viaNode == null || fromNode == null || toNode == null) {
 			if (viaCoord != null)
 				log.warn("can't add restriction relation", this.getId(), "type", restriction);
@@ -324,7 +334,7 @@ public class RestrictionRelation extends Relation {
 		   restriction.equals("no_straight_on") ||
 		   restriction.equals("no_u_turn") ||
 		   restriction.startsWith("no_turn")) {
-			rr = new GeneralRouteRestriction("not", exceptMask);
+			rr = new GeneralRouteRestriction("not", exceptMask, messagePrefix);
 			rr.setFromNode(fromNode);
 			rr.setToNode(toNode);
 			rr.setVia1Node(viaNode);
@@ -348,7 +358,7 @@ public class RestrictionRelation extends Relation {
 			if(restriction.startsWith("only_turn"))
 				log.warn(messagePrefix, "has bad type '" + restriction + "' it should be of the form only_X_turn rather than only_turn_X - I added the restriction anyway - allows routing to way", toWay.toBrowseURL());
 			log.info(messagePrefix, restriction, "added - allows routing to way", toWay.toBrowseURL());
-			rr = new GeneralRouteRestriction("only", exceptMask);
+			rr = new GeneralRouteRestriction("only", exceptMask, messagePrefix);
 			rr.setFromNode(fromNode);
 			rr.setToNode(toNode);
 			rr.setVia1Node(viaNode);
@@ -393,7 +403,7 @@ public class RestrictionRelation extends Relation {
 				if (co.getId() != 0)
 					return (CoordNode)co;
 			}
-		} else {
+		} else if (points.get(points.size()-1) == start){
 			for (int i = points.size()-2; i >= 0; --i){
 				Coord co = points.get(i);
 				if (co.getId() != 0)
@@ -412,4 +422,13 @@ public class RestrictionRelation extends Relation {
 			return false;
 		return true;
 	}
+
+	public List<Coord> getViaCoords() {
+		if (via2Coord == null)
+			return Arrays.asList(viaCoord);
+		else 
+			return Arrays.asList(viaCoord, via2Coord);
+	}
+
+
 }

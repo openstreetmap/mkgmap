@@ -18,7 +18,6 @@ package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -58,7 +57,6 @@ import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 import uk.me.parabola.mkgmap.reader.osm.GType;
-import uk.me.parabola.mkgmap.reader.osm.HighwayHooks;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
@@ -247,7 +245,6 @@ public class StyledConverter implements OsmConverter {
 
 
 	private void addConvertedWay(Way way, GType foundType) {
-		
 		if (foundType.getFeatureKind() == FeatureKind.POLYLINE) {
 			GType type = new GType(foundType);
 
@@ -273,13 +270,6 @@ public class StyledConverter implements OsmConverter {
 			   !MapObject.hasExtendedType(foundType.getType())){
 				recalcRoadClass(way, type);
 				recalcRoadSpeed(way, type);
-				if (roads.size() > 0 && roads.get(roads.size()-1).getId() == way.getId() + HighwayHooks.CYCLEWAY_ID_OFFSET){
-					Way way2 = new Way(way.getId() - HighwayHooks.CYCLEWAY_ID_OFFSET, way.getPoints());
-					way2.copyTags(way);
-					way2.setClosedInOSM(way.isClosedInOSM());
-					way2.setComplete(way.isComplete());
-					way = way2;
-				}
 		    	roads.add(way);
 		    	roadTypes.add(type);
 		    }
@@ -538,6 +528,7 @@ public class StyledConverter implements OsmConverter {
 		// make sure that copies of modified roads have equal points 
 		for (int i = 0; i < lines.size(); i++){
 			Way line = lines.get(i);
+			
 			if (line == null){
 				continue; // should not happen
 			}
@@ -581,8 +572,6 @@ public class StyledConverter implements OsmConverter {
 			GType gt = roadTypes.get(i);
 			addRoad(road, gt);
 		}
-		roads = null;
-		roadTypes = null;
 		
 		housenumberGenerator.generate(lineAdder);
 		
@@ -592,6 +581,8 @@ public class StyledConverter implements OsmConverter {
 		for (RestrictionRelation rr : restrictions) {
 			rr.addRestriction(collector, nodeIdMap);
 		}
+		roads = null;
+		roadTypes = null;
 
 		for(Relation relation : throughRouteRelations) {
 			Node node = null;
@@ -844,7 +835,7 @@ public class StyledConverter implements OsmConverter {
 				log.info("Access restriction in POI node " + node.toBrowseURL() + " was ignored, has no effect on any connected way");
 				continue;
 			}
-			GeneralRouteRestriction rr = new GeneralRouteRestriction("no_through", exceptMask);
+			GeneralRouteRestriction rr = new GeneralRouteRestriction("no_through", exceptMask, "CoordPOI at " + p.toOSMURL());
 			rr.setVia1Node(viaNode);
 			collector.addRestriction(rr);
 		}
@@ -1077,7 +1068,6 @@ public class StyledConverter implements OsmConverter {
 		}
 
 		checkRoundabout(way);
-		//addNodesForRestrictions(way); TODO: check if this is still needed
 
 		// process any Coords that have a POI associated with them
 		final double stubSegmentLength = 25; // metres
@@ -1426,7 +1416,7 @@ public class StyledConverter implements OsmConverter {
 		}
 
 		WayBBox wayBBox = new WayBBox();
-
+		
 		for(int i = 0; i < points.size(); ++i) {
 			Coord p = points.get(i);
 
@@ -1594,9 +1584,6 @@ public class StyledConverter implements OsmConverter {
 
 		int numNodes = nodeIndices.size();
 		road.setNumNodes(numNodes);
-		if (way.getId() == 32906345){
-			long dd = 4;
-		}
 		if(numNodes > 0) {
 			// replace Coords that are nodes with CoordNodes
 			boolean hasInternalNodes = false;

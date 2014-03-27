@@ -17,13 +17,14 @@ public class GeneralRouteRestriction {
 
 	private final byte exceptionMask;
 	private final byte type;
+	private final String sourceDesc;
 	
 	private Coord fromPoint,toPoint;
 	private long fromWayId,toWayId,viaWayId;
 	private CoordNode fromNode,toNode,via1Node,via2Node;
 	LongArrayList onlyWays;
 
-	public GeneralRouteRestriction(String type, byte exceptionMask) {
+	public GeneralRouteRestriction(String type, byte exceptionMask, String sourceDesc) {
 		if ("not".equals(type))
 			this.type = TYPE_NOT;
 		else if ("only".equals(type))
@@ -33,6 +34,7 @@ public class GeneralRouteRestriction {
 		else 
 			throw new IllegalArgumentException("invalid type " + type);
 		this.exceptionMask = exceptionMask;
+		this.sourceDesc = sourceDesc;
 	}
 	
 	public Coord getFromPoint() {
@@ -104,5 +106,7 @@ public class GeneralRouteRestriction {
 			onlyWays = new LongArrayList();
 		onlyWays.add(id);
 	}
-	
+	public String getSourceDesc(){
+		return sourceDesc;
+	}
 }

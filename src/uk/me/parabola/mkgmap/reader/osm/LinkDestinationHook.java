@@ -220,18 +220,21 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 		// create a copy because original list may be modified within the loop
 		for (RestrictionRelation rr : new ArrayList<>(wayRestrictions)) {
 			Coord lastPointNewWay = newWay.getPoints().get(0);
-			if (rr.getViaCoord() == lastPointNewWay) {
-				if (rr.getToWay().equals(oldWay)) {
-					log.debug("Change to-way",oldWay.getId(),"to",newWay.getId(),"for relation",rr.getId(),"at",lastPointNewWay.toOSMURL());
-					rr.setToWay(newWay);
-					restrictions.remove(oldWay.getId(), rr);
-					restrictions.add(newWay.getId(), rr);
-				} else if (rr.getFromWay().equals(oldWay)) {
-					log.debug("Change from-way",oldWay.getId(),"to",newWay.getId(),"for relation",rr.getId(),"at",lastPointNewWay.toOSMURL());
-					rr.setFromWay(newWay);
-					restrictions.remove(oldWay.getId(), rr);
-					restrictions.add(newWay.getId(), rr);
-				} 
+			List<Coord> viaCoords = rr.getViaCoords();
+			for (Coord via : viaCoords){
+				if (via == lastPointNewWay) {
+					if (rr.getToWay().equals(oldWay)) {
+						log.debug("Change to-way",oldWay.getId(),"to",newWay.getId(),"for relation",rr.getId(),"at",lastPointNewWay.toOSMURL());
+						rr.setToWay(newWay);
+						restrictions.remove(oldWay.getId(), rr);
+						restrictions.add(newWay.getId(), rr);
+					} else if (rr.getFromWay().equals(oldWay)) {
+						log.debug("Change from-way",oldWay.getId(),"to",newWay.getId(),"for relation",rr.getId(),"at",lastPointNewWay.toOSMURL());
+						rr.setFromWay(newWay);
+						restrictions.remove(oldWay.getId(), rr);
+						restrictions.add(newWay.getId(), rr);
+					} 
+				}
 			}
 		}
 	}
