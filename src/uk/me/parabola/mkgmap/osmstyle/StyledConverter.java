@@ -929,8 +929,6 @@ public class StyledConverter implements OsmConverter {
 		
 		if (way.isBoolTag("oneway"))
 			line.setDirection(true);
-		if (way.isBoolTag("mkgmap:skipSizeFilter"))
-			line.setSkipSizeFilter(true);
 
 		clipper.clipLine(line, lineAdder);
 	}
@@ -948,8 +946,6 @@ public class StyledConverter implements OsmConverter {
 		final MapShape shape = new MapShape(way.getId());
 		elementSetup(shape, gt, way);
 		shape.setPoints(way.getPoints());
-		if (way.isBoolTag("mkgmap:skipSizeFilter"))
-			shape.setSkipSizeFilter(true);
 
 		clipper.clipShape(shape, collector);
 	}
@@ -1008,7 +1004,11 @@ public class StyledConverter implements OsmConverter {
 		ms.setType(gt.getType());
 		ms.setMinResolution(gt.getMinResolution());
 		ms.setMaxResolution(gt.getMaxResolution());
-		
+
+		if (element.isBoolTag("mkgmap:skipSizeFilter") && ms instanceof MapLine){
+			((MapLine)ms).setSkipSizeFilter(true);
+		}
+			
 		// Now try to get some address info for POIs
 		
 		String country      = element.getTag("mkgmap:country");
@@ -1627,8 +1627,6 @@ public class StyledConverter implements OsmConverter {
 		line.setPoints(points);
 		
 		MapRoad road = new MapRoad(way.getId(), line);
-		if (way.isBoolTag("mkgmap:skipSizeFilter"))
-			road.setSkipSizeFilter(true);
 
 		boolean doFlareCheck = true;
 		if("roundabout".equals(way.getTag("junction"))) {
