@@ -508,7 +508,7 @@ public class StyledConverter implements OsmConverter {
 		}
 		
 		// instantiate the RoadMerger - the roads and roadTypes lists are copied
-		RoadMerger merger = new RoadMerger(roads, roadTypes, throughRouteRelations);
+		RoadMerger merger = new RoadMerger(roads, roadTypes, restrictions, throughRouteRelations);
 		// clear the lists
 		roads.clear();
 		roadTypes.clear();
