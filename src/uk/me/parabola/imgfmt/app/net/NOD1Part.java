@@ -239,13 +239,15 @@ public class NOD1Part {
 			if (arcs.size() >= 3){
 				for (int i = 0; i < arcs.size(); i++){
 					RouteArc arc = arcs.get(i);
-					tabA.addArc(arc);
-					RouteNode dest = arc.getDest();
-					if (arc.isInternal() == false)
-						tabB.addNode(dest);
-					else if (bbox != null && !bbox.contains(dest.getCoord()) || dest.getGroup() != node.getGroup()) {
-						arc.setInternal(false);
-						tabB.addNode(dest);
+					if (arc.getSource() != node){
+						tabA.addArc(arc);
+						RouteNode dest = arc.getDest();
+						if (arc.isInternal() == false)
+							tabB.addNode(dest);
+						else if (bbox != null && !bbox.contains(dest.getCoord()) || dest.getGroup() != node.getGroup()) {
+							arc.setInternal(false);
+							tabB.addNode(dest);
+						} 
 					}
 				}
 			}

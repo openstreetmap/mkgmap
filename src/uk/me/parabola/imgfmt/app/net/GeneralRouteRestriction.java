@@ -1,6 +1,8 @@
 package uk.me.parabola.imgfmt.app.net;
 
-import it.unimi.dsi.fastutil.longs.LongArrayList;
+import java.util.ArrayList;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 
@@ -11,26 +13,28 @@ import uk.me.parabola.imgfmt.app.CoordNode;
  *
  */
 public class GeneralRouteRestriction {
-	public static final byte TYPE_ONLY = 1; 
-	public static final byte TYPE_NOT = 2;
-	public static final byte TYPE_NO_TROUGH = 3; // for elements like barriers, gates, etc.
+	public enum RestrType {TYPE_ONLY , 
+		TYPE_NOT, 
+		TYPE_NO_TROUGH // for elements like barriers, gates, etc.
+	}
 
 	private final byte exceptionMask;
-	private final byte type;
+	private final RestrType type;
 	private final String sourceDesc;
 	
-	private Coord fromPoint,toPoint;
-	private long fromWayId,toWayId,viaWayId;
-	private CoordNode fromNode,toNode,via1Node,via2Node;
-	LongArrayList onlyWays;
+	private Coord fromPoint, toPoint;
+	private long fromWayId, toWayId;
+	private CoordNode fromNode, toNode;
+	private List<Long> viaWayIds = new ArrayList<>();
+	private List<CoordNode> viaNodes = new ArrayList<>();
 
 	public GeneralRouteRestriction(String type, byte exceptionMask, String sourceDesc) {
 		if ("not".equals(type))
-			this.type = TYPE_NOT;
+			this.type = RestrType.TYPE_NOT;
 		else if ("only".equals(type))
-			this.type = TYPE_ONLY;
+			this.type = RestrType.TYPE_ONLY;
 		else if ("no_through".equals(type))
-			this.type = TYPE_NO_TROUGH;
+			this.type = RestrType.TYPE_NO_TROUGH;
 		else 
 			throw new IllegalArgumentException("invalid type " + type);
 		this.exceptionMask = exceptionMask;
@@ -61,16 +65,10 @@ public class GeneralRouteRestriction {
 	public void setToWayId(long toWayId) {
 		this.toWayId = toWayId;
 	}
-	public long getViaWayId() {
-		return viaWayId;
-	}
-	public void setViaWayId(long viaWayId) {
-		this.viaWayId = viaWayId;
-	}
 	public byte getExceptionMask() {
 		return exceptionMask;
 	}
-	public byte getType() {
+	public RestrType getType() {
 		return type;
 	}
 	public CoordNode getFromNode() {
@@ -85,26 +83,19 @@ public class GeneralRouteRestriction {
 	public void setToNode(CoordNode toNode) {
 		this.toNode = toNode;
 	}
-	public CoordNode getVia1Node() {
-		return via1Node;
+
+	public List<Long> getViaWayIds() {
+		return viaWayIds;
 	}
-	public void setVia1Node(CoordNode via1Node) {
-		this.via1Node = via1Node;
+
+	public void setViaWayIds(List<Long> viaWayIds) {
+		this.viaWayIds = new ArrayList<Long>(viaWayIds);
 	}
-	public CoordNode getVia2Node() {
-		return via2Node;
+	public List<CoordNode> getViaNodes() {
+		return viaNodes;
 	}
-	public void setVia2Node(CoordNode via2Node) {
-		this.via2Node = via2Node;
-	}
-	public boolean isValid() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-	public void addOnlyWayId(long id){
-		if (onlyWays == null)
-			onlyWays = new LongArrayList();
-		onlyWays.add(id);
+	public void setViaNodes(List<CoordNode> viaNodes){
+		this.viaNodes = new ArrayList<>(viaNodes);
 	}
 	public String getSourceDesc(){
 		return sourceDesc;

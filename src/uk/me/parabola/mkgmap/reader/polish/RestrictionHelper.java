@@ -17,6 +17,7 @@ import uk.me.parabola.imgfmt.app.net.GeneralRouteRestriction;
 import uk.me.parabola.mkgmap.general.MapDetails;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -42,12 +43,12 @@ public class RestrictionHelper {
         	rr.setFromNode(allNodes.get(tr.getFromNodId()));
         	rr.setFromWayId(tr.getRoadIdA());
         	rr.setToNode(allNodes.get(tr.getToNodId()));
-        	rr.setVia1Node(allNodes.get(tr.getNodId()));
         	if (tr.getViaNodId() != 0){
-        		rr.setVia2Node(allNodes.get(tr.getViaNodId()));
-        		rr.setViaWayId(tr.getRoadIdB());
+        		rr.setViaNodes(Arrays.asList(allNodes.get(tr.getNodId()),allNodes.get(tr.getViaNodId())));
+        		rr.setViaWayIds(Arrays.asList(tr.getRoadIdB()));
         		rr.setToWayId(tr.getRoadIdC());
         	} else {
+        		rr.setViaNodes(Arrays.asList(allNodes.get(tr.getNodId())));
         		rr.setToWayId(tr.getRoadIdB());
         	}
         	mapper.addRestriction(rr); // restriction should be part of the map

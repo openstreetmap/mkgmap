@@ -836,7 +836,7 @@ public class StyledConverter implements OsmConverter {
 				continue;
 			}
 			GeneralRouteRestriction rr = new GeneralRouteRestriction("no_through", exceptMask, "CoordPOI at " + p.toOSMURL());
-			rr.setVia1Node(viaNode);
+			rr.setViaNodes(Arrays.asList(viaNode));
 			collector.addRestriction(rr);
 		}
 	}

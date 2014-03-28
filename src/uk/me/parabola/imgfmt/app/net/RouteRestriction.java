@@ -14,6 +14,7 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -47,6 +48,7 @@ public class RouteRestriction {
 	// the arcs
 	private final List<RouteArc> arcs;
 
+	private final RouteNode viaNode; 
 	// offset in Table C
 	private byte offsetSize;
 	private int offsetC;
@@ -75,12 +77,9 @@ public class RouteRestriction {
 	private final static byte SPECIAL_EXCEPTION_MASK = ~(EXCEPT_FOOT|EXCEPT_EMERGENCY);
 
 
-	public RouteRestriction(List<RouteArc> traffArcs, byte exceptMaskParm) {
-		this.arcs = traffArcs;
-		assert arcs.get(0).getSource() == arcs.get(1).getSource();
-		for (int i = 1; i+1 < arcs.size(); i++){
-			assert  arcs.get(i).getDest() == arcs.get(i+1).getSource();
-		}
+	public RouteRestriction(RouteNode viaNode, List<RouteArc> traffArcs, byte exceptMaskParm) {
+		this.viaNode = viaNode;
+		this.arcs = new ArrayList<RouteArc>(traffArcs);
 		byte flags = 0;
 		if ((exceptMaskParm & EXCEPT_FOOT) != 0)
 			flags |= F_EXCEPT_FOOT;
@@ -98,9 +97,7 @@ public class RouteRestriction {
 	}
 
 	
-	private int calcOffset(RouteArc arc, RouteNode node, int tableOffset) {
-		if (arc.isInternal() == false)
-			return  arc.getIndexB();
+	private int calcOffset(RouteNode node, int tableOffset) {
 		int offset = tableOffset - node.getOffsetNod1();
 		assert offset >= 0 : "node behind start of tables";
 		assert offset < 0x8000 : "node offset too large";
@@ -129,10 +126,32 @@ public class RouteRestriction {
 		int[] offsets = new int[numArcs+1];
 		// first arc is inverse arc
 		int pos = 0;
+		boolean viaWritten = false;
+		if (numArcs > 2){
+			long dd = 4;
+		}
 		for (int i = 0; i < numArcs; i++){
-			if (i == 1)
-				offsets[pos++] = calcOffset(arcs.get(1), arcs.get(1).getSource(), tableOffset);
-			offsets[pos++] = calcOffset(arcs.get(i), arcs.get(i).getDest(), tableOffset);
+			RouteArc arc = arcs.get(i);
+			if (arc.getSource() == viaNode){
+				if (arc.isInternal())
+					offsets[pos++] = calcOffset(arc.getDest(), tableOffset);
+				else 
+					offsets[pos++] = arc.getIndexB();
+				if (!viaWritten){
+					offsets[pos++] = calcOffset(viaNode, tableOffset);
+					viaWritten = true;
+				}
+			} else {
+				if (arc.isInternal())
+					offsets[pos++] = calcOffset(arc.getDest(), tableOffset);
+				else 
+					offsets[pos++] = arc.getIndexB();
+			}
+		}
+		for (int i = 1; i < offsets.length; i++){
+			if (offsets[i-1] == offsets[i]){
+				assert false: "failed to calculate offsets";
+			}
 		}
 		for (int offset : offsets)
 			writer.putChar((char) offset);
