@@ -115,6 +115,7 @@ public class RoadMerger {
 				add("mkgmap:skipSizeFilter");
 				add("junction");
 				add("mkgmap:synthesised");
+				add("mkgmap:highest-resolution-only");
 				add("mkgmap:flare-check");
 			}
 		};

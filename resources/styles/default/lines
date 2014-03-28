@@ -193,6 +193,9 @@ include 'inc/roadspeed';
 # calculate the access rules
 include 'inc/access';
 
+#limit artificial cycleways to to resolution 24
+mkgmap:synthesised=yes & mkgmap:bicycle=yes { set mkgmap:highest-resolution-only = true }
+
 name=* { name '${name}' }
 
 highway=* & ref=* { addlabel '${ref}' }

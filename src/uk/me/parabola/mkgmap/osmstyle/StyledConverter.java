@@ -240,9 +240,20 @@ public class StyledConverter implements OsmConverter {
 			else
 				rules = wayRules;
 		}
-		
+
+		Way cycleWay = null;
+		String cycleWayTag = way.getTag("mkgmap:make-cycle-way");
+		if ("yes".equals(cycleWayTag)){
+			way.deleteTag("mkgmap:make-cycle-way");
+			cycleWay = makeCycleWay(way);
+			way.addTag("bicycle", "no"); // make sure that bicycles are using the added bicycle way 
+		}
 		wayTypeResult.setWay(way);
 		rules.resolveType(way, wayTypeResult);
+		if (cycleWay != null){
+			wayTypeResult.setWay(cycleWay);
+			rules.resolveType(cycleWay, wayTypeResult);
+		}
 	}
 
 
@@ -342,6 +353,30 @@ public class StyledConverter implements OsmConverter {
 		}
 	}
 
+	/**
+	 * Construct a cycleway that has the same points as an existing way.  Used for separate
+	 * cycle lanes.
+	 * @param way The original way.
+	 * @return The new way, which will have the same points and have suitable cycle tags.
+	 */
+	private Way makeCycleWay(Way way) {
+		Way cycleWay = new Way(way.getId(), way.getPoints());
+		cycleWay.copyTags(way);
+
+		String name = way.getTag("name");
+		if(name != null)
+			name += " (cycleway)";
+		else
+			name = "cycleway";
+		cycleWay.addTag("name", name);
+		cycleWay.addTag("access", "no");
+		cycleWay.addTag("bicycle", "yes");
+		cycleWay.addTag("foot", "no");
+		cycleWay.addTag("mkgmap:synthesised", "yes");
+		cycleWay.addTag("oneway", "no");
+		return cycleWay;
+	}
+	
 	/**
 	 * Recalculates the road class defined in the given {@link GType} object based on the tags
 	 * <ul>
@@ -1005,10 +1040,14 @@ public class StyledConverter implements OsmConverter {
 		ms.setMinResolution(gt.getMinResolution());
 		ms.setMaxResolution(gt.getMaxResolution());
 
+		if (element.isBoolTag("mkgmap:highest-resolution-only")){
+			ms.setMinResolution(ms.getMaxResolution());
+		}
+		
 		if (element.isBoolTag("mkgmap:skipSizeFilter") && ms instanceof MapLine){
 			((MapLine)ms).setSkipSizeFilter(true);
 		}
-			
+		
 		// Now try to get some address info for POIs
 		
 		String country      = element.getTag("mkgmap:country");
