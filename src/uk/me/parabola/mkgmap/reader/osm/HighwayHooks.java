@@ -32,8 +32,6 @@ import uk.me.parabola.util.EnhancedProperties;
 public class HighwayHooks extends OsmReadingHooksAdaptor {
 	private static final Logger log = Logger.getLogger(HighwayHooks.class);
 
-	public static final long CYCLEWAY_ID_OFFSET = 0x10000000;
-
 	private final List<Way> motorways = new ArrayList<Way>();
 	private final List<Node> exits = new ArrayList<Node>();
 
@@ -81,6 +79,12 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 			// need the additional two tags 
 			usedTags.add("cycleway");
 			usedTags.add("bicycle");
+		}
+		
+		if (makeOppositeCycleways) {
+			// need the additional two tags 
+			usedTags.add("oneway:bicycle");
+			usedTags.add("bicycle:oneway");
 		}
 		
 		// add addr:street and addr:housenumber if housenumber search is enabled
@@ -157,31 +161,33 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 	public void onAddWay(Way way) {
 		String highway = way.getTag("highway");
 		if (highway != null || "ferry".equals(way.getTag("route"))) {
-			boolean oneway = way.isBoolTag("oneway");
-
 			// if the way is a roundabout but isn't already
 			// flagged as "oneway", flag it here
 			if ("roundabout".equals(way.getTag("junction"))) {
 				if (way.getTag("oneway") == null) {
 					way.addTag("oneway", "yes");
 				}
-
 			}
 
+			String onewayTag = way.getTag("oneway");
+			boolean oneway = way.isBoolTag("oneway");
+			if (!oneway & onewayTag != null && ("-1".equals(onewayTag) || "reverse".equals(onewayTag)))
+				oneway = true;
 			String cycleway = way.getTag("cycleway");
 			if (makeOppositeCycleways && cycleway != null && !"cycleway".equals(highway) && oneway &&
 			   ("opposite".equals(cycleway) ||
 				"opposite_lane".equals(cycleway) ||
-				"opposite_track".equals(cycleway)))
+				"opposite_track".equals(cycleway) ||
+				"no".equals(way.getTag("oneway:bicycle")) ||
+				"no".equals(way.getTag("bicycle:oneway"))))
 			{
 				// what we have here is a oneway street
 				// that allows bicycle traffic in both
 				// directions -- to enable bicycle routing
-				// in the reverse direction, we synthesise
+				// in the reverse direction, we will synthesise
 				// a cycleway that has the same points as
 				// the original way
-				Way cycleWay = makeCycleWay(way);
-				cycleWay.addTag("oneway", "no");
+				way.addTag("mkgmap:make-cycle-way", "yes");
 
 			} else if (makeCycleways && cycleway != null && !"cycleway".equals(highway) &&
 					("track".equals(cycleway) ||
@@ -192,53 +198,15 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 			{
 				// what we have here is a highway with a
 				// separate track for cycles -- to enable
-				// bicycle routing, we synthesise a cycleway
+				// bicycle routing, we will synthesise a cycleway
 				// that has the same points as the original
 				// way
-				makeCycleWay(way);
-				if (way.getTag("bicycle") == null)
-					way.addTag("bicycle", "no");
+				way.addTag("mkgmap:make-cycle-way", "yes");
 			}
 		}
 
 		if("motorway".equals(highway) || "trunk".equals(highway))
 			motorways.add(way);
-	}
-
-	/**
-	 * Construct a cycleway that has the same points as an existing way.  Used for separate
-	 * cycle lanes.
-	 * @param way The original way.
-	 * @return The new way, which will have the same points and have suitable cycle tags.
-	 */
-	private Way makeCycleWay(Way way) {
-		long cycleWayId = way.getId() + CYCLEWAY_ID_OFFSET;
-		Way cycleWay = new Way(cycleWayId);
-		saver.addWay(cycleWay);
-
-		// this reverses the direction of the way but
-		// that isn't really necessary as the cycleway
-		// isn't tagged as oneway
-		List<Coord> points = way.getPoints();
-		//for (int i = points.size() - 1; i >= 0; --i)
-		//	cycleWay.addPoint(points.get(i));
-		for (Coord point : points)
-			cycleWay.addPoint(point);
-		
-		cycleWay.copyTags(way);
-
-		String name = way.getTag("name");
-		if(name != null)
-			name += " (cycleway)";
-		else
-			name = "cycleway";
-		cycleWay.addTag("name", name);
-		cycleWay.addTag("access", "no");
-		cycleWay.addTag("bicycle", "yes");
-		cycleWay.addTag("foot", "no");
-		cycleWay.addTag("mkgmap:synthesised", "yes");
-
-		return cycleWay;
 	}
 
 	public void end() {

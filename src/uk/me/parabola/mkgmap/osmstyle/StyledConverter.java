@@ -238,9 +238,20 @@ public class StyledConverter implements OsmConverter {
 			else
 				rules = wayRules;
 		}
-		
+
+		Way cycleWay = null;
+		String cycleWayTag = way.getTag("mkgmap:make-cycle-way");
+		if ("yes".equals(cycleWayTag)){
+			way.deleteTag("mkgmap:make-cycle-way");
+			cycleWay = makeCycleWay(way);
+			way.addTag("bicycle", "no"); // make sure that bicycles are using the added bicycle way 
+		}
 		wayTypeResult.setWay(way);
 		rules.resolveType(way, wayTypeResult);
+		if (cycleWay != null){
+			wayTypeResult.setWay(cycleWay);
+			rules.resolveType(cycleWay, wayTypeResult);
+		}
 	}
 
 
@@ -339,6 +350,30 @@ public class StyledConverter implements OsmConverter {
 		}
 	}
 
+	/**
+	 * Construct a cycleway that has the same points as an existing way.  Used for separate
+	 * cycle lanes.
+	 * @param way The original way.
+	 * @return The new way, which will have the same points and have suitable cycle tags.
+	 */
+	private Way makeCycleWay(Way way) {
+		Way cycleWay = new Way(way.getId(), way.getPoints());
+		cycleWay.copyTags(way);
+
+		String name = way.getTag("name");
+		if(name != null)
+			name += " (cycleway)";
+		else
+			name = "cycleway";
+		cycleWay.addTag("name", name);
+		cycleWay.addTag("access", "no");
+		cycleWay.addTag("bicycle", "yes");
+		cycleWay.addTag("foot", "no");
+		cycleWay.addTag("mkgmap:synthesised", "yes");
+		cycleWay.addTag("oneway", "no");
+		return cycleWay;
+	}
+	
 	/**
 	 * Recalculates the road class defined in the given {@link GType} object based on the tags
 	 * <ul>
@@ -906,8 +941,6 @@ public class StyledConverter implements OsmConverter {
 		
 		if (way.isBoolTag("oneway"))
 			line.setDirection(true);
-		if (way.isBoolTag("mkgmap:skipSizeFilter"))
-			line.setSkipSizeFilter(true);
 
 		clipper.clipLine(line, lineAdder);
 	}
@@ -925,8 +958,6 @@ public class StyledConverter implements OsmConverter {
 		final MapShape shape = new MapShape(way.getId());
 		elementSetup(shape, gt, way);
 		shape.setPoints(way.getPoints());
-		if (way.isBoolTag("mkgmap:skipSizeFilter"))
-			shape.setSkipSizeFilter(true);
 
 		clipper.clipShape(shape, collector);
 	}
@@ -985,6 +1016,14 @@ public class StyledConverter implements OsmConverter {
 		ms.setType(gt.getType());
 		ms.setMinResolution(gt.getMinResolution());
 		ms.setMaxResolution(gt.getMaxResolution());
+
+		if (element.isBoolTag("mkgmap:highest-resolution-only")){
+			ms.setMinResolution(ms.getMaxResolution());
+		}
+		
+		if (element.isBoolTag("mkgmap:skipSizeFilter") && ms instanceof MapLine){
+			((MapLine)ms).setSkipSizeFilter(true);
+		}
 		
 		// Now try to get some address info for POIs
 		
@@ -1527,8 +1566,6 @@ public class StyledConverter implements OsmConverter {
 		line.setPoints(points);
 		
 		MapRoad road = new MapRoad(way.getId(), line);
-		if (way.isBoolTag("mkgmap:skipSizeFilter"))
-			road.setSkipSizeFilter(true);
 
 		boolean doFlareCheck = true;
 		if("roundabout".equals(way.getTag("junction"))) {
