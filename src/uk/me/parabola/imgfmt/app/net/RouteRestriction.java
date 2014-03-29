@@ -80,6 +80,10 @@ public class RouteRestriction {
 	public RouteRestriction(RouteNode viaNode, List<RouteArc> traffArcs, byte exceptMaskParm) {
 		this.viaNode = viaNode;
 		this.arcs = new ArrayList<RouteArc>(traffArcs);
+		for (int i = 0; i < arcs.size(); i++){
+			RouteArc arc = arcs.get(i);
+			assert arc.getDest() != viaNode;
+		}
 		byte flags = 0;
 		if ((exceptMaskParm & EXCEPT_FOOT) != 0)
 			flags |= F_EXCEPT_FOOT;

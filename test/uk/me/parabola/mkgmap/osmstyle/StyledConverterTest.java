@@ -265,7 +265,7 @@ public class StyledConverterTest {
 				lines.add(road);
 			}
 
-			public void addRestriction(GeneralRouteRestriction rr) { }
+			public void addRestriction(GeneralRouteRestriction grr) { }
 
 			public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) { }
 		};

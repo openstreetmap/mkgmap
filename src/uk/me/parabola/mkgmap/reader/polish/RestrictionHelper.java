@@ -39,19 +39,19 @@ public class RestrictionHelper {
         Map<Long, CoordNode> allNodes = roadHelper.getNodeCoords();
 
         for (PolishTurnRestriction tr : allRestrictions) {
-        	GeneralRouteRestriction rr = new GeneralRouteRestriction("not", tr.getExceptMask(),Long.toString(tr.getNodId()));
-        	rr.setFromNode(allNodes.get(tr.getFromNodId()));
-        	rr.setFromWayId(tr.getRoadIdA());
-        	rr.setToNode(allNodes.get(tr.getToNodId()));
+        	GeneralRouteRestriction grr = new GeneralRouteRestriction("not", tr.getExceptMask(),Long.toString(tr.getNodId()));
+        	grr.setFromNode(allNodes.get(tr.getFromNodId()));
+        	grr.setFromWayId(tr.getRoadIdA());
+        	grr.setToNode(allNodes.get(tr.getToNodId()));
         	if (tr.getViaNodId() != 0){
-        		rr.setViaNodes(Arrays.asList(allNodes.get(tr.getNodId()),allNodes.get(tr.getViaNodId())));
-        		rr.setViaWayIds(Arrays.asList(tr.getRoadIdB()));
-        		rr.setToWayId(tr.getRoadIdC());
+        		grr.setViaNodes(Arrays.asList(allNodes.get(tr.getNodId()),allNodes.get(tr.getViaNodId())));
+        		grr.setViaWayIds(Arrays.asList(tr.getRoadIdB()));
+        		grr.setToWayId(tr.getRoadIdC());
         	} else {
-        		rr.setViaNodes(Arrays.asList(allNodes.get(tr.getNodId())));
-        		rr.setToWayId(tr.getRoadIdB());
+        		grr.setViaNodes(Arrays.asList(allNodes.get(tr.getNodId())));
+        		grr.setToWayId(tr.getRoadIdB());
         	}
-        	mapper.addRestriction(rr); // restriction should be part of the map
+        	mapper.addRestriction(grr); // restriction should be part of the map
         }
     }
 

@@ -808,7 +808,7 @@ public class StyleTester implements OsmConverter {
 			lines.add(road);
 		}
 
-		public void addRestriction(GeneralRouteRestriction rr) {
+		public void addRestriction(GeneralRouteRestriction grr) {
 		}
 
 		public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {
@@ -850,7 +850,7 @@ public class StyleTester implements OsmConverter {
 			}
 		}
 
-		public void addRestriction(GeneralRouteRestriction rr) {
+		public void addRestriction(GeneralRouteRestriction grr) {
 		}
 
 		public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {

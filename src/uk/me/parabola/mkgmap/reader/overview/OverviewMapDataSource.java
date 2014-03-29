@@ -155,7 +155,7 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 		addLine(road);
 	}
 
-	public void addRestriction(GeneralRouteRestriction rr) {
+	public void addRestriction(GeneralRouteRestriction grr) {
 		log.error("This is not supposed to be called");
 	}
 
