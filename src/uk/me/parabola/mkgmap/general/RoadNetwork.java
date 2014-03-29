@@ -376,6 +376,13 @@ public class RoadNetwork {
 			for (RouteArc badArc : lastViaNode.arcsIteration()){
 				if (!badArc.isDirect() || badArc.getRoadDef().getId() == ta.getRoadDef().getId()) 
 					continue;
+				if (!badArc.isForward() && badArc.getRoadDef().isOneway()){
+					// the route restriction connects to the "wrong" end of a oneway
+					if ((grr.getExceptionMask() & RouteRestriction.EXCEPT_FOOT) != 0){
+						// pedestrians are allowed
+						continue;
+					}
+				}
 				badArcs.add(badArc);
 			}
 			
