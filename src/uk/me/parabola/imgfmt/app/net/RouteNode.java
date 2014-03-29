@@ -115,9 +115,6 @@ public class RouteNode implements Comparable<RouteNode> {
 	}
 
 	public void addRestriction(RouteRestriction restr) {
-		if (getCoord().getId() == 342){
-			long dd  = 4;
-		}
 		restrictions.add(restr);
 		flags |= F_RESTRICTIONS;
 	}
@@ -165,9 +162,6 @@ public class RouteNode implements Comparable<RouteNode> {
 	 * Writes a nod1 entry.
 	 */
 	public void write(ImgFileWriter writer) {
-		if (getCoord().distance(new Coord( 60.24068, 25.02063 )) < 1){
-			long dd = 4;
-		}
 		if(log.isDebugEnabled())
 			log.debug("writing node, first pass, nod1", coord.getId());
 		offsetNod1 = writer.position();
@@ -209,9 +203,6 @@ public class RouteNode implements Comparable<RouteNode> {
 			
 			int index = 0;
 			for (RouteArc arc: arcs){
-				if (arc.getSource() != this){
-					long dd = 4;
-				}
 				Byte compactedDir = null;
 				if (useCompactDirs){
 					if (lastArc == null || lastArc.getIndexA() != arc.getIndexA() || lastArc.isForward() != arc.isForward()){

@@ -127,9 +127,6 @@ public class RouteRestriction {
 		// first arc is inverse arc
 		int pos = 0;
 		boolean viaWritten = false;
-		if (numArcs > 2){
-			long dd = 4;
-		}
 		for (int i = 0; i < numArcs; i++){
 			RouteArc arc = arcs.get(i);
 			if (arc.getSource() == viaNode){

@@ -17,6 +17,7 @@
 package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 

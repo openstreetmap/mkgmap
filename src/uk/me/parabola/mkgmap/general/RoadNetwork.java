@@ -296,9 +296,6 @@ public class RoadNetwork {
 	 * @param grr the object that holds the details about the route restriction
 	 */
 	public int addRestriction(GeneralRouteRestriction grr) {
-		if (grr.getViaWayIds().isEmpty() == false ){
-			long dd = 4;
-			}
 		if (grr.getType() == GeneralRouteRestriction.RestrType.TYPE_NO_TROUGH)
 			return addNoThroughRoute(grr);
 		String sourceDesc = grr.getSourceDesc();
@@ -385,7 +382,7 @@ public class RoadNetwork {
 		}
 		int added = 0;
 		if (fa.getDest() == ta.getDest()){
-			long dd = 4;
+			log.error(sourceDesc, "check special case from = to arc ");
 		}
 		for (RouteArc badArc: badArcs){
 			for (RouteNode vn: viaNodes){
