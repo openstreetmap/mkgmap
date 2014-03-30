@@ -13,6 +13,9 @@
 
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.util.List;
+
+import uk.me.parabola.mkgmap.build.LocatorUtil;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
 import uk.me.parabola.util.EnhancedProperties;
 
@@ -24,12 +27,14 @@ public class RelationStyleHook extends OsmReadingHooksAdaptor {
 
 	private Style style;
 	private ElementSaver saver;
-	
+	List<String> nameTagList;
+
 	public RelationStyleHook() {
 	}
 
 	public boolean init(ElementSaver saver, EnhancedProperties props) {
 		this.saver = saver;
+		nameTagList = LocatorUtil.getNameTags(props);
 		style = StyleImpl.readStyle(props);
 		return super.init(saver, props);
 	}
@@ -37,6 +42,15 @@ public class RelationStyleHook extends OsmReadingHooksAdaptor {
 	public void end() {
 		Rule relationRules = style.getRelationRules();
 		for (Relation rel : saver.getRelations().values()) {
+			if (nameTagList != null){
+				for (String t : nameTagList) {
+					String val = rel.getTag(t);
+					if (val != null) {
+						rel.addTag("name", val);
+						break;
+					}
+				}
+			}			
 			relationRules.resolveType(rel, TypeResult.NULL_RESULT);
 		}
 		super.end();
