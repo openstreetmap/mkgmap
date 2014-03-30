@@ -435,7 +435,9 @@ public class RestrictionRelation extends Relation {
 			grr.setViaNodes(viaNodes);
 			grr.setViaWayIds(viaWayIds);
 				
-			collector.addRestriction(grr);
+			int numAdded = collector.addRestriction(grr);
+			if (numAdded == 0)
+				return;
 			if(restriction.startsWith("no_turn"))
 				log.warn(messagePrefix, "has bad type '" + restriction + "' it should be of the form no_X_turn rather than no_turn_X - I added the restriction anyway - blocks routing to way", toWay.toBrowseURL());
 			else 

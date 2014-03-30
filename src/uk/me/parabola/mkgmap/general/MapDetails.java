@@ -126,8 +126,8 @@ public class MapDetails implements MapCollector, MapDataSource {
 		addLine(road);
 	}
 
-	public void addRestriction(GeneralRouteRestriction grr) {
-		roadNetwork.addRestriction(grr);
+	public int addRestriction(GeneralRouteRestriction grr) {
+		return roadNetwork.addRestriction(grr);
 	}
 
 	public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {

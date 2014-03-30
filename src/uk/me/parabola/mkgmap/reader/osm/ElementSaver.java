@@ -127,9 +127,16 @@ public class ElementSaver {
 	 * @param way The osm way.
 	 */
 	public void addWay(Way way) {
+		wayMap.put(way.getId(), way);
+		/*
 		Way old = wayMap.put(way.getId(), way);
-		if (old != null)
-			log.error("duplicate way",way.toBrowseURL(),"replaces previous way");
+		if (old != null){
+			if (old == way)
+				log.error("way",way.toBrowseURL(),"was added again");
+			else 
+				log.error("duplicate way",way.toBrowseURL(),"replaces previous way");
+		}
+		*/
 	}
 
 	/**
