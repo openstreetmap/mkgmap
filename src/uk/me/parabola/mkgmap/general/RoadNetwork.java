@@ -445,6 +445,8 @@ public class RoadNetwork {
 						path.add(reverseArc);
 					}
 				}
+				// TODO: make sure that there is a vehicle class which can travel
+				// along all arcs and that is not excluded from the restriction
 				vn.addRestriction(new RouteRestriction(vn, path, grr.getExceptionMask()));
 				++added;
 			}
@@ -484,19 +486,20 @@ public class RoadNetwork {
 	
 
 	 */
+	 // TODO: rewrite using named constants, unit tests 
 	private boolean isUsableArc(RouteArc arc, byte exceptionMask) {
-			int roadNoAccess = arc.getRoadDef().getTabAAccess() & 0x77;
-			if ((arc.getRoadDef().getTabAAccess() & 0x8000) != 0)
-				roadNoAccess |= 0x80;
-			int access = ~roadNoAccess & 0xff;
-			int restrAccess = exceptionMask & 0xe7;
-			if ((exceptionMask & RouteRestriction.EXCEPT_FOOT) != 0)
-				restrAccess |= 0x10;
-			restrAccess = ~restrAccess & 0xff;
-			access &= restrAccess;
-			if (access == 0)
-				return false;
-			return true;
+		int roadNoAccess = arc.getRoadDef().getTabAAccess() & 0x77;
+		if ((arc.getRoadDef().getTabAAccess() & 0x8000) != 0)
+			roadNoAccess |= 0x80;
+		int access = ~roadNoAccess & 0xff;
+		int restrAccess = exceptionMask & 0xe7;
+		if ((exceptionMask & RouteRestriction.EXCEPT_FOOT) != 0)
+			restrAccess |= 0x10;
+		restrAccess = ~restrAccess & 0xff;
+		access &= restrAccess;
+		if (access == 0)
+			return false;
+		return true;
 	}
 
 	private int addNoThroughRoute(GeneralRouteRestriction grr) {
