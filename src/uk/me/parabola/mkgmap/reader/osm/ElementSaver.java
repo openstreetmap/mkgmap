@@ -143,11 +143,11 @@ public class ElementSaver {
 			if (type == null) {
 			} else if ("multipolygon".equals(type) || "boundary".equals(type)) {
 				rel = createMultiPolyRelation(rel); 
-			} else if("restriction".equals(type)) {
+			} else if("restriction".equals(type) || type.startsWith("restriction:")) {
 				if (ignoreTurnRestrictions)
 					rel = null;
-				else if (rel.getTag("restriction") == null)
-					log.warn("ignoring unspecified restriction " + rel.toBrowseURL());
+				else if (rel.getTag("restriction") == null && rel.getTagsWithPrefix("restriction:", false).isEmpty())
+					log.warn("ignoring unspecified/unsupported restriction " + rel.toBrowseURL());
 				else
 					rel = new RestrictionRelation(rel);
 			}

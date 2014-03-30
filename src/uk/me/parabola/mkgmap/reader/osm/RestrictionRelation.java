@@ -15,8 +15,10 @@ package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -136,8 +138,6 @@ public class RestrictionRelation extends Relation {
 
 		copyTags(other);
 
-		restriction = getTag("restriction");
-
 		// These tags are not loaded by default but if they exist issue a warning
 		String[] unsupportedTags = {
 		    "day_on",
@@ -149,30 +149,54 @@ public class RestrictionRelation extends Relation {
 				log.warn(messagePrefix, "ignoring unsupported '" + unsupportedTag + "' tag");
 			}
 		}
-
-		exceptMask = RouteRestriction.EXCEPT_FOOT | RouteRestriction.EXCEPT_EMERGENCY; 
+		
+		// find out what kind of restriction we have and to which vehicles it applies
+		exceptMask = RouteRestriction.EXCEPT_FOOT | RouteRestriction.EXCEPT_EMERGENCY;
+		String specifc_type = getTag("restriction");
+		int count_unknown = 0;
+		Map<String, String> vehicles = getTagsWithPrefix("restriction:", true);
+		if (vehicles.isEmpty() == false){
+			Iterator<Entry<String, String>> iter = vehicles.entrySet().iterator();
+			while (iter.hasNext()){
+				Map.Entry<String, String> entry = iter.next();
+				String vehicle = entry.getKey();
+				if (setExceptMask(vehicle, false) == false)
+					count_unknown++;
+				if (specifc_type == null)
+					specifc_type = entry.getValue();
+				else if (specifc_type.equals(entry.getValue()) == false){
+					log.warn(messagePrefix, "is invalid, it specifies different kinds of turns");
+					valid = false;
+					break;
+				}
+			}
+			if (valid && vehicles.size() == count_unknown){
+				log.warn(messagePrefix, "no supported vehicle in turn restriction");				
+				valid = false;
+			}
+		}
+		restriction = specifc_type;
+		
+		String type = getTag("type");
+		if (type.startsWith("restriction:")){
+			exceptMask = (byte) 0xff;
+			String vehicle = type.substring("restriction:".length());
+			if (setExceptMask(vehicle, false) == false) {
+				log.warn(messagePrefix, "ignoring unsupported '" + vehicle + "' in turn restriction");
+				valid = false;
+				return;
+			}
+		}
 		String except = getTag("except");
 		if(except != null) {
-			for(String e : except.split("[,;]")) { // be nice
-				e = e.trim();
-				if(e.equals("motorcar") || e.equals("motorcycle"))
-					exceptMask |= RouteRestriction.EXCEPT_CAR;
-				else if(e.equals("psv") || e.equals("bus"))
-					exceptMask |= RouteRestriction.EXCEPT_BUS;
-				else if(e.equals("taxi"))
-					exceptMask |= RouteRestriction.EXCEPT_TAXI;
-				else if(e.equals("delivery") || e.equals("goods"))
-					exceptMask |= RouteRestriction.EXCEPT_DELIVERY;
-				else if(e.equals("bicycle"))
-					exceptMask |= RouteRestriction.EXCEPT_BICYCLE;
-				else if(e.equals("hgv") || e.equals("truck"))
-					exceptMask |= RouteRestriction.EXCEPT_TRUCK;
-				else
-					log.warn(messagePrefix, "ignoring unsupported vehicle class '" + e + "' in turn restriction exception");
+			for(String vehicle : except.split("[,;]")) { // be nice
+				vehicle = vehicle.trim();
+				setExceptMask(vehicle, true);
 			}
 		}
 		if (!valid)
 			return;
+		
 		if (viaWays.isEmpty() && viaCoord == null && fromWay != null && toWay != null){
 			List<Coord>fromPoints = fromWay.getPoints();
 			List<Coord>toPoints = toWay.getPoints();
@@ -209,6 +233,39 @@ public class RestrictionRelation extends Relation {
 			viaCoord.setViaNodeOfRestriction(true);
 	}
 
+	/** 
+	 * match the vehicle type in a restriction with the garmin type
+	 * and modify the exceptMask 
+	 * @param vehicle
+	 * @param b true: restriction should not apply for vehicle, false: restriction should apply  
+	 * @return true if vehicle has a matching flag in the garmin format
+	 */
+	private boolean setExceptMask(String vehicle, boolean b){
+		byte flag = 0;
+		if(vehicle.equals("motorcar") || vehicle.equals("motorcycle") || vehicle.equals("motor_vehicle"))
+			flag = RouteRestriction.EXCEPT_CAR;
+		else if(vehicle.equals("psv") || vehicle.equals("bus"))
+			flag = RouteRestriction.EXCEPT_BUS;
+		else if(vehicle.equals("taxi"))
+			flag = RouteRestriction.EXCEPT_TAXI;
+		else if(vehicle.equals("delivery") || vehicle.equals("goods"))
+			flag = RouteRestriction.EXCEPT_DELIVERY;
+		else if(vehicle.equals("bicycle"))
+			flag = RouteRestriction.EXCEPT_BICYCLE;
+		else if(vehicle.equals("hgv") || vehicle.equals("truck"))
+			flag = RouteRestriction.EXCEPT_TRUCK;
+		if (flag == 0){
+			log.warn(messagePrefix, "ignoring unsupported vehicle class '" + vehicle + "' in turn restriction");
+			return false;
+		} else {
+			if (b)
+				exceptMask |= flag;
+			else 
+				exceptMask &= ~flag;
+		}
+		return true;			
+	}
+	
 	public Way getFromWay() {
 		return fromWay;
 	}

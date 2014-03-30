@@ -34,6 +34,13 @@ public class RoutingHook extends OsmReadingHooksAdaptor {
 		usedTags = new HashSet<String>();
 		usedTags.add("except");
 		usedTags.add("restriction");
+		usedTags.add("restriction:foot");
+		usedTags.add("restriction:hgv");
+		usedTags.add("restriction:motorcar");
+		usedTags.add("restriction:motorcycle");
+		usedTags.add("restriction:motor_vehicle");
+		usedTags.add("restriction:bicycle");
+		usedTags.add("restriction:bus");
 	}
 
 	public boolean init(ElementSaver saver, EnhancedProperties props) {
