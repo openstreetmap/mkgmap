@@ -1248,6 +1248,16 @@ public class StyledConverter implements OsmConverter {
 							// make sure it becomes a node
 							co.incHighwayCount();
 						}
+						if (co.isViaNodeOfRestriction()){
+							for (RestrictionRelation rr : restrictions){
+								if (rr.getViaCoords().contains(co)){
+									boolean changed = rr.replaceWay(way, nWay);
+									if (changed)
+										log.warn("way",way.getId(),"in restriction", rr.getId(),"was clipped at tile boundary");
+								}
+							}
+							
+						}
 					}
 					clippedWays.add(nWay);
 				}
