@@ -254,6 +254,8 @@ public class RestrictionRelation extends Relation {
 			flag = RouteRestriction.EXCEPT_BICYCLE;
 		else if(vehicle.equals("hgv") || vehicle.equals("truck"))
 			flag = RouteRestriction.EXCEPT_TRUCK;
+		else if(vehicle.equals("emergency"))
+			flag = RouteRestriction.EXCEPT_EMERGENCY;
 		if (flag == 0){
 			log.warn(messagePrefix, "ignoring unsupported vehicle class '" + vehicle + "' in turn restriction");
 			return false;
@@ -524,6 +526,26 @@ public class RestrictionRelation extends Relation {
 
 	public List<Coord> getViaCoords() {
 		return viaPoints;
+	}
+
+	public boolean replaceWay(Way way, Way nWay) {
+		boolean matched = false;
+		if (fromWay == way){
+			fromWay = nWay;
+			matched = true;
+		}
+		if (toWay == way){
+			toWay = nWay;
+			matched = true;
+		}
+		for (int i = 0; i < viaWays.size(); i++){
+			if (viaWays.get(i) == way){
+				viaWays.set(i, nWay);
+				nWay.setViaWay(true);
+				matched = true;
+			}
+		}
+		return matched;
 	}
 
 
