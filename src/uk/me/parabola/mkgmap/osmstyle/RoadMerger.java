@@ -391,7 +391,7 @@ public class RoadMerger {
 				if (via == from.getPoints().get(0) || via == from.getPoints().get(from.getPoints().size()-1) ){
 					restrictions.add(via, rel.getFromWay().getId());
 				}
-				Way to = rel.getFromWay();
+				Way to = rel.getToWay();
 				if (via == to.getPoints().get(0) || via == to.getPoints().get(to.getPoints().size()-1) ){
 					restrictions.add(via, rel.getToWay().getId());
 				}
@@ -511,6 +511,9 @@ public class RoadMerger {
 		// first add all roads with their start and end points to the
 		// start/endpoint lists
 		for (Road road : roadsToMerge) {
+			if (road.getWay().getId() == 17067396){
+				long dd = 4;
+			}
 			List<Coord> points = road.getWay().getPoints();
 			Coord start = points.get(0);
 			Coord end = points.get(points.size() - 1);
