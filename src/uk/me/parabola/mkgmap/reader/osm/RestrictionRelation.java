@@ -436,8 +436,11 @@ public class RestrictionRelation extends Relation {
 			grr.setViaWayIds(viaWayIds);
 				
 			int numAdded = collector.addRestriction(grr);
-			if (numAdded == 0)
-				return;
+			if (numAdded == 0){
+				log.warn(messagePrefix,"ignored, check if reason was printed before");
+				return; // message was created before
+			}
+			
 			if(restriction.startsWith("no_turn"))
 				log.warn(messagePrefix, "has bad type '" + restriction + "' it should be of the form no_X_turn rather than no_turn_X - I added the restriction anyway - blocks routing to way", toWay.toBrowseURL());
 			else 
@@ -457,7 +460,10 @@ public class RestrictionRelation extends Relation {
 			grr.setToWayId(toWay.getId());
 			grr.setViaNodes(viaNodes);
 			grr.setViaWayIds(viaWayIds);
-			collector.addRestriction(grr);
+			int numAdded = collector.addRestriction(grr);
+			if (numAdded == 0){
+				log.warn(messagePrefix,"ignored, check if reason was printed before");
+			}
 		}
 		else {
 			log.warn(messagePrefix, "has unsupported type '" + restriction + "'");

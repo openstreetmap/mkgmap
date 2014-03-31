@@ -299,6 +299,7 @@ public class RoadNetwork {
 		if (grr.getType() == GeneralRouteRestriction.RestrType.TYPE_NO_TROUGH)
 			return addNoThroughRoute(grr);
 		String sourceDesc = grr.getSourceDesc();
+		
 		long fromId = grr.getFromNode().getId();
 		long toId = grr.getToNode().getId();
 		RouteNode fn = nodes.get(fromId);
@@ -386,7 +387,7 @@ public class RoadNetwork {
 			for (RouteArc badArc : lastViaNode.arcsIteration()){
 				if (!badArc.isDirect() || badArc.getRoadDef().getId() == grr.getToWayId()) 
 					continue;
-				if (isUsableArc(badArc, grr.getExceptionMask()) == false)
+				if (isUsable(badArc.getRoadDef().getTabAAccess(), grr.getExceptionMask()) == false)
 					continue;
 				if (!badArc.isForward() && badArc.getRoadDef().isOneway()){
 					// the route restriction connects to the "wrong" end of a oneway
@@ -407,7 +408,7 @@ public class RoadNetwork {
 			List<RouteArc> arcs =  arcLists.get(i);
 			for (int j = arcs.size()-1; j >= 0; --j){
 				RouteArc arc = arcs.get(j);
-				if (isUsableArc(arc, grr.getExceptionMask()) == false)
+				if (isUsable(arc.getRoadDef().getTabAAccess(), grr.getExceptionMask()) == false)
 					arcs.remove(j);
 				else if (arc.getRoadDef().isOneway()){
 					if (i == 0 && arc.isForward() || i > 0 && !arc.isForward())
@@ -436,8 +437,10 @@ public class RoadNetwork {
 		for (int i = 0; i < numCombis; i++){
 			for (RouteNode vn : viaNodes){
 				path.clear();
+				int pathNoAccessMask = 0;
 				for (int j = 0; j < indexes.length; j++){
 					RouteArc arc = arcLists.get(j).get(indexes[j]);
+					pathNoAccessMask |= arc.getRoadDef().getTabAAccess();
 					if (arc.getDest() != vn)
 						path.add(arc);
 					else {
@@ -445,10 +448,12 @@ public class RoadNetwork {
 						path.add(reverseArc);
 					}
 				}
-				// TODO: make sure that there is a vehicle class which can travel
-				// along all arcs and that is not excluded from the restriction
-				vn.addRestriction(new RouteRestriction(vn, path, grr.getExceptionMask()));
-				++added;
+				if (isUsable(pathNoAccessMask, grr.getExceptionMask())){
+					vn.addRestriction(new RouteRestriction(vn, path, grr.getExceptionMask()));
+					++added;
+				} else {
+					long dd = 4;
+				}
 			}
 			// get next combination of arcs
 			++indexes[indexes.length-1];
@@ -459,11 +464,11 @@ public class RoadNetwork {
 				}
 			}
 		}
-		
+		assert indexes[0] == arcLists.get(0).size() : sourceDesc + " failed to generate all possible paths";
+			
 		return added;
 	}
 
-	
 	/*
 	 * Match the access mask of the road and the exception mask of the 
 	 * restriction. If 
@@ -483,22 +488,28 @@ public class RoadNetwork {
 	public final static byte EXCEPT_DELIVERY = 0x10;
 	public final static byte EXCEPT_BICYCLE  = 0x20;
 	public final static byte EXCEPT_TRUCK    = 0x40;
+	// additional flags that can be passed via exceptMask  
+	public final static byte EXCEPT_FOOT      = 0x08; // not written as such
+	public final static byte EXCEPT_EMERGENCY = (byte)0x80; // not written as such
 	
 
 	 */
 	 // TODO: rewrite using named constants, unit tests 
-	private boolean isUsableArc(RouteArc arc, byte exceptionMask) {
-		int roadNoAccess = arc.getRoadDef().getTabAAccess() & 0x77;
-		if ((arc.getRoadDef().getTabAAccess() & 0x8000) != 0)
-			roadNoAccess |= 0x80;
+	private boolean isUsable(int roadTabAAccess, byte exceptionMask) {
+		// bit positions for car,bus,taxi,bicycle and truck are equal
+		// move the other bits to match the meaning in the restriction 
+		int roadNoAccess = roadTabAAccess & 0x67;
+		if ((roadTabAAccess & 0x8000) != 0)
+			roadNoAccess |= RouteRestriction.EXCEPT_EMERGENCY;
+		if ((roadTabAAccess & 0x4000) != 0)
+			roadNoAccess |= RouteRestriction.EXCEPT_DELIVERY;
+		if ((roadTabAAccess & 0x010) != 0)
+			roadNoAccess |= RouteRestriction.EXCEPT_FOOT;
 		int access = ~roadNoAccess & 0xff;
-		int restrAccess = exceptionMask & 0xe7;
-		if ((exceptionMask & RouteRestriction.EXCEPT_FOOT) != 0)
-			restrAccess |= 0x10;
+		int restrAccess = exceptionMask;
 		restrAccess = ~restrAccess & 0xff;
-		access &= restrAccess;
-		if (access == 0)
-			return false;
+		if ((access & restrAccess) == 0)
+			return false; // no allowed vehicle is concerned by this restriction
 		return true;
 	}
 
