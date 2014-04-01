@@ -3,7 +3,6 @@ package uk.me.parabola.imgfmt.app.net;
 import java.util.ArrayList;
 import java.util.List;
 
-import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 
 /**
@@ -22,7 +21,6 @@ public class GeneralRouteRestriction {
 	private final RestrType type;
 	private final String sourceDesc;
 	
-	private Coord fromPoint, toPoint;
 	private long fromWayId, toWayId;
 	private CoordNode fromNode, toNode;
 	private List<Long> viaWayIds = new ArrayList<>();
@@ -41,18 +39,6 @@ public class GeneralRouteRestriction {
 		this.sourceDesc = sourceDesc;
 	}
 	
-	public Coord getFromPoint() {
-		return fromPoint;
-	}
-	public void setFromPoint(Coord fromPoint) {
-		this.fromPoint = fromPoint;
-	}
-	public Coord getToPoint() {
-		return toPoint;
-	}
-	public void setToPoint(Coord toPoint) {
-		this.toPoint = toPoint;
-	}
 	public long getFromWayId() {
 		return fromWayId;
 	}
