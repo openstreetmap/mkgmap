@@ -433,8 +433,10 @@ public class RoadNetwork {
 			List<RouteArc> arcs =  arcLists.get(i);
 			numCombis *= arcs.size();
 		}
-		if (numCombis == 0)
+		if (numCombis == 0){
+			// message was printed above
 			return 0;
+		}
 		List<RouteArc> path = new ArrayList<>();
 		int added = 0;
 		for (int i = 0; i < numCombis; i++){
@@ -465,7 +467,7 @@ public class RoadNetwork {
 				}
 			}
 		}
-		assert indexes[0] == arcLists.get(0).size() : sourceDesc + " failed to generate all possible paths";
+		log.error(sourceDesc, " failed to generate all possible paths");
 			
 		return added;
 	}

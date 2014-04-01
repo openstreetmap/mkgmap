@@ -59,9 +59,6 @@ public class RestrictionRelation extends Relation {
 	 */
 	public RestrictionRelation(Relation other) {
 		setId(other.getId());
-		if(getId() == 3478910){
-			long dd  =4;
-		}
 		valid = true;
 		final String browseURL = toBrowseURL();
 		messagePrefix = "Turn restriction " + browseURL;
@@ -172,9 +169,6 @@ public class RestrictionRelation extends Relation {
 			}
 		}
 		restriction = specifc_type;
-		if (restriction.equals("no_entry")){
-			long dd  = 4;
-		}
 		String type = getTag("type");
 		if (type.startsWith("restriction:")){
 			exceptMask = (byte) 0xff;
@@ -201,8 +195,6 @@ public class RestrictionRelation extends Relation {
 				valid = false;
 				return;
 			}
-		} else {
-			long dd = 4;
 		}
 		if ("no_exit".equals(restriction) == false){
 			if (toWays.size() > 1){
@@ -254,6 +246,12 @@ public class RestrictionRelation extends Relation {
 			log.warn(messagePrefix, "via way(s) are not supported with multiple from or to ways");
 			valid = false;
 		}
+		if (toWays.size() == 1 && fromWays.size() == 1 && viaWays.isEmpty()){
+			if ("no_u_turn".equals(restriction) && fromWays.get(0).equals(toWays.get(0))){
+				log.warn(messagePrefix,"no_u_turn with equal 'from' and 'to' way is ignored");
+				valid = false;
+			}
+		}
 		
 		if (!valid)
 			return;
@@ -294,6 +292,8 @@ public class RestrictionRelation extends Relation {
 			flag = RouteRestriction.EXCEPT_TRUCK;
 		else if(vehicle.equals("emergency"))
 			flag = RouteRestriction.EXCEPT_EMERGENCY;
+		else if(vehicle.equals("foot"))
+			flag = RouteRestriction.EXCEPT_FOOT;
 		if (flag == 0){
 			log.warn(messagePrefix, "ignoring unsupported vehicle class '" + vehicle + "' in turn restriction");
 			return false;
@@ -388,7 +388,7 @@ public class RestrictionRelation extends Relation {
 			log.error(messagePrefix, "check: 'via' ways in only-restrictions ");
 		}
 		if (valid && viaWays.size() > 1){
-			log.error(messagePrefix, "sorry, multiple via ways are not (yet) supported");
+			log.warn(messagePrefix, "sorry, multiple via ways are not (yet) supported");
 			valid = false;
 		}
 		if (!valid)
@@ -479,7 +479,6 @@ public class RestrictionRelation extends Relation {
 
 					int numAdded = collector.addRestriction(grr);
 					if (numAdded == 0){
-						log.warn(messagePrefix,"ignored, check if reason was printed before");
 						return; // message was created before
 					}
 					added += numAdded;
