@@ -151,7 +151,9 @@ public class RouteRestriction {
 		}
 		for (int i = 1; i < offsets.length; i++){
 			if (offsets[i-1] == offsets[i]){
-				assert false: "failed to calculate offsets";
+				assert false : "failed to calculate offsets for restriction at via node "
+						+ viaNode.getCoord()
+						+ "(" + viaNode.getCoord().toDegreeString() + ")";
 			}
 		}
 		for (int offset : offsets)

@@ -149,8 +149,8 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 				if (rrel.isValid()==false)
 					// ignore invalid restrictions
 					continue;
-				restrictions.add(rrel.getFromWay().getId(), rrel);
-				restrictions.add(rrel.getToWay().getId(), rrel);
+				for (Long wayId : rrel.getWayIds())
+					restrictions.add(wayId, rrel);
 			}
 		}
 	}
@@ -223,14 +223,14 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 			List<Coord> viaCoords = rr.getViaCoords();
 			for (Coord via : viaCoords){
 				if (via == lastPointNewWay) {
-					if (rr.getToWay().equals(oldWay)) {
+					if (rr.isToWay(oldWay)) {
 						log.debug("Change to-way",oldWay.getId(),"to",newWay.getId(),"for relation",rr.getId(),"at",lastPointNewWay.toOSMURL());
-						rr.setToWay(newWay);
+						rr.replaceWay(oldWay, newWay);
 						restrictions.remove(oldWay.getId(), rr);
 						restrictions.add(newWay.getId(), rr);
-					} else if (rr.getFromWay().equals(oldWay)) {
+					} else if (rr.isFromWay(oldWay)){
 						log.debug("Change from-way",oldWay.getId(),"to",newWay.getId(),"for relation",rr.getId(),"at",lastPointNewWay.toOSMURL());
-						rr.setFromWay(newWay);
+						rr.replaceWay(oldWay, newWay);
 						restrictions.remove(oldWay.getId(), rr);
 						restrictions.add(newWay.getId(), rr);
 					} 

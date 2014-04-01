@@ -387,14 +387,8 @@ public class RoadMerger {
 			if (!rel.isValid()) 
 				continue;
 			for (Coord via: rel.getViaCoords()){
-				Way from = rel.getFromWay();
-				if (via == from.getPoints().get(0) || via == from.getPoints().get(from.getPoints().size()-1) ){
-					restrictions.add(via, rel.getFromWay().getId());
-				}
-				Way to = rel.getToWay();
-				if (via == to.getPoints().get(0) || via == to.getPoints().get(to.getPoints().size()-1) ){
-					restrictions.add(via, rel.getToWay().getId());
-				}
+				for (Long wayId : rel.getConnectedWayIds(via))
+					restrictions.add(via, wayId);
 			}
 		}
 	}

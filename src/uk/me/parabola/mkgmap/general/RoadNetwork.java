@@ -329,12 +329,12 @@ public class RoadNetwork {
 		RouteNode firstViaNode = nodes.get(firstViaId);
 		RouteNode lastViaNode = nodes.get(lastViaId);
 		
-		List<RouteArc> fromArcs = firstViaNode.getDirectArcsTo(fn, grr.getFromWayId()); // inverse arc gets used
+		List<RouteArc> fromArcs = firstViaNode.getDirectArcsTo(fn, grr.getFromWayId()); // inverse arcs gets used
 		List<RouteArc> toArcs = lastViaNode.getDirectArcsTo(tn, grr.getToWayId());
 		if (fromArcs.isEmpty() || toArcs.isEmpty()){
-			if (fromArcs == null)
+			if (fromArcs.isEmpty())
 				log.error(sourceDesc, "can't locate arc from 'via' node ",firstViaId,"to 'from' node",fromId,"on way",grr.getFromWayId());
-			if (toArcs == null)
+			if (toArcs.isEmpty())
 				log.error(sourceDesc, "can't locate arc from 'via' node ",lastViaId,"to 'to' node",toId,"on way",grr.getToWayId());
 			return 0;
 		}
@@ -382,11 +382,14 @@ public class RoadNetwork {
 		}
 		else if (grr.getType() == GeneralRouteRestriction.RestrType.TYPE_ONLY){
 			// this is the inverse logic, rr gives the allowed path, we have to find the others
-			RouteNode source = lastViaNode;
-			
 			for (RouteArc badArc : lastViaNode.arcsIteration()){
 				if (!badArc.isDirect() || badArc.getRoadDef().getId() == grr.getToWayId()) 
 					continue;
+				if ( viaNodes.size() > 1 && badArc.getDest() == viaNodes.get(viaNodes.size()-2)){
+					// ignore u-turn
+					long dd  = 4;
+					continue;
+				}
 				if (isUsable(badArc.getRoadDef().getTabAAccess(), grr.getExceptionMask()) == false)
 					continue;
 				if (!badArc.isForward() && badArc.getRoadDef().isOneway()){
@@ -451,9 +454,7 @@ public class RoadNetwork {
 				if (isUsable(pathNoAccessMask, grr.getExceptionMask())){
 					vn.addRestriction(new RouteRestriction(vn, path, grr.getExceptionMask()));
 					++added;
-				} else {
-					long dd = 4;
-				}
+				} 
 			}
 			// get next combination of arcs
 			++indexes[indexes.length-1];
