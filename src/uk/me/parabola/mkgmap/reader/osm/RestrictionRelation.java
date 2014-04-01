@@ -242,8 +242,10 @@ public class RestrictionRelation extends Relation {
 	 */
 	private boolean setExceptMask(String vehicle, boolean b){
 		byte flag = 0;
-		if(vehicle.equals("motorcar") || vehicle.equals("motorcycle") || vehicle.equals("motor_vehicle"))
+		if(vehicle.equals("motorcar") || vehicle.equals("motorcycle"))
 			flag = RouteRestriction.EXCEPT_CAR;
+		else if(vehicle.equals("motor_vehicle"))
+			flag = (byte) (~(RouteRestriction.EXCEPT_BICYCLE | RouteRestriction.EXCEPT_FOOT) & 0xff);
 		else if(vehicle.equals("psv") || vehicle.equals("bus"))
 			flag = RouteRestriction.EXCEPT_BUS;
 		else if(vehicle.equals("taxi"))
