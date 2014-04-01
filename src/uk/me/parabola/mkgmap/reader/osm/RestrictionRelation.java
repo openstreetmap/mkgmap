@@ -505,7 +505,7 @@ public class RestrictionRelation extends Relation {
 			grr.setViaWayIds(viaWayIds);
 			int numAdded = collector.addRestriction(grr);
 			if (numAdded == 0){
-				log.warn(messagePrefix,"ignored, check if reason was printed before");
+				return; // message was created before
 			}
 		}
 		else {
