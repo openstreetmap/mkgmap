@@ -1161,7 +1161,7 @@ public class StyledConverter implements OsmConverter {
 								splitPoint.incHighwayCount();
 								points.add(splitPos, splitPoint);
 							}
-							if((splitPos + 1) < points.size() &&
+							if((splitPos + 1) < points.size() && way.isViaWay() == false &&
 									safeToSplitWay(points, splitPos, i, points.size() - 1)) {
 								Way tail = splitWayAt(way, splitPos);
 								// recursively process tail of way
@@ -1253,7 +1253,7 @@ public class StyledConverter implements OsmConverter {
 								if (rr.getViaCoords().contains(co)){
 									boolean changed = rr.replaceWay(way, nWay);
 									if (changed)
-										log.warn("way",way.getId(),"in restriction", rr.getId(),"was clipped at tile boundary");
+										log.info("way",way.getId(),"in restriction", rr.getId(),"was clipped at tile boundary at",co.toOSMURL());
 								}
 							}
 							
@@ -1693,6 +1693,9 @@ public class StyledConverter implements OsmConverter {
 	 * @return the trailing part of the way
 	 */
 	private Way splitWayAt(Way way, int index) {
+		if (way.isViaWay()){
+			log.warn("via way of restriction is split, restriction will be ignored",way);
+		}
 		Way trailingWay = new Way(way.getId());
 		List<Coord> wayPoints = way.getPoints();
 		int numPointsInWay = wayPoints.size();
@@ -1708,9 +1711,20 @@ public class StyledConverter implements OsmConverter {
 
 		// remove the points after the split from the original way
 		// it's probably more efficient to remove from the end first
-		for(int i = numPointsInWay - 1; i > index; --i)
-			wayPoints.remove(i);
-
+		for(int i = numPointsInWay - 1; i > index; --i){
+			Coord co = wayPoints.remove(i);
+			if (co.isViaNodeOfRestriction()){
+				for (RestrictionRelation rr : restrictions){
+					if (rr.getViaCoords().contains(co)){
+						boolean changed = rr.replaceWay(way, trailingWay);
+						if (changed)
+							log.info("way",way.getId(),"in restriction", rr.getId(),"was split at",co.toOSMURL());
+					}
+				}
+				
+			}
+			
+		}
 		return trailingWay;
 	}
 
