@@ -62,7 +62,68 @@ public class RestrictionRelation extends Relation {
 		valid = true;
 		final String browseURL = toBrowseURL();
 		messagePrefix = "Turn restriction " + browseURL;
-		Way viaWay = null;
+		copyTags(other);
+
+		// find out what kind of restriction we have and to which vehicles it applies
+		exceptMask = RouteRestriction.EXCEPT_FOOT | RouteRestriction.EXCEPT_EMERGENCY;
+		String specifc_type = getTag("restriction");
+		int count_unknown = 0;
+		Map<String, String> vehicles = getTagsWithPrefix("restriction:", true);
+		if (vehicles.isEmpty() == false){
+			Iterator<Entry<String, String>> iter = vehicles.entrySet().iterator();
+			while (iter.hasNext()){
+				Map.Entry<String, String> entry = iter.next();
+				String vehicle = entry.getKey();
+				if (setExceptMask(vehicle, false) == false)
+					count_unknown++;
+				if (specifc_type == null)
+					specifc_type = entry.getValue();
+				else if (specifc_type.equals(entry.getValue()) == false){
+					log.warn(messagePrefix, "is invalid, it specifies different kinds of turns");
+					valid = false;
+					break;
+				}
+			}
+			if (valid && vehicles.size() == count_unknown){
+				log.warn(messagePrefix, "no supported vehicle in turn restriction");				
+				valid = false;
+			}
+		}
+		restriction = specifc_type;
+		messagePrefix = "Turn restriction (" + restriction + ") " + browseURL;
+		
+		String type = getTag("type");
+		if (type.startsWith("restriction:")){
+			exceptMask = (byte) 0xff;
+			String vehicle = type.substring("restriction:".length());
+			if (setExceptMask(vehicle, false) == false) {
+				log.warn(messagePrefix, "ignoring unsupported '" + vehicle + "' in turn restriction");
+				valid = false;
+				return;
+			}
+		}
+		String except = getTag("except");
+		if(except != null) {
+			for(String vehicle : except.split("[,;]")) { // be nice
+				vehicle = vehicle.trim();
+				setExceptMask(vehicle, true);
+			}
+		}
+		
+		// These tags are not loaded by default but if they exist issue a warning
+		String[] unsupportedTags = {
+		    "day_on",
+		    "day_off",
+		    "hour_on",
+		    "hour_off" };
+		for (String unsupportedTag : unsupportedTags) {
+			if (getTag(unsupportedTag) != null) {
+				log.warn(messagePrefix, "ignoring unsupported '" + unsupportedTag + "' tag");
+			}
+		}
+		
+		
+		// evaluate members
 		for (Map.Entry<String, Element> pair : other.getElements()) {
 			String role = pair.getKey();
 			Element el = pair.getValue();
@@ -76,11 +137,11 @@ public class RestrictionRelation extends Relation {
 				location = fromWays.get(0).getPoints().get(0);
 			else if(!toWays.isEmpty() && !toWays.get(0).getPoints().isEmpty())
 				location = toWays.get(0).getPoints().get(0);
-			else if(viaWay != null && !viaWay.getPoints().isEmpty())
-				location = viaWay.getPoints().get(0);
+			else if(!viaWays.isEmpty() && !viaWays.get(0).getPoints().isEmpty())
+				location = viaWays.get(0).getPoints().get(0);
 
 			if(location != null)
-				messagePrefix = "Turn restriction " + browseURL + " (at " + location.toOSMURL() + ")";
+				messagePrefix = "Turn restriction (" + restriction + ") " + browseURL + " (at " + location.toOSMURL() + ")";
 
 			if("to".equals(role)) {
 				if(!(el instanceof Way)) {
@@ -129,63 +190,7 @@ public class RestrictionRelation extends Relation {
 			}
 		}
 
-		copyTags(other);
-
-		// These tags are not loaded by default but if they exist issue a warning
-		String[] unsupportedTags = {
-		    "day_on",
-		    "day_off",
-		    "hour_on",
-		    "hour_off" };
-		for (String unsupportedTag : unsupportedTags) {
-			if (getTag(unsupportedTag) != null) {
-				log.warn(messagePrefix, "ignoring unsupported '" + unsupportedTag + "' tag");
-			}
-		}
 		
-		// find out what kind of restriction we have and to which vehicles it applies
-		exceptMask = RouteRestriction.EXCEPT_FOOT | RouteRestriction.EXCEPT_EMERGENCY;
-		String specifc_type = getTag("restriction");
-		int count_unknown = 0;
-		Map<String, String> vehicles = getTagsWithPrefix("restriction:", true);
-		if (vehicles.isEmpty() == false){
-			Iterator<Entry<String, String>> iter = vehicles.entrySet().iterator();
-			while (iter.hasNext()){
-				Map.Entry<String, String> entry = iter.next();
-				String vehicle = entry.getKey();
-				if (setExceptMask(vehicle, false) == false)
-					count_unknown++;
-				if (specifc_type == null)
-					specifc_type = entry.getValue();
-				else if (specifc_type.equals(entry.getValue()) == false){
-					log.warn(messagePrefix, "is invalid, it specifies different kinds of turns");
-					valid = false;
-					break;
-				}
-			}
-			if (valid && vehicles.size() == count_unknown){
-				log.warn(messagePrefix, "no supported vehicle in turn restriction");				
-				valid = false;
-			}
-		}
-		restriction = specifc_type;
-		String type = getTag("type");
-		if (type.startsWith("restriction:")){
-			exceptMask = (byte) 0xff;
-			String vehicle = type.substring("restriction:".length());
-			if (setExceptMask(vehicle, false) == false) {
-				log.warn(messagePrefix, "ignoring unsupported '" + vehicle + "' in turn restriction");
-				valid = false;
-				return;
-			}
-		}
-		String except = getTag("except");
-		if(except != null) {
-			for(String vehicle : except.split("[,;]")) { // be nice
-				vehicle = vehicle.trim();
-				setExceptMask(vehicle, true);
-			}
-		}
 		if (!valid)
 			return;
 		
@@ -444,7 +449,7 @@ public class RestrictionRelation extends Relation {
 		for (Way toWay: toWays){
 			CoordNode toNode = findNextNode(toWay, currNode);
 			if (toNode == null){
-				log.warn(messagePrefix, "can't find routable 'to' node on 'from' way",toWay);
+				log.warn(messagePrefix, "can't find routable 'to' node on 'to' way",toWay);
 				return;
 			}
 			toNodes.add(new NodeOnWay(toNode, toWay));
@@ -503,6 +508,9 @@ public class RestrictionRelation extends Relation {
 			grr.setToWayId(toNodes.get(0).way.getId());
 			grr.setViaNodes(viaNodes);
 			grr.setViaWayIds(viaWayIds);
+			if (getId() == 2534400){
+				long dd = 4;
+			}
 			int numAdded = collector.addRestriction(grr);
 			if (numAdded == 0){
 				return; // message was created before
@@ -547,7 +555,9 @@ public class RestrictionRelation extends Relation {
 				if (co.getId() != 0)
 					return (CoordNode)co;
 			}
-		}
+		} else 
+			log.error(messagePrefix,"way",way.toBrowseURL(),"doesn't have required node");
+			
 		return null;
 	}
 
@@ -556,11 +566,16 @@ public class RestrictionRelation extends Relation {
 			return false;
 		if (viaCoord != null && bbox.contains(viaCoord) == false)
 			return false;
+		int countInside = 0;
 		for (Way viaWay : viaWays){
-			if(bbox.contains(viaWay.getPoints().get(0)) == false)
-				return false;
-			if(bbox.contains(viaWay.getPoints().get(viaWay.getPoints().size()-1)) == false)
-				return false;
+			if(bbox.contains(viaWay.getPoints().get(0)))
+				++countInside;
+			if(bbox.contains(viaWay.getPoints().get(viaWay.getPoints().size()-1)))
+				++countInside;
+		}
+		if (countInside > 0 && countInside < viaWays.size() * 2){
+			log.warn(messagePrefix,"via way crosses tile boundary. Don't know how to save that, ignoring it");
+			return false;
 		}
 		return true;
 	}

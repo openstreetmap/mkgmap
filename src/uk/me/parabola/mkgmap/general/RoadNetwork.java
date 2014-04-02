@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
@@ -292,7 +293,12 @@ public class RoadNetwork {
 	}
 
 	/**
-	 * 
+	 * One restriction forbids to travel a specific combination of arcs.
+	 * We know two kinds: 3 nodes with two arcs and one via node or 4 nodes with 3 arcs
+	 * and two via nodes. Maybe more nodes are possible, but we don't know for sure how
+	 * to write them (2014-04-02). 
+	 * Depending on the data in grr we create one or more such restrictions.
+	 * A restriction with 4 (or more) nodes is added to each via node.     
 	 * @param grr the object that holds the details about the route restriction
 	 */
 	public int addRestriction(GeneralRouteRestriction grr) {
@@ -329,8 +335,8 @@ public class RoadNetwork {
 		RouteNode firstViaNode = nodes.get(firstViaId);
 		RouteNode lastViaNode = nodes.get(lastViaId);
 		
-		List<RouteArc> fromArcs = firstViaNode.getDirectArcsTo(fn, grr.getFromWayId()); // inverse arcs gets used
-		List<RouteArc> toArcs = lastViaNode.getDirectArcsTo(tn, grr.getToWayId());
+		List<RouteArc> fromArcs = firstViaNode.getDirectArcsTo(sourceDesc, fn, grr.getFromWayId()); // inverse arcs gets used
+		List<RouteArc> toArcs = lastViaNode.getDirectArcsTo(sourceDesc, tn, grr.getToWayId());
 		if (fromArcs.isEmpty() || toArcs.isEmpty()){
 			if (fromArcs.isEmpty())
 				log.error(sourceDesc, "can't locate arc from 'via' node ",firstViaId,"to 'from' node",fromId,"on way",grr.getFromWayId());
@@ -342,23 +348,10 @@ public class RoadNetwork {
 		List<List<RouteArc>> viaArcsList = new ArrayList<>();
 		for (int i = 1; i < grr.getViaNodes().size(); i++){
 			RouteNode vn = viaNodes.get(i-1);
-			List<RouteArc> viaArcs = vn.getDirectArcsTo(viaNodes.get(i), grr.getViaWayIds().get(i-1));
+			List<RouteArc> viaArcs = vn.getDirectArcsTo(sourceDesc, viaNodes.get(i), grr.getViaWayIds().get(i-1));
 			if (viaArcs.isEmpty()){
 				log.error(sourceDesc, "can't locate arc from 'via' node ",vn.getCoord().getId(),"to next 'via' node on way",grr.getViaWayIds().get(i));
 				return 0;
-			}
-			for (int j = viaArcs.size()-1; j >= 0; --j){
-				RouteArc viaArc = viaArcs.get(j);
-				if(!viaArc.isForward() && viaArc.getRoadDef().isOneway()) {
-					// the route restriction via nodes connects to the "wrong" end of a oneway
-					if ((grr.getExceptionMask() & RouteRestriction.EXCEPT_FOOT) != 0){
-						// pedestrians are allowed
-						log.warn(sourceDesc, "restriction via "+firstViaId + " to " + lastViaId + " ignored because via-arc is wrong direction in oneway ");
-						return 0;
-					} else {
-						log.info(sourceDesc, "restriction via "+firstViaId + " to " + lastViaId + " added although via-arc is wrong direction in oneway, but restriction also excludes pedestrians.");
-					}
-				}
 			}
 			viaArcsList.add(viaArcs);
 		}
@@ -367,39 +360,29 @@ public class RoadNetwork {
 		
 		if (grr.getType() == GeneralRouteRestriction.RestrType.TYPE_NOT){
 			for (RouteArc toArc: toArcs){
-				if(!toArc.isForward() && toArc.getRoadDef().isOneway() ) {
-					// the route restriction connects to the "wrong" end of a oneway
-					if ((grr.getExceptionMask() & RouteRestriction.EXCEPT_FOOT) != 0){
-						// pedestrians are allowed
-						log.warn(sourceDesc, "restriction via "+lastViaId + " to " + toId + " ignored because to-arc is wrong direction in oneway ");
-						return 0;
-					} else {
-						log.info(sourceDesc, "restriction via "+lastViaId + " to " + toId + " added although to-arc is wrong direction in oneway, but restriction also excludes pedestrians.");
-					}
-				}
 				badArcs.add(toArc);
 			}
 		}
 		else if (grr.getType() == GeneralRouteRestriction.RestrType.TYPE_ONLY){
-			// this is the inverse logic, rr gives the allowed path, we have to find the others
+			// this is the inverse logic, grr gives the allowed path, we have to find the others
+			int uTurns = 0;
+			RouteNode uTurnNode = (viaNodes.size() > 1) ? viaNodes.get(viaNodes.size()-2): fn;
 			for (RouteArc badArc : lastViaNode.arcsIteration()){
 				if (!badArc.isDirect() || badArc.getRoadDef().getId() == grr.getToWayId()) 
 					continue;
-				if ( viaNodes.size() > 1 && badArc.getDest() == viaNodes.get(viaNodes.size()-2)){
+				if (badArc.getDest() == uTurnNode){
 					// ignore u-turn
-					long dd  = 4;
+					++uTurns;
 					continue;
-				}
-				if (isUsable(badArc.getRoadDef().getTabAAccess(), grr.getExceptionMask()) == false)
-					continue;
-				if (!badArc.isForward() && badArc.getRoadDef().isOneway()){
-					// the route restriction connects to the "wrong" end of a oneway
-					if ((grr.getExceptionMask() & RouteRestriction.EXCEPT_FOOT) != 0){
-						// pedestrians are allowed
-						continue;
-					}
 				}
 				badArcs.add(badArc);
+			}
+			if (badArcs.isEmpty()){
+				if (uTurns > 0)
+					log.warn(sourceDesc, "restriction ignored because it forbids only u-turn");
+				else
+					log.warn(sourceDesc, "restriction ignored because it has no effect");
+				return 0;
 			}
 		}
 		// create all possible paths for which the restriction applies 
@@ -418,13 +401,20 @@ public class RoadNetwork {
 						arcs.remove(j);
 				}
 			}
+			String arcType = null;
 			if (arcs.isEmpty()){
 				if (i == 0)
-					log.warn(sourceDesc, "restriction ignored because from-arc is wrong direction in oneway or not accessible for restricted vehicles");
-				else if (i == arcLists.size()-1)
-					log.warn(sourceDesc, "restriction ignored because to-arc is wrong direction in oneway or not accessible for restricted vehicles");
+					arcType = "from way is";
+				else if (i == arcLists.size()-1){
+					if (grr.getType() == GeneralRouteRestriction.RestrType.TYPE_ONLY)
+						arcType = "all possible other ways are";
+					else 
+						arcType = "to way is";
+				}
 				else 
-					log.warn(sourceDesc, "restriction ignored because via-arc is wrong direction in oneway or not accessible for restricted vehicles");
+					arcType = "via way is";
+				log.warn(sourceDesc, "restriction ignored because",arcType,"wrong direction in oneway or not accessible for restricted vehicles");
+				return 0;
 			}
 		}
 		int numCombis = 1;
@@ -432,10 +422,6 @@ public class RoadNetwork {
 		for (int i = 0; i < indexes.length; i++){
 			List<RouteArc> arcs =  arcLists.get(i);
 			numCombis *= arcs.size();
-		}
-		if (numCombis == 0){
-			// message was printed above
-			return 0;
 		}
 		List<RouteArc> path = new ArrayList<>();
 		int added = 0;
