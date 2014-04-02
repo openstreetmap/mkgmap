@@ -378,6 +378,88 @@ public class RuleFileReaderTest {
 	}
 
 	/**
+	 * Failure of the optimiser to promote the correct term to the front.
+	 * Example from mailing list.
+	 */
+	@Test
+	public void testOptimizeWithOr() {
+		String s = "highway ~ '(secondary|tertiary|unclassified|residential|minor|living_street|service)' " +
+				"& oneway=* " +
+				"& (cycleway=opposite | cycleway=opposite_lane | cycleway=opposite_track )" +
+				"[0x2 ]";
+		RuleSet rs = makeRuleSet(s);
+
+		Element el = new Way(1);
+		el.addTag("highway", "tertiary");
+		el.addTag("oneway", "1");
+		el.addTag("cycleway", "opposite_track");
+
+		GType type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals(2, type.getType());
+
+		el.addTag("cycleway", "fred");
+		type = getFirstType(rs, el);
+		assertNull(type);
+
+		el.addTag("cycleway", "opposite");
+		type = getFirstType(rs, el);
+		assertNotNull(type);
+
+		el.addTag("cycleway", "opposite_lane");
+		type = getFirstType(rs, el);
+		assertNotNull(type);
+
+		el.addTag("highway", "fred");
+		type = getFirstType(rs, el);
+		assertNull(type);
+	}
+
+	/**
+	 * Test is a simplified version of a rule in the floodblocker style.
+	 */
+	@Test
+	public void testOptimizeWithOr2() {
+		String s = "highway=*" +
+				"& tunnel!=*" +
+				"& (layer!=* | layer=0)" +
+				" [0x02]\n"
+				;
+		RuleSet rs = makeRuleSet(s);
+		Element el = new Way(1);
+
+		el.addTag("highway", "primary");
+		GType type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals(2, type.getType());
+
+		el.addTag("layer", "0");
+		type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals(2, type.getType());
+
+		el.addTag("layer", "1");
+		type = getFirstType(rs, el);
+		assertNull(type);
+	}
+
+	@Test
+	public void testOptimizeWithOr3() throws Exception {
+		String s = "highway=* &  bridge!=* & " +
+				"   (mtb:scale>0 | mtb:scale='0+' | tracktype ~ 'grade[2-6]' |" +
+				"   sac_scale ~ '.*(mountain|alpine)_hiking' |" +
+				"   sport=via_ferrata) [0x3]";
+
+		RuleSet rs = makeRuleSet(s);
+
+		Element el = new Way(1);
+		el.addTag("highway", "primary");
+		el.addTag("mtb:scale", "0+");
+		GType type = getFirstType(rs, el);
+		assertNotNull(type);
+	}
+
+	/**
 	 * This simply is to make sure that actions that affect their own
 	 * conditions do not hang. There are no defined semantics for this.
 	 */
@@ -596,7 +678,7 @@ public class RuleFileReaderTest {
 		Way el = new Way(1);
 		el.addTag("highway", "primary");
 
-		final List<GType> list = new ArrayList<GType>();
+		final List<GType> list = new ArrayList<>();
 
 		rs.resolveType(el, new TypeResult() {
 			public void add(Element el, GType type) {
@@ -865,15 +947,12 @@ public class RuleFileReaderTest {
 		assertNotNull(type);
 	}
 
-	@Test
+	@Test(expected = SyntaxException.class)
 	public void testFunctionWithParameters() {
 		// a parameter in a function is not allowed yet
-		try {
-			// this should throw a SyntaxException
-			makeRuleSet("A=B & length(a) > 91 [0x5]");
-			assertTrue("Function with parameters are not allowed", false);
-		} catch (SyntaxException exp) {
-		}
+		// this should throw a SyntaxException
+		makeRuleSet("A=B & length(a) > 91 [0x5]");
+		assertTrue("Function with parameters are not allowed", false);
 	}
 	
 	@Test
@@ -1047,7 +1126,7 @@ public class RuleFileReaderTest {
 	 * resolved type.
 	 */
 	private GType getFirstType(Rule rs, Element el) {
-		final List<GType> types = new ArrayList<GType>();
+		final List<GType> types = new ArrayList<>();
 		rs.resolveType(el, new TypeResult() {
 			public void add(Element el, GType type) {
 				types.add(type);

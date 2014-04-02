@@ -278,9 +278,21 @@ public class RuleFileReader {
 			rearrangeExpression(op.getSecond());
 
 			swapForSelectivity((BinaryOp) op);
+
+			// Rearrange ((A&B)&C) to (A&(B&C)).
+			while (op.getFirst().isType(AND)) {
+				Op aAndB = op.getFirst();
+				Op c = op.getSecond();
+				op.setFirst(aAndB.getFirst()); // A
+
+				aAndB.setFirst(aAndB.getSecond());
+				((BinaryOp) aAndB).setSecond(c);  // a-and-b is now b-and-c
+				((BinaryOp) op).setSecond(aAndB);
+			}
+
 			Op op1 = op.getFirst();
 			Op op2 = op.getSecond();
-			
+
 			// If the first term is an EQUALS or EXISTS then this subtree is
 			// already solved and we need to do no more.
 			if (isSolved(op1)) {
@@ -424,9 +436,11 @@ public class RuleFileReader {
 			return 10;
 
 		case AND:
-		case OR:
 			return Math.min(selectivity(op.getFirst()), selectivity(op.getSecond()));
-		
+
+		case OR:
+			return Math.max(selectivity(op.getFirst()), selectivity(op.getSecond()));
+
 		default:
 			return 1000;
 		}
