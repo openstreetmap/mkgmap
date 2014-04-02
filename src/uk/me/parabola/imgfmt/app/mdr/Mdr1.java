@@ -56,9 +56,12 @@ public class Mdr1 extends MdrSection implements HasHeaderFlags {
 	 * Add a map.  Create an MDR1 record for it and also allocate its reverse
 	 * index if this is not for a device.
 	 * @param mapNumber The map index number.
+	 * @param index The map index.
 	 */
-	public void addMap(int mapNumber) {
+	public void addMap(int mapNumber, int index) {
+		assert index > 0;
 		Mdr1Record rec = new Mdr1Record(mapNumber, getConfig());
+		rec.setMapIndex(index);
 		maps.add(rec);
 
 		if (!isForDevice()) {
@@ -83,10 +86,10 @@ public class Mdr1 extends MdrSection implements HasHeaderFlags {
 		});
 
 		// Used to renumber all the existing (pre-sorted) map index numbers.
-		mapping = new int[maps.size() + 1];
+		mapping = new int[maps.size()];
 		int count = 1;
 		for (Mdr1Record r : maps) {
-			mapping[r.getMapIndex()] = count;
+			mapping[r.getMapIndex()-1] = count;
 			count++;
 		}
 	}
@@ -165,6 +168,6 @@ public class Mdr1 extends MdrSection implements HasHeaderFlags {
 	}
 
 	public int sortedMapIndex(int n) {
-		return mapping[n];
+		return mapping[n-1];
 	}
 }

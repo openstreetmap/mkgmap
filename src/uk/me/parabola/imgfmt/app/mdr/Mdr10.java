@@ -133,10 +133,12 @@ public class Mdr10 extends MdrMapSection {
 		return 0;
 	}
 
+	/**
+	 * Nothing to do for this section.
+	 *
+	 * Although this section has a subsection by map index in mdr1, its record does not contain the
+	 * map index and so nothing needs to be re-written here.  The map index is contained in its mdr11ref.
+	 */
 	public void relabelMaps(Mdr1 maps) {
-		for (List<Mdr10Record> list : poiTypes) {
-			if (list != null)
-				relabel(maps, list);
-		}
 	}
 }

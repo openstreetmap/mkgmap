@@ -139,7 +139,7 @@ public class MDRFile extends ImgFile {
 	 */
 	public void addMap(int mapName, int codePage) {
 		currentMap++;
-		mdr1.addMap(mapName);
+		mdr1.addMap(mapName, currentMap);
 		Sort sort = mdrHeader.getSort();
 
 		if (sort.getCodepage() != codePage)
