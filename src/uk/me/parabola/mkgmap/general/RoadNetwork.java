@@ -467,7 +467,8 @@ public class RoadNetwork {
 				}
 			}
 		}
-		log.error(sourceDesc, " failed to generate all possible paths");
+		if (indexes[0] != arcLists.get(0).size())
+			log.error(sourceDesc, " failed to generate all possible paths");
 			
 		return added;
 	}
