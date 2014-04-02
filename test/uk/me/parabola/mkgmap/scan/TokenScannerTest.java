@@ -64,6 +64,20 @@ public class TokenScannerTest {
 		assertEquals(2, ts.getLinenumber());
 	}
 
+	@Test
+	public void testLinenumberBlankLines() throws Exception {
+		String s = "hello world\n\nnext tokens\n";
+		TokenScanner ts = new TokenScanner("", new StringReader(s));
+		ts.readLine();
+
+		// still on first line
+		assertEquals(1, ts.getLinenumber());
+
+		// now next line, which is line three in the file as blank line is skipped
+		ts.nextValue();
+		assertEquals(3, ts.getLinenumber());
+	}
+
 	/**
 	 * This is a misfeature of skipSpace, but relied on everywhere.
 	 */

@@ -37,7 +37,7 @@ public class TokenScanner {
 	private final String fileName;
 	private int linenumber;
 
-	private final LinkedList<Token> tokens = new LinkedList<Token>();
+	private final LinkedList<Token> tokens = new LinkedList<>();
 
 	private boolean bol = true;
 
@@ -178,13 +178,15 @@ public class TokenScanner {
 		val.append((char) c);
 
 		TokType tt;
-		if (c == '\n' || c == '\r') {
-			while ((c = readChar()) == '\n' || c == '\r')
-				val.append(c);
-			pushback = c;
+		if (c == '\r') {
+			c = readChar();
+			if (c != '\n')
+				pushback = c;
+			tt = TokType.EOL;
+		} else if (c == '\n') {
 			tt = TokType.EOL;
 		} else if (isSpace(c)) {
-			while (isSpace(c = readChar()) && (c != '\n' && c != '\r'))
+			while (isSpace(c = readChar()) && c != '\n')
 				val.append((char) c);
 
 			pushback = c;
