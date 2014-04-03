@@ -70,6 +70,7 @@ public class RestrictionRelation extends Relation {
 		int count_unknown = 0;
 		Map<String, String> vehicles = getTagsWithPrefix("restriction:", true);
 		if (vehicles.isEmpty() == false){
+			exceptMask = (byte) 0xff;
 			Iterator<Entry<String, String>> iter = vehicles.entrySet().iterator();
 			while (iter.hasNext()){
 				Map.Entry<String, String> entry = iter.next();
