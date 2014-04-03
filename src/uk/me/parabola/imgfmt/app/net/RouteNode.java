@@ -121,21 +121,16 @@ public class RouteNode implements Comparable<RouteNode> {
 
 	/**
 	 * get all direct arcs to the given node and the given way id
-	 * @param sourceDesc 
 	 * @param otherNode
 	 * @param roadId
 	 * @return
 	 */
-	public List<RouteArc> getDirectArcsTo(String sourceDesc, RouteNode otherNode, long roadId) {
+	public List<RouteArc> getDirectArcsTo(RouteNode otherNode, long roadId) {
 		List<RouteArc> result = new ArrayList<>();
 		for(RouteArc a : arcs){
 			if(a.isDirect() && a.getDest() == otherNode){
 				if(a.getRoadDef().getId() == roadId)
 					result.add(a);
-				else {
-					if (result.isEmpty())
-						log.error(sourceDesc,"check: old code might have selected wrong arc on road", a.getRoadDef().getId(), "instead of road", roadId,"at",getCoord().toOSMURL());
-				}
 			}
 		}
 		return result;

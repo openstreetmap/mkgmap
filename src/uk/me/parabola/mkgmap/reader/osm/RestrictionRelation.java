@@ -390,11 +390,14 @@ public class RestrictionRelation extends Relation {
 			} 
 		}
 		if (valid && !viaWays.isEmpty() && isOnlyXXXRestriction()){
-			log.error(messagePrefix, "check: 'via' ways in only-restrictions ");
+			log.warn(messagePrefix, "check: 'via' way(s) are used in",restriction,"restriction");
 		}
 		if (valid && viaWays.size() > 1){
 			log.warn(messagePrefix, "sorry, multiple via ways are not (yet) supported");
 			valid = false;
+		}
+		if (valid && viaWays.size() > 0){
+			log.warn(messagePrefix, "check: 'via' way(s) are used in",restriction,"restriction"); // TODO: remove this check
 		}
 		if (!valid)
 			return false;

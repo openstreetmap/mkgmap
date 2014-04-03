@@ -317,9 +317,6 @@ public class RoadNetwork {
 				log.error(sourceDesc, "can't locate 'to' RouteNode with id", toId);
 			return 0; 
 		}
-		if (fn == tn){
-			log.error(sourceDesc, "check special case from = to node");
-		}
 
 		List<RouteNode> viaNodes = new ArrayList<>();
 		for (CoordNode via : grr.getViaNodes()){
@@ -335,8 +332,8 @@ public class RoadNetwork {
 		RouteNode firstViaNode = nodes.get(firstViaId);
 		RouteNode lastViaNode = nodes.get(lastViaId);
 		
-		List<RouteArc> fromArcs = firstViaNode.getDirectArcsTo(sourceDesc, fn, grr.getFromWayId()); // inverse arcs gets used
-		List<RouteArc> toArcs = lastViaNode.getDirectArcsTo(sourceDesc, tn, grr.getToWayId());
+		List<RouteArc> fromArcs = firstViaNode.getDirectArcsTo(fn, grr.getFromWayId()); // inverse arcs gets used
+		List<RouteArc> toArcs = lastViaNode.getDirectArcsTo(tn, grr.getToWayId());
 		if (fromArcs.isEmpty() || toArcs.isEmpty()){
 			if (fromArcs.isEmpty())
 				log.error(sourceDesc, "can't locate arc from 'via' node ",firstViaId,"to 'from' node",fromId,"on way",grr.getFromWayId());
@@ -348,7 +345,7 @@ public class RoadNetwork {
 		List<List<RouteArc>> viaArcsList = new ArrayList<>();
 		for (int i = 1; i < grr.getViaNodes().size(); i++){
 			RouteNode vn = viaNodes.get(i-1);
-			List<RouteArc> viaArcs = vn.getDirectArcsTo(sourceDesc, viaNodes.get(i), grr.getViaWayIds().get(i-1));
+			List<RouteArc> viaArcs = vn.getDirectArcsTo(viaNodes.get(i), grr.getViaWayIds().get(i-1));
 			if (viaArcs.isEmpty()){
 				log.error(sourceDesc, "can't locate arc from 'via' node ",vn.getCoord().getId(),"to next 'via' node on way",grr.getViaWayIds().get(i));
 				return 0;
