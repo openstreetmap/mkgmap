@@ -363,11 +363,13 @@ public class RoadNetwork {
 		else if (grr.getType() == GeneralRouteRestriction.RestrType.TYPE_ONLY){
 			// this is the inverse logic, grr gives the allowed path, we have to find the others
 			int uTurns = 0;
+			
 			RouteNode uTurnNode = (viaNodes.size() > 1) ? viaNodes.get(viaNodes.size()-2): fn;
+			long uTurnWay = (viaNodes.size() > 1) ? grr.getViaWayIds().get(grr.getViaWayIds().size()-1) : grr.getFromWayId(); 
 			for (RouteArc badArc : lastViaNode.arcsIteration()){
 				if (!badArc.isDirect() || badArc.getRoadDef().getId() == grr.getToWayId()) 
 					continue;
-				if (badArc.getDest() == uTurnNode){
+				if (badArc.getDest() == uTurnNode && badArc.getRoadDef().getId() == uTurnWay){
 					// ignore u-turn
 					++uTurns;
 					continue;
@@ -389,13 +391,19 @@ public class RoadNetwork {
 		arcLists.add(badArcs);
 		for (int i = 0; i < arcLists.size(); i++){
 			List<RouteArc> arcs =  arcLists.get(i);
+			int countNoEffect = 0;
+			int countOneway= 0;
 			for (int j = arcs.size()-1; j >= 0; --j){
 				RouteArc arc = arcs.get(j);
-				if (isUsable(arc.getRoadDef().getTabAAccess(), grr.getExceptionMask()) == false)
+				if (isUsable(arc.getRoadDef().getTabAAccess(), grr.getExceptionMask()) == false){
+					countNoEffect++;
 					arcs.remove(j);
+				}
 				else if (arc.getRoadDef().isOneway()){
-					if (i == 0 && arc.isForward() || i > 0 && !arc.isForward())
+					if (i == 0 && arc.isForward() || i > 0 && !arc.isForward()){
+						countOneway++;
 						arcs.remove(j);
+					}
 				}
 			}
 			String arcType = null;
@@ -410,7 +418,14 @@ public class RoadNetwork {
 				}
 				else 
 					arcType = "via way is";
-				log.warn(sourceDesc, "restriction ignored because",arcType,"wrong direction in oneway or not accessible for restricted vehicles");
+				String reason;
+				if (countNoEffect > 0 & countOneway > 0)
+					reason = "wrong direction in oneway or not accessible for restricted vehicles";
+				else if (countNoEffect > 0)
+					reason = "not accessible for restricted vehicles";
+				else 
+					reason = "wrong direction in oneway";
+				log.warn(sourceDesc, "restriction ignored because",arcType,reason);
 				return 0;
 			}
 		}
