@@ -934,7 +934,7 @@ public class WrongAngleFixer {
 				}
 			}
 			if (removeErr < MAX_BEARING_ERROR){
-				createGPX(gpxPath+id+"_rem", replacements);
+//				createGPX(gpxPath+id+"_rem", replacements);
 				currentCenter.setRemove(true);
 				return true;
 			}
@@ -942,8 +942,10 @@ public class WrongAngleFixer {
 				return false;
 			
 			double dist = currentCenter.distance(worstNP);
-			if (dist <= 1 || currentCenter.equals(worstNP) || (this.neighbours.size() == 3 && worstNeighbour.neighbours.size() == 3))
-				return tryMerge(initialMaxError, worstNeighbour, replacements);
+			double maxDist = calcMaxErrorDistance(currentCenter) * 2;
+			boolean forceMerge = dist < maxDist || currentCenter.equals(worstNP);
+			if (forceMerge || this.neighbours.size() == 3 && worstNeighbour.neighbours.size() == 3)
+				return tryMerge(forceMerge, initialMaxError, worstNeighbour, replacements);
 			if (bestCenterReplacement != null){
 				double replImprovement = initialMaxError - bestReplErr;
 				if (replImprovement < MAX_BEARING_ERROR)
@@ -974,12 +976,13 @@ public class WrongAngleFixer {
 		 * Calculate error when two centres are merged. If they are not equal 
 		 * and the error is too big, nothing is changed and false is returned. 
 		 * 
+		 * @param forceMerge true: skip straight line check
 		 * @param initialMaxError max. bearing error of this centre
 		 * @param neighbour neighbour to merge 
 		 * @param replacements
 		 * @return true if merge is okay
 		 */
-		private boolean tryMerge(double initialMaxError, CenterOfAngle neighbour, Map<Coord, Coord> replacements) {
+		private boolean tryMerge(boolean forceMerge, double initialMaxError, CenterOfAngle neighbour, Map<Coord, Coord> replacements) {
 			if (badMergeCandidates != null && badMergeCandidates.contains(neighbour )
 					|| neighbour.badMergeCandidates != null && neighbour.badMergeCandidates.contains(this)) {
 				return false; // not allowed to merge
@@ -1012,6 +1015,16 @@ public class WrongAngleFixer {
 					}
 				}
 			}
+			if (!forceMerge){
+				// merge only if the merged line is part of a (nearly) straight line going through both centres,
+				if (!checkNearlyStraight(c.bearingTo(n), neighbour, replacements)
+						|| !neighbour.checkNearlyStraight(n.bearingTo(c), this, replacements)) {
+//					createGPX(gpxPath + "no_more_merge_" + id, replacements);
+//					neighbour.createGPX(gpxPath + "no_more_merge_" + neighbour.id, replacements);
+//					System.out.println("no_merge at " + mergePoint.toDegreeString() + " " + mergePoint.toOSMURL() + " at " + id);
+					return false;
+				}
+			}
 			int hwc = c.getHighwayCount() + n.getHighwayCount() - 1;
 			for (int i = 0; i < hwc; i++)
 				mergePoint.incHighwayCount();
@@ -1026,6 +1039,34 @@ public class WrongAngleFixer {
 			return true;
 		}
 
+		/**
+		 * Try to find a line that builds a nearly straight line
+		 * with the connection to an other centre. 
+		 * @param bearing bearing of the connection to the other centre
+		 * @param other the other centre
+		 * @param replacements 
+		 * @return true if a nearly straight line exists
+		 */
+		private boolean checkNearlyStraight(double bearing, CenterOfAngle other,
+				Map<Coord, Coord> replacements) {
+			Coord c = getCurrentLocation(replacements);
+			for (CenterOfAngle neighbour : neighbours) {
+				if (neighbour == other) 
+					continue;
+				Coord n = neighbour.getCurrentLocation(replacements);
+				if (n == null)
+					continue;
+				double bearing2 = c.bearingTo(n);
+				double angle = bearing2 - (bearing - 180);
+				while(angle > 180)
+					angle -= 360;
+				while(angle < -180)
+					angle += 360;
+				if (Math.abs(angle) < 10) // tolerate small angle
+					return true;
+			}
+			return false;
+		}
 
 		/**
 		 * Calculate max. error of this merged with other centres. 
@@ -1129,7 +1170,7 @@ public class WrongAngleFixer {
 					return Double.MAX_VALUE;
 				if (c.equals(n)){
 					if (c.getDistToDisplayedPoint() < n.getDistToDisplayedPoint())
-					return 0;
+						return 0;
 				}
 				outerPoints[i] = n;
 			}
@@ -1283,12 +1324,16 @@ public class WrongAngleFixer {
 		
 	}
 
+	/**
+	 * Calculate the rounding error tolerance for a given point.
+	 * The latitude error may be max higher. Maybe this should be 
+	 * @param p0
+	 * @return
+	 */
 	private static double calcMaxErrorDistance(Coord p0){
 		Coord test = new Coord(p0.getLatitude(),p0.getLongitude()+1);
 		double lonErr = p0.getDisplayedCoord().distance(test) / 2;
-		test = new Coord(p0.getLatitude()+1,p0.getLongitude());
-		double latErr = p0.getDisplayedCoord().distance(test) / 2;
-		return Math.min(latErr, lonErr);
+		return lonErr;
 	}
 
 	/**
