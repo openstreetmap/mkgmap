@@ -90,9 +90,29 @@ public class RestrictionRelation extends Relation {
 				valid = false;
 			}
 		}
-		restriction = specifc_type;
+		restriction = specifc_type.trim();
 		messagePrefix = "Turn restriction (" + restriction + ") " + browseURL;
-		
+		if(restriction.equals("no_left_turn") ||
+				   restriction.equals("no_right_turn") ||
+				   restriction.equals("no_straight_on") ||
+				   restriction.equals("no_u_turn") ||
+				   restriction.startsWith("no_turn") ||
+				   restriction.equals("no_entry") ||
+				   restriction.equals("no_exit") ) {
+			if(restriction.startsWith("no_turn"))
+				log.warn(messagePrefix, "has bad type '" + restriction + "' it should be of the form no_X_turn rather than no_turn_X");
+
+		}  else if(restriction.equals("only_left_turn") ||
+				restriction.equals("only_right_turn") ||
+				restriction.startsWith("only_straight") ||
+				restriction.startsWith("only_turn")) {
+			if(restriction.startsWith("only_turn"))
+				log.warn(messagePrefix, "has bad type '" + restriction + "' it should be of the form only_X_turn rather than only_turn_X");
+		} else {
+			log.warn(messagePrefix, "ignoring unsupported restriction type '" + restriction + "'");
+			valid = false;
+			return;
+		}
 		String type = getTag("type");
 		if (type.startsWith("restriction:")){
 			exceptMask = (byte) 0xff;
@@ -468,14 +488,7 @@ public class RestrictionRelation extends Relation {
 		List<Long> viaWayIds = new ArrayList<>();
 		for (Way viaWay : viaWays)
 			viaWayIds.add(viaWay.getId());
-		if(restriction.equals("no_left_turn") ||
-		   restriction.equals("no_right_turn") ||
-		   restriction.equals("no_straight_on") ||
-		   restriction.equals("no_u_turn") ||
-		   restriction.startsWith("no_turn") ||
-		   restriction.equals("no_entry") ||
-		   restriction.equals("no_exit") ) {
-			int added = 0;
+		if(restriction.startsWith("no_")){
 			for (NodeOnWay fromNode : fromNodes){
 				for (NodeOnWay toNode : toNodes){
 					grr = new GeneralRouteRestriction("not", exceptMask, messagePrefix);
@@ -490,7 +503,6 @@ public class RestrictionRelation extends Relation {
 					if (numAdded == 0){
 						return; // message was created before
 					}
-					added += numAdded;
 					if(restriction.startsWith("no_turn"))
 						log.warn(messagePrefix, "has bad type '" + restriction + "' it should be of the form no_X_turn rather than no_turn_X - I added the restriction anyway - blocks routing to way", toNode.way.toBrowseURL());
 					else 
@@ -498,12 +510,7 @@ public class RestrictionRelation extends Relation {
 				}
 			}
 		}
-		else if(restriction.equals("only_left_turn") ||
-				restriction.equals("only_right_turn") ||
-				restriction.startsWith("only_straight") ||
-				restriction.startsWith("only_turn")) {
-			if(restriction.startsWith("only_turn"))
-				log.warn(messagePrefix, "has bad type '" + restriction + "' it should be of the form only_X_turn rather than only_turn_X - I added the restriction anyway - allows routing to way", toWays.get(0).toBrowseURL());
+		else if(restriction.startsWith("only_")){
 			log.info(messagePrefix, restriction, "added - allows routing to way", toWays.get(0).toBrowseURL());
 			grr = new GeneralRouteRestriction("only", exceptMask, messagePrefix);
 			grr.setFromNode(fromNodes.get(0).node);
@@ -512,9 +519,6 @@ public class RestrictionRelation extends Relation {
 			grr.setToWayId(toNodes.get(0).way.getId());
 			grr.setViaNodes(viaNodes);
 			grr.setViaWayIds(viaWayIds);
-			if (getId() == 2534400){
-				long dd = 4;
-			}
 			int numAdded = collector.addRestriction(grr);
 			if (numAdded == 0){
 				return; // message was created before
