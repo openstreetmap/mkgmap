@@ -45,7 +45,7 @@ public class RestrictionRelation extends Relation {
     private List<Way> viaWays = new ArrayList<>();
     private List<Coord> viaPoints = new ArrayList<>();
     private Coord viaCoord;
-    private final String restriction;
+    private String restriction;
 
 	private byte exceptMask;
     private String messagePrefix;
@@ -60,10 +60,16 @@ public class RestrictionRelation extends Relation {
 	public RestrictionRelation(Relation other) {
 		setId(other.getId());
 		valid = true;
-		final String browseURL = toBrowseURL();
-		messagePrefix = "Turn restriction " + browseURL;
+		messagePrefix = "Turn restriction " + toBrowseURL();
 		copyTags(other);
-
+		for (Map.Entry<String, Element> pair : other.getElements()) {
+			addElement(pair.getKey(), pair.getValue());
+			
+		}
+	}
+	
+	public void eval(){
+		final String browseURL = toBrowseURL();
 		// find out what kind of restriction we have and to which vehicles it applies
 		exceptMask = RouteRestriction.EXCEPT_FOOT | RouteRestriction.EXCEPT_EMERGENCY;
 		String specifc_type = getTag("restriction");
@@ -145,10 +151,9 @@ public class RestrictionRelation extends Relation {
 		
 		
 		// evaluate members
-		for (Map.Entry<String, Element> pair : other.getElements()) {
+		for (Map.Entry<String, Element> pair : getElements()) {
 			String role = pair.getKey();
 			Element el = pair.getValue();
-			addElement(role, el);
 
 			Coord location = null;
 
