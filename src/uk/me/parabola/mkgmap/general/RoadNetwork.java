@@ -467,7 +467,7 @@ public class RoadNetwork {
 		}
 		if (indexes[0] != arcLists.get(0).size())
 			log.error(sourceDesc, " failed to generate all possible paths");
-			
+		log.info(sourceDesc, "added",added,"route restrictions to img file");
 		return added;
 	}
 
