@@ -37,7 +37,6 @@ import uk.me.parabola.mkgmap.general.MapCollector;
  * @author Mark Burton
  */
 public class RestrictionRelation extends Relation {
-
     private static final Logger log = Logger.getLogger(RestrictionRelation.class);
 
     private List<Way> fromWays = new ArrayList<>();
@@ -46,10 +45,11 @@ public class RestrictionRelation extends Relation {
     private List<Coord> viaPoints = new ArrayList<>();
     private Coord viaCoord;
     private String restriction;
-
 	private byte exceptMask;
+	
     private String messagePrefix;
     private boolean valid;
+    private boolean evalWasCalled;
 
 	/**
 	 * Create an instance based on an existing relation.  We need to do
@@ -59,7 +59,6 @@ public class RestrictionRelation extends Relation {
 	 */
 	public RestrictionRelation(Relation other) {
 		setId(other.getId());
-		valid = true;
 		messagePrefix = "Turn restriction " + toBrowseURL();
 		copyTags(other);
 		for (Map.Entry<String, Element> pair : other.getElements()) {
@@ -68,8 +67,16 @@ public class RestrictionRelation extends Relation {
 		}
 	}
 	
+	/**
+	 * 
+	 */
 	public void eval(){
+		evalWasCalled = true;
 		final String browseURL = toBrowseURL();
+		fromWays.clear();
+		viaWays.clear();
+		toWays.clear();
+		valid = true;
 		// find out what kind of restriction we have and to which vehicles it applies
 		exceptMask = RouteRestriction.EXCEPT_FOOT | RouteRestriction.EXCEPT_EMERGENCY;
 		String specifc_type = getTag("restriction");
@@ -148,7 +155,6 @@ public class RestrictionRelation extends Relation {
 				log.warn(messagePrefix, "ignoring unsupported '" + unsupportedTag + "' tag");
 			}
 		}
-		
 		
 		// evaluate members
 		for (Map.Entry<String, Element> pair : getElements()) {
@@ -283,7 +289,6 @@ public class RestrictionRelation extends Relation {
 				valid = false;
 			}
 		}
-		
 		if (!valid)
 			return;
 		
@@ -359,6 +364,10 @@ public class RestrictionRelation extends Relation {
 	}
 	
 	public boolean isValid() {
+		if (!evalWasCalled){
+			log.warn("internal error: RestrictionRelation.isValid() is called before eval()");
+			eval();
+		}
 		if(!valid)
 			return false;
 		
@@ -421,9 +430,6 @@ public class RestrictionRelation extends Relation {
 		if (valid && viaWays.size() > 1){
 			log.warn(messagePrefix, "sorry, multiple via ways are not (yet) supported");
 			valid = false;
-		}
-		if (valid && viaWays.size() > 0){
-			log.warn(messagePrefix, "check: 'via' way(s) are used in",restriction,"restriction"); // TODO: remove this check
 		}
 		if (!valid)
 			return false;
