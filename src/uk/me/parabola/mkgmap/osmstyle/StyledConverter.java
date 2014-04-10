@@ -66,6 +66,7 @@ import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.TypeResult;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.util.EnhancedProperties;
+import uk.me.parabola.util.MultiHashMap;
 
 /**
  * Convert from OSM to the mkgmap intermediate format using a style.
@@ -86,6 +87,7 @@ public class StyledConverter implements OsmConverter {
 	private Area bbox = new Area(-90.0d, -180.0d, 90.0d, 180.0d); // default is planet
 
 	private final List<RestrictionRelation> restrictions = new ArrayList<>();
+	private final MultiHashMap<Long, RestrictionRelation> wayRelMap = new MultiHashMap<>();
 	
 	private Map<Node, List<Way>> poiRestrictions = new LinkedHashMap<Node, List<Way>>();
 	 
@@ -212,13 +214,16 @@ public class StyledConverter implements OsmConverter {
 	 * @param way The OSM way.
 	 */
 	public void convertWay(final Way way) {
-		if (way.getPoints().size() < 2)
-			return;
-		
-		if (way.getTagCount() == 0) {
-			// no tags => nothing to convert
+		if (way.getPoints().size() < 2 || way.getTagCount() == 0){
+			// no tags or no points => nothing to convert
+			List<RestrictionRelation> rrList = wayRelMap.get(way.getId());
+			for (RestrictionRelation rr : rrList){
+				log.warn("restriction",rr.toBrowseURL()," is ignored because referenced way",way.toBrowseURL(),"is ignored");
+				restrictions.remove(rr);
+			}
 			return;
 		}
+		
 
 		preConvertRules(way);
 
@@ -251,6 +256,16 @@ public class StyledConverter implements OsmConverter {
 		if (cycleWay != null){
 			wayTypeResult.setWay(cycleWay);
 			rules.resolveType(cycleWay, wayTypeResult);
+		}
+		List<RestrictionRelation> rrList = wayRelMap.get(way.getId());
+		if (rrList.isEmpty() == false){
+			if (roads.isEmpty() || roads.get(roads.size()-1).getId() != way.getId()){
+				for (RestrictionRelation rr : rrList){
+					log.warn("restriction",rr.toBrowseURL()," is ignored because referenced way",way.toBrowseURL(),"is not routable");
+					restrictions.remove(rr);
+				}
+				
+			}
 		}
 	}
 
@@ -898,6 +913,8 @@ public class StyledConverter implements OsmConverter {
 			RestrictionRelation rr = (RestrictionRelation)relation;
 			if(rr.isValid(bbox)) {
 				restrictions.add(rr);
+				for (long id : rr.getWayIds())
+					wayRelMap.add(id, rr);
 			}
 		}
 		else if("through_route".equals(relation.getTag("type"))) {
@@ -1713,7 +1730,7 @@ public class StyledConverter implements OsmConverter {
 		// it's probably more efficient to remove from the end first
 		for(int i = numPointsInWay - 1; i > index; --i){
 			Coord co = wayPoints.remove(i);
-			if (co.isViaNodeOfRestriction()){
+			if (co.isViaNodeOfRestriction() && wayPoints.get(0) != co){
 				for (RestrictionRelation rr : restrictions){
 					if (rr.getViaCoords().contains(co)){
 						boolean changed = rr.replaceWay(way, trailingWay);
