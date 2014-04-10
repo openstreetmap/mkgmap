@@ -399,6 +399,8 @@ public class RestrictionRelation extends Relation {
 				valid = false;
 			} 
 		}
+		if (!valid)
+			return false;
 		viaPoints.add(viaCoord);
 		// check if via ways are connected in the given order
 		for (int i = 0; i < viaWays.size();i++){
@@ -414,6 +416,8 @@ public class RestrictionRelation extends Relation {
 			}
 			viaPoints.add(v2);
 		}
+		if (!valid)
+			return false;
 		// check if all to ways are connected to via point or last via way
 		Coord lastVia = viaPoints.get(viaPoints.size()-1);
 		for (Way toWay : toWays){

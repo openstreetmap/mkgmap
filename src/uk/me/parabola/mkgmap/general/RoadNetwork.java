@@ -58,10 +58,8 @@ public class RoadNetwork {
 	private final Map<Long, RouteNode> nodes = new LinkedHashMap<Long, RouteNode>();
 
 	// boundary nodes
-	// a node should be in here iff the nodes boundary flag is set
+	// a node should be in here if the nodes boundary flag is set
 	private final List<RouteNode> boundary = new ArrayList<RouteNode>();
-	//private final List<MapRoad> mapRoads = new ArrayList<MapRoad>();
-
 	private final List<RoadDef> roadDefs = new ArrayList<RoadDef>();
 	private List<RouteCenter> centers = new ArrayList<RouteCenter>();
 	private int adjustTurnHeadings ;
