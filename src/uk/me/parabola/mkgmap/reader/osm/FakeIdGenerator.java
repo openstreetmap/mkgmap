@@ -39,7 +39,11 @@ public class FakeIdGenerator {
 	 * @return a unique id
 	 */
 	public static long makeFakeId() {
-		return fakeId.incrementAndGet();
+		long id = fakeId.incrementAndGet(); 
+//				if (4611686018427394038L == id){
+//					long dd = 4;
+//				}
+		return id;
 	}
 
 	public static boolean isFakeId(long id) {

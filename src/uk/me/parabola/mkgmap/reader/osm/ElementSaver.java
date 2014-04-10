@@ -128,6 +128,15 @@ public class ElementSaver {
 	 */
 	public void addWay(Way way) {
 		wayMap.put(way.getId(), way);
+		/*
+		Way old = wayMap.put(way.getId(), way);
+		if (old != null){
+			if (old == way)
+				log.error("way",way.toBrowseURL(),"was added again");
+			else 
+				log.error("duplicate way",way.toBrowseURL(),"replaces previous way");
+		}
+		*/
 	}
 
 	/**
@@ -141,11 +150,11 @@ public class ElementSaver {
 			if (type == null) {
 			} else if ("multipolygon".equals(type) || "boundary".equals(type)) {
 				rel = createMultiPolyRelation(rel); 
-			} else if("restriction".equals(type)) {
+			} else if("restriction".equals(type) || type.startsWith("restriction:")) {
 				if (ignoreTurnRestrictions)
 					rel = null;
-				else if (rel.getTag("restriction") == null)
-					log.warn("ignoring unspecified restriction " + rel.toBrowseURL());
+				else if (rel.getTag("restriction") == null && rel.getTagsWithPrefix("restriction:", false).isEmpty())
+					log.warn("ignoring unspecified/unsupported restriction " + rel.toBrowseURL());
 				else
 					rel = new RestrictionRelation(rel);
 			}

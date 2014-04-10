@@ -44,6 +44,8 @@ public class Way extends Element {
 	// This is set to false if, we know that there are nodes missing from this way.
 	// If you set this to false, then you *must* also set closed to the correct value.
 	private boolean complete  = true;
+	
+	private boolean isViaWay;
 
 	public Way(long id) {
 		points = new ArrayList<Coord>(5);
@@ -237,5 +239,13 @@ public class Way extends Element {
 			if(!thisPoly.contains(p.getHighPrecLon(), p.getHighPrecLat()))
 				return false;
 		return true;
+	}
+
+	public boolean isViaWay() {
+		return isViaWay;
+	}
+
+	public void setViaWay(boolean isViaWay) {
+		this.isViaWay = isViaWay;
 	}
 }

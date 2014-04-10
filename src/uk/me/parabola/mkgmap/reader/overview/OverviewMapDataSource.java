@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.CoordNode;
+import uk.me.parabola.imgfmt.app.net.GeneralRouteRestriction;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.combiners.OverviewMap;
 import uk.me.parabola.mkgmap.general.LevelInfo;
@@ -155,11 +155,12 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 		addLine(road);
 	}
 
-	public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode, byte exceptMask) {
-		getRoadNetwork().addRestriction(fromNode, toNode, viaNode, exceptMask);
+	public int addRestriction(GeneralRouteRestriction grr) {
+		log.error("This is not supposed to be called");
+		return 0;
 	}
 
 	public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {
-		getRoadNetwork().addThroughRoute(junctionNodeId, roadIdA, roadIdB);
+		log.error("This is not supposed to be called");
 	}
 }

@@ -53,12 +53,12 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	private final OsmReadingHooks[] POSSIBLE_HOOKS = {
 			new SeaGenerator(),
 			new MultiPolygonFinishHook(),
+			new RelationStyleHook(), 
 			new LinkDestinationHook(),
 			new UnusedElementsRemoverHook(),
 			new RoutingHook(),
 			new HighwayHooks(),
 			new LocationHook(),
-			new RelationStyleHook(),
 			new POIGeneratorHook(),
 	};
 	protected OsmConverter converter;

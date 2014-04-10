@@ -52,22 +52,40 @@ public class RouteCenter {
 		log.info("new RouteCenter at " + centralPoint.toDegreeString() +
 				 ", nodes: " + nodes.size()	+ " tabA: " + tabA.size() +
 				 " tabB: " + tabB.size());
+	}
 
-		// update lat/lon offsets; update arcs with table indices; populate tabC
+	/**
+	 * update arcs with table indices; populate tabC
+	 */
+	private void updateOffsets(){
 		for (RouteNode node : nodes) {
 			node.setOffsets(centralPoint);
 			for (RouteArc arc : node.arcsIteration()) {
 				arc.setIndexA(tabA.getIndex(arc));
+				arc.setInternal(nodes.contains(arc.getDest()));
 				if (!arc.isInternal())
 					arc.setIndexB(tabB.getIndex(arc.getDest()));
 			}
-			for (RouteRestriction restr : node.getRestrictions())
+
+			for (RouteRestriction restr : node.getRestrictions()){
+				if (restr.getArcs().size() >= 3){
+					// only restrictions with more than 2 arcs can contain further arcs 
+					for (RouteArc arc : restr.getArcs()){
+						if (arc.getSource() == node)
+							continue;
+						arc.setIndexA(tabA.getIndex(arc));
+						arc.setInternal(nodes.contains(arc.getDest()));
+						if (!arc.isInternal())
+							arc.setIndexB(tabB.getIndex(arc.getDest()));
+					}
+				}
 				restr.setOffsetC(tabC.addRestriction(restr));
+			}
 		}
 		// update size of tabC offsets, now that tabC has been populated
 		tabC.propagateSizeBytes();
 	}
-
+	
 	/**
 	 * Write a route center.
 	 *
@@ -76,7 +94,7 @@ public class RouteCenter {
 	 */
 	public void write(ImgFileWriter writer, int[] classBoundaries) {
 		assert !nodes.isEmpty(): "RouteCenter without nodes";
-
+		updateOffsets();
 		int centerPos = writer.position();
 		for (RouteNode node : nodes){
 			node.write(writer);

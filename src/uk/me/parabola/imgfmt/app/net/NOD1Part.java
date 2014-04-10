@@ -226,11 +226,33 @@ public class NOD1Part {
 		for (RouteArc arc : node.arcsIteration()) {
 			tabA.addArc(arc);
 			RouteNode dest = arc.getDest();
-			if (bbox != null && !bbox.contains(dest.getCoord()) || dest.getGroup() != node.getGroup()) {
+			if (arc.isInternal() == false)
+				tabB.addNode(dest);
+			else if (bbox != null && !bbox.contains(dest.getCoord()) || dest.getGroup() != node.getGroup()) {
 				arc.setInternal(false);
 				tabB.addNode(dest);
 			}
 		}
+		
+		for (RouteRestriction rr: node.getRestrictions()){
+			List<RouteArc> arcs = rr.getArcs();
+			if (arcs.size() >= 3){
+				for (int i = 0; i < arcs.size(); i++){
+					RouteArc arc = arcs.get(i);
+					if (arc.getSource() != node){
+						tabA.addArc(arc);
+						RouteNode dest = arc.getDest();
+						if (arc.isInternal() == false)
+							tabB.addNode(dest);
+						else if (bbox != null && !bbox.contains(dest.getCoord()) || dest.getGroup() != node.getGroup()) {
+							arc.setInternal(false);
+							tabB.addNode(dest);
+						} 
+					}
+				}
+			}
+		}
+		
 		nodesSize += node.boundSize();
 	}
 

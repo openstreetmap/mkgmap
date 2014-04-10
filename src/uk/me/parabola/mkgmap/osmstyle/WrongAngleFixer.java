@@ -54,7 +54,7 @@ public class WrongAngleFixer {
 	static private final double MAX_DIFF_ANGLE_STRAIGHT_LINE = 3;
 	
 	private Area bbox;
-	private String gpxPath;
+	private String gpxPath = null;
 	static final int MODE_ROADS = 0;
 	static final int MODE_LINES = 1;
 	private int mode = MODE_ROADS;
@@ -73,7 +73,7 @@ public class WrongAngleFixer {
 	 * @param deletedRoads Will be enlarged by all roads in roads that were set to null by this method 
 	 * @param restrictions Map with restriction relations 
 	 */
-	public void optimizeWays(List<Way> roads, List<Way> lines, HashMap<Long, Way> modifiedRoads, HashSet<Long> deletedRoads, Map<Coord, List<RestrictionRelation>> restrictions ) {
+	public void optimizeWays(List<Way> roads, List<Way> lines, HashMap<Long, Way> modifiedRoads, HashSet<Long> deletedRoads, List<RestrictionRelation> restrictions ) {
 		printBadAngles("bad_angles_start", roads);
 		writeOSM("roads_orig", roads);
 		writeOSM("lines_orig", lines);
@@ -178,7 +178,7 @@ public class WrongAngleFixer {
 	 * @param deletedRoads set of ids of deleted routable ways (modified by this routine)
 	 * @param restrictions Map with restriction relations. The restriction relations may be modified by this routine 
 	 */
-	private void removeWrongAngles(List<Way> roads, List<Way> lines, HashMap<Long, Way> modifiedRoads, HashSet<Long> deletedRoads, Map<Coord, List<RestrictionRelation>> restrictions) {
+	private void removeWrongAngles(List<Way> roads, List<Way> lines, HashMap<Long, Way> modifiedRoads, HashSet<Long> deletedRoads, List<RestrictionRelation> restrictions) {
 		// replacements maps those nodes that have been replaced to
 		// the node that replaces them
 		Map<Coord, Coord> replacements = new IdentityHashMap<Coord, Coord>();
@@ -413,12 +413,6 @@ public class WrongAngleFixer {
 					if (p.isViaNodeOfRestriction()){
 						// make sure that we find the restriction with the new coord instance
 						replacement.setViaNodeOfRestriction(true);
-						List<RestrictionRelation> lrr = restrictions.remove(p);
-						if (lrr != null){
-							restrictions.put(replacement,lrr);
-							for (RestrictionRelation rr: lrr)
-								rr.setViaCoord(replacement);
-						}
 						p.setViaNodeOfRestriction(false);
 					}
 					p = replacement;
@@ -514,6 +508,16 @@ public class WrongAngleFixer {
 				}
 			}
 		}
+		
+		for (RestrictionRelation rr: restrictions){
+			for (Coord p: rr.getViaCoords()){ 
+				Coord replacement = getReplacement(p, null, replacements);
+				if (p != replacement){
+					rr.replaceViaCoord(p, replacement);
+				}
+			}
+		}
+		
 		if (gpxPath != null) {
 			GpxCreator.createGpx(gpxPath + "solved_badAngles", bbox.toCoords(),
 					new ArrayList<Coord>(changedPlaces));
@@ -902,12 +906,12 @@ public class WrongAngleFixer {
 			}
 			
 			if (bestReplErr < MAX_BEARING_ERROR){
-				String msg = "_good"; 
+//				String msg = "_good"; 
 				if (removeErr < bestReplErr && initialMaxError - removeErr >= MAX_BEARING_ERROR/2 && removeErr < MAX_BEARING_ERROR/2){
 					bestCenterReplacement = null;
 //					createGPX(gpxPath+id+"_rem_pref", replacements);
 				} else if (initialMaxError - bestReplErr < MAX_BEARING_ERROR/2 || bestReplErr > MAX_BEARING_ERROR/2){
-					msg = "_rather_good";
+//					msg = "_rather_good";
 				}
 				if (bestCenterReplacement != null){
 					replaceCoord(currentCenter, bestCenterReplacement, replacements);

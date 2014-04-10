@@ -20,8 +20,10 @@ public class PolishTurnRestriction {
     private long nodId;
     private long toNodId;
     private long fromNodId;
+    private long viaNodId;
     private long roadIdA;
     private long roadIdB;
+    private long roadIdC;
     private byte exceptMask;
 
 
@@ -60,7 +62,15 @@ public class PolishTurnRestriction {
         this.fromNodId = fromNodId;
     }
 
-    public long getRoadIdA() {
+    public long getViaNodId() {
+		return viaNodId;
+	}
+
+	public void setViaNodId(long viaNodId) {
+		this.viaNodId = viaNodId;
+	}
+
+	public long getRoadIdA() {
         return roadIdA;
     }
 
@@ -76,7 +86,15 @@ public class PolishTurnRestriction {
         this.roadIdB = roadIdB;
     }
 
-    public byte getExceptMask() {
+	public long getRoadIdC() {
+		return roadIdC;
+	}
+
+	public void setRoadIdC(long roadIdC) {
+		this.roadIdC = roadIdC;
+	}
+
+	public byte getExceptMask() {
         return exceptMask;
     }
 
@@ -88,4 +106,5 @@ public class PolishTurnRestriction {
     public String toString() {
         return "TurnRestriction[FromNodId=" + fromNodId + ", ViaNodId=" + nodId + ", ToNodId=" + toNodId + "]";
     }
+
 }

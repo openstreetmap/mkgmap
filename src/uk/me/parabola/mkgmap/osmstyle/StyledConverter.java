@@ -18,7 +18,6 @@ package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,6 +32,7 @@ import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.net.GeneralRouteRestriction;
 import uk.me.parabola.imgfmt.app.net.NODHeader;
 import uk.me.parabola.imgfmt.app.net.RouteRestriction;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
@@ -85,9 +85,7 @@ public class StyledConverter implements OsmConverter {
 	private Clipper clipper = Clipper.NULL_CLIPPER;
 	private Area bbox = new Area(-90.0d, -180.0d, 90.0d, 180.0d); // default is planet
 
-	// restrictions associates lists of turn restrictions with the
-	// Coord corresponding to the restrictions' 'via' node
-	private final Map<Coord, List<RestrictionRelation>> restrictions = new IdentityHashMap<Coord, List<RestrictionRelation>>();
+	private final List<RestrictionRelation> restrictions = new ArrayList<>();
 	
 	private Map<Node, List<Way>> poiRestrictions = new LinkedHashMap<Node, List<Way>>();
 	 
@@ -258,7 +256,6 @@ public class StyledConverter implements OsmConverter {
 
 
 	private void addConvertedWay(Way way, GType foundType) {
-		
 		if (foundType.getFeatureKind() == FeatureKind.POLYLINE) {
 			GType type = new GType(foundType);
 
@@ -566,6 +563,7 @@ public class StyledConverter implements OsmConverter {
 		// make sure that copies of modified roads have equal points 
 		for (int i = 0; i < lines.size(); i++){
 			Way line = lines.get(i);
+			
 			if (line == null){
 				continue; // should not happen
 			}
@@ -609,21 +607,17 @@ public class StyledConverter implements OsmConverter {
 			GType gt = roadTypes.get(i);
 			addRoad(road, gt);
 		}
-		roads = null;
-		roadTypes = null;
 		
 		housenumberGenerator.generate(lineAdder);
 		
 		createRouteRestrictionsFromPOI();
 		poiRestrictions = null;
 		
-		Collection<List<RestrictionRelation>> lists = restrictions.values();
-		for (List<RestrictionRelation> l : lists) {
-
-			for (RestrictionRelation rr : l) {
-				rr.addRestriction(collector);
-			}
+		for (RestrictionRelation rr : restrictions) {
+			rr.addRestriction(collector, nodeIdMap);
 		}
+		roads = null;
+		roadTypes = null;
 
 		for(Relation relation : throughRouteRelations) {
 			Node node = null;
@@ -876,18 +870,9 @@ public class StyledConverter implements OsmConverter {
 				log.info("Access restriction in POI node " + node.toBrowseURL() + " was ignored, has no effect on any connected way");
 				continue;
 			}
-			List<CoordNode> otherNodesUniqe = new ArrayList<CoordNode>(otherNodeIds.values());
-			for (int i = 0; i < otherNodesUniqe.size(); i++){
-				CoordNode from = (CoordNode) otherNodesUniqe.get(i);
-				for (int j = i+1; j < otherNodesUniqe.size(); j++){
-					CoordNode to = (CoordNode) otherNodesUniqe.get(j);
-					if (to.getId() != viaNode.getId() && from.getId() != viaNode.getId()){
-						collector.addRestriction(from, to, viaNode, exceptMask);
-						collector.addRestriction(to, from, viaNode, exceptMask);
-						log.info("created route restriction from poi for node " + node.toBrowseURL());
-					}
-				}
-			}
+			GeneralRouteRestriction rr = new GeneralRouteRestriction("no_through", exceptMask, "CoordPOI at " + p.toOSMURL());
+			rr.setViaNodes(Arrays.asList(viaNode));
+			collector.addRestriction(rr);
 		}
 	}
 
@@ -909,18 +894,10 @@ public class StyledConverter implements OsmConverter {
 
 		// relation rules are not applied here because they are applied
 		// earlier by the RelationStyleHook
-		
 		if(relation instanceof RestrictionRelation) {
 			RestrictionRelation rr = (RestrictionRelation)relation;
-			if(rr.isValid() && bbox.contains(rr.getViaCoord())) {
-				List<RestrictionRelation> lrr = restrictions.get(rr.getViaCoord());
-				if(lrr == null) {
-					lrr = new ArrayList<RestrictionRelation>();
-					Coord via = rr.getViaCoord();
-					via.setViaNodeOfRestriction(true);
-					restrictions.put(via, lrr);
-				}
-				lrr.add(rr);
+			if(rr.isValid(bbox)) {
+				restrictions.add(rr);
 			}
 		}
 		else if("through_route".equals(relation.getTag("type"))) {
@@ -1130,7 +1107,6 @@ public class StyledConverter implements OsmConverter {
 		}
 
 		checkRoundabout(way);
-		addNodesForRestrictions(way);
 
 		// process any Coords that have a POI associated with them
 		final double stubSegmentLength = 25; // metres
@@ -1185,7 +1161,7 @@ public class StyledConverter implements OsmConverter {
 								splitPoint.incHighwayCount();
 								points.add(splitPos, splitPoint);
 							}
-							if((splitPos + 1) < points.size() &&
+							if((splitPos + 1) < points.size() && way.isViaWay() == false &&
 									safeToSplitWay(points, splitPos, i, points.size() - 1)) {
 								Way tail = splitWayAt(way, splitPos);
 								// recursively process tail of way
@@ -1271,6 +1247,16 @@ public class StyledConverter implements OsmConverter {
 							// this point lies on a boundary
 							// make sure it becomes a node
 							co.incHighwayCount();
+						}
+						if (co.isViaNodeOfRestriction()){
+							for (RestrictionRelation rr : restrictions){
+								if (rr.getViaCoords().contains(co)){
+									boolean changed = rr.replaceWay(way, nWay);
+									if (changed)
+										log.info("way",way.getId(),"in restriction", rr.getId(),"was clipped at tile boundary at",co.toOSMURL());
+								}
+							}
+							
 						}
 					}
 					clippedWays.add(nWay);
@@ -1384,82 +1370,6 @@ public class StyledConverter implements OsmConverter {
 
 	
 	/**
-	 * Detect the case that two nodes are connected with 
-	 * different road segments and at least one node
-	 * is the via node of an "only-xxx" restriction.
-	 * If that is the case, make sure that there is
-	 * a node between them. If not, add it or change 
-	 * an existing point to a node by incrementing the highway
-	 * count.
-	 * Without this trick, only-restrictions might be ignored.
-	 * 
-	 * @param way the road
-	 */
-	private void addNodesForRestrictions(Way way) {
-		List<Coord> points = way.getPoints();
-		// loop downwards as we may add points
-		Coord lastNode = null;
-		int lastNodePos = -1;
-		for (int i = points.size() - 1; i >= 0; i--) {
-			Coord p1 = points.get(i);
-			if (p1.getHighwayCount() > 1){
-				if (lastNode != null){
-					if (lastNode.isViaNodeOfRestriction() && p1.isViaNodeOfRestriction()
-							|| (i == 0 && lastNodePos == points.size()-1 && (lastNode.isViaNodeOfRestriction() || p1.isViaNodeOfRestriction()))){
-						boolean addNode = false;
-						Coord[] testCoords = { p1, lastNode };
-						for (int k = 0; k < 2; k++){
-							if (testCoords[k].isViaNodeOfRestriction() == false)
-								continue;
-							List<RestrictionRelation> lrr = restrictions.get(testCoords[k]);
-							Coord test = k==0 ? testCoords[1]:testCoords[0];
-							for (RestrictionRelation rr : lrr) {
-								if (rr.isOnlyXXXRestriction() == false || rr.getFromWay() == way || rr.getToWay() == way)
-									continue;
-								// check if our way shares a point with either the to or from way
-								// we have to use Coord.equals() here because some
-								// points may already be CoordNodes while others are not
-								for (Coord co: rr.getToWay().getPoints()){
-									if (co.equals(test)){
-										addNode = true;
-										break;
-									}
-								}
-								for (Coord co: rr.getFromWay().getPoints()){
-									if (co.equals(test)){
-										addNode = true;
-										break;
-									}
-								}
-							}
-						}
-						if (addNode == false)
-							continue;
-						Coord co = null;
-						if (lastNodePos-i == 1){
-							if (p1.distance(lastNode) > 0){
-								// create new point
-								co = lastNode.makeBetweenPoint(p1, 0.5);
-								co.incHighwayCount();
-								if (log.isInfoEnabled())
-									log.info("adding node in way", way.toBrowseURL(), "to have node between two via points at", co.toOSMURL());
-								points.add(lastNodePos,co);
-							}
-						} else {
-							co = points.get(i+1);
-							if (log.isInfoEnabled())
-								log.info("changing point to node in way", way.toBrowseURL(), "to have node between two via points at", co.toOSMURL());
-						}
-						if (co != null)
-							co.incHighwayCount();
-					}
-				}
-				lastNode = p1;
-				lastNodePos = i;
-			}
-		}
-	} 	
-	/**
 	 * safeToSplitWay() returns true if it is safe (no short arcs will be
 	 * created) to split a way at a given position - assumes that the
 	 * floor and ceiling points will become nodes even if they are not
@@ -1555,7 +1465,7 @@ public class StyledConverter implements OsmConverter {
 		}
 
 		WayBBox wayBBox = new WayBBox();
-
+		
 		for(int i = 0; i < points.size(); ++i) {
 			Coord p = points.get(i);
 
@@ -1721,12 +1631,10 @@ public class StyledConverter implements OsmConverter {
 
 		int numNodes = nodeIndices.size();
 		road.setNumNodes(numNodes);
-
 		if(numNodes > 0) {
 			// replace Coords that are nodes with CoordNodes
 			boolean hasInternalNodes = false;
-			CoordNode lastCoordNode = null;
-			List<RestrictionRelation> lastRestrictions = null;
+			
 			for(int i = 0; i < numNodes; ++i) {
 				int n = nodeIndices.get(i);
 				if(n > 0 && n < points.size() - 1)
@@ -1739,52 +1647,6 @@ public class StyledConverter implements OsmConverter {
 					log.info("Way", debugWayName + "'s point #" + n, "at", coord.toOSMURL(), "is a boundary node");
 				}
 				points.set(n, thisCoordNode);
-
-				// see if this node plays a role in any turn
-				// restrictions
-
-				if(lastRestrictions != null) {
-					// the previous node was the location of one or
-					// more restrictions
-					for(RestrictionRelation rr : lastRestrictions) {
-						if(rr.getToWay().getId() == way.getId()) {
-							rr.setToNode(thisCoordNode);
-						}
-						else if(rr.getFromWay().getId() == way.getId()) {
-							rr.setFromNode(thisCoordNode);
-						}
-						else {
-							rr.addOtherNode(thisCoordNode);
-						}
-					}
-				}
-
-				List<RestrictionRelation> theseRestrictions;
-				if (coord.isViaNodeOfRestriction())
-					theseRestrictions = restrictions.get(coord);
-				else
-					theseRestrictions = null;
-				if(theseRestrictions != null) {
-					// this node is the location of one or more
-					// restrictions
-					for(RestrictionRelation rr : theseRestrictions) {
-						rr.setViaNode(thisCoordNode);
-						if(rr.getToWay().getId() == way.getId()) {
-							if(lastCoordNode != null)
-								rr.setToNode(lastCoordNode);
-						}
-						else if(rr.getFromWay().getId() == way.getId()) {
-							if(lastCoordNode != null)
-								rr.setFromNode(lastCoordNode);
-						}
-						else if(lastCoordNode != null) {
-							rr.addOtherNode(lastCoordNode);
-						}
-					}
-				}
-
-				lastRestrictions = theseRestrictions;
-				lastCoordNode = thisCoordNode;
 			}
 
 			road.setStartsWithNode(nodeIndices.get(0) == 0);
@@ -1831,6 +1693,9 @@ public class StyledConverter implements OsmConverter {
 	 * @return the trailing part of the way
 	 */
 	private Way splitWayAt(Way way, int index) {
+		if (way.isViaWay()){
+			log.warn("via way of restriction is split, restriction will be ignored",way);
+		}
 		Way trailingWay = new Way(way.getId());
 		List<Coord> wayPoints = way.getPoints();
 		int numPointsInWay = wayPoints.size();
@@ -1846,9 +1711,20 @@ public class StyledConverter implements OsmConverter {
 
 		// remove the points after the split from the original way
 		// it's probably more efficient to remove from the end first
-		for(int i = numPointsInWay - 1; i > index; --i)
-			wayPoints.remove(i);
-
+		for(int i = numPointsInWay - 1; i > index; --i){
+			Coord co = wayPoints.remove(i);
+			if (co.isViaNodeOfRestriction()){
+				for (RestrictionRelation rr : restrictions){
+					if (rr.getViaCoords().contains(co)){
+						boolean changed = rr.replaceWay(way, trailingWay);
+						if (changed)
+							log.info("way",way.getId(),"in restriction", rr.getId(),"was split at",co.toOSMURL());
+					}
+				}
+				
+			}
+			
+		}
 		return trailingWay;
 	}
 
@@ -1891,7 +1767,6 @@ public class StyledConverter implements OsmConverter {
 		for (Way way :roads){
 			if (way == null)
 				continue;
-			
 			if (way.getId() == lastId) {
 				log.debug("Road with identical id:", way.getId());
 				dupIdHighways.add(way);
@@ -1904,7 +1779,8 @@ public class StyledConverter implements OsmConverter {
 			}
 		}
 		
-		// go through all duplicated highways and increase the highway counter of all crossroads 
+		// go through all duplicated highways and increase the highway counter of all crossroads
+		
 		for (Way way : dupIdHighways) {
 			List<Coord> points = way.getPoints();
 			// increase the highway counter of the first and last point
@@ -1920,6 +1796,7 @@ public class StyledConverter implements OsmConverter {
 				}
 			}
 		}
+		
 	}
 	
 	/**

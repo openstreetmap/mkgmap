@@ -119,14 +119,39 @@ public class RouteNode implements Comparable<RouteNode> {
 		flags |= F_RESTRICTIONS;
 	}
 
-	public RouteArc getDirectArcTo(RouteNode otherNode) {
-		for(RouteArc a : arcs)
-			if(a.isDirect() && a.getDest() == otherNode)
-				return a;
-
-		return null;
+	/**
+	 * get all direct arcs to the given node and the given way id
+	 * @param otherNode
+	 * @param roadId
+	 * @return
+	 */
+	public List<RouteArc> getDirectArcsTo(RouteNode otherNode, long roadId) {
+		List<RouteArc> result = new ArrayList<>();
+		for(RouteArc a : arcs){
+			if(a.isDirect() && a.getDest() == otherNode){
+				if(a.getRoadDef().getId() == roadId)
+					result.add(a);
+			}
+		}
+		return result;
 	}
 
+	/**
+	 * Find arc to given node on given road. 
+	 * @param otherNode
+	 * @param roadDef
+	 * @return
+	 */
+	public RouteArc getDirectArcTo(RouteNode otherNode, RoadDef roadDef) {
+		for(RouteArc a : arcs){
+			if(a.isDirect() && a.getDest() == otherNode){
+				if(a.getRoadDef()== roadDef)
+					return a;
+			}
+		}
+		return null;
+	}
+	
 	/**
 	 * Provide an upper bound to the size (in bytes) that
 	 * writing this node will take.
@@ -1077,4 +1102,9 @@ public class RouteNode implements Comparable<RouteNode> {
 		}
 		return nodeGroup;
 	}
+
+	public List<RouteArc> getArcs() {
+		return arcs;
+	}
+
 }

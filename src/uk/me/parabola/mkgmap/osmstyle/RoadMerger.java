@@ -362,7 +362,7 @@ public class RoadMerger {
 	}
 
 	public RoadMerger(List<Way> ways, List<GType> gtypes,
-			Map<Coord, List<RestrictionRelation>> restrictions,
+			List<RestrictionRelation> restrictions,
 			List<Relation> throughRouteRelations) {
 		assert ways.size() == gtypes.size();
 
@@ -378,18 +378,17 @@ public class RoadMerger {
 		workoutThroughRoutes(throughRouteRelations);
 	}
 
-	private void workoutRestrictionRelations(Map<Coord, List<RestrictionRelation>> restrictionRels) {
-		for (List<RestrictionRelation> rels : restrictionRels.values()) {
-			for (RestrictionRelation rel : rels) {
-				if (rel.getViaCoord() == null) {
-					continue;
-				}
-				if (rel.getFromWay() != null) {
-					restrictions.add(rel.getViaCoord(), rel.getFromWay().getId());
-				}
-				if (rel.getToWay() != null) {
-					restrictions.add(rel.getViaCoord(), rel.getToWay().getId());
-				}
+	/**
+	 * We must not merge roads at via points of restriction relations.
+	 * @param restrictionRels
+	 */
+	private void workoutRestrictionRelations(List<RestrictionRelation> restrictionRels) {
+		for (RestrictionRelation rel : restrictionRels) {
+			if (!rel.isValid()) 
+				continue;
+			for (Coord via: rel.getViaCoords()){
+				for (Long wayId : rel.getConnectedWayIds(via))
+					restrictions.add(via, wayId);
 			}
 		}
 	}
@@ -437,6 +436,8 @@ public class RoadMerger {
 	}
 
 	private boolean hasRestriction(Coord c, Way w) {
+		if (w.isViaWay())
+			return true;
 		List<Long> wayRestrictions = restrictions.get(c);
 		return wayRestrictions.contains(w.getId());
 	}
