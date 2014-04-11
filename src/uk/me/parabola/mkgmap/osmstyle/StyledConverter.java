@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -216,14 +217,8 @@ public class StyledConverter implements OsmConverter {
 	public void convertWay(final Way way) {
 		if (way.getPoints().size() < 2 || way.getTagCount() == 0){
 			// no tags or no points => nothing to convert
-			List<RestrictionRelation> rrList = wayRelMap.get(way.getId());
-			for (RestrictionRelation rr : rrList){
-				log.warn("restriction",rr.toBrowseURL()," is ignored because referenced way",way.toBrowseURL(),"is ignored");
-				restrictions.remove(rr);
-			}
-			return;
+			removeRestrictionsWithWay(Level.WARNING, way, "is ignored");
 		}
-		
 
 		preConvertRules(way);
 
@@ -257,15 +252,8 @@ public class StyledConverter implements OsmConverter {
 			wayTypeResult.setWay(cycleWay);
 			rules.resolveType(cycleWay, wayTypeResult);
 		}
-		List<RestrictionRelation> rrList = wayRelMap.get(way.getId());
-		if (rrList.isEmpty() == false){
-			if (roads.isEmpty() || roads.get(roads.size()-1).getId() != way.getId()){
-				for (RestrictionRelation rr : rrList){
-					log.warn("restriction",rr.toBrowseURL()," is ignored because referenced way",way.toBrowseURL(),"is not routable");
-					restrictions.remove(rr);
-				}
-				
-			}
+		if (roads.isEmpty() || roads.get(roads.size()-1).getId() != way.getId()){
+			removeRestrictionsWithWay(Level.WARNING, way, "is not routable");
 		}
 	}
 
@@ -547,6 +535,49 @@ public class StyledConverter implements OsmConverter {
 		collector.addToBounds(new Coord(bbox.getMaxLat(), bbox.getMaxLong()));
 	}
 
+	/**
+	 * Remove all restriction relations that refer to a way if that way will not appear
+	 * in the NOD file.
+	 * @param logLevel 
+	 * @param way the way that was removed
+	 * @param reason explanation for the removal
+	 */
+	private void removeRestrictionsWithWay(Level logLevel, Way way, String reason){
+		List<RestrictionRelation> rrList = wayRelMap.get(way.getId());
+		for (RestrictionRelation rr : rrList){
+			if (log.isLoggable(logLevel)){
+				log.log(logLevel, "restriction",rr.toBrowseURL()," is ignored because referenced way",way.toBrowseURL(),reason);
+			}
+			restrictions.remove(rr);
+		}
+	}
+
+	/**
+	 * If a way was split (e.g. at tile boundary or because it has a loop),
+	 * and that way is part of a restriction relation, we have to update the 
+	 * references in the restriction.   
+	 * @param way way that was split
+	 * @param nWay new (part of that) way
+	 * @param reason reason for splitting
+	 * @param via the via node 
+	 */
+	private void replaceWayInRestrictions(Way way, Way nWay, String reason, Coord via){
+		List<RestrictionRelation> rrList = wayRelMap.get(way.getId());
+		for (RestrictionRelation rr : rrList){
+			if (rr.getViaCoords().contains(via)){
+				if (way.getPoints().get(0) == via && nWay.getPoints().get(0) != via){
+					long dd = 4;
+				}
+				if (way.getPoints().get(way.getPoints().size()-1) == via && nWay.getPoints().get(nWay.getPoints().size()-1) != via){
+					long dd = 4;
+				}
+				boolean changed = rr.replaceWay(way, nWay);
+				if (changed)
+					log.info("way",way.getId(),"in restriction", rr.getId(),reason,via.toOSMURL());
+			}
+		}
+	}
+	
 	/**
 	 * Merges roads with identical attributes (gtype, OSM tags) to reduce the size of the 
 	 * road network.
@@ -1252,7 +1283,9 @@ public class StyledConverter implements OsmConverter {
 			List<List<Coord>> lineSegs = LineClipper.clip(bbox, way.getPoints());
 
 			if (lineSegs != null) {
-
+				if (lineSegs.isEmpty()){
+					removeRestrictionsWithWay(Level.SEVERE, way, "lies outside of bbox");
+				}
 				clippedWays = new ArrayList<Way>();
 
 				for (List<Coord> lco : lineSegs) {
@@ -1266,14 +1299,7 @@ public class StyledConverter implements OsmConverter {
 							co.incHighwayCount();
 						}
 						if (co.isViaNodeOfRestriction()){
-							for (RestrictionRelation rr : restrictions){
-								if (rr.getViaCoords().contains(co)){
-									boolean changed = rr.replaceWay(way, nWay);
-									if (changed)
-										log.info("way",way.getId(),"in restriction", rr.getId(),"was clipped at tile boundary at",co.toOSMURL());
-								}
-							}
-							
+							replaceWayInRestrictions(way, nWay, "was clipped at tile boundary at", co);
 						}
 					}
 					clippedWays.add(nWay);
@@ -1730,17 +1756,12 @@ public class StyledConverter implements OsmConverter {
 		// it's probably more efficient to remove from the end first
 		for(int i = numPointsInWay - 1; i > index; --i){
 			Coord co = wayPoints.remove(i);
-			if (co.isViaNodeOfRestriction() && wayPoints.get(0) != co){
-				for (RestrictionRelation rr : restrictions){
-					if (rr.getViaCoords().contains(co)){
-						boolean changed = rr.replaceWay(way, trailingWay);
-						if (changed)
-							log.info("way",way.getId(),"in restriction", rr.getId(),"was split at",co.toOSMURL());
-					}
+			if (co.isViaNodeOfRestriction()){ 
+				// special case: way may be part of restriction
+				if(wayPoints.get(0) != co){
+					replaceWayInRestrictions(way, trailingWay, "was split at", co);
 				}
-				
 			}
-			
 		}
 		return trailingWay;
 	}

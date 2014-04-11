@@ -848,9 +848,14 @@ public class WrongAngleFixer {
 					if (currentCenter == n){
 						log.error(id + ": bad neighbour " + neighbour.id + " zero distance");
 					}
-					replaceCoord(currentCenter, n, replacements);
-					neighbour.wasMerged = wasMerged = true;
-					return true;
+					if (badMergeCandidates != null && badMergeCandidates.contains(neighbour )
+							|| neighbour.badMergeCandidates != null && neighbour.badMergeCandidates.contains(this)) {
+						//not allowed to merge
+					} else {
+						replaceCoord(currentCenter, n, replacements);
+						neighbour.wasMerged = wasMerged = true;
+						return true;
+					}
 				}
 				double err = calcBearingError(currentCenter, n);
 				if (err != Double.MAX_VALUE)
@@ -993,10 +998,17 @@ public class WrongAngleFixer {
 			}
 			Coord c = getCurrentLocation(replacements);
 			Coord n = neighbour.getCurrentLocation(replacements);
-			if (c.getOnBoundary() && n.getOnBoundary() && c.equals(n) == false)
-				return false;
-			 if (c.isViaNodeOfRestriction() && n.isViaNodeOfRestriction())
+			// check special cases: don't merge if
+			// 1) both points are via nodes 
+			// 2) both nodes are boundary nodes with non-equal coords
+			// 3) on point is via node and the other is a boundary node, the result could be that the restriction is ignored 
+			if (c.getOnBoundary()){
+				if (n.isViaNodeOfRestriction() || n.getOnBoundary() && c.equals(n) == false)
+					return false; 
+			}
+			if (c.isViaNodeOfRestriction() && (n.isViaNodeOfRestriction() || n.getOnBoundary()))
 				 return false;
+			 
 			Coord mergePoint;
 			if (c.getOnBoundary())
 				mergePoint = c;
