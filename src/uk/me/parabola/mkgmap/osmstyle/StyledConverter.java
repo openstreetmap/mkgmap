@@ -254,6 +254,14 @@ public class StyledConverter implements OsmConverter {
 		}
 		if (roads.isEmpty() || roads.get(roads.size()-1).getId() != way.getId()){
 			removeRestrictionsWithWay(Level.WARNING, way, "is not routable");
+		} else {
+			Way road = roads.get(roads.size()-1);
+			if (road  != way){
+				List<RestrictionRelation> rrList = wayRelMap.get(way.getId());
+				for (RestrictionRelation rr : rrList){
+					rr.replaceWay(way, road);
+				}
+			}
 		}
 	}
 
