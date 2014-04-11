@@ -545,10 +545,12 @@ public class StyledConverter implements OsmConverter {
 	private void removeRestrictionsWithWay(Level logLevel, Way way, String reason){
 		List<RestrictionRelation> rrList = wayRelMap.get(way.getId());
 		for (RestrictionRelation rr : rrList){
-			if (log.isLoggable(logLevel)){
-				log.log(logLevel, "restriction",rr.toBrowseURL()," is ignored because referenced way",way.toBrowseURL(),reason);
+			if (rr.isValidWithoputWay(way) == false){
+				if (log.isLoggable(logLevel)){
+					log.log(logLevel, "restriction",rr.toBrowseURL()," is ignored because referenced way",way.toBrowseURL(),reason);
+				}
+				restrictions.remove(rr);
 			}
-			restrictions.remove(rr);
 		}
 	}
 

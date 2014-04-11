@@ -673,4 +673,27 @@ public class RestrictionRelation extends Relation {
 			this.way = way;
 		}
 	}
+
+	/**
+	 * check if restriction is still valid if the given way is removed
+	 * @param way
+	 * @return
+	 */
+	public boolean isValidWithoputWay(Way way) {
+		if (viaWays.contains(way))
+			return false;
+		if (fromWays.contains(way)){
+			fromWays.remove(way);
+			if (fromWays.isEmpty())
+				return false;
+			// else it must be a no_entry restriction which still is valid
+		}
+		if (toWays.contains(way)){
+			toWays.remove(way);
+			if (toWays.isEmpty())
+				return false;
+			// else it must be a no_exit restriction which still is valid
+		}
+		return true;
+	}
 }
