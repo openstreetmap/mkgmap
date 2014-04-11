@@ -291,7 +291,21 @@ public class RestrictionRelation extends Relation {
 		}
 		if (!valid)
 			return;
-		
+		for (List<Way> ways : Arrays.asList(fromWays,viaWays,toWays)){
+			for (Way way : ways){
+				if (way.getPoints().size() < 2){
+					log.warn(messagePrefix,"way",way.toBrowseURL(),"has less than 2 points, restriction is ignored");
+					valid = false;
+				} else {
+					if (way.getPoints().get(0) == way.getPoints().get(way.getPoints().size()-1)){
+						log.warn(messagePrefix, "way", way.toBrowseURL(), "starts and ends at same node, this is not supported");
+						valid = false;
+					}
+				}
+			}
+		}
+		if (!valid)
+			return;
 		if (viaWays.isEmpty() == false){
 			for (Way way:viaWays){
 				way.getPoints().get(0).setViaNodeOfRestriction(true);
@@ -584,6 +598,12 @@ public class RestrictionRelation extends Relation {
 		return null;
 	}
 
+	/**
+	 * Check if the via node(s) of the restriction are all inside 
+	 * or on the bbox and if the restriction itself is valid. 
+	 * @param bbox
+	 * @return true if restriction is okay
+	 */
 	public boolean isValid(Area bbox) {
 		if (!isValid())
 			return false;
