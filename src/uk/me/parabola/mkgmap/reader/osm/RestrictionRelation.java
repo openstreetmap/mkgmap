@@ -493,6 +493,8 @@ public class RestrictionRelation extends Relation {
 				nextNode = viaWay.getPoints().get(0);
 			Coord co = findNextNode(viaWay, currNode);
 			if (nextNode != co){
+				if (co == null)
+					return;
 				log.warn(messagePrefix, "'via' way", viaWay.toBrowseURL(), "is also connected to other roads between end-points at",co.toDegreeString()); 
 				return;
 			}
