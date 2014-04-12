@@ -62,6 +62,7 @@ public class Way extends Element {
 		dup.copyTags(this);
 		dup.closedInOSM = this.closedInOSM;
 		dup.complete = this.complete;
+		dup.isViaWay = this.isViaWay;
 		return dup;
 	}
 
