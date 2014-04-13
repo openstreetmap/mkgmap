@@ -36,7 +36,6 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 	private final List<Node> exits = new ArrayList<Node>();
 
 	private boolean makeOppositeCycleways;
-	private boolean makeCycleways;
 	private ElementSaver saver;
 	private boolean linkPOIsToWays;
 
@@ -66,25 +65,24 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 	public boolean init(ElementSaver saver, EnhancedProperties props) {
 		this.saver = saver;
 		if(props.getProperty("make-all-cycleways", false)) {
-			makeOppositeCycleways = makeCycleways = true;
+			log.error("option make-all-cycleways is deprecated, please use make-opposite-cycleways");
+			makeOppositeCycleways = true;
 		}
 		else {
 			makeOppositeCycleways = props.getProperty("make-opposite-cycleways", false);
-			makeCycleways = props.getProperty("make-cycleways", false);
 		}
+		
 		linkPOIsToWays = props.getProperty("link-pois-to-ways", false);
 		currentNodeInWay = null;
 
-		if (makeCycleways || makeOppositeCycleways) {
-			// need the additional two tags 
+		if (makeOppositeCycleways) {
+			// need the additional tags 
 			usedTags.add("cycleway");
 			usedTags.add("bicycle");
-		}
-		
-		if (makeOppositeCycleways) {
-			// need the additional two tags 
 			usedTags.add("oneway:bicycle");
 			usedTags.add("bicycle:oneway");
+			usedTags.add("cycleway:left");
+			usedTags.add("cycleway:right");
 		}
 		
 		// add addr:street and addr:housenumber if housenumber search is enabled
@@ -169,39 +167,30 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 				}
 			}
 
-			String onewayTag = way.getTag("oneway");
-			boolean oneway = way.isBoolTag("oneway");
-			if (!oneway & onewayTag != null && ("-1".equals(onewayTag) || "reverse".equals(onewayTag)))
-				oneway = true;
-			String cycleway = way.getTag("cycleway");
-			if (makeOppositeCycleways && cycleway != null && !"cycleway".equals(highway) && oneway &&
-			   ("opposite".equals(cycleway) ||
-				"opposite_lane".equals(cycleway) ||
-				"opposite_track".equals(cycleway) ||
-				"no".equals(way.getTag("oneway:bicycle")) ||
-				"no".equals(way.getTag("bicycle:oneway"))))
-			{
-				// what we have here is a oneway street
-				// that allows bicycle traffic in both
-				// directions -- to enable bicycle routing
-				// in the reverse direction, we will synthesise
-				// a cycleway that has the same points as
-				// the original way
-				way.addTag("mkgmap:make-cycle-way", "yes");
-
-			} else if (makeCycleways && cycleway != null && !"cycleway".equals(highway) &&
-					("track".equals(cycleway) ||
-					 "lane".equals(cycleway) ||
-					 "both".equals(cycleway) ||
-					 "left".equals(cycleway) ||
-					 "right".equals(cycleway)))
-			{
-				// what we have here is a highway with a
-				// separate track for cycles -- to enable
-				// bicycle routing, we will synthesise a cycleway
-				// that has the same points as the original
-				// way
-				way.addTag("mkgmap:make-cycle-way", "yes");
+			if (makeOppositeCycleways && !"cycleway".equals(highway)){
+				String onewayTag = way.getTag("oneway");
+				boolean oneway = way.isBoolTag("oneway");
+				if (!oneway & onewayTag != null && ("-1".equals(onewayTag) || "reverse".equals(onewayTag)))
+					oneway = true;
+				if (oneway){
+					String cycleway = way.getTag("cycleway");
+					boolean addCycleWay = false;
+					// we have a oneway street, check if it allows bicycles to travel in opposite direction
+					if ("no".equals(way.getTag("oneway:bicycle")) || "no".equals(way.getTag("bicycle:oneway"))){
+						addCycleWay = true;
+					}
+					else if (cycleway != null && ("opposite".equals(cycleway) || "opposite_lane".equals(cycleway) || "opposite_track".equals(cycleway))){
+						addCycleWay = true;	
+					}
+					else if ("opposite_lane".equals(way.getTag("cycleway:left")) || "opposite_lane".equals(way.getTag("cycleway:right"))){
+						addCycleWay = true;
+					}
+					else if ("opposite_track".equals(way.getTag("cycleway:left")) || "opposite_track".equals(way.getTag("cycleway:right"))){
+						addCycleWay = true;
+					}
+					if (addCycleWay)
+						way.addTag("mkgmap:make-cycle-way", "yes");
+				} 
 			}
 		}
 

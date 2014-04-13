@@ -549,6 +549,7 @@ Miscellaneous options:
 	(NSIS) to create a Windows Mapsource Installer.
 
 --make-all-cycleways
+  Deprecated, use --make-opposite-cycleways instead. Former meaning: 
 	Turn on all of the options that make cycleways.
 
 --make-opposite-cycleways
@@ -557,6 +558,7 @@ Miscellaneous options:
 	the original that allows bicycle traffic (in both directions).
 
 --make-cycleways
+  Now ignored, former meaning:
 	Some streets have a separate cycleway track/lane just for
 	bicycle traffic and this option makes a way with the same
 	points as the original that allows bicycle traffic. Also,

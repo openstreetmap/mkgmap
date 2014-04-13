@@ -656,7 +656,7 @@ is used to assign the country location.
 | +mkgmap:exit_hint_ref+  | The +ref+ tag value of the links exit node | 'process-exits'    
 | +mkgmap:exit_hint_exit_to+  | The +exit_to+ tag value of the links exit node | 'process-exits'    
 | +mkgmap:dest_hint+  | +true+ for the part on link roads that should contain destination information about the link | 'process-destination'    
-| +mkgmap:synthesised+  | The value is +yes+ if the way was added by the make-cycleways option | 'make-cycleways' or 'make-opposite-cycleways'
+| +mkgmap:synthesised+  | The value is +yes+ if the way was added by the make-opposite-cycleways option | 'make-opposite-cycleways'
 | +mkgmap:mp_created+  | The value is +true+ if the way was created by the internal multi-polygon-relation handling | none
 |=========================================================
 
