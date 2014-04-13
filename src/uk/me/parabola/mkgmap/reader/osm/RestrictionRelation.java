@@ -108,7 +108,7 @@ public class RestrictionRelation extends Relation {
 				valid = false;
 			}
 		}
-    if (restriction == null){
+    if (specifc_type == null){
 				log.warn(messagePrefix, "no valid restriction tag found");				
 				valid = false;
         return;
