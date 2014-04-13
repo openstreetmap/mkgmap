@@ -44,6 +44,13 @@ Function .onInit
 FunctionEnd
 
 Function myGUIInit
+  ;Read $INSTDIR from the registry
+  ClearErrors
+  ReadRegStr $INSTDIR HKLM "SOFTWARE\Garmin\MapSource\Families\${REG_KEY}\${PRODUCT_ID}" "LOC"
+  IfErrors +2
+  StrCmp $INSTDIR "" 0 +2
+  StrCpy $INSTDIR "${DEFAULT_DIR}"
+  
   ; Uninstall before installing (code from http://nsis.sourceforge.net/Auto-uninstall_old_before_installing_new )
   ReadRegStr $R0 HKLM \
   "Software\Microsoft\Windows\CurrentVersion\Uninstall\${REG_KEY}" "UninstallString"
@@ -56,7 +63,7 @@ Function myGUIInit
   ;Run the uninstaller
   uninst:
   ClearErrors
-  ExecWait '"$R0" _?=$INSTDIR' ;Do not copy the uninstaller to a temp file
+  ExecWait '"$R0" /S ' ;Do not copy the uninstaller to a temp file
  
   IfErrors no_remove_uninstaller done
     ;You can either use Delete /REBOOTOK in the uninstaller or add some code
@@ -68,7 +75,7 @@ Function myGUIInit
   Goto done
  
   silent:
-  ExecWait '"$R0" /S _?=$INSTDIR' ;Do not copy the uninstaller to a temp file
+  ExecWait '"$R0" /S ' ;Do not copy the uninstaller to a temp file
  
   done:
  
