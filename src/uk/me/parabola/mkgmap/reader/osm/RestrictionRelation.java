@@ -76,6 +76,11 @@ public class RestrictionRelation extends Relation {
 		fromWays.clear();
 		viaWays.clear();
 		toWays.clear();
+		if (getTag("type") == null){
+      log.info(messagePrefix, "type tag was removed, relation is ignored");				
+			valid = false;
+			return;
+		}
 		valid = true;
 		// find out what kind of restriction we have and to which vehicles it applies
 		exceptMask = RouteRestriction.EXCEPT_FOOT | RouteRestriction.EXCEPT_EMERGENCY;
@@ -103,6 +108,11 @@ public class RestrictionRelation extends Relation {
 				valid = false;
 			}
 		}
+    if (restriction == null){
+				log.warn(messagePrefix, "no valid restriction tag found");				
+				valid = false;
+        return;
+    }
 		restriction = specifc_type.trim();
 		messagePrefix = "Turn restriction (" + restriction + ") " + browseURL;
 		if(restriction.equals("no_left_turn") ||
