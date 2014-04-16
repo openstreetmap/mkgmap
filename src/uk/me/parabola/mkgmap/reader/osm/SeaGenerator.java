@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.Set;
@@ -1159,9 +1160,10 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				Way w1 = new Way(FakeIdGenerator.makeFakeId());
 				w1.getPoints().addAll(w.getPoints());
 				// only copy the name tags
-				for(String tag : w)
-					if(tag.equals("name") || tag.endsWith(":name"))
-						w1.addTag(tag, w.getTag(tag));
+				for (Entry<String, String> tagEntry : w.getEntryIteratable()){
+					if(tagEntry.getKey().equals("name") || tagEntry.getKey().endsWith(":name"))
+						w1.addTag(tagEntry.getKey(), tagEntry.getValue());
+				}
 				w = w1;
 			}
 
@@ -1237,9 +1239,10 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 						Way w1 = new Way(FakeIdGenerator.makeFakeId());
 						w1.getPoints().addAll(w.getPoints());
 						// only copy the name tags
-						for(String tag : w)
-							if(tag.equals("name") || tag.endsWith(":name"))
-								w1.addTag(tag, w.getTag(tag));
+						for (Entry<String, String> tagEntry : w.getEntryIteratable()){
+							if(tagEntry.getKey().equals("name") || tagEntry.getKey().endsWith(":name"))
+								w1.addTag(tagEntry.getKey(), tagEntry.getValue());
+						}
 						w = w1;
 					}
 					w.addTag(landTag[0], landTag[1]);
