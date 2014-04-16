@@ -156,8 +156,8 @@ class Directory {
 
 		// Get the number of blocks required for the directory entry representing the header.
 		// First calculate the number of blocks required for the directory entries.
-		int headerBlocks = (int) Math.ceil((startEntry + 1.0 + headerEntries) * Dirent.ENTRY_SIZE / blockSize);
-		int forHeader = (headerBlocks + Dirent.ENTRY_SIZE - 1)/Dirent.ENTRY_SIZE;
+		int headerBlocks = (int) Math.ceil((startEntry + 1.0 + headerEntries) * DirectoryEntry.ENTRY_SIZE / blockSize);
+		int forHeader = (headerBlocks + DirectoryEntry.ENTRY_SIZE - 1)/DirectoryEntry.ENTRY_SIZE;
 
 		log.debug("header blocks needed", forHeader);
 
@@ -166,7 +166,7 @@ class Directory {
 		assert forHeader == 1;
 
 		// Write the blocks that will will contain the header blocks.
-		chan.position(dirPosition + (long) forHeader * Dirent.ENTRY_SIZE);
+		chan.position(dirPosition + (long) forHeader * DirectoryEntry.ENTRY_SIZE);
 
 		for (DirectoryEntry dir : entries.values()) {
 			Dirent ent = (Dirent) dir;
