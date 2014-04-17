@@ -61,18 +61,45 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
 public class RuleIndex {
 	private final List<RuleDetails> ruleDetails = new ArrayList<RuleDetails>();
 
-	// This is an index of all rules that start with EQUALS (A=B)
-	private final Map<String, BitSet> existKeys = new HashMap<String, BitSet>();
-	// This is an index of all rules that start with EXISTS (A=*)
-	private final Map<String, BitSet> tagVals = new HashMap<String, BitSet>();
-	// This is an index of all rules by the tag name (A).
-	private final Map<String, BitSet> tagnames = new HashMap<String, BitSet>();
-
-	// Maps a rule number to the tags that might be changed by that rule
-	private final Map<Integer, List<String>> changeTags = new HashMap<Integer, List<String>>();
+	private final Map<String, TagHelper> tagKeys = new HashMap<>();
 
 	private boolean inited;
 
+	private class TagHelper{
+		// This is an index of all rules that start with EXISTS (A=*)
+		final BitSet exists;
+		// This is an index of all rules that start with EQUALS (A=B) 
+		Map<String, BitSet> tagVals;
+		
+		public TagHelper(BitSet exits){
+			this.exists = exits;
+		}
+
+		public void addTag(String val, BitSet value) {
+			if (tagVals == null)
+				tagVals = new HashMap<>();
+			if (exists != null){	
+				BitSet merged = new BitSet();
+				merged.or(exists);
+				merged.or(value);
+				tagVals.put(val, merged);
+			} else
+				tagVals.put(val, value);
+		}
+
+		public BitSet getBitSet(String tagVal) {
+			if (tagVals != null){
+				BitSet set = tagVals.get(tagVal);
+				if (set != null){
+					return (BitSet) set.clone();
+				}
+			} 
+			if (exists != null)
+				return (BitSet) exists.clone();
+			return new BitSet();
+		}
+	}
+	
 	/**
 	 * Save the rule and maintains several lists related to it from the other
 	 * information that is supplied.
@@ -82,24 +109,6 @@ public class RuleIndex {
 	 */
 	public void addRuleToIndex(RuleDetails rd) {
 		assert !inited;
-		int ruleNumber = ruleDetails.size();
-		String keystring = rd.getKeystring();
-		Set<String> changeableTags = rd.getChangingTags();
-
-		if (keystring.endsWith("=*")) {
-			String key = keystring.substring(0, keystring.length() - 2);
-			addExists(key, ruleNumber);
-			addUnknowns(key, ruleNumber);
-		} else {
-			addKeyVal(keystring, ruleNumber);
-			int ind = keystring.indexOf('=');
-			if (ind >= 0) {
-				String key = keystring.substring(0, ind);
-				addUnknowns(key, ruleNumber);
-			}
-		}
-
-		addChangables(changeableTags, ruleNumber);
 		ruleDetails.add(rd);
 	}
 
@@ -124,6 +133,7 @@ public class RuleIndex {
 	 * @return A BitSet of rules numbers.
 	 * If there are no rules then null will be returned.
 	 */
+	/*
 	public BitSet getRulesForTag(String tagval) {
 		BitSet set = tagVals.get(tagval);
 
@@ -139,12 +149,61 @@ public class RuleIndex {
 			res.or(set2);
 		return res;
 	}
+*/
+	
+	/**
+	 * Get a list of rules that might be matched by this tag.
+	 * @param tagval The tag and its value eg highway=primary.
+	 * @return A BitSet of rules numbers.
+	 * If there are no rules then null will be returned.
+	 */
+	public BitSet getRulesForTag(String tagKey, String tagVal) {
+		TagHelper th = tagKeys.get(tagKey);
+		if (th == null)
+			return new BitSet();
+		return th.getBitSet(tagVal);
+	}
 
+	
 	/**
 	 * Prepare the index for use.  This involves merging in all the possible
 	 * rules that could be run as a result of actions changing tags.
 	 */
 	public void prepare() {
+		if (inited)
+			return;
+		// This is an index of all rules that start with EXISTS (A=*)
+		Map<String, BitSet> existKeys = new HashMap<String, BitSet>();
+		// This is an index of all rules that start with EQUALS (A=B)
+		Map<String, BitSet> tagVals = new HashMap<String, BitSet>();
+		
+		// This is an index of all rules by the tag name (A).
+		Map<String, BitSet> tagnames = new HashMap<String, BitSet>();
+
+		// Maps a rule number to the tags that might be changed by that rule
+		Map<Integer, List<String>> changeTags = new HashMap<Integer, List<String>>();
+		
+		for (int i = 0; i < ruleDetails.size(); i++){
+			int ruleNumber = i;
+			RuleDetails rd = ruleDetails.get(i);
+			String keystring = rd.getKeystring();
+			Set<String> changeableTags = rd.getChangingTags();
+
+			if (keystring.endsWith("=*")) {
+				String key = keystring.substring(0, keystring.length() - 2);
+				addNumberToMap(existKeys, key, ruleNumber);
+				addNumberToMap(tagnames, key, ruleNumber);
+			} else {
+				addNumberToMap(tagVals, keystring, ruleNumber);
+				int ind = keystring.indexOf('=');
+				if (ind >= 0) {
+					String key = keystring.substring(0, ind);
+					addNumberToMap(tagnames, key, ruleNumber);
+				} 
+			}
+			addChangables(changeTags, changeableTags, ruleNumber);
+		}
+		
 		for (Map.Entry<Integer, List<String>> ent : changeTags.entrySet()) {
 			int ruleNumber = ent.getKey();
 			List<String> changeTagList = ent.getValue();
@@ -213,20 +272,25 @@ public class RuleIndex {
 			} while (!newChanged.isEmpty());
 		}
 
+		// compress the index: create one hash map with one entry for each key
+		for (Map.Entry<String, BitSet> entry  : existKeys.entrySet()){
+			tagKeys.put(entry.getKey(), new TagHelper(entry.getValue()));
+		}
+		for (Map.Entry<String, BitSet> entry  : tagVals.entrySet()){
+			String keyString = entry.getKey();
+			int ind = keyString.indexOf('=');
+			if (ind >= 0) {
+				String key = keyString.substring(0, ind);
+				String val = keyString.substring(ind+1);
+				TagHelper th = tagKeys.get(key);
+				if (th == null){
+					th = new TagHelper(null);
+					tagKeys.put(key, th);
+				} 
+				th.addTag(val, entry.getValue());
+			}
+		}
 		inited = true;
-	}
-
-	private void addExists(String keystring, int ruleNumber) {
-		addNumberToMap(existKeys, keystring, ruleNumber);
-	}
-
-	private void addKeyVal(String keystring, int ruleNumber) {
-		addNumberToMap(tagVals, keystring, ruleNumber);
-
-	}
-
-	private void addUnknowns(String keystring, int ruleNumber) {
-		addNumberToMap(tagnames, keystring, ruleNumber);
 	}
 
 	private void addNumberToMap(Map<String, BitSet> map, String key, int ruleNumber) {
@@ -241,11 +305,12 @@ public class RuleIndex {
 	/**
 	 * For each rule number, we maintain a list of tags that might be
 	 * changed by that rule.
+	 * @param changeTags 
 	 * @param changeableTags The tags that might be changed if the rule is
 	 * matched.
 	 * @param ruleNumber The rule number.
 	 */
-	private void addChangables(Set<String> changeableTags, int ruleNumber) {
+	private void addChangables(Map<Integer, List<String>> changeTags, Set<String> changeableTags, int ruleNumber) {
 		List<String> tags = changeTags.get(ruleNumber);
 		if (tags == null) {
 			tags = new ArrayList<String>();

@@ -21,6 +21,7 @@ import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.Set;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
@@ -57,12 +58,11 @@ public class RuleSet implements Rule, Iterable<Rule> {
 
 		// Get all the rules that could match from the index.  
 		BitSet candidates = new BitSet();
-		for (String tag : el) {
-			BitSet rules = index.getRulesForTag(tag);
-			if (rules != null)
+		for (Entry<String, String> tagEntry : el.getEntryIteratable()) {
+			BitSet rules = index.getRulesForTag(tagEntry.getKey(), tagEntry.getValue());
+			if (rules != null && !rules.isEmpty() )
 				candidates.or(rules);
 		}
-
 		for (int i = candidates.nextSetBit(0); i >= 0; i = candidates.nextSetBit(i + 1)) {			
 			a.reset();
 			rules[i].resolveType(el, a);
