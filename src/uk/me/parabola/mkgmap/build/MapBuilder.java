@@ -1027,7 +1027,7 @@ public class MapBuilder implements Configurable {
 		// Maybe more efficient if merging before creating subdivisions.
 		if (mergeLines) {
 			LineMergeFilter merger = new LineMergeFilter();
-			lines = merger.merge(lines);
+			lines = merger.merge(lines, res);
 		}
 		LayerFilterChain filters = new LayerFilterChain(config);
 		if (enableLineCleanFilters && (res < 24)) {

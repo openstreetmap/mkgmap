@@ -53,9 +53,13 @@ public class LineMergeFilter{
 		endPoints.add(points.get(points.size()-1), line);
 	}
 
-	public List<MapLine> merge(List<MapLine> lines) {
+	//TODO: This routine has a side effect: it modifies some of the MapLine instances
+	// instead of creating copies. It seems that this has no bad effect, but it is not clean
+	public List<MapLine> merge(List<MapLine> lines, int res) {
 		linesMerged = new ArrayList<MapLine>(lines.size());	//better use LinkedList??
 		for (MapLine line : lines) {
+			if (line.getMinResolution() > res || line.getMaxResolution() < res)
+				continue;
 			
 			if (line.isRoad()){
 				linesMerged.add(line);
