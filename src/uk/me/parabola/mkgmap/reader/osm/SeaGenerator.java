@@ -1161,7 +1161,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				w1.getPoints().addAll(w.getPoints());
 				// only copy the name tags
 				for (Entry<String, String> tagEntry : w.getEntryIteratable()){
-					if(tagEntry.getKey().equals("name") || tagEntry.getKey().endsWith(":name"))
+					if(tagEntry.getKey().equals("name") || tagEntry.getKey().contains("name"))
 						w1.addTag(tagEntry.getKey(), tagEntry.getValue());
 				}
 				w = w1;
@@ -1240,7 +1240,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 						w1.getPoints().addAll(w.getPoints());
 						// only copy the name tags
 						for (Entry<String, String> tagEntry : w.getEntryIteratable()){
-							if(tagEntry.getKey().equals("name") || tagEntry.getKey().endsWith(":name"))
+							if(tagEntry.getKey().equals("name") || tagEntry.getKey().contains("name"))
 								w1.addTag(tagEntry.getKey(), tagEntry.getValue());
 						}
 						w = w1;
