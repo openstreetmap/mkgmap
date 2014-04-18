@@ -14,7 +14,7 @@
  * Author: Steve Ratcliffe
  * Create date: 13-Jul-2008
  */
-package uk.me.parabola.imgfmt.app.net;
+package uk.me.parabola.mkgmap.general;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,8 +27,14 @@ import java.util.TreeMap;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
+import uk.me.parabola.imgfmt.app.net.GeneralRouteRestriction;
+import uk.me.parabola.imgfmt.app.net.NOD1Part;
+import uk.me.parabola.imgfmt.app.net.RoadDef;
+import uk.me.parabola.imgfmt.app.net.RouteArc;
+import uk.me.parabola.imgfmt.app.net.RouteCenter;
+import uk.me.parabola.imgfmt.app.net.RouteNode;
+import uk.me.parabola.imgfmt.app.net.RouteRestriction;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.util.EnhancedProperties;
 
 /**
