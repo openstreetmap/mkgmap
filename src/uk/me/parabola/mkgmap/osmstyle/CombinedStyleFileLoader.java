@@ -190,6 +190,7 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 				writer.close();
 			}
 		}
+		loader.close();
 	}
 
 	private static void convertToFile(File file, PrintStream out) throws IOException {
@@ -212,6 +213,7 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 				String line;
 				while ((line = r.readLine()) != null)
 					out.println(line);
+				r.close();
 			} else {
 				convertToFile(out, entry.listFiles(new NoHiddenFilter()), entry.getName());
 			}

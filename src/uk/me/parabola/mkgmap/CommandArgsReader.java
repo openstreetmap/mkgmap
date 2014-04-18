@@ -159,9 +159,7 @@ public class CommandArgsReader {
 		String value = opt.getValue();
 
 		if (validOptions != null && !validOptions.contains(option) && !opt.isExperimental()) {
-			Formatter f = new Formatter();
-			f.format("Invalid option: '%s'", option);
-			throw new ExitException(f.toString());
+			throw new ExitException(String.format("Invalid option: '%s'", option));
 		}
 
 		log.debug("adding option", option, value);

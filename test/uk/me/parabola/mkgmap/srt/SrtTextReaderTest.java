@@ -24,7 +24,6 @@ import uk.me.parabola.imgfmt.app.srt.Sort;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertNotSame;
 
 public class SrtTextReaderTest {
 

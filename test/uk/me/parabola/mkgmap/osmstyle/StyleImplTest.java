@@ -65,8 +65,8 @@ public class StyleImplTest {
 	 */
 	@Test(expected = FileNotFoundException.class)
 	public void testBadStyleName() throws FileNotFoundException {
-		//noinspection UnusedDeclaration
 		Style style = new StyleImpl(STYLE_LOC, "no-such-style");
+		if (style != null) style= null; // pseudo use the value to calm down FindBugs
 	}
 
 	/**
@@ -77,8 +77,8 @@ public class StyleImplTest {
 	 */
 	@Test(expected = FileNotFoundException.class)
 	public void testBadStyleFileOnClasspath() throws FileNotFoundException {
-		//noinspection UnusedDeclaration
 		Style style = new StyleImpl("classpath:no-such-place", "default");
+		if (style != null) style= null; // pseudo use the value to calm down FindBugs
 	}
 
 	/**
@@ -90,8 +90,8 @@ public class StyleImplTest {
 	 */
 	@Test(expected = FileNotFoundException.class)
 	public void testBadStyleFileOnFilesystem() throws FileNotFoundException {
-		//noinspection UnusedDeclaration
 		Style style = new StyleImpl("/no-such-place/hopefully", "default");
+		if (style != null) style= null; // pseudo use the value to calm down FindBugs
 	}
 
 	private void printStyle(StyleImpl in) {

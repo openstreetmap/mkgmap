@@ -540,6 +540,7 @@ public class RouteNode implements Comparable<RouteNode> {
 					}
 				}
 
+				/*
 				if(false && outArc == null) {
 					// last ditch attempt to find the outgoing arc -
 					// try and find a single arc that has the same
@@ -574,7 +575,8 @@ public class RouteNode implements Comparable<RouteNode> {
 					if(outArc != null)
 						log.info("Matched outgoing arc " + outArc.getRoadDef() + " to " + inRoadDef + " using road class (" + inArcClass + ") and speed (" + inArcSpeed + ") at " + coord.toOSMURL()); 
 				}
-
+				 */
+				
 				// if we did not find the outgoing arc, give up with
 				// this incoming arc
 				if(outArc == null) {
