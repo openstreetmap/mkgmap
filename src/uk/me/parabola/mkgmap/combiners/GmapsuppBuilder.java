@@ -542,7 +542,7 @@ public class GmapsuppBuilder implements Combiner {
 
 			log.info("total blocks for", bs, "is", totHeaderBlocks, "based on slots=", totHeaderEntries);
 
-			int reserveEntries = (int) Math.ceil(DIRECTORY_OFFSET_ENTRY + 1 + totHeaderEntries);
+			int reserveEntries = DIRECTORY_OFFSET_ENTRY + 1 + totHeaderEntries;
 			if (totBlocks + reserveEntries < 0xfffe && totHeaderBlocks <= ENTRY_SIZE) {
 				return new BlockInfo(bs, reserveEntries);
 			}
