@@ -28,7 +28,7 @@ import uk.me.parabola.mkgmap.general.MapDetails;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.general.RoadNetwork;
+import uk.me.parabola.imgfmt.app.net.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.dem.DEM;
 import uk.me.parabola.util.Configurable;
 import uk.me.parabola.util.EnhancedProperties;

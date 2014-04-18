@@ -14,7 +14,7 @@
  * Author: Steve Ratcliffe
  * Create date: 13-Jul-2008
  */
-package uk.me.parabola.mkgmap.general;
+package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,14 +27,8 @@ import java.util.TreeMap;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
-import uk.me.parabola.imgfmt.app.net.GeneralRouteRestriction;
-import uk.me.parabola.imgfmt.app.net.NOD1Part;
-import uk.me.parabola.imgfmt.app.net.RoadDef;
-import uk.me.parabola.imgfmt.app.net.RouteArc;
-import uk.me.parabola.imgfmt.app.net.RouteCenter;
-import uk.me.parabola.imgfmt.app.net.RouteNode;
-import uk.me.parabola.imgfmt.app.net.RouteRestriction;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.util.EnhancedProperties;
 
 /**
@@ -86,9 +80,9 @@ public class RoadNetwork {
 		reportSimilarArcs = props.getProperty("report-similar-arcs", false);
 	}
 
-	public void addRoad(MapRoad road) {
+	public void addRoad(RoadDef roadDef, List<Coord> coordList) {
 		//mapRoads.add(road);
-		roadDefs.add(road.getRoadDef()); //XXX
+		roadDefs.add(roadDef); //XXX
 
 		CoordNode lastCoord = null;
 		int lastIndex = 0;
@@ -96,7 +90,6 @@ public class RoadNetwork {
 		double arcLength = 0;
 		int pointsHash = 0;
 
-		List<Coord> coordList = road.getPoints();
 		int npoints = coordList.size();
 		for (int index = 0; index < npoints; index++) {
 			Coord co = coordList.get(index);
@@ -131,9 +124,9 @@ public class RoadNetwork {
 				RouteNode node2 = getNode(id, co);
 
 				if(node1 == node2)
-					log.error("Road " + road.getRoadDef() + " contains consecutive identical nodes at " + co.toOSMURL() + " - routing will be broken");
+					log.error("Road " + roadDef + " contains consecutive identical nodes at " + co.toOSMURL() + " - routing will be broken");
 				else if(arcLength == 0)
-					log.warn("Road " + road.getRoadDef() + " contains zero length arc at " + co.toOSMURL());
+					log.warn("Road " + roadDef + " contains zero length arc at " + co.toOSMURL());
 
 				Coord forwardBearingPoint = coordList.get(lastIndex + 1);
 				if(lastCoord.equals(forwardBearingPoint)) {
@@ -170,7 +163,7 @@ public class RoadNetwork {
 
 				double directLength = (lastIndex + 1 == index) ? arcLength : lastCoord.distance(co);
 				// Create forward arc from node1 to node2
-				RouteArc arc = new RouteArc(road.getRoadDef(),
+				RouteArc arc = new RouteArc(roadDef,
 											node1,
 											node2,
 											forwardInitialBearing,
@@ -185,7 +178,7 @@ public class RoadNetwork {
 				node2.addIncomingArc(arc);
 				
 				// Create the reverse arc
-				arc = new RouteArc(road.getRoadDef(),
+				arc = new RouteArc(roadDef,
 								   node2, node1,
 								   reverseInitialBearing,
 								   reverseFinalBearing,
@@ -198,7 +191,7 @@ public class RoadNetwork {
 				node1.addIncomingArc(arc);
 			} else {
 				// This is the first node in the road
-				road.getRoadDef().setNode(getNode(id, co));
+				roadDef.setNode(getNode(id, co));
 			}
 
 			lastCoord = (CoordNode) co;
@@ -206,7 +199,7 @@ public class RoadNetwork {
 			arcLength = 0;
 			pointsHash = co.hashCode();
 		}
-		road.getRoadDef().setLength(roadLength);
+		roadDef.setLength(roadLength);
 	}
 
 	private RouteNode getNode(long id, Coord coord) {

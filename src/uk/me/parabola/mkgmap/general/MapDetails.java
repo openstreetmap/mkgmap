@@ -25,6 +25,7 @@ import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.net.GeneralRouteRestriction;
+import uk.me.parabola.imgfmt.app.net.RoadNetwork;
 import uk.me.parabola.imgfmt.app.trergn.Overview;
 import uk.me.parabola.imgfmt.app.trergn.PointOverview;
 import uk.me.parabola.imgfmt.app.trergn.PolygonOverview;
@@ -122,7 +123,7 @@ public class MapDetails implements MapCollector, MapDataSource {
 	}
 
 	public void addRoad(MapRoad road) {
-		roadNetwork.addRoad(road);
+		roadNetwork.addRoad(road.getRoadDef(), road.getPoints());
 		addLine(road);
 	}
 
