@@ -104,6 +104,8 @@ public class WrongAngleFixer {
 			replacement = new CoordPOI(replacement);
 			((CoordPOI) replacement).setNode(((CoordPOI) toRepl).getNode());
 		}
+		if (toRepl.isViaNodeOfRestriction())
+			replacement.setViaNodeOfRestriction(true);
 		replacements.put(toRepl, replacement);
 		while (toRepl.getHighwayCount() > replacement.getHighwayCount())
 			replacement.incHighwayCount();
@@ -507,13 +509,13 @@ public class WrongAngleFixer {
 							+ "_mod_non_routable", points);
 				}
 			}
-		}
 		
-		for (RestrictionRelation rr: restrictions){
-			for (Coord p: rr.getViaCoords()){ 
-				Coord replacement = getReplacement(p, null, replacements);
-				if (p != replacement){
-					rr.replaceViaCoord(p, replacement);
+			for (RestrictionRelation rr: restrictions){
+				for (Coord p: rr.getViaCoords()){ 
+					Coord replacement = getReplacement(p, null, replacements);
+					if (p != replacement){
+						rr.replaceViaCoord(p, replacement);
+					}
 				}
 			}
 		}

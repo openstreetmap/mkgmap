@@ -53,7 +53,7 @@ public class RelationStyleHook extends OsmReadingHooksAdaptor {
 			}			
 			relationRules.resolveType(rel, TypeResult.NULL_RESULT);
 			if (rel instanceof RestrictionRelation){
-				((RestrictionRelation) rel).eval();
+				((RestrictionRelation) rel).eval(saver.getBoundingBox());
 			}
 		}
 		super.end();

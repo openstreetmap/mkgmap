@@ -111,11 +111,13 @@ public class RouteRestriction {
 	public List<RouteArc> getArcs(){
 		return arcs;
 	}
+	
 	/**
-	 * Writes a Table C entry with 3 or 4 nodes.
+	 * Writes a Table C entry with 3 or more nodes.
 	 *
 	 * @param writer The writer.
 	 * @param tableOffset The offset in NOD 1 of the tables area.
+	 * 
 	 */
 	public void write(ImgFileWriter writer, int tableOffset) {
 		writer.put(RESTRICTION_TYPE); 
@@ -128,34 +130,28 @@ public class RouteRestriction {
 
 		int numArcs = arcs.size();
 		int[] offsets = new int[numArcs+1];
-		// first arc is inverse arc
 		int pos = 0;
 		boolean viaWritten = false;
 		for (int i = 0; i < numArcs; i++){
 			RouteArc arc = arcs.get(i);
+			// the arcs must have a specific order and direction
+			// first arc: dest is from node , last arc: dest is to node
+			// if there only two arcs, both will have the via node as source node.
+			// For more n via nodes, the order is like this: 
+			// from <- via(1) <- via(2) <- ... <- this via node -> via( n-1) -> via(n) -> to
+			if (arc.isInternal())
+				offsets[pos++] = calcOffset(arc.getDest(), tableOffset);
+			else 
+				offsets[pos++] = arc.getIndexB();
 			if (arc.getSource() == viaNode){
-				if (arc.isInternal())
-					offsets[pos++] = calcOffset(arc.getDest(), tableOffset);
-				else 
-					offsets[pos++] = arc.getIndexB();
+				// there will be two nodes with source node = viaNode, but we write the source only once
 				if (!viaWritten){
 					offsets[pos++] = calcOffset(viaNode, tableOffset);
 					viaWritten = true;
 				}
-			} else {
-				if (arc.isInternal())
-					offsets[pos++] = calcOffset(arc.getDest(), tableOffset);
-				else 
-					offsets[pos++] = arc.getIndexB();
 			}
 		}
-//		for (int i = 1; i < offsets.length; i++){
-//			if (offsets[i-1] == offsets[i]){
-//				assert false : "failed to calculate offsets for restriction at via node "
-//						+ viaNode.getCoord()
-//						+ "(" + viaNode.getCoord().toDegreeString() + ")";
-//			}
-//		}
+
 		for (int offset : offsets)
 			writer.putChar((char) offset);
 

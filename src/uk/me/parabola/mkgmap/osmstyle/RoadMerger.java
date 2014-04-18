@@ -45,7 +45,8 @@ public class RoadMerger {
 	private static final double MAX_MERGE_ANGLE = 130d;
 	
 	/** maps which coord of a way(id) are restricted - they should not be merged */
-	private final MultiIdentityHashMap<Coord, Long> restrictions;
+	private final MultiIdentityHashMap<Coord, Long> restrictions = new MultiIdentityHashMap<Coord, Long>();
+
 	/** Contains a list of all roads (GType + Way) */
 	private final List<Road> roads;
 
@@ -361,9 +362,7 @@ public class RoadMerger {
 		}
 	}
 
-	public RoadMerger(List<Way> ways, List<GType> gtypes,
-			List<RestrictionRelation> restrictions,
-			List<Relation> throughRouteRelations) {
+	public RoadMerger(List<Way> ways, List<GType> gtypes) {
 		assert ways.size() == gtypes.size();
 
 		this.roads = new ArrayList<Road>(ways.size());
@@ -373,22 +372,25 @@ public class RoadMerger {
 				roads.add(new Road(i, ways.get(i), gtypes.get(i)));
 		}
 
-		this.restrictions = new MultiIdentityHashMap<Coord, Long>();
-		workoutRestrictionRelations(restrictions);
-		workoutThroughRoutes(throughRouteRelations);
 	}
 
 	/**
-	 * We must not merge roads at via points of restriction relations.
+	 * We must not merge roads at via points of restriction relations
+	 * if the way is referenced in the restriction.
 	 * @param restrictionRels
 	 */
 	private void workoutRestrictionRelations(List<RestrictionRelation> restrictionRels) {
 		for (RestrictionRelation rel : restrictionRels) {
-			if (!rel.isValid()) 
-				continue;
+			Set<Long> restrictionWayIds = rel.getWayIds();
 			for (Coord via: rel.getViaCoords()){
-				for (Long wayId : rel.getConnectedWayIds(via))
-					restrictions.add(via, wayId);
+				HashSet<Road> roadAtVia = new HashSet<>();
+				roadAtVia.addAll(startPoints.get(via));
+				roadAtVia.addAll(endPoints.get(via));
+				for (Road r: roadAtVia){
+					long wayId = r.getWay().getId();
+					if (restrictionWayIds.contains(wayId))
+						restrictions.add(via, wayId);
+				}
 			}
 		}
 	}
@@ -493,7 +495,9 @@ public class RoadMerger {
 	 * @param resultingWays list for the merged (and not mergeable) ways
 	 * @param resultingGTypes list for the merged (and not mergeable) GTypes
 	 */
-	public void merge(List<Way> resultingWays, List<GType> resultingGTypes) {
+	public void merge(List<Way> resultingWays, List<GType> resultingGTypes,
+			List<RestrictionRelation> restrictions,
+			List<Relation> throughRouteRelations) {
 
 		int noRoadsBeforeMerge = this.roads.size();
 		int noMerges = 0;
@@ -520,6 +524,8 @@ public class RoadMerger {
 			startPoints.add(start, road);
 			endPoints.add(end, road);
 		}
+		workoutRestrictionRelations(restrictions);
+		workoutThroughRoutes(throughRouteRelations);
 
 		// a set of all points where no more merging is possible
 		Set<Coord> mergeCompletedPoints = Collections.newSetFromMap(new IdentityHashMap<Coord, Boolean>());

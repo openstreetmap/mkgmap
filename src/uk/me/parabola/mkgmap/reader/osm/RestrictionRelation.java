@@ -15,6 +15,7 @@ package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -34,23 +35,31 @@ import uk.me.parabola.mkgmap.general.MapCollector;
 /**
  * Representation of an OSM turn restriction
  *
- * @author Mark Burton
+ * @author Mark Burton, GerdP
  */
 public class RestrictionRelation extends Relation {
     private static final Logger log = Logger.getLogger(RestrictionRelation.class);
 
-    private List<Way> fromWays = new ArrayList<>();
-    private List<Way> toWays = new ArrayList<>();
-    private List<Way> viaWays = new ArrayList<>();
-    private List<Coord> viaPoints = new ArrayList<>();
+    private List<Long> fromWayIds = new ArrayList<>(2);
+    private List<Long> toWayIds = new ArrayList<>(2);
+    private List<Long> viaWayIds = new ArrayList<>(2);
+    private List<Coord> viaPoints = new ArrayList<>(2);
     private Coord viaCoord;
     private String restriction;
 	private byte exceptMask;
-	
+	private char dirIndicator; 
     private String messagePrefix;
     private boolean valid;
     private boolean evalWasCalled;
-
+    
+	// These tags are not loaded by default but if they exist issue a warning
+	final static String[] unsupportedTags = { "day_on", "day_off", "hour_on", "hour_off" };
+	
+	final static List<String> supportedRestrictions = Arrays.asList(
+		"no_right_turn", "no_left_turn", "no_u_turn", "no_straight_on", 
+		"only_right_turn", "only_left_turn", "only_straight_on", 
+		"no_entry", "no_exit"	     
+	);
 	/**
 	 * Create an instance based on an existing relation.  We need to do
 	 * this because the type of the relation is not known until after all
@@ -63,24 +72,34 @@ public class RestrictionRelation extends Relation {
 		copyTags(other);
 		for (Map.Entry<String, Element> pair : other.getElements()) {
 			addElement(pair.getKey(), pair.getValue());
-			
 		}
 	}
 	
 	/**
-	 * 
+	 * The evaluation should happen after style processing.
+	 * Normally this is called from the {@link RelationStyleHook}
+	 * Performs also diverse plausibility checks.
+	 * @param bbox tile boundary
 	 */
-	public void eval(){
-		evalWasCalled = true;
-		final String browseURL = toBrowseURL();
-		fromWays.clear();
-		viaWays.clear();
-		toWays.clear();
+	public void eval(Area bbox){
+		if (evalWasCalled){
+			log.error(messagePrefix,"internal error: eval() was already called");
+			fromWayIds.clear();
+			toWayIds.clear();
+			viaWayIds.clear();
+		}
 		if (getTag("type") == null){
-      log.info(messagePrefix, "type tag was removed, relation is ignored");				
+			// style removed the tag
+			log.info(messagePrefix, "type tag was removed, relation is ignored");				
 			valid = false;
 			return;
 		}
+		
+	    List<Way> fromWays = new ArrayList<>();
+	    List<Way> toWays = new ArrayList<>();
+	    List<Way> viaWays = new ArrayList<>();
+		evalWasCalled = true;
+		final String browseURL = toBrowseURL();
 		valid = true;
 		// find out what kind of restriction we have and to which vehicles it applies
 		exceptMask = RouteRestriction.EXCEPT_FOOT | RouteRestriction.EXCEPT_EMERGENCY;
@@ -108,34 +127,39 @@ public class RestrictionRelation extends Relation {
 				valid = false;
 			}
 		}
-    if (specifc_type == null){
-				log.warn(messagePrefix, "no valid restriction tag found");				
-				valid = false;
-        return;
-    }
+		if (specifc_type == null){
+			// style removed the tag
+			log.info(messagePrefix, "no valid restriction tag found");				
+			valid = false;
+			return;
+		}
 		restriction = specifc_type.trim();
+		
 		messagePrefix = "Turn restriction (" + restriction + ") " + browseURL;
-		if(restriction.equals("no_left_turn") ||
-				   restriction.equals("no_right_turn") ||
-				   restriction.equals("no_straight_on") ||
-				   restriction.equals("no_u_turn") ||
-				   restriction.startsWith("no_turn") ||
-				   restriction.equals("no_entry") ||
-				   restriction.equals("no_exit") ) {
-			if(restriction.startsWith("no_turn"))
-				log.warn(messagePrefix, "has bad type '" + restriction + "' it should be of the form no_X_turn rather than no_turn_X");
-
-		}  else if(restriction.equals("only_left_turn") ||
-				restriction.equals("only_right_turn") ||
-				restriction.startsWith("only_straight") ||
-				restriction.startsWith("only_turn")) {
-			if(restriction.startsWith("only_turn"))
-				log.warn(messagePrefix, "has bad type '" + restriction + "' it should be of the form only_X_turn rather than only_turn_X");
-		} else {
+		if (supportedRestrictions.contains(restriction) == false){
 			log.warn(messagePrefix, "ignoring unsupported restriction type '" + restriction + "'");
 			valid = false;
 			return;
 		}
+		
+		String dirInfo = "";
+		if (restriction.contains("left"))
+			dirInfo += "l";
+		if (restriction.contains("right"))
+			dirInfo += "r";
+		if (restriction.contains("straight"))
+			dirInfo += "s";
+		if (restriction.endsWith("u_turn"))
+			dirInfo += "u";
+		if (dirInfo.length() > 1){
+			log.warn(messagePrefix, "ignoring unsupported restriction type '" + restriction + "'");
+			valid = false;
+			return;
+		} else if (dirInfo.length() == 1){
+			dirIndicator = dirInfo.charAt(0);
+		} else 
+			dirIndicator = '?';
+		
 		String type = getTag("type");
 		if (type.startsWith("restriction:")){
 			exceptMask = (byte) 0xff;
@@ -146,6 +170,7 @@ public class RestrictionRelation extends Relation {
 				return;
 			}
 		}
+		
 		String except = getTag("except");
 		if(except != null) {
 			for(String vehicle : except.split("[,;]")) { // be nice
@@ -154,12 +179,6 @@ public class RestrictionRelation extends Relation {
 			}
 		}
 		
-		// These tags are not loaded by default but if they exist issue a warning
-		String[] unsupportedTags = {
-		    "day_on",
-		    "day_off",
-		    "hour_on",
-		    "hour_off" };
 		for (String unsupportedTag : unsupportedTags) {
 			if (getTag(unsupportedTag) != null) {
 				log.warn(messagePrefix, "ignoring unsupported '" + unsupportedTag + "' tag");
@@ -271,12 +290,13 @@ public class RestrictionRelation extends Relation {
 				log.warn(messagePrefix, "lacks 'via' node and the 'from' (" + fromWay.toBrowseURL() + ") and 'to' (" + toWay.toBrowseURL() + ") ways don't connect");
 				valid = false;
 			} else {
-				log.warn(messagePrefix, "lacks 'via' node (guessing it should be at", viaCoord.toOSMURL() + ", why don't you add it to the OSM data?)");				
+				if (fromPoints.get(0) != viaCoord && fromPoints.get(fromPoints.size()-1) != viaCoord ||
+						toPoints.get(0) != viaCoord && toPoints.get(toPoints.size()-1) != viaCoord){
+					log.warn(messagePrefix, "lacks 'via' node and the 'from' (" + fromWay.toBrowseURL() + ") and 'to' (" + toWay.toBrowseURL() + ") ways don't connect at an end point");
+					valid = false;
+				} else
+					log.warn(messagePrefix, "lacks 'via' node (guessing it should be at", viaCoord.toOSMURL() + ", why don't you add it to the OSM data?)");				
 			}
-		}
-		if(restriction == null) {
-			log.warn(messagePrefix, "lacks 'restriction' tag (e.g. no_left_turn)");
-			valid = false;
 		}
 
 		if(fromWays.isEmpty() ) {
@@ -290,12 +310,12 @@ public class RestrictionRelation extends Relation {
 		}
 
 		if ((fromWays.size() > 1 || toWays.size() > 1) && viaWays.isEmpty() == false){
-			log.warn(messagePrefix, "via way(s) are not supported with multiple from or to ways");
+			log.warn(messagePrefix, "'via' way(s) are not supported with multiple 'from' or 'to' ways");
 			valid = false;
 		}
 		if (toWays.size() == 1 && fromWays.size() == 1 && viaWays.isEmpty()){
 			if ("no_u_turn".equals(restriction) && fromWays.get(0).equals(toWays.get(0))){
-				log.warn(messagePrefix,"no_u_turn with equal 'from' and 'to' way is ignored");
+				log.warn(messagePrefix,"no_u_turn with equal 'from' and 'to' way and via node is ignored");
 				valid = false;
 			}
 		}
@@ -308,7 +328,9 @@ public class RestrictionRelation extends Relation {
 					valid = false;
 				} else {
 					if (way.getPoints().get(0) == way.getPoints().get(way.getPoints().size()-1)){
-						log.warn(messagePrefix, "way", way.toBrowseURL(), "starts and ends at same node, this is not supported");
+						if (ways == toWays && dirIndicator != '?')
+							continue; // we try to determine the correct part in RoadNetwork 
+						log.warn(messagePrefix, "way", way.toBrowseURL(), "starts and ends at same node, don't know which one to use");
 						valid = false;
 					}
 				}
@@ -316,15 +338,105 @@ public class RestrictionRelation extends Relation {
 		}
 		if (!valid)
 			return;
+		if (viaPoints.isEmpty() == false)
+			viaCoord = viaPoints.get(0);
+		
+		if(viaCoord == null && viaWays.isEmpty()) {
+			valid = false;
+			return;
+		}
+		
+		viaPoints.clear();
+		Coord v1 = viaCoord;
+		Coord v2 = viaCoord;
 		if (viaWays.isEmpty() == false){
-			for (Way way:viaWays){
-				way.getPoints().get(0).setViaNodeOfRestriction(true);
-				way.getPoints().get(way.getPoints().size()-1).setViaNodeOfRestriction(true);
-				way.setViaWay(true);
+			v1 = viaWays.get(0).getPoints().get(0);
+			v2 = viaWays.get(0).getPoints().get(viaWays.get(0).getPoints().size()-1);
+		}
+		// check if all from ways are connected at the given via point or with the given via ways
+		for (Way fromWay : fromWays){
+			Coord e1 = fromWay.getPoints().get(0);
+			Coord e2 = fromWay.getPoints().get(fromWay.getPoints().size() - 1);
+			if (e1 == v1 || e2 == v1)
+				viaCoord = v1;
+			else if (e1 == v2 || e2 == v2)
+				viaCoord = v2;
+			else {
+				log.warn(messagePrefix, "'from' way", fromWay.toBrowseURL(), "doesn't start or end at 'via' node or way");
+				valid = false;
+			} 
+		}
+		if (!valid)
+			return;
+		viaPoints.add(viaCoord);
+		// check if via ways are connected in the given order
+		for (int i = 0; i < viaWays.size();i++){
+			Way way = viaWays.get(i);
+			Coord v = viaPoints.get(viaPoints.size()-1);
+			if (way.getPoints().get(0) == v)
+				v2 = way.getPoints().get(way.getPoints().size()-1);
+			else if (way.getPoints().get(way.getPoints().size()-1) == v)
+				v2 = way.getPoints().get(0);
+			else {
+				log.warn(messagePrefix, "'via' way", way.toBrowseURL(), "doesn't start or end at",v.toDegreeString());
+				valid = false;
+			}
+			viaPoints.add(v2);
+		}
+		
+		// check if all via points are inside the bounding box
+		int countInside = 0;
+		for (Coord via: viaPoints){
+			if(bbox.contains(via))
+				++countInside;
+		}
+		if (countInside == 0)
+			valid = false;
+		else if (countInside > 0 && countInside < viaPoints.size()){
+			log.warn(messagePrefix,"via way crosses tile boundary. Don't know how to save that, ignoring it");
+			valid = false;
+		}
+		
+		if (!valid)
+			return;
+		// check if all to ways are connected to via point or last via way
+		Coord lastVia = viaPoints.get(viaPoints.size()-1);
+		for (Way toWay : toWays){
+			Coord e1 = toWay.getPoints().get(0);
+			Coord e2 = toWay.getPoints().get(toWay.getPoints().size() - 1);
+			if(e1 != lastVia && e2 != lastVia) {
+				log.warn(messagePrefix, "'to' way", toWay.toBrowseURL(), "doesn't start or end at 'via' node or way");
+				valid = false;
+			} 
+		}
+		if (valid && !viaWays.isEmpty() && restriction.startsWith("only")){
+			log.warn(messagePrefix, "check: 'via' way(s) are used in",restriction,"restriction");
+		}
+		if (valid){
+			// make sure that via way(s) don't appear in the from or to lists 
+			for (Way w: viaWays){
+				if (fromWays.contains(w)){
+					log.warn(messagePrefix, "'via' way",w.toBrowseURL(),"appears also as 'from' way");
+					valid = false;
+				}
+				if (toWays.contains(w)){
+					log.warn(messagePrefix, "'via' way",w.toBrowseURL(),"appears also as 'to' way");
+					valid = false;
+				}
 			}
 		}
-		if (viaCoord != null) 
-			viaCoord.setViaNodeOfRestriction(true);
+		if (valid){
+			for (Way w: fromWays)
+				fromWayIds.add(w.getId());
+			for (Way w: toWays)
+				toWayIds.add(w.getId());
+			for (Way w: viaWays){
+				w.setViaWay(true);
+				viaWayIds.add(w.getId());
+			}
+			for (Coord v: viaPoints)
+				v.setViaNodeOfRestriction(true);
+		}
 	}
 
 	/** 
@@ -366,12 +478,12 @@ public class RestrictionRelation extends Relation {
 		return true;			
 	}
 	
-	public boolean isFromWay(Way way) {
-		return fromWays.contains(way);
+	public boolean isFromWay(long wayId) {
+		return fromWayIds.contains(wayId);
 	}
 
-	public boolean isToWay(Way way) {
-		return toWays.contains(way);
+	public boolean isToWay(long wayId) {
+		return toWayIds.contains(wayId);
 	}
 
 	public void replaceViaCoord(Coord oldP, Coord newP) {
@@ -387,89 +499,9 @@ public class RestrictionRelation extends Relation {
 		}
 	}
 	
-	public boolean isValid() {
-		if (!evalWasCalled){
-			log.warn("internal error: RestrictionRelation.isValid() is called before eval()");
-			eval();
-		}
-		if(!valid)
-			return false;
-		
-		if (viaPoints.isEmpty() == false)
-			viaCoord = viaPoints.get(0);
-		
-		if(viaCoord == null && viaWays.isEmpty()) {
-			valid = false;
-			return false;
-		}
-		
-		viaPoints.clear();
-		Coord v1 = viaCoord;
-		Coord v2 = viaCoord;
-		if (viaWays.isEmpty() == false){
-			v1 = viaWays.get(0).getPoints().get(0);
-			v2 = viaWays.get(0).getPoints().get(viaWays.get(0).getPoints().size()-1);
-		}
-		// check if all from ways are connected at the given via point or with the given via ways
-		for (Way fromWay : fromWays){
-			Coord e1 = fromWay.getPoints().get(0);
-			Coord e2 = fromWay.getPoints().get(fromWay.getPoints().size() - 1);
-			if (e1 == v1 || e2 == v1)
-				viaCoord = v1;
-			else if (e1 == v2 || e2 == v2)
-				viaCoord = v2;
-			else {
-				log.warn(messagePrefix, "'from' way", fromWay.toBrowseURL(), "doesn't start or end at 'via' node or way");
-				valid = false;
-			} 
-		}
-		if (!valid)
-			return false;
-		viaPoints.add(viaCoord);
-		// check if via ways are connected in the given order
-		for (int i = 0; i < viaWays.size();i++){
-			Way way = viaWays.get(i);
-			Coord v = viaPoints.get(viaPoints.size()-1);
-			if (way.getPoints().get(0) == v)
-				v2 = way.getPoints().get(way.getPoints().size()-1);
-			else if (way.getPoints().get(way.getPoints().size()-1) == v)
-				v2 = way.getPoints().get(0);
-			else {
-				log.warn(messagePrefix, "'via' way", way.toBrowseURL(), "doesn't start or end at",v.toDegreeString());
-				valid = false;
-			}
-			viaPoints.add(v2);
-		}
-		if (!valid)
-			return false;
-		// check if all to ways are connected to via point or last via way
-		Coord lastVia = viaPoints.get(viaPoints.size()-1);
-		for (Way toWay : toWays){
-			Coord e1 = toWay.getPoints().get(0);
-			Coord e2 = toWay.getPoints().get(toWay.getPoints().size() - 1);
-			if(e1 != lastVia && e2 != lastVia) {
-				log.warn(messagePrefix, "'to' way", toWay.toBrowseURL(), "doesn't start or end at 'via' node or way");
-				valid = false;
-			} 
-		}
-		if (valid && !viaWays.isEmpty() && isOnlyXXXRestriction()){
-			log.warn(messagePrefix, "check: 'via' way(s) are used in",restriction,"restriction");
-		}
-		if (valid && viaWays.size() > 1){
-			log.warn(messagePrefix, "sorry, multiple via ways are not (yet) supported");
-			valid = false;
-		}
-		if (!valid)
-			return false;
-		for (Coord v: viaPoints)
-			v.setViaNodeOfRestriction(true);
-		return valid;
-	}
-
 	public void addRestriction(MapCollector collector, IdentityHashMap<Coord, CoordNode> nodeIdMap) {
 		if (!valid)
 			return;
-		
 	    List<CoordNode> viaNodes = new ArrayList<>();
 		for (Coord v: viaPoints){
 			CoordNode vn = nodeIdMap.get(v);
@@ -480,93 +512,46 @@ public class RestrictionRelation extends Relation {
 			else 
 				viaNodes.add(vn);
 		}
-		List<NodeOnWay> fromNodes = new ArrayList<>(); 
-		for (Way fromWay: fromWays){
-			CoordNode fromNode = findNextNode(fromWay, viaNodes.get(0));
-			if (fromNode == null){
-				log.warn(messagePrefix, "can't find routable 'from' node on 'from' way",fromWay);
-				return;
-			}
-			fromNodes.add(new NodeOnWay(fromNode, fromWay));
+
+		if (viaNodes.size() > 6){
+			log.warn(messagePrefix,"has more than 6 via nodes, this is not supported");
+			return;
 		}
-		Coord currNode = viaNodes.get(0);
-		
-		for (Way viaWay: viaWays){
-			if (viaWay.getPoints().get(0).getId() == 0 || viaWay.getPoints().get(viaWay.getPoints().size()-1).getId() == 0){
-				log.error(messagePrefix, "'via' way", viaWay.toBrowseURL(), "doesn't start or end with CoordNode");
-				return;
-			}
-			Coord nextNode = null;
-			if (viaWay.getPoints().get(0) == currNode)
-				nextNode = viaWay.getPoints().get(viaWay.getPoints().size()-1);
-			else 
-				nextNode = viaWay.getPoints().get(0);
-			Coord co = findNextNode(viaWay, currNode);
-			if (nextNode != co){
-				if (co == null)
-					return;
-				log.warn(messagePrefix, "'via' way", viaWay.toBrowseURL(), "is also connected to other roads between end-points at",co.toDegreeString()); 
-				return;
-			}
-			currNode = nextNode;
-		} 
-		List<NodeOnWay> toNodes = new ArrayList<>(); 
-		for (Way toWay: toWays){
-			CoordNode toNode = findNextNode(toWay, currNode);
-			if (toNode == null){
-				log.warn(messagePrefix, "can't find routable 'to' node on 'to' way",toWay);
-				return;
-			}
-			toNodes.add(new NodeOnWay(toNode, toWay));
-		}
-		
-		if(restriction == null || fromNodes.isEmpty() || toNodes.isEmpty()) {
+		if(restriction == null){
 			log.error("internal error: can't add valid restriction relation", this.getId(), "type", restriction);
 			return;
 		}
-		
+		int addedRestrictions = 0;
 		GeneralRouteRestriction grr;
-		List<Long> viaWayIds = new ArrayList<>();
-		for (Way viaWay : viaWays)
-			viaWayIds.add(viaWay.getId());
 		if(restriction.startsWith("no_")){
-			for (NodeOnWay fromNode : fromNodes){
-				for (NodeOnWay toNode : toNodes){
+			for (long fromWayId : fromWayIds){
+				for (long toWayId : toWayIds){
 					grr = new GeneralRouteRestriction("not", exceptMask, messagePrefix);
-					grr.setFromNode(fromNode.node);
-					grr.setFromWayId(fromNode.way.getId());
-					grr.setToNode(toNode.node);
-					grr.setToWayId(toNode.way.getId());
+					grr.setFromWayId(fromWayId);
+					grr.setToWayId(toWayId);
 					grr.setViaNodes(viaNodes);
 					grr.setViaWayIds(viaWayIds);
-
-					int numAdded = collector.addRestriction(grr);
-					if (numAdded == 0){
-						return; // message was created before
-					}
-					if(restriction.startsWith("no_turn"))
-						log.warn(messagePrefix, "has bad type '" + restriction + "' it should be of the form no_X_turn rather than no_turn_X - I added the restriction anyway - blocks routing to way", toNode.way.toBrowseURL());
-					else 
-						log.info(messagePrefix, restriction, "added - blocks routing to way", toNode.way.toBrowseURL());
+					grr.setDirIndicator(dirIndicator);
+					addedRestrictions += collector.addRestriction(grr);
 				}
 			}
+			if (log.isInfoEnabled())
+				log.info(messagePrefix, restriction, "translated to",addedRestrictions,"img file restrictions");
 		}
 		else if(restriction.startsWith("only_")){
-			log.info(messagePrefix, restriction, "added - allows routing to way", toWays.get(0).toBrowseURL());
 			grr = new GeneralRouteRestriction("only", exceptMask, messagePrefix);
-			grr.setFromNode(fromNodes.get(0).node);
-			grr.setFromWayId(fromNodes.get(0).way.getId());
-			grr.setToNode(toNodes.get(0).node);
-			grr.setToWayId(toNodes.get(0).way.getId());
+			grr.setFromWayId(fromWayIds.get(0));
+			grr.setToWayId(toWayIds.get(0));
 			grr.setViaNodes(viaNodes);
 			grr.setViaWayIds(viaWayIds);
+			grr.setDirIndicator(dirIndicator);
 			int numAdded = collector.addRestriction(grr);
-			if (numAdded == 0){
-				return; // message was created before
-			}
+			if (numAdded > 0)
+				log.info(messagePrefix, restriction, "added - allows routing to way", toWayIds.get(0));
+
 		}
 		else {
-			log.warn(messagePrefix, "has unsupported type '" + restriction + "'");
+			log.error("mkgmap internal error: unknown restriction", restriction);
 		}
 	}
 
@@ -577,135 +562,135 @@ public class RestrictionRelation extends Relation {
 	}
 
 	public String toString() {
-		return "[restriction = " + restriction + ", from = " + fromWays.get(0).toBrowseURL() + ", to = " + toWays.get(0).toBrowseURL() + ", via = " + viaCoord.toOSMURL() + "]";
-	}
-	
-	public boolean isOnlyXXXRestriction(){
-		return restriction.startsWith("only");
+		String s = "[restriction id = " + getId() + "(" + restriction + ")";
+		if (!fromWayIds.isEmpty() && !toWayIds.isEmpty() && viaCoord != null )
+			s += ", from = " + fromWayIds.get(0) + ", to = " + toWayIds.get(0) + ", via = " + viaCoord.toOSMURL() + "]";
+		else 
+			s += "]";
+		return s;
 	}
 	
 	/**
-	 * First next CoordNode on the way, starting search at start
-	 * @param way the way
-	 * @param currNode the start node (
-	 * @return the next node or null if none was found
+	 * @return true if restriction is usable
 	 */
-	private CoordNode findNextNode(Way way, Coord currNode){
-		List<Coord> points = way.getPoints();
-		if (points.get(0) == currNode){
-			for (int i = 1; i < points.size(); i++){
-				Coord co = points.get(i);
-				if (co.getId() != 0)
-					return (CoordNode)co;
-			}
-		} else if (points.get(points.size()-1) == currNode){
-			for (int i = points.size()-2; i >= 0; --i){
-				Coord co = points.get(i);
-				if (co.getId() != 0)
-					return (CoordNode)co;
-			}
-		} else 
-			log.error(messagePrefix,"way",way.toBrowseURL(),"doesn't have required node");
-			
-		return null;
-	}
-
-	/**
-	 * Check if the via node(s) of the restriction are all inside 
-	 * or on the bbox and if the restriction itself is valid. 
-	 * @param bbox
-	 * @return true if restriction is okay
-	 */
-	public boolean isValid(Area bbox) {
-		if (!isValid())
-			return false;
-		if (viaCoord != null && bbox.contains(viaCoord) == false)
-			return false;
-		int countInside = 0;
-		for (Way viaWay : viaWays){
-			if(bbox.contains(viaWay.getPoints().get(0)))
-				++countInside;
-			if(bbox.contains(viaWay.getPoints().get(viaWay.getPoints().size()-1)))
-				++countInside;
-		}
-		if (countInside > 0 && countInside < viaWays.size() * 2){
-			log.warn(messagePrefix,"via way crosses tile boundary. Don't know how to save that, ignoring it");
-			return false;
-		}
-		return true;
+	public boolean isValid() {
+		assert evalWasCalled;
+		return valid;
 	}
 
 	public List<Coord> getViaCoords() {
+		assert evalWasCalled;
 		return viaPoints;
 	}
 
-	public Set<Long> getConnectedWayIds(Coord via){
-		Set<Long> wayIds = new HashSet<>();
-		for (List<Way> ways : Arrays.asList(fromWays,viaWays,toWays)){
-			for (Way way : ways){
-				List<Coord> points = way.getPoints();
-				if (points.get(0) == via || points.get(points.size()-1) == via)
-					wayIds.add(way.getId());
-			}
-		}
-		return wayIds;
-	}
-	
+	/**
+	 * 
+	 * @return a Set with the OSM IDs of all ways used in the restriction 
+	 */
 	public Set<Long> getWayIds(){
+		assert evalWasCalled;
 		Set<Long> wayIds = new HashSet<>();
-		for (List<Way> ways : Arrays.asList(fromWays,viaWays,toWays)){
-			for (Way way : ways){
-				wayIds.add(way.getId());
-			}
-		}
+		wayIds.addAll(fromWayIds);
+		wayIds.addAll(viaWayIds);
+		wayIds.addAll(toWayIds);
 		return wayIds;
 	}
 	
-	public boolean replaceWay(Way way, Way nWay) {
+	/**
+	 * Replace 
+	 * @param oldWayId
+	 * @param newWayId
+	 * @return
+	 */
+	public boolean replaceWay(long oldWayId, long newWayId) {
+		assert evalWasCalled;
 		boolean matched = false;
-		for (List<Way> ways : Arrays.asList(fromWays,viaWays,toWays)){
+		for (List<Long> ways: Arrays.asList(fromWayIds, viaWayIds, toWayIds)){
 			for (int i = 0; i < ways.size(); i++){
-				if (ways.get(i) == way){
-					ways.set(i, nWay);
+				if (ways.get(i) == oldWayId){
+					ways.set(i, newWayId);
 					matched = true;
 				}
 			}
 		}
-		if (way.isViaWay())
-			nWay.setViaWay(true);
 		return matched;
 	}
 
-	// helper class 
-	private class NodeOnWay{
-		final CoordNode node;
-		final Way way;
-		public NodeOnWay(CoordNode node, Way way) {
-			this.node = node;
-			this.way = way;
-		}
+	/**
+	 * check if restriction is still valid if the way with the given id is not in the map
+	 * @param wayId
+	 * @return
+	 */
+	public boolean isValidWithoputWay(long wayId) {
+		assert evalWasCalled;
+		if (viaWayIds.contains(wayId))
+			return false;
+		fromWayIds.remove(wayId);
+		if (fromWayIds.isEmpty())
+			return false;
+		// else it must be a no_entry restriction which still is valid
+
+		toWayIds.remove(wayId);
+		if (toWayIds.isEmpty())
+			return false;
+		// else it must be a no_exit restriction which still is valid
+		return true;
 	}
 
 	/**
-	 * check if restriction is still valid if the given way is removed
+	 * A via way may be connected to other ways between the end points.
+	 * We have to create a complete path for that. 
 	 * @param way
-	 * @return
+	 * @param nodeIndices
 	 */
-	public boolean isValidWithoputWay(Way way) {
-		if (viaWays.contains(way))
-			return false;
-		if (fromWays.contains(way)){
-			fromWays.remove(way);
-			if (fromWays.isEmpty())
-				return false;
-			// else it must be a no_entry restriction which still is valid
+	public void updateViaWay(Way way, List<Integer> nodeIndices) {
+		if (!valid)
+			return;
+		if (viaWayIds.contains(way.getId()) == false)
+			return;
+		Coord first = way.getPoints().get(nodeIndices.get(0));
+		Coord last = way.getPoints().get(
+				nodeIndices.get(nodeIndices.size() - 1));
+		int posFirst = -1;
+		for (int i = 0; i < viaPoints.size(); i++) {
+			if (first == viaPoints.get(i)) {
+				posFirst = i;
+				break;
+			}
 		}
-		if (toWays.contains(way)){
-			toWays.remove(way);
-			if (toWays.isEmpty())
-				return false;
-			// else it must be a no_exit restriction which still is valid
+		int posLast = -1;
+		for (int i = 0; i < viaPoints.size(); i++) {
+			if (last == viaPoints.get(i)) {
+				posLast = i;
+				break;
+			}
 		}
-		return true;
+		if (posFirst < 0  || posLast < 0 || Math.abs(posLast-posFirst) > 1){
+			log.error(messagePrefix, "internal error: via way doesn't contain expected points");
+			valid = false;
+			return;
+		}
+		List<Coord> midPoints = new ArrayList<>();
+		for (int i = 1; i + 1 < nodeIndices.size(); i++) {
+			midPoints.add(way.getPoints().get(nodeIndices.get(i)));
+		}
+		if (posFirst < posLast)
+			viaPoints.addAll(posFirst + 1, midPoints); 
+		else {
+			Collections.reverse(midPoints);
+			viaPoints.addAll(posLast + 1, midPoints);
+		}
+		
+		int wayPos = viaWayIds.indexOf(way.getId());
+		for (int i = 0; i < midPoints.size(); i++){
+			viaWayIds.add(wayPos+1, way.getId());
+		}
+		if (viaPoints.size() != viaWayIds.size()+1){
+			log.error("internal error: number of via points and via ways no longer fits");
+			valid = false;
+		} else if (viaPoints.size() > 6){
+			log.warn(messagePrefix,"has more than 6 via nodes, this is not supported");
+			valid = false;
+		} 
 	}
 }

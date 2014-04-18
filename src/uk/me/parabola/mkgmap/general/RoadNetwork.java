@@ -18,10 +18,12 @@ package uk.me.parabola.mkgmap.general;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
@@ -55,6 +57,7 @@ public class RoadNetwork {
 	public static final int NO_TRUCK = 7;
 	public static final int NO_MAX = 8;
 
+	private final static int MAX_RESTRICTIONS_ARCS = 7;
 	private final Map<Long, RouteNode> nodes = new LinkedHashMap<Long, RouteNode>();
 
 	// boundary nodes
@@ -131,7 +134,6 @@ public class RoadNetwork {
 					log.error("Road " + road.getRoadDef() + " contains consecutive identical nodes at " + co.toOSMURL() + " - routing will be broken");
 				else if(arcLength == 0)
 					log.warn("Road " + road.getRoadDef() + " contains zero length arc at " + co.toOSMURL());
-
 
 				Coord forwardBearingPoint = coordList.get(lastIndex + 1);
 				if(lastCoord.equals(forwardBearingPoint)) {
@@ -297,6 +299,10 @@ public class RoadNetwork {
 	 * to write them (2014-04-02). 
 	 * Depending on the data in grr we create one or more such restrictions.
 	 * A restriction with 4 (or more) nodes is added to each via node.     
+	 * 
+	 * The OSM restriction gives a from way id and a to way id and one or more 
+	 * via nodes. It is possible that the to-way is a loop, so we have to identify
+	 * the correct arc. 
 	 * @param grr the object that holds the details about the route restriction
 	 */
 	public int addRestriction(GeneralRouteRestriction grr) {
@@ -304,18 +310,6 @@ public class RoadNetwork {
 			return addNoThroughRoute(grr);
 		String sourceDesc = grr.getSourceDesc();
 		
-		long fromId = grr.getFromNode().getId();
-		long toId = grr.getToNode().getId();
-		RouteNode fn = nodes.get(fromId);
-		RouteNode tn = nodes.get(toId);
-		if (fn == null  || tn == null){
-			if (fn == null)
-				log.error(sourceDesc, "can't locate 'from' RouteNode with id", fromId);
-			if (tn == null)
-				log.error(sourceDesc, "can't locate 'to' RouteNode with id", toId);
-			return 0; 
-		}
-
 		List<RouteNode> viaNodes = new ArrayList<>();
 		for (CoordNode via : grr.getViaNodes()){
 			RouteNode vn = nodes.get(via.getId());
@@ -325,30 +319,127 @@ public class RoadNetwork {
 			}
 			viaNodes.add(vn);
 		}
+		
 		long firstViaId = grr.getViaNodes().get(0).getId();
 		long lastViaId = grr.getViaNodes().get(grr.getViaNodes().size()-1).getId();
 		RouteNode firstViaNode = nodes.get(firstViaId);
 		RouteNode lastViaNode = nodes.get(lastViaId);
-		
-		List<RouteArc> fromArcs = firstViaNode.getDirectArcsTo(fn, grr.getFromWayId()); // inverse arcs gets used
-		List<RouteArc> toArcs = lastViaNode.getDirectArcsTo(tn, grr.getToWayId());
-		if (fromArcs.isEmpty() || toArcs.isEmpty()){
-			if (fromArcs.isEmpty())
-				log.error(sourceDesc, "can't locate arc from 'via' node ",firstViaId,"to 'from' node",fromId,"on way",grr.getFromWayId());
-			if (toArcs.isEmpty())
-				log.error(sourceDesc, "can't locate arc from 'via' node ",lastViaId,"to 'to' node",toId,"on way",grr.getToWayId());
+		List<List<RouteArc>> viaArcsList = new ArrayList<>();
+		if (grr.getViaNodes().size() != grr.getViaWayIds().size() + 1){
+			log.error(sourceDesc, "internal error: number of via nodes and via ways doesn't fit");
 			return 0;
 		}
-		
-		List<List<RouteArc>> viaArcsList = new ArrayList<>();
 		for (int i = 1; i < grr.getViaNodes().size(); i++){
 			RouteNode vn = viaNodes.get(i-1);
-			List<RouteArc> viaArcs = vn.getDirectArcsTo(viaNodes.get(i), grr.getViaWayIds().get(i-1));
+			Long viaWayId = grr.getViaWayIds().get(i-1);
+			List<RouteArc> viaArcs = vn.getDirectArcsTo(viaNodes.get(i), viaWayId);
 			if (viaArcs.isEmpty()){
-				log.error(sourceDesc, "can't locate arc from 'via' node ",vn.getCoord().getId(),"to next 'via' node on way",grr.getViaWayIds().get(i));
+				log.error(sourceDesc, "can't locate arc from 'via' node at",vn.getCoord().toOSMURL(),"to next 'via' node on way",viaWayId);
 				return 0;
 			}
 			viaArcsList.add(viaArcs);
+		}
+		
+		// determine the from node and arc(s)
+		long fromId = 0;
+		RouteNode fn = null;
+		if (grr.getFromNode() != null){
+			fromId = grr.getFromNode().getId();
+			// polish input data provides id
+			fn = nodes.get(fromId);
+			if (fn == null ){
+				log.error(sourceDesc, "can't locate 'from' RouteNode with id", fromId);
+				return 0; 
+			}
+		} else {
+			List<RouteArc> possibleFromArcs = firstViaNode.getDirectArcsOnWay(grr.getFromWayId());
+			for (RouteArc arc : possibleFromArcs){
+				if (fn == null)
+					fn = arc.getDest();
+				else if (fn != arc.getDest()){
+					log.warn(sourceDesc, "found different 'from' arcs for way",grr.getFromWayId(),"restriction is ignored");
+					return 0;
+				}
+			}
+			if (fn == null){
+				log.warn(sourceDesc, "can't locate 'from' RouteNode for 'from' way", grr.getFromWayId());
+				return 0;
+			} else 
+				fromId = fn.getCoord().getId();
+		}
+		List<RouteArc> fromArcs = fn.getDirectArcsTo(firstViaNode, grr.getFromWayId()); 
+		if (fromArcs.isEmpty()){
+			log.error(sourceDesc, "can't locate arc from 'from' node ",fromId,"to 'via' node",firstViaId,"on way",grr.getFromWayId());
+			return 0;
+		}
+		
+		// a bit more complex: determine the to-node and arc(s) 
+		RouteNode uTurnNode = (viaNodes.size() > 1) ? viaNodes.get(viaNodes.size()-2): fn;
+		long uTurnWay = (viaNodes.size() > 1) ? grr.getViaWayIds().get(grr.getViaWayIds().size()-1) : grr.getFromWayId(); 
+		
+		RouteNode tn = null;
+		long toId = 0; 
+		List<RouteArc> toArcs = new ArrayList<>();
+		if (grr.getToNode() != null){ 
+			// polish input data provides id
+			toId = grr.getToNode().getId();
+			tn = nodes.get(toId);
+			if (tn == null ){
+				log.error(sourceDesc, "can't locate 'to' RouteNode with id", toId);
+				return 0; 
+			}
+		} else {
+			// we can have multiple arcs between last via node and to node. The 
+			// arcs can be on the same OSM way or on different OSM ways.
+			// We can have multiple arcs with different RoadDef objects that refer to the same 
+			// OSM way id. The direction indicator tells us what arc is probably meant.
+			List<RouteArc> possibleToArcs = lastViaNode.getDirectArcsOnWay(grr.getToWayId());
+			RouteArc fromArc = fromArcs.get(0);
+
+			boolean ignoreAngle = false;
+			if (fromArc.getLengthInMeter() <= 0.0001)
+				ignoreAngle = true;
+			if (grr.getDirIndicator() == '?')
+				ignoreAngle = true;
+			log.info(sourceDesc, "found", possibleToArcs.size(), "candidates for to-arc");
+
+			// group the available arcs by angle 
+			Map<Integer, List<RouteArc>> angleMap = new TreeMap<>();
+			for (RouteArc arc : possibleToArcs){
+				if (arc.getLengthInMeter() <= 0.0001)
+					ignoreAngle = true;
+				Integer angle = Math.round(getAngle(fromArc, arc));
+				List<RouteArc> list = angleMap.get(angle);
+				if (list == null){
+					list = new ArrayList<>();
+					angleMap.put(angle, list);
+				}
+				list.add(arc);
+			}
+
+			// find the group that fits best 
+			Iterator<Entry<Integer, List<RouteArc>>> iter = angleMap.entrySet().iterator();
+			Integer bestAngle = null;
+			while (iter.hasNext()){
+				Entry<Integer, List<RouteArc>> entry = iter.next();
+				if (ignoreAngle || matchDirectionInfo(entry.getKey(), grr.getDirIndicator()) ){
+					if (bestAngle == null)
+						bestAngle = entry.getKey();
+					else {
+						bestAngle = getBetterAngle(bestAngle, entry.getKey(), grr.getDirIndicator());
+					}
+				}
+			}
+			
+			if (bestAngle == null){
+				log.warn(sourceDesc,"the angle of the from and to way don't match the restriction");
+				return 0;
+			} else 
+				toArcs = angleMap.get(bestAngle);
+		}
+		if (toArcs.isEmpty()){
+			log.error(sourceDesc, "can't locate arc from 'via' node ",lastViaId,"to 'to' node",toId,"on way",grr.getToWayId());
+			return 0;
 		}
 		
 		List<RouteArc> badArcs = new ArrayList<>();
@@ -362,10 +453,8 @@ public class RoadNetwork {
 			// this is the inverse logic, grr gives the allowed path, we have to find the others
 			int uTurns = 0;
 			
-			RouteNode uTurnNode = (viaNodes.size() > 1) ? viaNodes.get(viaNodes.size()-2): fn;
-			long uTurnWay = (viaNodes.size() > 1) ? grr.getViaWayIds().get(grr.getViaWayIds().size()-1) : grr.getFromWayId(); 
 			for (RouteArc badArc : lastViaNode.arcsIteration()){
-				if (!badArc.isDirect() || badArc.getRoadDef().getId() == grr.getToWayId()) 
+				if (!badArc.isDirect() || toArcs.contains(badArc))
 					continue;
 				if (badArc.getDest() == uTurnNode && badArc.getRoadDef().getId() == uTurnWay){
 					// ignore u-turn
@@ -382,11 +471,18 @@ public class RoadNetwork {
 				return 0;
 			}
 		}
+		
 		// create all possible paths for which the restriction applies 
 		List<List<RouteArc>> arcLists = new ArrayList<>();
 		arcLists.add(fromArcs);
 		arcLists.addAll(viaArcsList);
 		arcLists.add(badArcs);
+		if (arcLists.size() > MAX_RESTRICTIONS_ARCS){
+			log.warn(sourceDesc, "has more than", MAX_RESTRICTIONS_ARCS, "arcs, this is not supported");
+			return 0;
+		}
+		
+		// remove arcs which cannot be travelled by the vehicles listed in the restriction
 		for (int i = 0; i < arcLists.size(); i++){
 			List<RouteArc> arcs =  arcLists.get(i);
 			int countNoEffect = 0;
@@ -398,7 +494,7 @@ public class RoadNetwork {
 					arcs.remove(j);
 				}
 				else if (arc.getRoadDef().isOneway()){
-					if (i == 0 && arc.isForward() || i > 0 && !arc.isForward()){
+					if (!arc.isForward()){
 						countOneway++;
 						arcs.remove(j);
 					}
@@ -427,6 +523,10 @@ public class RoadNetwork {
 				return 0;
 			}
 		}
+		
+		// determine all possible combinations of arcs. In most cases,
+		// this will be 0 or one, but if the style creates multiple roads for one
+		// OSM way, this can be a larger number
 		int numCombis = 1;
 		int [] indexes = new int[arcLists.size()];
 		for (int i = 0; i < indexes.length; i++){
@@ -438,16 +538,17 @@ public class RoadNetwork {
 		for (int i = 0; i < numCombis; i++){
 			for (RouteNode vn : viaNodes){
 				path.clear();
+				boolean viaNodeFound = false;
 				int pathNoAccessMask = 0;
 				for (int j = 0; j < indexes.length; j++){
 					RouteArc arc = arcLists.get(j).get(indexes[j]);
-					pathNoAccessMask |= arc.getRoadDef().getTabAAccess();
-					if (arc.getDest() != vn)
-						path.add(arc);
-					else {
-						RouteArc reverseArc = vn.getDirectArcTo(arc.getSource(), arc.getRoadDef());
-						path.add(reverseArc);
+					if (arc.getDest() == vn || viaNodeFound == false){
+						arc = getReverseArc(arc);
+						if (arc.getSource() == vn)
+							viaNodeFound = true;
 					}
+					pathNoAccessMask |= arc.getRoadDef().getTabAAccess();
+					path.add(arc);
 				}
 				if (isUsable(pathNoAccessMask, grr.getExceptionMask())){
 					vn.addRestriction(new RouteRestriction(vn, path, grr.getExceptionMask()));
@@ -463,9 +564,11 @@ public class RoadNetwork {
 				}
 			}
 		}
+
+		// double check
 		if (indexes[0] != arcLists.get(0).size())
 			log.error(sourceDesc, " failed to generate all possible paths");
-		log.info(sourceDesc, "added",added,"route restrictions to img file");
+		log.info(sourceDesc, "added",added,"route restriction(s) to img file");
 		return added;
 	}
 
@@ -523,14 +626,22 @@ public class RoadNetwork {
 			return 0;
 		}
 		int added = 0;
+		
 		for (RouteArc out: vn.arcsIteration()){
 			if (!out.isDirect())
 				continue;
+			int pathNoAccessMask = out.getRoadDef().getTabAAccess();
 			for (RouteArc in: vn.arcsIteration()){
-				if (!in.isDirect() || in == out)
+				if (!in.isDirect() || in == out || in.getDest() == out.getDest())
 					continue;
-				vn.addRestriction(new RouteRestriction(vn, Arrays.asList(in,out), grr.getExceptionMask()));
-				added++;
+				pathNoAccessMask |= in.getRoadDef().getTabAAccess();
+				if (isUsable(pathNoAccessMask, grr.getExceptionMask())){
+					vn.addRestriction(new RouteRestriction(vn, Arrays.asList(in,out), grr.getExceptionMask()));
+					added++;
+				} else {
+					if (log.isDebugEnabled())
+						log.debug(grr.getSourceDesc(),"ignored no-through-route",in,"to",out);
+				}
 			}
 		}
 		return added;
@@ -542,5 +653,95 @@ public class RoadNetwork {
 
 		node.addThroughRoute(roadIdA, roadIdB);
 	}
-
+	
+	/**
+	 * Calculate the "angle" between to arcs. The arcs may not be connected.
+	 * We do this by "virtually" moving the toArc so that its source 
+	 * node lies on the destination node of the from arc.
+	 * This makes only sense if move is not over a large distance, we assume that this 
+	 * is the case as via ways should be short. 
+	 * @param fromArc arc with from node as source and first via node as destination
+	 * @param toArc arc with last via node as source
+	 * @return angle at in degree [-180;180]
+	 */
+	private float getAngle(RouteArc fromArc, RouteArc toArc){
+		// note that the values do not depend on the isForward() attribute
+		float headingFrom = fromArc.getFinalHeading();
+		float headingTo = toArc.getInitialHeading();
+		float angle = headingTo - headingFrom;
+		while(angle > 180)
+			angle -= 360;
+		while(angle < -180)
+			angle += 360;
+		return angle;
+	}
+	
+	private RouteArc getReverseArc(RouteArc arc){
+		return arc.getDest().getDirectArcTo(arc.getSource(), arc.getRoadDef());
+	}
+		
+	/**
+	 * Find the angle that comes closer to the direction indicated.
+	 * 
+	 * @param angle1 1st angle -180:180 degrees
+	 * @param angle2 2nd angle -180:180 degrees
+	 * @param dirIndicator l:left, r:right, u:u_turn, s: straight_on
+	 * @return
+	 */
+	private Integer getBetterAngle (Integer angle1, Integer angle2, char dirIndicator){
+		switch (dirIndicator){
+		case 'l':
+			if (Math.abs(-90-angle2) < Math.abs(-90-angle1))
+				return angle2; // closer to -90
+			break;
+		case 'r':
+			if (Math.abs(90-angle2) < Math.abs(90-angle1))
+				return angle2; // closer to 90
+			break;
+		case 'u': 
+			double d1 = (angle1 < 0 ) ? -180-angle1 : 180-angle1; 
+			double d2 = (angle2 < 0 ) ? -180-angle2 : 180-angle2; 
+			if (Math.abs(d2) < Math.abs(d1))
+				return angle2; // closer to -180
+			break;
+		case 's': 
+			if (Math.abs(angle2) < Math.abs(angle1))
+				return angle2; // closer to 0
+			break;
+		}
+		
+		return angle1;
+	}
+	
+	/**
+	 * Check if angle is in the range indicated by the direction
+	 * @param angle the angle -180:180 degrees
+	 * @param dirIndicator l:left, r:right, u:u_turn, s: straight_on 
+	 * @return
+	 */
+	private boolean matchDirectionInfo (float angle, char dirIndicator){
+		switch (dirIndicator){
+		case 'l':
+			if (angle < -3 && angle > - 177)
+				return true;
+			break;
+		case 'r':
+			if (angle > 3 && angle < 177)
+				return true;
+			break;
+		case 'u':
+			if (angle < -87 || angle > 93)
+				return true;
+			break;
+		case 's':
+			if (angle > -87 && angle < 87)
+				return true;
+			break;
+		case '?':
+			return true;
+		}
+		return false;
+	}
+	
+	
 }

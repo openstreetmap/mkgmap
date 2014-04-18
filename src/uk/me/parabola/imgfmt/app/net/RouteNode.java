@@ -137,6 +137,22 @@ public class RouteNode implements Comparable<RouteNode> {
 	}
 
 	/**
+	 * get all direct arcs on a given way id  
+	 * @param roadId
+	 * @return
+	 */
+	public List<RouteArc> getDirectArcsOnWay(long roadId) {
+		List<RouteArc> result = new ArrayList<>();
+		for(RouteArc a : arcs){
+			if(a.isDirect()){
+				if(a.getRoadDef().getId() == roadId)
+					result.add(a);
+			}
+		}
+		return result;
+	}
+	
+	/**
 	 * Find arc to given node on given road. 
 	 * @param otherNode
 	 * @param roadDef
@@ -668,7 +684,7 @@ public class RouteNode implements Comparable<RouteNode> {
 						if(newHeading < -180)
 							newHeading += 360;
 					}
-					if(newHeading != otherHeading) {
+					if(Math.abs(newHeading - otherHeading) > 0.0000001) {
 						otherArc.setInitialHeading(newHeading);
 						log.info("Adjusting turn heading from " + otherHeading + " to " + newHeading + " at junction of " + inRoadDef + " and " + otherArc.getRoadDef() + " at " + coord.toOSMURL());
 					}

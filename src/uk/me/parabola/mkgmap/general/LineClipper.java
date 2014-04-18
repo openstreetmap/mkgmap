@@ -21,7 +21,6 @@ import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.log.Logger;
 
 /**
  * Routine to clip a polyline to a given bounding box.
@@ -29,8 +28,6 @@ import uk.me.parabola.log.Logger;
  * @see <a href="http://www.skytopia.com/project/articles/compsci/clipping.html">A very clear explaination of the Liang-Barsky algorithm</a>
  */
 public class LineClipper {
-	private static final Logger log = Logger.getLogger(LineClipper.class);
-
 	/**
 	 * Clips a polyline by the given bounding box.  This may produce several
 	 * separate lines if the line meanders in and out of the box.

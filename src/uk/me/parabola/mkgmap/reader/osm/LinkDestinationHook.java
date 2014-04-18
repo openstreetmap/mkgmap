@@ -146,9 +146,6 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 		for (Relation rel : saver.getRelations().values()) {
 			if (rel instanceof RestrictionRelation) {
 				RestrictionRelation rrel = (RestrictionRelation) rel;
-				if (rrel.isValid()==false)
-					// ignore invalid restrictions
-					continue;
 				for (Long wayId : rrel.getWayIds())
 					restrictions.add(wayId, rrel);
 			}
@@ -217,20 +214,23 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 		if (wayRestrictions.isEmpty()) {
 			return;
 		}
+		if (oldWay.isViaWay())
+			newWay.setViaWay(true);
 		// create a copy because original list may be modified within the loop
 		for (RestrictionRelation rr : new ArrayList<>(wayRestrictions)) {
 			Coord lastPointNewWay = newWay.getPoints().get(0);
 			List<Coord> viaCoords = rr.getViaCoords();
 			for (Coord via : viaCoords){
 				if (via == lastPointNewWay) {
-					if (rr.isToWay(oldWay)) {
+					if (rr.isToWay(oldWay.getId())) {
 						log.debug("Change to-way",oldWay.getId(),"to",newWay.getId(),"for relation",rr.getId(),"at",lastPointNewWay.toOSMURL());
-						rr.replaceWay(oldWay, newWay);
+						rr.replaceWay(oldWay.getId(), newWay.getId());
 						restrictions.remove(oldWay.getId(), rr);
 						restrictions.add(newWay.getId(), rr);
-					} else if (rr.isFromWay(oldWay)){
+						
+					} else if (rr.isFromWay(oldWay.getId())){
 						log.debug("Change from-way",oldWay.getId(),"to",newWay.getId(),"for relation",rr.getId(),"at",lastPointNewWay.toOSMURL());
-						rr.replaceWay(oldWay, newWay);
+						rr.replaceWay(oldWay.getId(), newWay.getId());
 						restrictions.remove(oldWay.getId(), rr);
 						restrictions.add(newWay.getId(), rr);
 					} 
@@ -531,9 +531,12 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 					// use link ways only
 					for (Way w : exitWays) {
 						destinationLinkWays.remove(w.getId());
-						
 						if (isNotOneway(w)) {
 							log.warn("Ignore way",w,"because it is not oneway");
+							continue;
+						}
+						if (w.isViaWay()){
+							log.warn("Ignore way",w,"because it is a via way in a restriction  relation");
 							continue;
 						}
 						
@@ -598,9 +601,12 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 			while (destinationLinkWays.isEmpty() == false) {
 				Way w = destinationLinkWays.values().iterator().next();
 				destinationLinkWays.remove(w.getId());
-
 				if (isNotOneway(w)) {
 					log.warn("Ignore way",w,"because it is not oneway");
+					continue;
+				}
+				if (w.isViaWay()){
+					log.warn("Ignore way",w,"because it is a via way in a restriction  relation");
 					continue;
 				}
 				

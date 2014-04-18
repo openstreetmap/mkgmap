@@ -38,6 +38,7 @@ public class GeneralRouteRestriction {
 	private CoordNode fromNode, toNode;
 	private List<Long> viaWayIds = new ArrayList<>();
 	private List<CoordNode> viaNodes = new ArrayList<>();
+	private char dirIndicator; // s(traight),l(eft),r(ight),u, ? for unknown 
 
 	public GeneralRouteRestriction(String type, byte exceptionMask, String sourceDesc) {
 		if ("not".equals(type))
@@ -50,6 +51,7 @@ public class GeneralRouteRestriction {
 			throw new IllegalArgumentException("invalid type " + type);
 		this.exceptionMask = exceptionMask;
 		this.sourceDesc = sourceDesc;
+		this.setDirIndicator('?');
 	}
 	
 	public long getFromWayId() {
@@ -98,5 +100,13 @@ public class GeneralRouteRestriction {
 	}
 	public String getSourceDesc(){
 		return sourceDesc;
+	}
+
+	public char getDirIndicator() {
+		return dirIndicator;
+	}
+
+	public void setDirIndicator(char dirIndicator) {
+		this.dirIndicator = dirIndicator;
 	}
 }
