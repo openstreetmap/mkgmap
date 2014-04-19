@@ -185,7 +185,6 @@ public class StyledConverter implements OsmConverter {
 
 	/** One type result for ways to avoid recreating one for each way. */ 
 	private final WayTypeResult wayTypeResult = new WayTypeResult();
-	private int ConvertedWayId = 0;
 	private class WayTypeResult implements TypeResult 
 	{
 		private Way way;
@@ -200,9 +199,8 @@ public class StyledConverter implements OsmConverter {
 					el = way.copy();
 			}
 			postConvertRules(el, type);
-			ConvertedWay cw = new ConvertedWay(ConvertedWayId, (Way) el, type);
+			ConvertedWay cw = new ConvertedWay((Way) el, type);
 			addConvertedWay(cw);
-			ConvertedWayId++;
 		}
 	}
 	
@@ -374,135 +372,6 @@ public class StyledConverter implements OsmConverter {
 	}
 	
 	/**
-	 * Recalculates the road class defined in the given {@link GType} object based on the tags
-	 * <ul>
-	 * <li>{@code mkgmap:road-class}</li>
-	 * <li>{@code mkgmap:road-class-min}</li>
-	 * <li>{@code mkgmap:road-class-max}</li>
-	 * </ul>
-	 * The road class of the {@link GType} object is changed if the tags modify its road class. 
-	 * 
-	 * @param el an element 
-	 * @param type a GType instance with the current road class.
-	 * @return {@code true} the road class of {@code type} has been changed; 
-	 *    {@code false} the road class of of {@code type} has not been changed
-	 */
-	private boolean recalcRoadClass(Element el, GType type) {
-		// retrieve the original road class value
-		int roadClass = type.getRoadClass();
-		
-		// check if the road class is modified
-		String val = el.getTag("mkgmap:road-class");
-		if (val != null) {
-			if (val.startsWith("-")) {
-				roadClass -= Integer.decode(val.substring(1));
-			} else if (val.startsWith("+")) {
-				roadClass += Integer.decode(val.substring(1));
-			} else {
-				roadClass = Integer.decode(val);
-			}
-			val = el.getTag("mkgmap:road-class-max");
-			int roadClassMax = 4;
-			if (val != null)
-				roadClassMax = Integer.decode(val);
-			val = el.getTag("mkgmap:road-class-min");
-
-			int roadClassMin = 0;
-			if (val != null)
-				roadClassMin = Integer.decode(val);
-			if (roadClass > roadClassMax)
-				roadClass = roadClassMax;
-			else if (roadClass < roadClassMin)
-				roadClass = roadClassMin;
-
-		}
-		
-		if (roadClass == type.getRoadClass()) {
-			// no change of road class
-			return false;
-		} else {
-			// change the road class
-			type.setRoadClass(roadClass);
-			return true;
-		}
-	}
-	
-	/**
-	 * Recalculates the road speed defined in the given {@link GType} object based on the tags
-	 * <ul>
-	 * <li>{@code mkgmap:road-speed-class}</li>
-	 * <li>{@code mkgmap:road-speed}</li>
-	 * <li>{@code mkgmap:road-speed-min}</li>
-	 * <li>{@code mkgmap:road-speed-max}</li>
-	 * </ul>
-	 * The road speed of the {@link GType} object is changed if the tags modify its road speed. 
-	 * 
-	 * @param el an element 
-	 * @param type a GType instance with the current road speed.
-	 * @return {@code true} the road speed of {@code type} has been changed; 
-	 *    {@code false} the road speed of of {@code type} has not been changed
-	 */
-	private boolean recalcRoadSpeed(Element el, GType type) {
-		// retrieve the original road speed value
-		int roadSpeed = type.getRoadSpeed();
-		
-		// check if the road speed defined in the GType object is overridden
-		String roadSpeedOverride = el.getTag("mkgmap:road-speed-class");
-		if (roadSpeedOverride != null) {
-			try {
-				int rs = Integer.decode(roadSpeedOverride);
-				if (rs >= 0 && rs <= 7) {
-					// override the road speed class
-					roadSpeed = rs;
-				} else {
-					log.error(el.getDebugName()
-							+ " road classification mkgmap:road-speed-class="
-							+ roadSpeedOverride + " must be in [0;7]");
-				}
-			} catch (Exception exp) {
-				log.error(el.getDebugName()
-						+ " road classification mkgmap:road-speed-class="
-						+ roadSpeedOverride + " must be in [0;7]");
-			}
-		}
-		
-		// check if the road speed should be modified more
-		String val = el.getTag("mkgmap:road-speed");
-		if(val != null) {
-			if(val.startsWith("-")) {
-				roadSpeed -= Integer.decode(val.substring(1));
-			}
-			else if(val.startsWith("+")) {
-				roadSpeed += Integer.decode(val.substring(1));
-			}
-			else {
-				roadSpeed = Integer.decode(val);
-			}
-			val = el.getTag("mkgmap:road-speed-max");
-			int roadSpeedMax = 7;
-			if(val != null)
-				roadSpeedMax = Integer.decode(val);
-			val = el.getTag("mkgmap:road-speed-min");
-
-			int roadSpeedMin = 0;
-			if(val != null)
-				roadSpeedMin = Integer.decode(val);
-			if(roadSpeed > roadSpeedMax)
-				roadSpeed = roadSpeedMax;
-			else if(roadSpeed < roadSpeedMin)
-				roadSpeed = roadSpeedMin;
-		}
-		
-		if (roadSpeed == type.getRoadSpeed()) {
-			// road speed is not changed
-			return false;
-		} else {
-			type.setRoadSpeed(roadSpeed);
-			return true;
-		}
-	}
-	
-	/**
 	 * Built in rules to run after converting the element.
 	 */
 	private void postConvertRules(Element el, GType type) {
@@ -617,12 +486,8 @@ public class StyledConverter implements OsmConverter {
 		}
 		// add the roads after the other lines
 		for (ConvertedWay cw : roads){
-			if (cw.isValid()){
-				GType gtype = new GType(cw.getType());
-				gtype.setRoadClass(cw.getRoadClass());
-				gtype.setRoadSpeed(cw.getRoadSpeed());
-				addRoad(cw.getWay(), gtype);
-			}
+			if (cw.isValid())
+				addRoad(cw);
 		}
 		
 		housenumberGenerator.generate(lineAdder);
@@ -1122,9 +987,8 @@ public class StyledConverter implements OsmConverter {
 	 * @param way the way
 	 * @param gt the type assigned by the style
 	 */
-	private void addRoad(Way way, GType gtParm) {
-		GType gt = new GType(gtParm);
-		
+	private void addRoad(ConvertedWay cw) {
+		Way way = cw.getWay();
 		if (way.getPoints().size() < 2){
 			log.warn("road has < 2 points",way.getId(),"(discarding)");
 			return;
@@ -1189,15 +1053,15 @@ public class StyledConverter implements OsmConverter {
 									safeToSplitWay(points, splitPos, i, points.size() - 1)) {
 								Way tail = splitWayAt(way, splitPos);
 								// recursively process tail of way
-								addRoad(tail, gt);
+								addRoad(new ConvertedWay(cw, tail));
 							}
-							boolean classChanged = recalcRoadClass(node, gt);
+							boolean classChanged = cw.recalcRoadClass(node);
 							if (classChanged && log.isInfoEnabled()){
-								log.info("POI changing road class of", way.toBrowseURL(), "to", gt.getRoadClass(), "at", points.get(0).toOSMURL()); 								
+								log.info("POI changing road class of", way.toBrowseURL(), "to", cw.getRoadClass(), "at", points.get(0).toOSMURL()); 								
 							}
-							boolean speedChanged = recalcRoadSpeed(node, gt);
+							boolean speedChanged = cw.recalcRoadSpeed(node);
 							if (speedChanged && log.isInfoEnabled()){
-								log.info("POI changing road speed of", way.toBrowseURL(), "to", gt.getRoadSpeed(), "at" , points.get(0).toOSMURL());
+								log.info("POI changing road speed of", way.toBrowseURL(), "to", cw.getRoadSpeed(), "at" , points.get(0).toOSMURL());
 							}
 						}
 					}
@@ -1243,7 +1107,7 @@ public class StyledConverter implements OsmConverter {
 									safeToSplitWay(points, splitPos, 0, points.size()-1)) {
 								Way tail = splitWayAt(way, splitPos);
 								// recursively process tail of way
-								addRoad(tail, gt);
+								addRoad(new ConvertedWay(cw, tail));
 							}
 						}
 					}
@@ -1281,18 +1145,18 @@ public class StyledConverter implements OsmConverter {
 		}
 
 		if(clippedWays != null) {
-			for(Way cw : clippedWays) {
-				addRoadAfterSplittingLoops(cw, gt);
+			for(Way clippedWay : clippedWays) {
+				addRoadAfterSplittingLoops(new ConvertedWay(cw, clippedWay));
 			}
 		}
 		else {
 			// no bounding box or way was not clipped
-			addRoadAfterSplittingLoops(way, gt);
+			addRoadAfterSplittingLoops(cw);
 		}
 	}
 
-	private void addRoadAfterSplittingLoops(Way way, final GType gtParm) {
-		GType gt = new GType(gtParm);
+	private void addRoadAfterSplittingLoops(ConvertedWay cw) {
+		Way way = cw.getWay();
 		// make sure the way has nodes at each end
 		way.getPoints().get(0).incHighwayCount();
 		way.getPoints().get(way.getPoints().size() - 1).incHighwayCount();
@@ -1366,10 +1230,12 @@ public class StyledConverter implements OsmConverter {
 							if (log.isInfoEnabled())
 								log.info("Splitting looped way", way.getDebugName(), "at", wayPoints.get(splitI).toOSMURL(), "- it has", (numPointsInWay - splitI - 1 ), "following segment(s).");
 							Way loopTail = splitWayAt(way, splitI);
+							ConvertedWay next = new ConvertedWay(cw, loopTail);
 							// recursively check (shortened) head for
 							// more loops
-							addRoadAfterSplittingLoops(way, gt);
+							addRoadAfterSplittingLoops(cw);
 							// now process the tail of the way
+							cw = next;
 							way = loopTail;
 							wayWasSplit = true;
 						}
@@ -1379,7 +1245,7 @@ public class StyledConverter implements OsmConverter {
 
 			if(!wayWasSplit) {
 				// no split required so make road from way
-				addRoadWithoutLoops(way, gt);
+				addRoadWithoutLoops(cw);
 			}
 		}
 	}
@@ -1433,7 +1299,9 @@ public class StyledConverter implements OsmConverter {
 		return true;
 	}
 
-	private void addRoadWithoutLoops(Way way, GType gt) {
+	private void addRoadWithoutLoops(ConvertedWay cw) {
+		Way way = cw.getWay();
+		GType gt = cw.getType();
 		List<Integer> nodeIndices = new ArrayList<Integer>();
 		List<Coord> points = way.getPoints();
 		Way trailingWay = null;
@@ -1576,7 +1444,7 @@ public class StyledConverter implements OsmConverter {
 		}
 
 		MapLine line = new MapLine();
-		elementSetup(line, gt, way);
+		elementSetup(line, cw.getType(), way);
 		line.setPoints(points);
 		MapRoad road = new MapRoad(way.getId(), line);
 
@@ -1604,8 +1472,8 @@ public class StyledConverter implements OsmConverter {
 		// set road parameters 
 
 		// copy road class and road speed
-		road.setRoadClass(gt.getRoadClass());
-		road.setSpeed(gt.getRoadSpeed());
+		road.setRoadClass(cw.getRoadClass());
+		road.setSpeed(cw.getRoadSpeed());
 		
 		if (way.isBoolTag("oneway")) {
 			road.setDirection(true);
@@ -1677,7 +1545,7 @@ public class StyledConverter implements OsmConverter {
 		housenumberGenerator.addRoad(way, road);
 
 		if(trailingWay != null)
-			addRoadWithoutLoops(trailingWay, gt);
+			addRoadWithoutLoops(new ConvertedWay(cw, trailingWay));
 	}
 
 	/**

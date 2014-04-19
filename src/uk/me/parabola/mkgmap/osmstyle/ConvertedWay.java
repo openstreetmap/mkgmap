@@ -32,15 +32,13 @@ import static uk.me.parabola.imgfmt.app.net.AccessTagsAndBits.*;
  */
 public class ConvertedWay {
 	private static final Logger log = Logger.getLogger(ConvertedWay.class);
-	private int id;
 	private byte roadClass;
 	private byte roadSpeed;
 	private byte mkgmapAccess; 		// bit mask 
 	private GType gt;								
 	private Way way;				// with tags after Style processing
 
-	public ConvertedWay(int id, Way way, GType type) {
-		this.id = id;
+	public ConvertedWay(Way way, GType type) {
 		this.way = way;
 		this.gt = type;
 		this.roadClass = (byte) gt.getRoadClass();
@@ -56,6 +54,14 @@ public class ConvertedWay {
 				noAccess |= entry.getValue();
 		}
 		mkgmapAccess = (byte) ~noAccess;
+	}
+	
+	public ConvertedWay(ConvertedWay other, Way way){
+		this.way = way;
+		this.gt = other.gt;
+		this.roadClass = other.roadClass;
+		this.roadSpeed = other.roadSpeed;
+		this.mkgmapAccess = other.mkgmapAccess;
 	}
 	
 	public GType getType(){
@@ -125,7 +131,7 @@ public class ConvertedWay {
 	 * @param el an element 
 	 * @return {@code true} the road speed has been changed, else {@code false} 
 	 */
-	private boolean recalcRoadSpeed(Element el) {
+	public boolean recalcRoadSpeed(Element el) {
 		// save the original road speed value
 		byte oldRoadSpeed = roadSpeed;
 		
@@ -197,4 +203,5 @@ public class ConvertedWay {
 	public byte getRoadSpeed(){
 		return roadSpeed;
 	}
+	
 }
