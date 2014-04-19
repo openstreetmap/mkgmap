@@ -49,13 +49,16 @@ public abstract class Element implements Iterable<String> {
 		return tags.get(key);
 	}
 
-	public void deleteTag(String tagname) {
+	public String deleteTag(String tagname) {
+		String old = null;
 		if(tags != null) {
-			tags.remove(tagname);
+			old = tags.remove(tagname);
 			if (tags.size() == 0) {
 				tags = null;
 			}
+			
 		}
+		return old;
 	}
 
 	public Iterator<String> iterator() {
@@ -185,4 +188,16 @@ public abstract class Element implements Iterable<String> {
 		// Can be implemented in subclasses
 		throw new UnsupportedOperationException("unsupported element copy");
 	}
+	
+	public String getDebugName() {
+		String name = getName();
+		if(name == null)
+			name = getTag("ref");
+		if(name == null)
+			name = "";
+		else
+			name += " ";
+		return name + "(OSM id " + getId() + ")";
+	}
+	
 }

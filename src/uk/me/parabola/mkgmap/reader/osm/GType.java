@@ -199,7 +199,9 @@ public class GType {
 		if (propogateActionsOnContinue)
 			fmt.format(" propagate");
 		sb.append(']');
-		return sb.toString();
+		String res = sb.toString();
+		fmt.close();
+		return res;
 	}
 
 	public int getMinLevel() {

@@ -65,8 +65,7 @@ public class RoadMerger {
 	private static class Road {
 		/** gives the index of the original position in the way/road list */
 		private final int index;
-		private final Way way;
-		private final GType gtype;
+		private final ConvertedWay cw;
 
 		/** 
 		 * For these tags two ways need to return the same value for {@link Way#isNotBoolTag(String)} 
@@ -74,14 +73,6 @@ public class RoadMerger {
 		 */
 		private final static Set<String> mergeTagsNotBool = new HashSet<String>() {
 			{
-				add("mkgmap:emergency");
-				add("mkgmap:delivery");
-				add("mkgmap:car");
-				add("mkgmap:bus");
-				add("mkgmap:taxi");
-				add("mkgmap:foot");
-				add("mkgmap:bicycle");
-				add("mkgmap:truck");
 				add("mkgmap:throughroute");
 			}
 		};
@@ -121,10 +112,9 @@ public class RoadMerger {
 			}
 		};
 
-		public Road(int index, Way way, GType gtype) {
+		public Road(int index, ConvertedWay cw){
 			this.index = index;
-			this.way = way;
-			this.gtype = gtype;
+			this.cw = cw;
 		}
 
 		/**
@@ -136,9 +126,21 @@ public class RoadMerger {
 		 * 	{@code false} the roads cannot be merged at {@code mergePoint}
 		 */
 		public boolean isMergable(Coord mergePoint, Road otherRoad) {
+			if (cw.getRoadClass() != otherRoad.cw.getRoadClass())
+				return false;
+			if (cw.getRoadSpeed() != otherRoad.cw.getRoadSpeed())
+				return false;
+			
+			if (getAccess() != otherRoad.getAccess()){
+				log.debug("access does not match", getWay().getId(), "("
+						+ getAccess() + ")", otherRoad.getWay().getId(), "(" + otherRoad.getAccess()
+						+ ")");
+				return false;
+			}
+			
 			// first check if this road starts or stops at the mergePoint
-			Coord cStart = way.getPoints().get(0);
-			Coord cEnd = way.getPoints().get(way.getPoints().size() - 1);
+			Coord cStart = getWay().getPoints().get(0);
+			Coord cEnd = getWay().getPoints().get(getWay().getPoints().size() - 1);
 			if (cStart != mergePoint && cEnd != mergePoint) {
 				// it doesn't => roads not mergeable at mergePoint
 				return false;
@@ -185,7 +187,7 @@ public class RoadMerger {
 			// log.info("Gtype2",otherGType);
 			
 			// check all fields of the GType objects for equality
-			
+			GType gtype = cw.getType();
 			if (gtype.getType() != otherGType.getType()) {
 				return false;
 			}
@@ -201,12 +203,13 @@ public class RoadMerger {
 			if (gtype.getMaxLevel() != otherGType.getMaxLevel()) {
 				return false;
 			}
-			if (gtype.getRoadClass() != otherGType.getRoadClass()){
-				return false;
-			}
-			if (gtype.getRoadSpeed() != otherGType.getRoadSpeed()){
-				return false;
-			}
+// roadClass and roadSpeed are taken from the ConvertedWay object 
+//			if (gtype.getRoadClass() != otherGType.getRoadClass()){
+//				return false;
+//			}
+//			if (gtype.getRoadSpeed() != otherGType.getRoadSpeed()){
+//				return false;
+//			}
 // default name is applied before the RoadMerger starts
 // so they needn't be equal 
 //			if (stringEquals(gtype.getDefaultName(),
@@ -227,7 +230,7 @@ public class RoadMerger {
 		 *  {@code false} tag values differ so that road must not be merged
 		 */
 		private boolean isWayMergable(Coord mergePoint, Way otherWay) {
-
+			
 			// oneway must not only be checked for equal tag values
 			// but also for correct direction of both ways
 			
@@ -240,7 +243,7 @@ public class RoadMerger {
 				// the oneway tags differ => cannot merge
 				// (It might be possible to reverse the direction of one way
 				// but this might be implemented later)
-				log.debug("oneway does not match", way.getId(), "("
+				log.debug("oneway does not match", getWay().getId(), "("
 						+ thisOneway + ")", otherWay.getId(), "(" + otherOneway
 						+ ")");
 				return false;
@@ -254,7 +257,7 @@ public class RoadMerger {
 				
 				if (thisStart == otherStart) {
 					// both ways are oneway but they have a different direction
-					log.warn("oneway with different direction", way.getId(),
+					log.warn("oneway with different direction", getWay().getId(),
 							otherWay.getId());
 					return false;
 				}
@@ -268,7 +271,7 @@ public class RoadMerger {
 				String thisTag = getWay().getTag(tagname);
 				String otherTag = otherWay.getTag(tagname);
 				if (stringEquals(thisTag, otherTag) == false) {
-					log.debug(tagname, "does not match", way.getId(), "("
+					log.debug(tagname, "does not match", getWay().getId(), "("
 							+ thisTag + ")", otherWay.getId(), "(" + otherTag
 							+ ")");
 					// log.warn(way.getId(), way.toTagString());
@@ -282,7 +285,7 @@ public class RoadMerger {
 				boolean thisNo = getWay().isNotBoolTag(tagname);
 				boolean otherNo = otherWay.isNotBoolTag(tagname);
 				if (thisNo != otherNo) {
-					log.debug(tagname, "does not match", way.getId(), "("
+					log.debug(tagname, "does not match", getWay().getId(), "("
 							+ getWay().getTag(tagname) + ")", otherWay.getId(),
 							"(" + otherWay.getTag(tagname) + ")");
 					return false;
@@ -294,7 +297,7 @@ public class RoadMerger {
 				boolean thisYes = getWay().isBoolTag(tagname);
 				boolean otherYes = otherWay.isBoolTag(tagname);
 				if (thisYes != otherYes) {
-					log.debug(tagname, "does not match", way.getId(), "("
+					log.debug(tagname, "does not match", getWay().getId(), "("
 							+ getWay().getTag(tagname) + ")", otherWay.getId(),
 							"(" + otherWay.getTag(tagname) + ")");
 					return false;
@@ -331,12 +334,20 @@ public class RoadMerger {
 			return true;
 		}
 
+		public ConvertedWay getConvertedWay(){
+			return cw;
+		}
+		
 		public Way getWay() {
-			return way;
+			return cw.getWay();
 		}
 
 		public GType getGtype() {
-			return gtype;
+			return cw.getType();
+		}
+		
+		public byte getAccess(){
+			return cw.getAccess();
 		}
 
 		/**
@@ -354,7 +365,7 @@ public class RoadMerger {
 		}
 
 		public String toString() {
-			return gtype + " " + way.getId() + " " + way.toTagString();
+			return cw.getType() + " " + getWay().getId() + " " + getWay().toTagString();
 		}
 
 		public final int getIndex() {
@@ -362,14 +373,13 @@ public class RoadMerger {
 		}
 	}
 
-	public RoadMerger(List<Way> ways, List<GType> gtypes) {
-		assert ways.size() == gtypes.size();
+	public RoadMerger(List<ConvertedWay> convertedWays) {
+		this.roads = new ArrayList<Road>(convertedWays.size());
 
-		this.roads = new ArrayList<Road>(ways.size());
-
-		for (int i = 0; i < ways.size(); i++) {
-			if (ways.get(i) != null)
-				roads.add(new Road(i, ways.get(i), gtypes.get(i)));
+		for (int i = 0; i < convertedWays.size(); i++) {
+			ConvertedWay cw = convertedWays.get(i);
+			if (cw.isValid())
+				roads.add(new Road(i, cw));
 		}
 
 	}
@@ -495,7 +505,7 @@ public class RoadMerger {
 	 * @param resultingWays list for the merged (and not mergeable) ways
 	 * @param resultingGTypes list for the merged (and not mergeable) GTypes
 	 */
-	public void merge(List<Way> resultingWays, List<GType> resultingGTypes,
+	public void merge(List<ConvertedWay> resultingWays,
 			List<RestrictionRelation> restrictions,
 			List<Relation> throughRouteRelations) {
 
@@ -620,8 +630,7 @@ public class RoadMerger {
 		
 		// copy the roads to the resulting lists
 		for (Road r : roads) {
-			resultingWays.add(r.getWay());
-			resultingGTypes.add(r.getGtype());
+			resultingWays.add(r.getConvertedWay());
 		}
 		
 		// print out some statistics

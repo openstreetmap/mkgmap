@@ -12,8 +12,8 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
-//import java.io.File;
-//import java.io.IOException;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -29,7 +29,7 @@ import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.RestrictionRelation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
-//import uk.me.parabola.splitter.O5mMapWriter;
+import uk.me.parabola.splitter.O5mMapWriter;
 import uk.me.parabola.util.GpxCreator;
 
 /**
@@ -73,7 +73,7 @@ public class WrongAngleFixer {
 	 * @param deletedRoads Will be enlarged by all roads in roads that were set to null by this method 
 	 * @param restrictions Map with restriction relations 
 	 */
-	public void optimizeWays(List<Way> roads, List<Way> lines, HashMap<Long, Way> modifiedRoads, HashSet<Long> deletedRoads, List<RestrictionRelation> restrictions ) {
+	public void optimizeWays(List<ConvertedWay> roads, List<ConvertedWay> lines, HashMap<Long, ConvertedWay> modifiedRoads, HashSet<Long> deletedRoads, List<RestrictionRelation> restrictions ) {
 		printBadAngles("bad_angles_start", roads);
 		writeOSM("roads_orig", roads);
 		writeOSM("lines_orig", lines);
@@ -180,7 +180,7 @@ public class WrongAngleFixer {
 	 * @param deletedRoads set of ids of deleted routable ways (modified by this routine)
 	 * @param restrictions Map with restriction relations. The restriction relations may be modified by this routine 
 	 */
-	private void removeWrongAngles(List<Way> roads, List<Way> lines, HashMap<Long, Way> modifiedRoads, HashSet<Long> deletedRoads, List<RestrictionRelation> restrictions) {
+	private void removeWrongAngles(List<ConvertedWay> roads, List<ConvertedWay> lines, HashMap<Long, ConvertedWay> modifiedRoads, HashSet<Long> deletedRoads, List<RestrictionRelation> restrictions) {
 		// replacements maps those nodes that have been replaced to
 		// the node that replaces them
 		Map<Coord, Coord> replacements = new IdentityHashMap<Coord, Coord>();
@@ -191,18 +191,20 @@ public class WrongAngleFixer {
 		HashSet<Long> waysThatMapToOnePoint = new HashSet<>();
 		int pass = 0;
 		Way lastWay = null;
-		List<Way> ways = (roads != null) ? roads: lines;
+		List<ConvertedWay> convertedWays = (roads != null) ? roads: lines;
 		
 		boolean anotherPassRequired = true;
 		while (anotherPassRequired && pass < 20) {
 			anotherPassRequired = false;
 			log.info("Removing wrong angles - PASS " + ++pass);
-			writeOSM(((mode==MODE_LINES) ? "lines_pass_" + pass:"roads_pass_" + pass), ways);	
+			writeOSM(((mode==MODE_LINES) ? "lines_pass_" + pass:"roads_pass_" + pass), convertedWays);	
 			// Step 1: detect points which are parts of line segments with wrong bearings
 			lastWay = null;
-			for (int w = 0; w < ways.size(); w++) {
-				Way way = ways.get(w);
-				if (way == null || way.equals(lastWay)) 
+			for (ConvertedWay cw : convertedWays) {
+				if (!cw.isValid()) 
+					continue;
+				Way way = cw.getWay();
+				if (way.equals(lastWay)) 
 					continue;
 				if (mode == MODE_LINES && modifiedRoads.containsKey(way.getId()))
 					continue;
@@ -249,9 +251,11 @@ public class WrongAngleFixer {
 			int centerId = 0;
 				
 			lastWay = null;
-			for (int w = 0; w < ways.size(); w++) {
-				Way way = ways.get(w);
-				if (way == null || way.equals(lastWay)) 
+			for (ConvertedWay cw : convertedWays) {
+				if (!cw.isValid()) 
+					continue;
+				Way way = cw.getWay();
+				if (way.equals(lastWay)) 
 					continue;
 				if (mode == MODE_LINES && modifiedRoads.containsKey(way.getId()))
 					continue;
@@ -273,7 +277,7 @@ public class WrongAngleFixer {
 							points.remove(i);
 							--i;
 							if (mode == MODE_ROADS)
-								modifiedRoads.put(way.getId(), way);
+								modifiedRoads.put(way.getId(), cw);
 							continue;
 						}
 						if (p.isPartOfBadAngle() || prev.isPartOfBadAngle()) {
@@ -321,9 +325,11 @@ public class WrongAngleFixer {
 			}
 			// Step 3: Update list of ways with bearing errors or points next to them 
 			lastWay = null;
-			for (int w = 0; w < ways.size(); w++) {
-				Way way = ways.get(w);
-				if (way == null || way.equals(lastWay)) 
+			for (ConvertedWay cw : convertedWays) {
+				if (!cw.isValid()) 
+					continue;
+				Way way = cw.getWay();
+				if (way.equals(lastWay)) 
 					continue;
 				if (mode == MODE_LINES && modifiedRoads.containsKey(way.getId()))
 					continue;
@@ -372,10 +378,10 @@ public class WrongAngleFixer {
 			// Step 5: apply the calculated corrections to the ways
 			lastWay = null;
 			boolean lastWayModified = false;
-			for (int w = 0; w < ways.size(); w++){
-				Way way = ways.get(w);
-				if (way == null)
+			for (ConvertedWay cw : convertedWays) {
+				if (!cw.isValid()) 
 					continue;
+				Way way = cw.getWay();
 				if (mode == MODE_LINES && modifiedRoads.containsKey(way.getId()))
 					continue;
 				if (waysWithBearingErrors.contains(way) == false)
@@ -398,7 +404,7 @@ public class WrongAngleFixer {
 						anotherPassRequired = true;
 						lastWayModified = true;
 						if (mode == MODE_ROADS)
-							modifiedRoads.put(way.getId(), way);
+							modifiedRoads.put(way.getId(), cw);
 						if (i > 0 && i < points.size()) {
 							// special case: handle micro loop
 							if (points.get(i - 1) == points.get(i))
@@ -424,7 +430,7 @@ public class WrongAngleFixer {
 						numNodesMerged++;
 					lastWayModified = true;
 					if (mode == MODE_ROADS)
-						modifiedRoads.put(way.getId(), way);
+						modifiedRoads.put(way.getId(), cw);
 					if (i + 1 < points.size() && points.get(i + 1) == p) {
 						points.remove(i);
 						anotherPassRequired = true;
@@ -440,10 +446,10 @@ public class WrongAngleFixer {
 		int numWaysDeleted = 0;
 		lastWay = null;
 		boolean lastWayModified = false;
-		for (int w = 0; w < ways.size(); w++){
-			Way way = ways.get(w);
-			if (way == null)
+		for (ConvertedWay cw : convertedWays) {
+			if (!cw.isValid())
 				continue;
+			Way way = cw.getWay();
 			if (mode == MODE_LINES && modifiedRoads.containsKey(way.getId()))
 				continue;
 			
@@ -454,7 +460,6 @@ public class WrongAngleFixer {
 				if (mode == MODE_LINES && waysThatMapToOnePoint.contains(way.getId()) == false)
 					log.warn("non-routable way " ,way.getId(),"was removed");
 				
-				ways.set(w, null);
 				if (mode == MODE_ROADS)
 					deletedRoads.add(way.getId());
 				++numWaysDeleted;
@@ -487,9 +492,10 @@ public class WrongAngleFixer {
 		if (mode == MODE_ROADS){
 			// treat special case: non-routable ways may be connected to moved
 			// points in roads
-			for (Way way : lines) {
-				if (way == null)
+			for (ConvertedWay cw : lines) {
+				if (!cw.isValid())
 					continue;
+				Way way = cw.getWay();
 				if (modifiedRoads.containsKey(way.getId())){ 
 					// overlay line is handled later
 					continue;
@@ -536,20 +542,20 @@ public class WrongAngleFixer {
 	 * very close to 180 degrees angles in the real line or wrong points. 
 	 * Wrong points are those that produce wrong angles, so that  
 	 * removing them reduces the error.
-	 * @param ways 
+	 * @param roads 
 	 * @param modifiedRoads 
 	 */
-	private void removeObsoletePoints(List<Way> ways, HashMap<Long, Way> modifiedRoads){
+	private void removeObsoletePoints(List<ConvertedWay> roads, HashMap<Long, ConvertedWay> modifiedRoads){
 		Way lastWay = null;
 		int numPointsRemoved = 0;
 		boolean lastWasModified = false;
 		List<Coord> removedInWay = new ArrayList<Coord>();
 		List<Coord> obsoletePoints = new ArrayList<Coord>();
 		List<Coord> modifiedPoints = new ArrayList<Coord>();
-		for (int w = 0; w < ways.size(); w++) {
-			Way way = ways.get(w);
-			if (way == null)
+		for (ConvertedWay cw : roads) {
+			if (!cw.isValid())
 				continue;
+			Way way = cw.getWay();
 			if (mode == MODE_LINES && modifiedRoads.containsKey(way.getId()))
 				continue;
 			if (way.equals(lastWay)) {
@@ -624,7 +630,7 @@ public class WrongAngleFixer {
 				points.clear();
 				points.addAll(modifiedPoints);
 				if (mode == MODE_ROADS)
-					modifiedRoads.put(way.getId(), way);
+					modifiedRoads.put(way.getId(), cw);
 				if (gpxPath != null){
 					if (draw || "roundabout".equals(way.getTag("junction"))) {
 						GpxCreator.createGpx(gpxPath+way.getId()+"_dpmod", points,removedInWay);
@@ -644,16 +650,17 @@ public class WrongAngleFixer {
 	 * debug code
 	 * @param roads 
 	 */
-	private void printBadAngles(String name, List<Way> roads){
+	private void printBadAngles(String name, List<ConvertedWay> roads){
 		if (gpxPath ==  null)
 			return;
-		List<Way> badWays = new ArrayList<Way>();
+		List<ConvertedWay> badWays = new ArrayList<>();
 		Way lastWay = null;
 		List<Coord> badAngles = new ArrayList<Coord>();
 		for (int w = 0; w < roads.size(); w++) {
-			Way way = roads.get(w);
-			if (way == null)
+			ConvertedWay cw = roads.get(w);
+			if (!cw.isValid())
 				continue;
+			Way way = cw.getWay();
 			if (way.equals(lastWay)) {
 				continue;
 			}
@@ -700,7 +707,7 @@ public class WrongAngleFixer {
 				}
 			}
 			if (hasBadAngles)
-				badWays.add(way);
+				badWays.add(cw);
 		}
 		GpxCreator.createGpx(gpxPath + name, bbox.toCoords(),
 				new ArrayList<Coord>(badAngles));
@@ -1233,9 +1240,9 @@ public class WrongAngleFixer {
 	}
 	
 	
-	private void writeOSM(String name, List<Way> ways){
+	private void writeOSM(String name, List<ConvertedWay> convertedWays){
 		//TODO: comment or remove
-		/*
+		
 		if (gpxPath == null)
 			return;
 		File outDir = new File(gpxPath + "/.");
@@ -1254,10 +1261,10 @@ public class WrongAngleFixer {
 			Integer nodeId;
 			try {
 
-				for (Way way: ways){
-					if (way == null)
+				for (ConvertedWay cw: convertedWays){
+					if (cw == null)
 						continue;
-					for (Coord p: way.getPoints()){
+					for (Coord p: cw.getPoints()){
 						nodeId = allPoints.get(p);
 						if (nodeId == null){
 							nodeId = allPoints.size();
@@ -1276,10 +1283,11 @@ public class WrongAngleFixer {
 						}
 					}
 				}
-				for (int w = 0; w < ways.size(); w++){
-					Way way = ways.get(w);
-					if (way == null)
+				for (int w = 0; w < convertedWays.size(); w++){
+					ConvertedWay cw = convertedWays.get(w);
+					if (cw == null)
 						continue;
+					Way way = cw.getWay();
 					uk.me.parabola.splitter.Way wayOut = new uk.me.parabola.splitter.Way();
 					for (Coord p: way.getPoints()){
 						nodeId = allPoints.get(p);
@@ -1307,7 +1315,7 @@ public class WrongAngleFixer {
 				ren.delete();
 			f.renameTo(ren);
 		}
-		*/
+		
 	}
 	
 	 

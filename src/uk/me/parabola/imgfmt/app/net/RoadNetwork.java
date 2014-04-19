@@ -28,7 +28,6 @@ import java.util.TreeMap;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.util.EnhancedProperties;
 
 /**
