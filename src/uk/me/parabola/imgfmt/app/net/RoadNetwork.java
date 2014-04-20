@@ -28,7 +28,6 @@ import java.util.TreeMap;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.util.EnhancedProperties;
 
 /**
@@ -623,11 +622,10 @@ public class RoadNetwork {
 		for (RouteArc out: vn.arcsIteration()){
 			if (!out.isDirect())
 				continue;
-			int pathNoAccessMask = out.getRoadDef().getTabAAccess();
 			for (RouteArc in: vn.arcsIteration()){
 				if (!in.isDirect() || in == out || in.getDest() == out.getDest())
 					continue;
-				pathNoAccessMask |= in.getRoadDef().getTabAAccess();
+				int pathNoAccessMask = out.getRoadDef().getTabAAccess() | in.getRoadDef().getTabAAccess();
 				if (isUsable(pathNoAccessMask, grr.getExceptionMask())){
 					vn.addRestriction(new RouteRestriction(vn, Arrays.asList(in,out), grr.getExceptionMask()));
 					added++;
