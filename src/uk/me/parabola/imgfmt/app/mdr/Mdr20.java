@@ -125,6 +125,15 @@ public class Mdr20 extends Mdr2x {
 	}
 
 	/**
+	 * Two streets are in the same group if they have the same mdr20 id.
+	 */
+	protected boolean sameGroup(Mdr7Record street1, Mdr7Record street2) {
+		if (street2 != null && street1.getCity().getMdr20() == street2.getCity().getMdr20())
+			return true;
+		return false;
+	}
+
+	/**
 	 * Unknown.
 	 */
 	public int getExtraValue() {

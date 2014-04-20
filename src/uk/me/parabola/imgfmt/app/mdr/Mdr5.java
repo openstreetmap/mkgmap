@@ -202,4 +202,8 @@ public class Mdr5 extends MdrMapSection {
 	public List<Mdr5Record> getSortedCities() {
 		return Collections.unmodifiableList(cities);
 	}
+
+	public void relabelMaps(Mdr1 maps) {
+		relabel(maps, cities);
+	}
 }

@@ -48,8 +48,8 @@ public class Mdr22 extends Mdr2x {
 	public void buildFromStreets(List<Mdr7Record> inStreets) {
 		Sort sort = getConfig().getSort();
 
-		List<SortKey<Mdr7Record>> keys = new ArrayList<SortKey<Mdr7Record>>();
-		Map<String, byte[]> cache = new HashMap<String, byte[]>();
+		List<SortKey<Mdr7Record>> keys = new ArrayList<>();
+		Map<String, byte[]> cache = new HashMap<>();
 		for (Mdr7Record s : inStreets) {
 			Mdr5Record city = s.getCity();
 			if (city == null) continue;
@@ -91,6 +91,10 @@ public class Mdr22 extends Mdr2x {
 		}
 	}
 
+	protected boolean sameGroup(Mdr7Record street1, Mdr7Record street2) {
+		return true;
+	}
+
 	public List<Mdr7Record> getStreets() {
 		return Collections.unmodifiableList(streets);
 	}
@@ -100,7 +104,7 @@ public class Mdr22 extends Mdr2x {
 	 */
 	public int getExtraValue() {
 		if (isForDevice())
-			return 0xc000a;
+			return 0x600a;
 		else
 			return 0x11000;
 	}

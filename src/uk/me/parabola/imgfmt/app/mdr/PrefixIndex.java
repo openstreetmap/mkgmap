@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 
 /**
@@ -33,7 +32,7 @@ public class PrefixIndex extends MdrSection {
 	private int maxIndex;
 
 	// We use mdr8record for all similar indexes.
-	private final List<Mdr8Record> index = new ArrayList<Mdr8Record>();
+	private final List<Mdr8Record> index = new ArrayList<>();
 
 	/**
 	 * Sets the config and the prefix length for this index.
@@ -129,14 +128,23 @@ public class PrefixIndex extends MdrSection {
 	 * prefix of name and padded with nulls if necessary to make up the length.
 	 */
 	private String getPrefix(String in) {
-		String name = Label.stripGarminCodes(in);
-		if (prefixLength > name.length()) {
-			StringBuilder sb = new StringBuilder(name);
-			while (sb.length() < prefixLength)
-				sb.append('\0');
-			return sb.toString();
+		StringBuilder sb = new StringBuilder();
+		char[] chars = in.toCharArray();
+		int ci = 0;
+		for (int i = 0; i < prefixLength; i++) {
+			char c = 0;
+			while (ci < chars.length) {
+				// TODO: simplify when initial spaces are removed
+				c = chars[ci++];
+				if (ci == 1 && c== 0x20)
+					continue;
+				if (c >= 0x20)
+					break;
+			}
+			sb.append(c);
 		}
-		return name.substring(0, prefixLength);
+
+		return sb.toString();
 	}
 
 	public int getPrefixLength() {
