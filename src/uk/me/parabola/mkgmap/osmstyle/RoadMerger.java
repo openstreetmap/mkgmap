@@ -453,7 +453,7 @@ public class RoadMerger {
 			
 			// checks if the tag values of both ways match so that the ways
 			// can be merged
-			if (isWayMergable(mergePoint, road1.getWay(), road2.getWay()) == false) {
+			if (isWayMergable(mergePoint, road1, road2) == false) {
 				return false;
 			}
 
@@ -504,10 +504,12 @@ public class RoadMerger {
 	 * @return {@code true} tag values match so that both roads might be merged;
 	 *  {@code false} tag values differ so that road must not be merged
 	 */
-	private boolean isWayMergable(Coord mergePoint, Way way1, Way way2) {
+	private boolean isWayMergable(Coord mergePoint, ConvertedWay road1, ConvertedWay road2) {
 		// oneway must not only be checked for equal tag values
 		// but also for correct direction of both ways
-		
+
+		Way way1 = road1.getWay();
+		Way way2 = road2.getWay();
 		// first map the different oneway values
 		String oneway1 = way1.getTag("oneway");
 		// map oneway value for the other way
@@ -554,34 +556,35 @@ public class RoadMerger {
 			}
 		}
 
+		if (road1.getRouteFlags() != road2.getRouteFlags()){
 		// second: tags for which only the NotBool value must be equal 
-		for (String tagname : mergeTagsNotBool) {
-			boolean flag1No = way1.isNotBoolTag(tagname);
-			boolean flag2No = way2.isNotBoolTag(tagname);
-			if (flag1No != flag2No) {
-				if (log.isDebugEnabled()){
-					log.debug(tagname, "does not match", way1.getId(), "("
-							+ way1.getTag(tagname) + ")", way2.getId(),
-							"(" + way2.getTag(tagname) + ")");
+			for (String tagname : mergeTagsNotBool) {
+				boolean flag1No = way1.isNotBoolTag(tagname);
+				boolean flag2No = way2.isNotBoolTag(tagname);
+				if (flag1No != flag2No) {
+					if (log.isDebugEnabled()){
+						log.debug(tagname, "does not match", way1.getId(), "("
+								+ way1.getTag(tagname) + ")", way2.getId(),
+								"(" + way2.getTag(tagname) + ")");
+					}
+					return false;
 				}
-				return false;
 			}
+
+			// third: tags for which only the bool value must be equal 
+			for (String tagname : mergeTagsBool) {
+				boolean flag1Yes = way1.isBoolTag(tagname);
+				boolean flag2Yes = way2.isBoolTag(tagname);
+				if (flag1Yes != flag2Yes) {
+					if (log.isDebugEnabled()){
+						log.debug(tagname, "does not match", way1.getId(), "("
+								+ way1.getTag(tagname) + ")", way2.getId(),
+								"(" + way2.getTag(tagname) + ")");
+					}
+					return false;
+				}
+			}			
 		}
-		
-		// third: tags for which only the bool value must be equal 
-		for (String tagname : mergeTagsBool) {
-			boolean flag1Yes = way1.isBoolTag(tagname);
-			boolean flag2Yes = way2.isBoolTag(tagname);
-			if (flag1Yes != flag2Yes) {
-				if (log.isDebugEnabled()){
-					log.debug(tagname, "does not match", way1.getId(), "("
-							+ way1.getTag(tagname) + ")", way2.getId(),
-							"(" + way2.getTag(tagname) + ")");
-				}
-				return false;
-			}
-		}			
-		
 		// Check the angle of the two ways
 		Coord cOnWay1;
 		if (way1.getPoints().get(0) == mergePoint) {

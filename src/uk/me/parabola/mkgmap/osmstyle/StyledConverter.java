@@ -589,86 +589,85 @@ public class StyledConverter implements OsmConverter {
 	 * Check if roundabout has correct direction. Set driveOnRight or
 	 * driveOnLeft is not yet set.
 	 * 
-	 * @param way
 	 */
-	private void checkRoundabout(Way way) {
-		if ("roundabout".equals(way.getTag("junction"))) {
-			List<Coord> points = way.getPoints();
-			// if roundabout checking is enabled and roundabout has at
-			// least 3 points and it has not been marked as "don't
-			// check", check its direction
-			if (checkRoundabouts && way.getPoints().size() > 2
-					&& !way.isBoolTag("mkgmap:no-dir-check")
-					&& !way.isNotBoolTag("mkgmap:dir-check")) {
-				Coord centre = way.getCofG();
-				int dir = 0;
-				// check every third segment
-				for (int i = 0; (i + 1) < points.size(); i += 3) {
-					Coord pi = points.get(i);
-					Coord pi1 = points.get(i + 1);
-					// TODO: check if high prec coords allow to use smaller
-					// distance
-					// don't check segments that are very short
-					if (pi.distance(centre) > 2.5 && pi.distance(pi1) > 2.5) {
-						// determine bearing from segment that starts with
-						// point i to centre of roundabout
-						double a = pi.bearingTo(pi1);
-						double b = pi.bearingTo(centre) - a;
-						while (b > 180)
-							b -= 360;
-						while (b < -180)
-							b += 360;
-						// if bearing to centre is between 15 and 165
-						// degrees consider it trustworthy
-						if (b >= 15 && b < 165)
-							++dir;
-						else if (b <= -15 && b > -165)
-							--dir;
-					}
+	private void checkRoundabout(ConvertedWay cw) {
+		if (AccessTagsAndBits.isRoundabout(cw.getRouteFlags()) == false)
+			return;
+		Way way = cw.getWay();
+		List<Coord> points = way.getPoints();
+		// if roundabout checking is enabled and roundabout has at
+		// least 3 points and it has not been marked as "don't
+		// check", check its direction
+		if (checkRoundabouts && points.size() > 2
+				&& !way.isBoolTag("mkgmap:no-dir-check")
+				&& !way.isNotBoolTag("mkgmap:dir-check")) {
+			Coord centre = way.getCofG();
+			int dir = 0;
+			// check every third segment
+			for (int i = 0; (i + 1) < points.size(); i += 3) {
+				Coord pi = points.get(i);
+				Coord pi1 = points.get(i + 1);
+				// TODO: check if high prec coords allow to use smaller
+				// distance
+				// don't check segments that are very short
+				if (pi.distance(centre) > 2.5 && pi.distance(pi1) > 2.5) {
+					// determine bearing from segment that starts with
+					// point i to centre of roundabout
+					double a = pi.bearingTo(pi1);
+					double b = pi.bearingTo(centre) - a;
+					while (b > 180)
+						b -= 360;
+					while (b < -180)
+						b += 360;
+					// if bearing to centre is between 15 and 165
+					// degrees consider it trustworthy
+					if (b >= 15 && b < 165)
+						++dir;
+					else if (b <= -15 && b > -165)
+						--dir;
 				}
-				if (dir == 0)
-					log.info("Roundabout segment " + way.getId()
-							+ " direction unknown (see "
-							+ points.get(0).toOSMURL() + ")");
-				else {
-					boolean clockwise = dir > 0;
-					if (points.get(0) == points.get(points.size() - 1)) {
-						// roundabout is a loop
-						if (!driveOnLeft && !driveOnRight) {
-							if (clockwise) {
-								log.info("Roundabout "
-										+ way.getId()
-										+ " is clockwise so assuming vehicles should drive on left side of road ("
-										+ centre.toOSMURL() + ")");
-								driveOnLeft = true;
-								NODHeader.setDriveOnLeft(true);
-							} else {
-								log.info("Roundabout "
-										+ way.getId()
-										+ " is anti-clockwise so assuming vehicles should drive on right side of road ("
-										+ centre.toOSMURL() + ")");
-								driveOnRight = true;
-							}
-						}
-						if (driveOnLeft && !clockwise || driveOnRight
-								&& clockwise) {
-							log.warn("Roundabout "
+			}
+			if (dir == 0)
+				log.info("Roundabout segment " + way.getId()
+						+ " direction unknown (see "
+						+ points.get(0).toOSMURL() + ")");
+			else {
+				boolean clockwise = dir > 0;
+				if (points.get(0) == points.get(points.size() - 1)) {
+					// roundabout is a loop
+					if (!driveOnLeft && !driveOnRight) {
+						if (clockwise) {
+							log.info("Roundabout "
 									+ way.getId()
-									+ " direction is wrong - reversing it (see "
+									+ " is clockwise so assuming vehicles should drive on left side of road ("
 									+ centre.toOSMURL() + ")");
-							way.reverse();
+							driveOnLeft = true;
+							NODHeader.setDriveOnLeft(true);
+						} else {
+							log.info("Roundabout "
+									+ way.getId()
+									+ " is anti-clockwise so assuming vehicles should drive on right side of road ("
+									+ centre.toOSMURL() + ")");
+							driveOnRight = true;
 						}
-					} else if (driveOnLeft && !clockwise || driveOnRight
-							&& clockwise) {
-						// roundabout is a line
-						log.warn("Roundabout segment " + way.getId()
-								+ " direction looks wrong (see "
-								+ points.get(0).toOSMURL() + ")");
 					}
+					if (driveOnLeft && !clockwise || driveOnRight
+							&& clockwise) {
+						log.warn("Roundabout "
+								+ way.getId()
+								+ " direction is wrong - reversing it (see "
+								+ centre.toOSMURL() + ")");
+						way.reverse();
+					}
+				} else if (driveOnLeft && !clockwise || driveOnRight
+						&& clockwise) {
+					// roundabout is a line
+					log.warn("Roundabout segment " + way.getId()
+							+ " direction looks wrong (see "
+							+ points.get(0).toOSMURL() + ")");
 				}
 			}
 		}
-
 	}
 	
 	
@@ -953,7 +952,8 @@ public class StyledConverter implements OsmConverter {
 			return;
 		}
 
-		checkRoundabout(way);
+		
+		checkRoundabout(cw);
 
 		// process any Coords that have a POI associated with them
 		final double stubSegmentLength = 25; // metres
@@ -1554,33 +1554,6 @@ public class StyledConverter implements OsmConverter {
 		return trailingWay;
 	}
 
-	protected boolean accessExplicitlyAllowed(String val) {
-		if (val == null)
-			return false;
-
-		return (val.equalsIgnoreCase("yes") ||
-			val.equalsIgnoreCase("designated") ||
-			val.equalsIgnoreCase("permissive") ||
-			val.equalsIgnoreCase("official"));
-	}
-
-	private boolean isFootOnlyAccess(Way way){
-
-		// foot must be allowed
-		if (way.isNotBoolTag("mkgmap:foot")) {
-			return false;
-		}
-		// check if bike, truck, car, bus, taxi and emergency are not allowed
-		// not sure about delivery - but check if also
-		// carpool and throughroute can be ignored (I think so...)
-		for (String accessTag : Arrays.asList("mkgmap:bicycle","mkgmap:truck","mkgmap:car","mkgmap:bus","mkgmap:taxi","mkgmap:emergency","mkgmap:delivery")) 
-		{
-			if (way.isNotBoolTag(accessTag) == false) {
-				return false;
-			}
-		}
-		return true;
-	}
 
 	/**
 	 * Increment the highway counter for each coord of each road.
@@ -1830,15 +1803,15 @@ public class StyledConverter implements OsmConverter {
 						CoordPOI cp = (CoordPOI) p;
 						Node node = cp.getNode();
 						boolean usedInThisWay = false;
+						byte wayAccess = cw.getAccess();
 						if (node.getTag("mkgmap:road-class") != null
 								|| node.getTag("mkgmap:road-speed") != null ) {
-							if (isFootOnlyAccess(way) == false)
+							if (wayAccess != AccessTagsAndBits.FOOT)
 								usedInThisWay = true;
 						}
 						byte nodeAccess = AccessTagsAndBits.evalAccessTags(node);
 						if(nodeAccess != (byte)0xff){
 							// barriers etc. 
-							byte wayAccess = AccessTagsAndBits.evalAccessTags(way);
 							if ((wayAccess & nodeAccess) != wayAccess){
 								// node is more restrictive
 								if (p.getHighwayCount() >= 2 || (i != 0 && i != numPoints-1)){

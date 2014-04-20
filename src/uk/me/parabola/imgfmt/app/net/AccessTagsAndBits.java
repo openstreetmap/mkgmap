@@ -37,7 +37,7 @@ public final class AccessTagsAndBits {
 	// other routing attributes
 	public static final byte R_THROUGHROUTE	= 0x001; // note: 1 means throughroute is allowed
 	public static final byte R_CARPOOL      = 0x002; 	
-	public static final byte R_ONEWAY       = 0x004;
+//	public static final byte R_ONEWAY       = 0x004;
 	public static final byte R_TOLL		    = 0x008;
 	public static final byte R_UNPAVED      = 0x010;
 	public static final byte R_FERRY        = 0x020;
@@ -57,10 +57,7 @@ public final class AccessTagsAndBits {
 	public static byte evalAccessTags(Element el){
 		byte noAccess = 0;
 		for (Entry<String, Byte> entry : ACCESS_TAGS.entrySet()){
-			String access = el.getTag(entry.getKey());
-			if (access == null)
-				continue;
-			if ("no".equals(access))
+			if (el.isNotBoolTag(entry.getKey()))
 				noAccess |= entry.getValue();
 		}
 		return  (byte) ~noAccess;
@@ -86,6 +83,7 @@ public final class AccessTagsAndBits {
 		
 		if ("roundabout".equals(el.getTag("junction"))) 
 			routeFlags |= R_ROUNDABOUT;
+		
 		return routeFlags;
 	}
 	
