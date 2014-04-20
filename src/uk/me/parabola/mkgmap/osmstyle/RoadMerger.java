@@ -126,6 +126,7 @@ public class RoadMerger {
 		 * 	{@code false} the roads cannot be merged at {@code mergePoint}
 		 */
 		public boolean isMergable(Coord mergePoint, Road otherRoad) {
+			// check if basic road attributes match
 			if (cw.getRoadClass() != otherRoad.cw.getRoadClass())
 				return false;
 			if (cw.getRoadSpeed() != otherRoad.cw.getRoadSpeed())
@@ -138,7 +139,7 @@ public class RoadMerger {
 				return false;
 			}
 			
-			// first check if this road starts or stops at the mergePoint
+			// now check if this road starts or stops at the mergePoint
 			Coord cStart = getWay().getPoints().get(0);
 			Coord cEnd = getWay().getPoints().get(getWay().getPoints().size() - 1);
 			if (cStart != mergePoint && cEnd != mergePoint) {
@@ -162,7 +163,7 @@ public class RoadMerger {
 				return false;
 			}
 			
-			// check if the GType objects are the same
+			// check if some other fields in the GType objects are the same
 			if (isGTypeMergable(otherRoad.getGtype()) == false) {
 				return false;
 			}

@@ -12,8 +12,8 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
-import java.io.File;
-import java.io.IOException;
+//import java.io.File;
+//import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -29,7 +29,7 @@ import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.RestrictionRelation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
-import uk.me.parabola.splitter.O5mMapWriter;
+//import uk.me.parabola.splitter.O5mMapWriter;
 import uk.me.parabola.util.GpxCreator;
 
 /**
@@ -1242,7 +1242,7 @@ public class WrongAngleFixer {
 	
 	private void writeOSM(String name, List<ConvertedWay> convertedWays){
 		//TODO: comment or remove
-		
+		/*
 		if (gpxPath == null)
 			return;
 		File outDir = new File(gpxPath + "/.");
@@ -1315,7 +1315,7 @@ public class WrongAngleFixer {
 				ren.delete();
 			f.renameTo(ren);
 		}
-		
+		*/
 	}
 	
 	 
