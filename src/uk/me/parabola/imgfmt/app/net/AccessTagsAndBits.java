@@ -13,13 +13,16 @@
 package uk.me.parabola.imgfmt.app.net;
 
 import java.util.HashMap;
+import java.util.Map.Entry;
+
+import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
  * mkgmap internal representation of (vehicle) access.
  * @author GerdP
  *
  */
-public interface AccessTagsAndBits {
+public class AccessTagsAndBits {
 	
 	public static final byte FOOT 	   = 0x01;
 	public static final byte BIKE      = 0x02;
@@ -42,4 +45,15 @@ public interface AccessTagsAndBits {
 		put("mkgmap:emergency", EMERGENCY);
 	}};
 	
+	public static byte evalAccessTags(Element el){
+		byte noAccess = 0;
+		for (Entry<String, Byte> entry : ACCESS_TAGS.entrySet()){
+			String access = el.getTag(entry.getKey());
+			if (access == null)
+				continue;
+			if ("no".equals(access))
+				noAccess |= entry.getValue();
+		}
+		return  (byte) ~noAccess;
+	}
 }

@@ -17,14 +17,15 @@
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import java.util.ArrayList;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import uk.me.parabola.mkgmap.osmstyle.StyledConverter;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.Token;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
+import static uk.me.parabola.imgfmt.app.net.AccessTagsAndBits.*;
 
 /**
  * Read an action block.  This is contained within braces and contains
@@ -209,10 +210,10 @@ public class ActionReader {
 			// If the value contains a variable, then we do not know what the
 			// value will be.  Otherwise save the full tag=value
 			if (val.contains("$")) {
-				for (String accessTag : StyledConverter.ACCESS_TAGS)
+				for (String accessTag : ACCESS_TAGS.keySet())
 					changeableTags.add(accessTag);
 			} else {
-				for (String accessTag : StyledConverter.ACCESS_TAGS)
+				for (String accessTag : ACCESS_TAGS.keySet())
 					changeableTags.add(accessTag + "=" + val);
 			}
 			if (scanner.checkToken("|"))

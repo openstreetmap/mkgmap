@@ -16,7 +16,10 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
+import static uk.me.parabola.imgfmt.app.net.AccessTagsAndBits.ACCESS_TAGS;
+
 import java.util.ArrayList;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,6 +36,7 @@ import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.net.AccessTagsAndBits;
 import uk.me.parabola.imgfmt.app.net.GeneralRouteRestriction;
 import uk.me.parabola.imgfmt.app.net.NODHeader;
 import uk.me.parabola.imgfmt.app.net.RouteRestriction;
@@ -95,7 +99,7 @@ public class StyledConverter implements OsmConverter {
 	private final List<Relation> throughRouteRelations = new ArrayList<Relation>();
 
 	/** all tags used for access restrictions */
-	public final static List<String> ACCESS_TAGS = Arrays.asList(
+	public final static List<String> ACCESS_TAGS2 = Arrays.asList(
 			"mkgmap:bicycle", 
 			"mkgmap:foot", 
 			"mkgmap:truck", 
@@ -792,8 +796,12 @@ public class StyledConverter implements OsmConverter {
 			throughRouteRelations.add(relation);
 		}
 	}
-
+	
 	private void addLine(Way way, GType gt) {
+		addLine(way, gt, -1);
+	}
+	
+	private void addLine(Way way, GType gt, int replType) {
 		List<Coord> wayPoints = way.getPoints();
 		List<Coord> points = new ArrayList<Coord>(wayPoints.size());
 		double lineLength = 0;
@@ -808,7 +816,7 @@ public class StyledConverter implements OsmConverter {
 				if(lineLength >= MAX_LINE_LENGTH) {
 					if (log.isInfoEnabled())
 						log.info("Splitting line", way.toBrowseURL(), "at", p.toOSMURL(), "to limit its length to", (long)lineLength + "m");
-					addLine(way, gt, points);
+					addLine(way, gt, replType, points);
 					points = new ArrayList<Coord>(wayPoints.size() - points.size() + 1);
 					points.add(p);
 					lineLength = 0;
@@ -818,12 +826,14 @@ public class StyledConverter implements OsmConverter {
 		}
 
 		if(points.size() > 1)
-			addLine(way, gt, points);
+			addLine(way, gt, replType, points);
 	}
 
-	private void addLine(Way way, GType gt, List<Coord> points) {
+	private void addLine(Way way, GType gt, int replType, List<Coord> points) {
 		MapLine line = new MapLine();
 		elementSetup(line, gt, way);
+		if (replType >= 0)
+			line.setType(replType);
 		line.setPoints(points);
 
 		
@@ -973,7 +983,7 @@ public class StyledConverter implements OsmConverter {
 	}
 	 	
 	private boolean hasAccessRestriction(Element osmElement) {
-		for (String tag : ACCESS_TAGS) {
+		for (String tag : ACCESS_TAGS.keySet()) {
 			if (osmElement.isNotBoolTag(tag)) {
 				return true;
 			}
@@ -1410,9 +1420,8 @@ public class StyledConverter implements OsmConverter {
 					if (cp.getConvertToViaInRouteRestriction()){
 						String wayPOI = way.getTag(WAY_POI_NODE_IDS);
 						if (wayPOI != null && wayPOI.contains("[" + cp.getNode().getId() + "]")){
-							boolean[] nodeNoAccess = getNoAccess(cp.getNode());
-							boolean[] wayNoAccess = getNoAccess(way);
-							if (Arrays.equals(nodeNoAccess, wayNoAccess) == false){
+							byte nodeAccess = AccessTagsAndBits.evalAccessTags(cp.getNode());
+							if (nodeAccess != cw.getAccess()){
 								List<Way> wayList = poiRestrictions.get(cp.getNode());
 								if (wayList == null){
 									wayList = new ArrayList<Way>(4);
@@ -1720,7 +1729,10 @@ public class StyledConverter implements OsmConverter {
 		
 		// find roads that are not connected
 		for (int i = 0; i < roads.size(); i++){
-			Way way = roads.get(i).getWay();
+			ConvertedWay cw = roads.get(i);
+			if (!cw.isValid())
+				continue;
+			Way way = cw.getWay();
 			if(reportDeadEnds > 0){
 				// report dead ends of oneway roads 
 				if (way.isBoolTag("oneway") && !way.isNotBoolTag("mkgmap:dead-end-check")) {
@@ -1797,8 +1809,8 @@ public class StyledConverter implements OsmConverter {
 					}
 				}
 			}
-  			String check_type = way.getTag("mkgmap:set_unconnected_type");
-			if (check_type != null){
+  			String replType = way.getTag("mkgmap:set_unconnected_type");
+			if (replType != null){
 				boolean isConnected = false;
 				boolean onBoundary = false;
 				for (Coord p:way.getPoints()){
@@ -1816,23 +1828,22 @@ public class StyledConverter implements OsmConverter {
 					if (onBoundary){
 						log.info("road not connected to other roads but is on boundary:", way.toBrowseURL());
 					} else {
-						if ("none".equals(check_type))
+						if ("none".equals(replType))
 							log.info("road not connected to other roads, is ignored:", way.toBrowseURL());
 						else {
-							int type = -1;
+							int typeNoConnection = -1;
 							try{
-								type = Integer.decode(check_type);
-								if (GType.isRoutableLineType(type)){
-									type = -1;
-									log.error("type value in mkgmap:set_unconnected_type should not be a routable type:" + check_type);
+								typeNoConnection = Integer.decode(replType);
+								if (GType.isRoutableLineType(typeNoConnection)){
+									typeNoConnection = -1;
+									log.error("type value in mkgmap:set_unconnected_type should not be a routable type:" + replType);
 								}
 							} catch (NumberFormatException e){
-								log.warn("invalid type value in mkgmap:set_unconnected_type:", check_type);
+								log.warn("invalid type value in mkgmap:set_unconnected_type:", replType);
 							}
-							if (type != -1 ){
-								log.info("road not connected to other roads, added as line with type", check_type + ":", way.toBrowseURL());
-								GType gt = new GType(roads.get(i).getType(), check_type); 
-								addLine(way, gt);
+							if (typeNoConnection != -1 ){
+								log.info("road not connected to other roads, added as line with type", replType + ":", way.toBrowseURL());
+								addLine(way, cw.getType(), typeNoConnection);
 							} else {
 								log.warn("road not connected to other roads, but replacement type is invalid. Dropped:", way.toBrowseURL());
 							}
@@ -1875,7 +1886,7 @@ public class StyledConverter implements OsmConverter {
 						if(hasAccessRestriction(node)){
 							// barriers etc. 
 							boolean nodeIsMoreRestrictive = false;
-							for (String tag : ACCESS_TAGS) {
+							for (String tag : ACCESS_TAGS.keySet()) {
 								if (node.isNotBoolTag(tag) && way.isNotBoolTag(tag) == false) {
 									nodeIsMoreRestrictive = true;
 									break;

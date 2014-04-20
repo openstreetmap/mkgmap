@@ -14,8 +14,8 @@ package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import java.util.List;
 
-import uk.me.parabola.mkgmap.osmstyle.StyledConverter;
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import static uk.me.parabola.imgfmt.app.net.AccessTagsAndBits.*;
 
 /**
  * Add one value to all mkgmap access tags, optionally changing them if they already exist.  
@@ -52,7 +52,7 @@ public class AddAccessAction extends ValueBuildedAction {
 		if (accessValue == null) {
 			return;
 		}
-		for (String accessTag : StyledConverter.ACCESS_TAGS) {
+		for (String accessTag : ACCESS_TAGS.keySet()) {
 			setTag(el, accessTag, accessValue);
 		}
 	}

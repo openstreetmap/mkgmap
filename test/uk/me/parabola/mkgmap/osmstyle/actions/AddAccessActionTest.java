@@ -12,9 +12,9 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
-import uk.me.parabola.mkgmap.osmstyle.StyledConverter;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.Way;
+import static uk.me.parabola.imgfmt.app.net.AccessTagsAndBits.*;
 
 import org.junit.Test;
 
@@ -34,7 +34,7 @@ public class AddAccessActionTest {
 		Action act = new AddAccessAction(value, false);
 		Element el = stdElement();
 		act.perform(el);
-		for (String accessTag : StyledConverter.ACCESS_TAGS) {
+		for (String accessTag : ACCESS_TAGS.keySet()) {
 			assertSame("a not changed", value, el.getTag(accessTag));
 		}
 	}
@@ -49,7 +49,7 @@ public class AddAccessActionTest {
 		Element el = stdElement();
 		act.perform(el);
 
-		for (String accessTag : StyledConverter.ACCESS_TAGS) {
+		for (String accessTag : ACCESS_TAGS.keySet()) {
 			assertEquals("subst access", ACCESSVAL, el.getTag(accessTag));
 		}
 	}
@@ -78,7 +78,7 @@ public class AddAccessActionTest {
 		Element el = stdElement();
 		el.addTag("mkgmap:bicycle", "yes");
 		act.perform(el);
-		for (String accessTag : StyledConverter.ACCESS_TAGS) {
+		for (String accessTag : ACCESS_TAGS.keySet()) {
 			if ("mkgmap:bicycle".equals(accessTag))
 				assertEquals("no overwrite", "yes", el.getTag(accessTag));
 			else
@@ -96,7 +96,7 @@ public class AddAccessActionTest {
 		Element el = stdElement();
 		el.addTag("mkgmap:bicycle", "yes");
 		act.perform(el);
-		for (String accessTag : StyledConverter.ACCESS_TAGS) {
+		for (String accessTag : ACCESS_TAGS.keySet()) {
 			assertEquals("no overwrite", "no", el.getTag(accessTag));
 		}
 	}
@@ -116,7 +116,7 @@ public class AddAccessActionTest {
 		Element el = stdElement();
 		act.perform(el);
 
-		for (String accessTag : StyledConverter.ACCESS_TAGS) 
+		for (String accessTag : ACCESS_TAGS.keySet()) 
 			assertNull(accessTag+"a not set", el.getTag(accessTag));
 	}
 
@@ -133,7 +133,7 @@ public class AddAccessActionTest {
 		el.addTag("hello", "hello");
 		act.perform(el);
 
-		for (String accessTag : StyledConverter.ACCESS_TAGS) 
+		for (String accessTag : ACCESS_TAGS.keySet()) 
 			assertEquals(accessTag+" is set", ACCESSVAL, el.getTag(accessTag));
 	}
 
@@ -150,7 +150,7 @@ public class AddAccessActionTest {
 		el.addTag("world", "world");
 		act.perform(el);
 
-		for (String accessTag : StyledConverter.ACCESS_TAGS) 
+		for (String accessTag : ACCESS_TAGS.keySet()) 
 			assertEquals(accessTag+" is set", ACCESSVAL, el.getTag(accessTag));
 	}
 

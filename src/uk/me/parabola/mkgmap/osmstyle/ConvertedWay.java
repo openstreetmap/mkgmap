@@ -14,7 +14,6 @@
 package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.List;
-import java.util.Map.Entry;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
@@ -45,15 +44,7 @@ public class ConvertedWay {
 		this.roadSpeed = (byte) gt.getRoadSpeed();
 		recalcRoadClass(way);
 		recalcRoadSpeed(way);
-		byte noAccess = 0;
-		for (Entry<String, Byte> entry : ACCESS_TAGS.entrySet()){
-			String access = way.getTag(entry.getKey());
-			if (access == null)
-				continue;
-			if ("no".equals(access))
-				noAccess |= entry.getValue();
-		}
-		mkgmapAccess = (byte) ~noAccess;
+		mkgmapAccess = evalAccessTags(way);
 	}
 	
 	public ConvertedWay(ConvertedWay other, Way way){
@@ -203,5 +194,4 @@ public class ConvertedWay {
 	public byte getRoadSpeed(){
 		return roadSpeed;
 	}
-	
 }
