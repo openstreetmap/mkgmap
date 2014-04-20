@@ -31,28 +31,48 @@ import static uk.me.parabola.imgfmt.app.net.AccessTagsAndBits.*;
  */
 public class ConvertedWay {
 	private static final Logger log = Logger.getLogger(ConvertedWay.class);
+	private final int index;
+	private final Way way;				// with tags after Style processing
+	private final GType gt;								
+
 	private byte roadClass;
 	private byte roadSpeed;
-	private byte mkgmapAccess; 		// bit mask 
-	private GType gt;								
-	private Way way;				// with tags after Style processing
+	private byte mkgmapAccess; 		// bit mask, see ACCESS_TAGS 
+	private final byte routeFlags;	// bit mask, see ROUTING_TAGS
+	
 
-	public ConvertedWay(Way way, GType type) {
+	public ConvertedWay(int index, Way way, GType type) {
+		this.index = index;
 		this.way = way;
 		this.gt = type;
-		this.roadClass = (byte) gt.getRoadClass();
-		this.roadSpeed = (byte) gt.getRoadSpeed();
-		recalcRoadClass(way);
-		recalcRoadSpeed(way);
-		mkgmapAccess = evalAccessTags(way);
+		if (type.isRoad()) {
+			this.roadClass = (byte) gt.getRoadClass();
+			this.roadSpeed = (byte) gt.getRoadSpeed();
+			recalcRoadClass(way);
+			recalcRoadSpeed(way);
+			mkgmapAccess = evalAccessTags(way);
+			routeFlags = evalRouteTags(way);
+		} else {
+			roadClass = 0;
+			roadSpeed = 0;
+			mkgmapAccess = 0;
+			routeFlags = 0;
+		}
 	}
 	
 	public ConvertedWay(ConvertedWay other, Way way){
 		this.way = way;
+		// copy all other attributes
+		this.index = other.index;
 		this.gt = other.gt;
 		this.roadClass = other.roadClass;
 		this.roadSpeed = other.roadSpeed;
 		this.mkgmapAccess = other.mkgmapAccess;
+		this.routeFlags = other.routeFlags;
+	}
+	
+	public int getIndex(){
+		return index;
 	}
 	
 	public GType getType(){
@@ -66,6 +86,20 @@ public class ConvertedWay {
 	public byte getAccess(){
 		return mkgmapAccess;
 	}
+	
+	public byte getRoadClass(){
+		return roadClass;
+	}
+
+	public byte getRoadSpeed(){
+		return roadSpeed;
+	}
+	
+	public byte getRouteFlags(){
+		return routeFlags;
+	}
+	
+
 	/**
 	 * Recalculates the road class based on the tags
 	 * <ul>
@@ -187,11 +221,8 @@ public class ConvertedWay {
 		return true;
 	}
 	
-	public byte getRoadClass(){
-		return roadClass;
-	}
+	public String toString(){
+		return getType() + " " + getWay().getId() + " " + getWay().toTagString();
 
-	public byte getRoadSpeed(){
-		return roadSpeed;
 	}
 }
