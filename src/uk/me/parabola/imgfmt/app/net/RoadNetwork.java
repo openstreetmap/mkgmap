@@ -40,16 +40,6 @@ import uk.me.parabola.util.EnhancedProperties;
 public class RoadNetwork {
 	private static final Logger log = Logger.getLogger(RoadNetwork.class);
 
-	public static final int NO_EMERGENCY = 0;
-	public static final int NO_DELIVERY = 1;
-	public static final int NO_CAR = 2;
-	public static final int NO_BUS = 3;
-	public static final int NO_TAXI = 4;
-	public static final int NO_FOOT = 5;
-	public static final int NO_BIKE = 6;
-	public static final int NO_TRUCK = 7;
-	public static final int NO_MAX = 8;
-
 	private final static int MAX_RESTRICTIONS_ARCS = 7;
 	private final Map<Long, RouteNode> nodes = new LinkedHashMap<Long, RouteNode>();
 
