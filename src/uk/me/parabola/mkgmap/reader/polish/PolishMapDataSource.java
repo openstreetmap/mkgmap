@@ -18,6 +18,7 @@ package uk.me.parabola.mkgmap.reader.polish;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -38,7 +39,7 @@ import java.util.Map;
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.net.RouteRestriction;
+import uk.me.parabola.imgfmt.app.net.AccessTagsAndBits;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
@@ -829,6 +830,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
      * will NOT apply for Delivery and Car.
      *
      * @param value Tag value
+     * @return the exceptMask in mkgmap internal format
      */
     private byte getRestrictionExceptionMask(String value) {
         String[] params = value.split(",");
@@ -838,28 +840,28 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
                 if ("1".equals(params[i])) {
                     switch(i) {
 					case 0:
-						exceptMask |= RouteRestriction.EXCEPT_EMERGENCY;
+						exceptMask |= AccessTagsAndBits.EMERGENCY;
 						break;
 					case 1:
-						exceptMask |= RouteRestriction.EXCEPT_DELIVERY;
+						exceptMask |= AccessTagsAndBits.DELIVERY;
 						break;
 					case 2:
-						exceptMask |= RouteRestriction.EXCEPT_CAR;
+						exceptMask |= AccessTagsAndBits.CAR;
 						break;
 					case 3:
-						exceptMask |= RouteRestriction.EXCEPT_BUS;
+						exceptMask |= AccessTagsAndBits.BUS;
 						break;
 					case 4:
-						exceptMask |= RouteRestriction.EXCEPT_TAXI;
+						exceptMask |= AccessTagsAndBits.TAXI;
 						break;
 					case 5:
-						exceptMask |= RouteRestriction.EXCEPT_FOOT;
+						exceptMask |= AccessTagsAndBits.FOOT;
 						break;
 					case 6:
-						exceptMask |= RouteRestriction.EXCEPT_BICYCLE;
+						exceptMask |= AccessTagsAndBits.BIKE;
 						break;
 					case 7:
-						exceptMask |= RouteRestriction.EXCEPT_TRUCK;
+						exceptMask |= AccessTagsAndBits.TRUCK;
 						break;
                     }
                 }

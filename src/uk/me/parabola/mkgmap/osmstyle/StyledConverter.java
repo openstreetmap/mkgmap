@@ -39,7 +39,6 @@ import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.net.AccessTagsAndBits;
 import uk.me.parabola.imgfmt.app.net.GeneralRouteRestriction;
 import uk.me.parabola.imgfmt.app.net.NODHeader;
-import uk.me.parabola.imgfmt.app.net.RouteRestriction;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.imgfmt.app.trergn.MapObject;
 import uk.me.parabola.log.Logger;
@@ -697,6 +696,7 @@ public class StyledConverter implements OsmConverter {
 			Coord p = node.getLocation();
 			// list of ways that are connected to the poi
 			List<Way> wayList = entry.getValue();
+			/*
 			boolean[] nodeNoAccess = getNoAccess(node);
 			byte exceptMask = 0;
 			// exclude allowed vehicles/pedestrians from restriction
@@ -716,7 +716,8 @@ public class StyledConverter implements OsmConverter {
 				exceptMask |= RouteRestriction.EXCEPT_FOOT;
 			if (nodeNoAccess[RoadNetwork.NO_EMERGENCY] == false)
 				exceptMask |= RouteRestriction.EXCEPT_EMERGENCY;
-
+*/
+			byte exceptMask = AccessTagsAndBits.evalAccessTags(node);
 			Map<Long,CoordNode> otherNodeIds = new LinkedHashMap<Long, CoordNode>();
 			CoordNode viaNode = null;
 			boolean viaIsUnique = true;
@@ -756,6 +757,7 @@ public class StyledConverter implements OsmConverter {
 				log.info("Access restriction in POI node " + node.toBrowseURL() + " was ignored, has no effect on any connected way");
 				continue;
 			}
+			
 			GeneralRouteRestriction rr = new GeneralRouteRestriction("no_through", exceptMask, "CoordPOI at " + p.toOSMURL());
 			rr.setViaNodes(Arrays.asList(viaNode));
 			int added = collector.addRestriction(rr);
@@ -969,19 +971,6 @@ public class StyledConverter implements OsmConverter {
 		}
 	}
 
-	private boolean[] getNoAccess(Element osmElement){
-		boolean[] noAccess = new boolean[RoadNetwork.NO_MAX];
-		noAccess[RoadNetwork.NO_EMERGENCY] = osmElement.isNotBoolTag("mkgmap:emergency");
-		noAccess[RoadNetwork.NO_DELIVERY] = osmElement.isNotBoolTag("mkgmap:delivery");
-		noAccess[RoadNetwork.NO_CAR] = osmElement.isNotBoolTag("mkgmap:car");
-		noAccess[RoadNetwork.NO_BUS] = osmElement.isNotBoolTag("mkgmap:bus");
-		noAccess[RoadNetwork.NO_TAXI] = osmElement.isNotBoolTag("mkgmap:taxi");
-		noAccess[RoadNetwork.NO_FOOT] = osmElement.isNotBoolTag("mkgmap:foot");
-		noAccess[RoadNetwork.NO_BIKE] = osmElement.isNotBoolTag("mkgmap:bicycle");
-		noAccess[RoadNetwork.NO_TRUCK] = osmElement.isNotBoolTag("mkgmap:truck");
-		return noAccess;
-	}
-	 	
 	private boolean hasAccessRestriction(Element osmElement) {
 		for (String tag : ACCESS_TAGS.keySet()) {
 			if (osmElement.isNotBoolTag(tag)) {
@@ -1240,7 +1229,9 @@ public class StyledConverter implements OsmConverter {
 							if (log.isInfoEnabled())
 								log.info("Splitting looped way", way.getDebugName(), "at", wayPoints.get(splitI).toOSMURL(), "- it has", (numPointsInWay - splitI - 1 ), "following segment(s).");
 							Way loopTail = splitWayAt(way, splitI);
+							
 							ConvertedWay next = new ConvertedWay(cw, loopTail);
+							
 							// recursively check (shortened) head for
 							// more loops
 							addRoadAfterSplittingLoops(cw);
@@ -1489,7 +1480,7 @@ public class StyledConverter implements OsmConverter {
 			road.setOneway();
 		}
 
-		road.setAccess(getNoAccess(way));
+		road.setAccess(cw.getAccess());
 		
 		// does the road have a carpool lane?
 		if (way.isBoolTag("mkgmap:carpool"))
@@ -1542,7 +1533,6 @@ public class StyledConverter implements OsmConverter {
 			// shift the bits so that they have the correct position
 			int cmpAccess = (road.getRoadDef().getTabAAccess() & 0xff) + ((road.getRoadDef().getTabAAccess() & 0xc000) >> 6);
 			if (road.isDirection()) {
-				
 				cmpAccess |= 1<<10;
 			}
 			String access = String.format("%11s",Integer.toBinaryString(cmpAccess)).replace(' ', '0');
@@ -1883,16 +1873,12 @@ public class StyledConverter implements OsmConverter {
 							if (isFootOnlyAccess(way) == false)
 								usedInThisWay = true;
 						}
-						if(hasAccessRestriction(node)){
+						byte nodeAccess = AccessTagsAndBits.evalAccessTags(node);
+						if(nodeAccess != (byte)0xff){
 							// barriers etc. 
-							boolean nodeIsMoreRestrictive = false;
-							for (String tag : ACCESS_TAGS.keySet()) {
-								if (node.isNotBoolTag(tag) && way.isNotBoolTag(tag) == false) {
-									nodeIsMoreRestrictive = true;
-									break;
-								}
-							}
-							if (nodeIsMoreRestrictive){
+							byte wayAccess = AccessTagsAndBits.evalAccessTags(way);
+							if ((wayAccess & nodeAccess) != wayAccess){
+								// node is more restrictive
 								if (p.getHighwayCount() >= 2 || (i != 0 && i != numPoints-1)){
 									usedInThisWay = true;
 									cp.setConvertToViaInRouteRestriction(true);

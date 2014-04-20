@@ -15,9 +15,12 @@
 package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
+
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import static uk.me.parabola.imgfmt.app.net.AccessTagsAndBits.*;
+
 
 /**
  * A restriction in the routing graph.
@@ -64,20 +67,20 @@ public class RouteRestriction {
 	private final static byte F_EXCEPT_EMERGENCY = 0x04;
 	private final static byte F_MORE_EXCEPTIONS  = 0x08;
 	
-	public final static byte EXCEPT_CAR      = 0x01;
-	public final static byte EXCEPT_BUS      = 0x02;
-	public final static byte EXCEPT_TAXI     = 0x04;
-	public final static byte EXCEPT_DELIVERY = 0x10;
-	public final static byte EXCEPT_BICYCLE  = 0x20;
-	public final static byte EXCEPT_TRUCK    = 0x40;
+	private final static byte EXCEPT_CAR      = 0x01;
+	private final static byte EXCEPT_BUS      = 0x02;
+	private final static byte EXCEPT_TAXI     = 0x04;
+	private final static byte EXCEPT_DELIVERY = 0x10;
+	private final static byte EXCEPT_BICYCLE  = 0x20;
+	private final static byte EXCEPT_TRUCK    = 0x40;
 	
-	// additional flags that can be passed via exceptMask  
-	public final static byte EXCEPT_FOOT      = 0x08; // not written as such
-	public final static byte EXCEPT_EMERGENCY = (byte)0x80; // not written as such
-	private final static byte SPECIAL_EXCEPTION_MASK = ~(EXCEPT_FOOT|EXCEPT_EMERGENCY);
-
-
-	public RouteRestriction(RouteNode viaNode, List<RouteArc> traffArcs, byte exceptMaskParm) {
+	/**
+	 * 
+	 * @param viaNode the node to which this restriction is related
+	 * @param traffArcs the arcs that describe the "forbidden" path
+	 * @param mkgmapExceptMask the exception mask in the mkgmap format
+	 */
+	public RouteRestriction(RouteNode viaNode, List<RouteArc> traffArcs, byte mkgmapExceptMask) {
 		this.viaNode = viaNode;
 		this.arcs = new ArrayList<RouteArc>(traffArcs);
 		for (int i = 0; i < arcs.size(); i++){
@@ -85,12 +88,13 @@ public class RouteRestriction {
 			assert arc.getDest() != viaNode;
 		}
 		byte flags = 0;
-		if ((exceptMaskParm & EXCEPT_FOOT) != 0)
+		
+		if ((mkgmapExceptMask & FOOT) != 0)
 			flags |= F_EXCEPT_FOOT;
-		if ((exceptMaskParm & EXCEPT_EMERGENCY) != 0)
+		if ((mkgmapExceptMask & EMERGENCY) != 0)
 			flags |= F_EXCEPT_EMERGENCY;
 		
-		exceptMask = (byte)(exceptMaskParm & SPECIAL_EXCEPTION_MASK); 
+		exceptMask = translateExceptMask(mkgmapExceptMask); 
 		if(exceptMask != 0)
 			flags |= F_MORE_EXCEPTIONS;
 
@@ -101,6 +105,29 @@ public class RouteRestriction {
 	}
 
 	
+	/**
+	 * Translate the mkgmap internal representation of vehicles to the one used in the img format
+	 * @param mkgmapExceptMask
+	 * @return
+	 */
+	private byte translateExceptMask(byte mkgmapExceptMask) {
+		byte mask = 0;
+		if ((mkgmapExceptMask & CAR) != 0)
+			mask |= EXCEPT_CAR;
+		if ((mkgmapExceptMask & BUS) != 0)
+			mask |= EXCEPT_BUS;
+		if ((mkgmapExceptMask & TAXI) != 0)
+			mask |= EXCEPT_TAXI;
+		if ((mkgmapExceptMask & DELIVERY) != 0)
+			mask |= EXCEPT_DELIVERY;
+		if ((mkgmapExceptMask & BIKE) != 0)
+			mask |= EXCEPT_BICYCLE;
+		if ((mkgmapExceptMask & TRUCK) != 0)
+			mask |= EXCEPT_TRUCK;
+		return mask;
+	}
+
+
 	private int calcOffset(RouteNode node, int tableOffset) {
 		int offset = tableOffset - node.getOffsetNod1();
 		assert offset >= 0 : "node behind start of tables";

@@ -481,7 +481,7 @@ public class RoadNetwork {
 			int countOneway= 0;
 			for (int j = arcs.size()-1; j >= 0; --j){
 				RouteArc arc = arcs.get(j);
-				if (isUsable(arc.getRoadDef().getTabAAccess(), grr.getExceptionMask()) == false){
+				if (isUsable(arc.getRoadDef().getAccess(), grr.getExceptionMask()) == false){
 					countNoEffect++;
 					arcs.remove(j);
 				}
@@ -531,7 +531,7 @@ public class RoadNetwork {
 			for (RouteNode vn : viaNodes){
 				path.clear();
 				boolean viaNodeFound = false;
-				int pathNoAccessMask = 0;
+				byte pathNoAccessMask = 0;
 				for (int j = 0; j < indexes.length; j++){
 					RouteArc arc = arcLists.get(j).get(indexes[j]);
 					if (arc.getDest() == vn || viaNodeFound == false){
@@ -539,10 +539,11 @@ public class RoadNetwork {
 						if (arc.getSource() == vn)
 							viaNodeFound = true;
 					}
-					pathNoAccessMask |= arc.getRoadDef().getTabAAccess();
+					pathNoAccessMask |= ~arc.getRoadDef().getAccess();
 					path.add(arc);
 				}
-				if (isUsable(pathNoAccessMask, grr.getExceptionMask())){
+				byte pathAccessMask = (byte)~pathNoAccessMask;
+				if (isUsable(pathAccessMask, grr.getExceptionMask())){
 					vn.addRestriction(new RouteRestriction(vn, path, grr.getExceptionMask()));
 					++added;
 				} 
@@ -564,46 +565,14 @@ public class RoadNetwork {
 		return added;
 	}
 
-	/*
-	 * Match the access mask of the road and the exception mask of the 
-	 * restriction. If 
-	 * TabA:
-	 * 	0x8000, // emergency (net pointer bit 31)
-		0x4000, // delivery (net pointer bit 30)
-		0x0001, // car
-		0x0002, // bus
-		0x0004, // taxi
-		0x0010, // foot
-		0x0020, // bike
-		0x0040, // truck
-
-	public final static byte EXCEPT_CAR      = 0x01;
-	public final static byte EXCEPT_BUS      = 0x02;
-	public final static byte EXCEPT_TAXI     = 0x04;
-	public final static byte EXCEPT_DELIVERY = 0x10;
-	public final static byte EXCEPT_BICYCLE  = 0x20;
-	public final static byte EXCEPT_TRUCK    = 0x40;
-	// additional flags that can be passed via exceptMask  
-	public final static byte EXCEPT_FOOT      = 0x08; // not written as such
-	public final static byte EXCEPT_EMERGENCY = (byte)0x80; // not written as such
-	
-
+	/**
+	 * Compare the disallowed vehicles for the path with the exceptions from the restriction
+	 * @param roadNoAccess
+	 * @param exceptionMask
+	 * @return
 	 */
-	 // TODO: rewrite using named constants, unit tests 
-	private boolean isUsable(int roadTabAAccess, byte exceptionMask) {
-		// bit positions for car,bus,taxi,bicycle and truck are equal
-		// move the other bits to match the meaning in the restriction 
-		int roadNoAccess = roadTabAAccess & 0x67;
-		if ((roadTabAAccess & 0x8000) != 0)
-			roadNoAccess |= RouteRestriction.EXCEPT_EMERGENCY;
-		if ((roadTabAAccess & 0x4000) != 0)
-			roadNoAccess |= RouteRestriction.EXCEPT_DELIVERY;
-		if ((roadTabAAccess & 0x010) != 0)
-			roadNoAccess |= RouteRestriction.EXCEPT_FOOT;
-		int access = ~roadNoAccess & 0xff;
-		int restrAccess = exceptionMask;
-		restrAccess = ~restrAccess & 0xff;
-		if ((access & restrAccess) == 0)
+	private boolean isUsable(byte roadAccess, byte exceptionMask) {
+		if ((roadAccess & (byte) ~exceptionMask) == 0)
 			return false; // no allowed vehicle is concerned by this restriction
 		return true;
 	}
@@ -622,12 +591,11 @@ public class RoadNetwork {
 		for (RouteArc out: vn.arcsIteration()){
 			if (!out.isDirect())
 				continue;
-			int pathNoAccessMask = out.getRoadDef().getTabAAccess();
 			for (RouteArc in: vn.arcsIteration()){
 				if (!in.isDirect() || in == out || in.getDest() == out.getDest())
 					continue;
-				pathNoAccessMask |= in.getRoadDef().getTabAAccess();
-				if (isUsable(pathNoAccessMask, grr.getExceptionMask())){
+				byte pathAccessMask = (byte) (out.getRoadDef().getAccess() & in.getRoadDef().getAccess());
+				if (isUsable(pathAccessMask, grr.getExceptionMask())){
 					vn.addRestriction(new RouteRestriction(vn, Arrays.asList(in,out), grr.getExceptionMask()));
 					added++;
 				} else {

@@ -24,6 +24,7 @@ import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
+import uk.me.parabola.imgfmt.app.net.AccessTagsAndBits;
 import uk.me.parabola.imgfmt.app.net.NumberStyle;
 import uk.me.parabola.imgfmt.app.net.Numbers;
 import uk.me.parabola.log.Logger;
@@ -58,7 +59,7 @@ class RoadHelper {
 	private boolean oneway;
 	private boolean toll;
 
-	private boolean[] access;
+	private byte mkgmapAccess;
 	private List<Numbers> numbers;
 
 	public RoadHelper() {
@@ -73,7 +74,6 @@ class RoadHelper {
 		roadClass = 0;
 		oneway = false;
 		toll = false;
-		access = new boolean[NUM_ACCESS];
 		numbers = null;
 	}
 
@@ -86,6 +86,11 @@ class RoadHelper {
 		nodes.add(new NodeIndex(f));
 	}
 
+	/**
+	 * @param param cgpsmapper manual:
+	 * RouteParam=speed,road_class,one_way,toll,
+	 * denied_emergency,denied_delivery,denied_car,denied_bus,denied_taxi,denied_pedestrain,denied_bicycle,denied_truck
+	 */
 	public void setParam(String param) {
 		String[] f = param.split(",");
 		speed = Integer.parseInt(f[0]);
@@ -100,8 +105,22 @@ class RoadHelper {
 			roadClass = 4;
 		oneway = Integer.parseInt(f[2]) > 0;
 		toll = Integer.parseInt(f[3]) > 0;
-		for (int j = 0; j < f.length - 4; j++)
-			access[j] = Integer.parseInt(f[4+j]) > 0;
+		byte noAccess = 0;
+		for (int j = 0; j < f.length - 4; j++){
+			if (Integer.parseInt(f[4+j]) == 0)
+				continue;
+			switch (j){
+			case 0: noAccess |= AccessTagsAndBits.EMERGENCY; break; 
+			case 1: noAccess |= AccessTagsAndBits.DELIVERY; break; 
+			case 2: noAccess |= AccessTagsAndBits.CAR; break; 
+			case 3: noAccess |= AccessTagsAndBits.BUS; break; 
+			case 4: noAccess |= AccessTagsAndBits.TAXI; break; 
+			case 5: noAccess |= AccessTagsAndBits.FOOT; break; 
+			case 6: noAccess |= AccessTagsAndBits.BIKE; break; 
+			case 7: noAccess |= AccessTagsAndBits.TRUCK; break; 
+			}
+		}
+		mkgmapAccess = (byte) ~noAccess; // we store the allowed vehicles
 	}
 
 	public MapRoad makeRoad(MapLine l) {
@@ -119,7 +138,7 @@ class RoadHelper {
 			road.setOneway();
 		if (toll)
 			road.setToll();
-		road.setAccess(access);
+		road.setAccess(mkgmapAccess);
 
 		if (numbers != null && !numbers.isEmpty()) {
 			convertNodesForHouseNumbers();

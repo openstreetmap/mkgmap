@@ -22,7 +22,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  * @author GerdP
  *
  */
-public class AccessTagsAndBits {
+public final class AccessTagsAndBits {
 	
 	public static final byte FOOT 	   = 0x01;
 	public static final byte BIKE      = 0x02;
