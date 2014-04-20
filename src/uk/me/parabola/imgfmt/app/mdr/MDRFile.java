@@ -139,7 +139,7 @@ public class MDRFile extends ImgFile {
 	 */
 	public void addMap(int mapName, int codePage) {
 		currentMap++;
-		mdr1.addMap(mapName);
+		mdr1.addMap(mapName, currentMap);
 		Sort sort = mdrHeader.getSort();
 
 		if (sort.getCodepage() != codePage)
@@ -151,7 +151,7 @@ public class MDRFile extends ImgFile {
 
 		String name = country.getLabel().getText();
 		record.setMapIndex(currentMap);
-		record.setCountryIndex((int) country.getIndex());
+		record.setCountryIndex(country.getIndex());
 		record.setLblOffset(country.getLabel().getOffset());
 		record.setName(name);
 		record.setStrOff(createString(name));
@@ -243,11 +243,6 @@ public class MDRFile extends ImgFile {
 	public void write() {
 		mdr15.release();
 		
-		for (MdrSection s : sections) {
-			if (s != null)
-				s.finish();
-		}
-
 		ImgFileWriter writer = getWriter();
 		writeSections(writer);
 
@@ -270,6 +265,8 @@ public class MDRFile extends ImgFile {
 	 */
 	private void writeSections(ImgFileWriter writer) {
 		sizes = new MdrMapSection.PointerSizes(sections);
+
+		mdr1.finish();
 
 		// Deal with the dependencies between the sections. The order of the following
 		// statements is sometimes important.
@@ -373,7 +370,7 @@ public class MDRFile extends ImgFile {
 	private void writeSection(ImgFileWriter writer, int sectionNumber, MdrSection section) {
 
 		// Some sections are just not written in the device config
-		if (forDevice && Arrays.asList(12, 13, 14, 15, 21, 23, 26, 27, 28).contains(sectionNumber))
+		if (forDevice && Arrays.asList(13, 14, 15, 21, 23, 26, 27, 28).contains(sectionNumber))
 			return;
 
 		section.setSizes(sizes);
@@ -386,6 +383,7 @@ public class MDRFile extends ImgFile {
 			MdrMapSection mapSection = (MdrMapSection) section;
 			mapSection.setMapIndex(mdr1);
 			mapSection.initIndex(sectionNumber);
+			mapSection.relabelMaps(mdr1);
 		}
 
 		if (section instanceof HasHeaderFlags)

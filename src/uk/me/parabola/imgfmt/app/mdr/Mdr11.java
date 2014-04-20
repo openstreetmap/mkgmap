@@ -27,7 +27,7 @@ import uk.me.parabola.imgfmt.app.trergn.Point;
  * @author Steve Ratcliffe
  */
 public class Mdr11 extends MdrMapSection {
-	private List<Mdr11Record> pois = new ArrayList<Mdr11Record>();
+	private List<Mdr11Record> pois = new ArrayList<>();
 	private Mdr10 mdr10;
 
 	public Mdr11(MdrConfig config) {
@@ -119,7 +119,7 @@ public class Mdr11 extends MdrMapSection {
 	}
 
 	public List<Mdr8Record> getIndex() {
-		List<Mdr8Record> list = new ArrayList<Mdr8Record>();
+		List<Mdr8Record> list = new ArrayList<>();
 		for (int number = 1; number <= pois.size(); number += 10240) {
 			String prefix = getPrefixForRecord(number);
 
@@ -171,6 +171,10 @@ public class Mdr11 extends MdrMapSection {
 	}
 
 	public List<Mdr11Record> getPois() {
-		return new ArrayList<Mdr11Record>(pois);
+		return new ArrayList<>(pois);
+	}
+
+	public void relabelMaps(Mdr1 maps) {
+		relabel(maps, pois);
 	}
 }

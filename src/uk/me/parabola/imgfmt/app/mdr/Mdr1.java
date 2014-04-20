@@ -45,7 +45,8 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  * @author Steve Ratcliffe
  */
 public class Mdr1 extends MdrSection implements HasHeaderFlags {
-	private final List<Mdr1Record> maps = new ArrayList<Mdr1Record>();
+	private final List<Mdr1Record> maps = new ArrayList<>();
+	private int[] mapping;
 
 	public Mdr1(MdrConfig config) {
 		setConfig(config);
@@ -55,9 +56,12 @@ public class Mdr1 extends MdrSection implements HasHeaderFlags {
 	 * Add a map.  Create an MDR1 record for it and also allocate its reverse
 	 * index if this is not for a device.
 	 * @param mapNumber The map index number.
+	 * @param index The map index.
 	 */
-	public void addMap(int mapNumber) {
+	public void addMap(int mapNumber, int index) {
+		assert index > 0;
 		Mdr1Record rec = new Mdr1Record(mapNumber, getConfig());
+		rec.setMapIndex(index);
 		maps.add(rec);
 
 		if (!isForDevice()) {
@@ -80,6 +84,14 @@ public class Mdr1 extends MdrSection implements HasHeaderFlags {
 					return 1;
 			}
 		});
+
+		// Used to renumber all the existing (pre-sorted) map index numbers.
+		mapping = new int[maps.size()];
+		int count = 1;
+		for (Mdr1Record r : maps) {
+			mapping[r.getMapIndex()-1] = count;
+			count++;
+		}
 	}
 
 	public void writeSubSections(ImgFileWriter writer) {
@@ -153,5 +165,9 @@ public class Mdr1 extends MdrSection implements HasHeaderFlags {
 		if (!isForDevice())
 			magic |= 1;
 		return magic;
+	}
+
+	public int sortedMapIndex(int n) {
+		return mapping[n-1];
 	}
 }

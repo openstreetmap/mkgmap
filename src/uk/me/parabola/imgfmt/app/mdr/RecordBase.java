@@ -26,6 +26,7 @@ public abstract class RecordBase {
 	}
 
 	public void setMapIndex(int mapIndex) {
+		assert mapIndex > 0;
 		this.mapIndex = (short) mapIndex;
 	}
 }

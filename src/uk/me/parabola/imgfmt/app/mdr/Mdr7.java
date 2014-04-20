@@ -27,8 +27,8 @@ import uk.me.parabola.imgfmt.app.srt.SortKey;
  * @author Steve Ratcliffe
  */
 public class Mdr7 extends MdrMapSection {
-	private List<Mdr7Record> allStreets = new ArrayList<Mdr7Record>();
-	private List<Mdr7Record> streets = new ArrayList<Mdr7Record>();
+	private List<Mdr7Record> allStreets = new ArrayList<>();
+	private List<Mdr7Record> streets = new ArrayList<>();
 
 	public Mdr7(MdrConfig config) {
 		setConfig(config);
@@ -134,7 +134,7 @@ public class Mdr7 extends MdrMapSection {
 	 * @return List of index records.
 	 */
 	public List<Mdr8Record> getIndex() {
-		List<Mdr8Record> list = new ArrayList<Mdr8Record>();
+		List<Mdr8Record> list = new ArrayList<>();
 		for (int number = 1; number <= streets.size(); number += 10240) {
 			String prefix = getPrefixForRecord(number);
 
@@ -182,5 +182,9 @@ public class Mdr7 extends MdrMapSection {
 	
 	public List<Mdr7Record> getSortedStreets() {
 		return Collections.unmodifiableList(streets);
+	}
+
+	public void relabelMaps(Mdr1 maps) {
+		relabel(maps, allStreets);
 	}
 }
