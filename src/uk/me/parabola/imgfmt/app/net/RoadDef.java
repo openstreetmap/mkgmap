@@ -107,7 +107,7 @@ public class RoadDef implements Comparable<RoadDef> {
 	private final Label[] labels = new Label[MAX_LABELS];
 	private int numlabels;
 
-	private final SortedMap<Integer,List<RoadIndex>> roadIndexes = new TreeMap<Integer,List<RoadIndex>>();
+	private final SortedMap<Integer,List<RoadIndex>> roadIndexes = new TreeMap<>();
 
 	private City city;
 	private Zip zip;
@@ -119,7 +119,7 @@ public class RoadDef implements Comparable<RoadDef> {
 	private boolean flareCheck;
 	private Set<String> messageIssued;
 
-	private final List<Offset> rgnOffsets = new ArrayList<Offset>(4);
+	private final List<Offset> rgnOffsets = new ArrayList<>();
 
 	/*
 	 * Everything that's relevant for writing out Nod 2.
@@ -210,9 +210,8 @@ public class RoadDef implements Comparable<RoadDef> {
 		}
 
 		writeLabels(writer);
-		if (numbers != null) { // TODO combine if
-			if (numbers.getSwapped())
-				netFlags |= 0x20; // swapped default; left=even, right=odd
+		if (numbers != null && numbers.getSwapped()) {
+			netFlags |= 0x20; // swapped default; left=even, right=odd
 		}
 		writer.put((byte) netFlags);
 		writer.put3(roadLength);
@@ -351,12 +350,11 @@ public class RoadDef implements Comparable<RoadDef> {
 		int level = pl.getSubdiv().getZoom().getLevel();
 		List<RoadIndex> l = roadIndexes.get(level);
 		if (l == null) {
-			l = new ArrayList<RoadIndex>(4);
+			l = new ArrayList<>();
 			roadIndexes.put(level, l);
 		}
 		l.add(new RoadIndex(pl));
 
-		// XXX needs to be the lowest level, which might not always be zero in the future
 		if (level == 0) {
 			nodeCount += pl.getNodeCount();
 		}
@@ -762,7 +760,7 @@ public class RoadDef implements Comparable<RoadDef> {
 
 	public boolean messagePreviouslyIssued(String key) {
 		if(messageIssued == null)
-			messageIssued = new HashSet<String>();
+			messageIssued = new HashSet<>();
 		boolean previouslyIssued = messageIssued.contains(key);
 		messageIssued.add(key);
 		return previouslyIssued;

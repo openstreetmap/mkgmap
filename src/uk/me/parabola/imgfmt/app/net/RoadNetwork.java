@@ -41,13 +41,13 @@ public class RoadNetwork {
 	private static final Logger log = Logger.getLogger(RoadNetwork.class);
 
 	private final static int MAX_RESTRICTIONS_ARCS = 7;
-	private final Map<Long, RouteNode> nodes = new LinkedHashMap<Long, RouteNode>();
+	private final Map<Long, RouteNode> nodes = new LinkedHashMap<>();
 
 	// boundary nodes
 	// a node should be in here if the nodes boundary flag is set
-	private final List<RouteNode> boundary = new ArrayList<RouteNode>();
-	private final List<RoadDef> roadDefs = new ArrayList<RoadDef>();
-	private List<RouteCenter> centers = new ArrayList<RouteCenter>();
+	private final List<RouteNode> boundary = new ArrayList<>();
+	private final List<RoadDef> roadDefs = new ArrayList<>();
+	private List<RouteCenter> centers = new ArrayList<>();
 	private int adjustTurnHeadings ;
 	private boolean checkRoundabouts;
 	private boolean checkRoundaboutFlares;
@@ -70,8 +70,7 @@ public class RoadNetwork {
 	}
 
 	public void addRoad(RoadDef roadDef, List<Coord> coordList) {
-		//mapRoads.add(road);
-		roadDefs.add(roadDef); //XXX
+		roadDefs.add(roadDef);
 
 		CoordNode lastCoord = null;
 		int lastIndex = 0;
@@ -346,8 +345,8 @@ public class RoadNetwork {
 			if (fn == null){
 				log.warn(sourceDesc, "can't locate 'from' RouteNode for 'from' way", grr.getFromWayId());
 				return 0;
-			} else 
-				fromId = fn.getCoord().getId();
+			} 
+			fromId = fn.getCoord().getId();
 		}
 		List<RouteArc> fromArcs = fn.getDirectArcsTo(firstViaNode, grr.getFromWayId()); 
 		if (fromArcs.isEmpty()){
@@ -416,8 +415,8 @@ public class RoadNetwork {
 			if (bestAngle == null){
 				log.warn(sourceDesc,"the angle of the from and to way don't match the restriction");
 				return 0;
-			} else 
-				toArcs = angleMap.get(bestAngle);
+			} 
+			toArcs = angleMap.get(bestAngle);
 		}
 		if (toArcs.isEmpty()){
 			log.error(sourceDesc, "can't locate arc from 'via' node ",lastViaId,"to 'to' node",toId,"on way",grr.getToWayId());

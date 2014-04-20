@@ -47,7 +47,7 @@ public class RoadMerger {
 	private static final double MAX_MERGE_ANGLE = 130d;
 	
 	/** maps which coord of a way(id) are restricted - they should not be merged */
-	private final MultiIdentityHashMap<Coord, Long> restrictions = new MultiIdentityHashMap<Coord, Long>();
+	private final MultiIdentityHashMap<Coord, Long> restrictions = new MultiIdentityHashMap<>();
 
 	/** Contains a list of all roads (GType + Way) */
 	private final List<ConvertedWay> roads;
@@ -117,16 +117,14 @@ public class RoadMerger {
 	 * @return {@code true} both strings are equal or both {@code null}; {@code false} both strings are not equal
 	 */
 	private boolean stringEquals(String s1, String s2) {
-		if (s1 == null) {
+		if (s1 == null) 
 			return s2 == null;
-		} else {
-			return s1.equals(s2);
-		}
+		return s1.equals(s2);
 	}
 
 
 	public RoadMerger(List<ConvertedWay> convertedWays) {
-		this.roads = new ArrayList<ConvertedWay>(convertedWays.size());
+		this.roads = new ArrayList<>(convertedWays.size());
 
 		for (int i = 0; i < convertedWays.size(); i++) {
 			ConvertedWay cw = convertedWays.get(i);

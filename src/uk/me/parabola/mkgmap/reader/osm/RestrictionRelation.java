@@ -471,12 +471,11 @@ public class RestrictionRelation extends Relation {
 		if (flag == 0){
 			log.warn(messagePrefix, "ignoring unsupported vehicle class '" + vehicle + "' in turn restriction");
 			return false;
-		} else {
-			if (b)
-				exceptMask |= flag;
-			else 
-				exceptMask &= ~flag;
-		}
+		} 
+		if (b)
+			exceptMask |= flag;
+		else 
+			exceptMask &= ~flag;
 		return true;			
 	}
 	
@@ -511,8 +510,7 @@ public class RestrictionRelation extends Relation {
 				log.error(messagePrefix,"via node is not a routing node");
 				return;
 			}
-			else 
-				viaNodes.add(vn);
+			viaNodes.add(vn);
 		}
 
 		if (viaNodes.size() > 6){

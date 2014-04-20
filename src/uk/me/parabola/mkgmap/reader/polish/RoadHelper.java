@@ -42,16 +42,14 @@ import uk.me.parabola.mkgmap.general.MapRoad;
 class RoadHelper {
 	private static final Logger log = Logger.getLogger(RoadHelper.class);
 
-	private static final int NUM_ACCESS = 8;
-
 	// routing node store, persistent over resets
-	private final Map<Long, CoordNode> nodeCoords = new HashMap<Long, CoordNode>();
+	private final Map<Long, CoordNode> nodeCoords = new HashMap<>();
 
 	// Next node number to use for nodes constructed for house numbers. Persists over reset.
 	private long houseNumberNodeNumber = 16000000;
 
 	private int roadId;
-	private final List<NodeIndex> nodes = new ArrayList<NodeIndex>();
+	private final List<NodeIndex> nodes = new ArrayList<>();
 
 	private int speed;
 	private int roadClass;
@@ -252,7 +250,7 @@ class RoadHelper {
 
 	public void addNumbers(String value) {
 		if (numbers == null)
-			numbers = new ArrayList<Numbers>();
+			numbers = new ArrayList<>();
 		Numbers num = new Numbers(value);
 		if (num.getLeftNumberStyle() != NumberStyle.NONE || num.getRightNumberStyle() != NumberStyle.NONE)
 			numbers.add(num);

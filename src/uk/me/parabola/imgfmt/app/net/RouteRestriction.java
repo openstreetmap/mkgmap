@@ -82,7 +82,7 @@ public class RouteRestriction {
 	 */
 	public RouteRestriction(RouteNode viaNode, List<RouteArc> traffArcs, byte mkgmapExceptMask) {
 		this.viaNode = viaNode;
-		this.arcs = new ArrayList<RouteArc>(traffArcs);
+		this.arcs = new ArrayList<>(traffArcs);
 		for (int i = 0; i < arcs.size(); i++){
 			RouteArc arc = arcs.get(i);
 			assert arc.getDest() != viaNode;

@@ -36,15 +36,15 @@ import static uk.me.parabola.imgfmt.app.net.AccessTagsAndBits.*;
 public class ActionReader {
 	private final TokenScanner scanner;
 
-	private final Set<String> usedTags = new HashSet<String>();
+	private final Set<String> usedTags = new HashSet<>();
 
 	public ActionReader(TokenScanner scanner) {
 		this.scanner = scanner;
 	}
 
 	public ActionList readActions() {
-		List<Action> actions = new ArrayList<Action>();
-		Set<String> changeableTags = new HashSet<String>();
+		List<Action> actions = new ArrayList<>();
+		Set<String> changeableTags = new HashSet<>();
 		scanner.skipSpace();
 		if (!scanner.checkToken("{"))
 			return new ActionList(actions, changeableTags);

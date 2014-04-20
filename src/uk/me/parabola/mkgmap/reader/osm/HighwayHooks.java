@@ -32,8 +32,8 @@ import uk.me.parabola.util.EnhancedProperties;
 public class HighwayHooks extends OsmReadingHooksAdaptor {
 	private static final Logger log = Logger.getLogger(HighwayHooks.class);
 
-	private final List<Way> motorways = new ArrayList<Way>();
-	private final List<Node> exits = new ArrayList<Node>();
+	private final List<Way> motorways = new ArrayList<>();
+	private final List<Node> exits = new ArrayList<>();
 
 	private boolean makeOppositeCycleways;
 	private ElementSaver saver;
@@ -42,7 +42,7 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 	private Node currentNodeInWay;
 
 	
-	private final Set<String> usedTags = new HashSet<String>() {
+	private final static Set<String> usedTags = new HashSet<String>() {
 		{
 			add("highway");
 			add("access");
@@ -215,8 +215,7 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 				String ref = null;
 				Way motorway = null;
 				for (Way w : motorways) {
-					// XXX: this test might fail if the exit point was removed or changed in StyledConverter
-					// as it uses an implicit call of Coord.equals()
+					// uses an implicit call of Coord.equals()
 					if (w.getPoints().contains(e.getLocation())) {
 						motorway = w;
 						ref = w.getTag("ref");

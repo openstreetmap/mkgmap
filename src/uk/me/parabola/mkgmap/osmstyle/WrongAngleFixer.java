@@ -164,9 +164,9 @@ public class WrongAngleFixer {
 					}
 				}
 				return replacement;
-			} else {
-				log.error("replacement not found for point " + p.toOSMURL());
-			}
+			} 
+			log.error("replacement not found for point " + p.toOSMURL());
+			
 		}
 		return p;
 	}
@@ -183,11 +183,11 @@ public class WrongAngleFixer {
 	private void removeWrongAngles(List<ConvertedWay> roads, List<ConvertedWay> lines, HashMap<Long, ConvertedWay> modifiedRoads, HashSet<Long> deletedRoads, List<RestrictionRelation> restrictions) {
 		// replacements maps those nodes that have been replaced to
 		// the node that replaces them
-		Map<Coord, Coord> replacements = new IdentityHashMap<Coord, Coord>();
+		Map<Coord, Coord> replacements = new IdentityHashMap<>();
 
-		final HashSet<Coord> changedPlaces = new HashSet<Coord>();
+		final HashSet<Coord> changedPlaces = new HashSet<>();
 		int numNodesMerged = 0; 
-		HashSet<Way> waysWithBearingErrors = new HashSet<Way>();
+		HashSet<Way> waysWithBearingErrors = new HashSet<>();
 		HashSet<Long> waysThatMapToOnePoint = new HashSet<>();
 		int pass = 0;
 		Way lastWay = null;
@@ -246,8 +246,8 @@ public class WrongAngleFixer {
 				}
 			}
 			// Step 2: collect the line segments that are connected to critical points
-			IdentityHashMap<Coord, CenterOfAngle> centerMap = new IdentityHashMap<Coord, CenterOfAngle>();
-			List<CenterOfAngle> centers = new ArrayList<CenterOfAngle>(); // needed for ordered processing
+			IdentityHashMap<Coord, CenterOfAngle> centerMap = new IdentityHashMap<>();
+			List<CenterOfAngle> centers = new ArrayList<>(); // needed for ordered processing
 			int centerId = 0;
 				
 			lastWay = null;
@@ -354,7 +354,7 @@ public class WrongAngleFixer {
 			List<CenterOfAngle> checkAgainList = null;
 			boolean tryMerge = false;
 			while (true){
-				checkAgainList = new ArrayList<CenterOfAngle>();
+				checkAgainList = new ArrayList<>();
 				for (CenterOfAngle coa : centers) {
 					coa.center.setPartOfBadAngle(false); // reset flag for next pass
 					if (coa.getCurrentLocation(replacements) == null)
@@ -528,7 +528,7 @@ public class WrongAngleFixer {
 		
 		if (gpxPath != null) {
 			GpxCreator.createGpx(gpxPath + "solved_badAngles", bbox.toCoords(),
-					new ArrayList<Coord>(changedPlaces));
+					new ArrayList<>(changedPlaces));
 		}
 		if (anotherPassRequired)
 			log.error("Removing wrong angles - didn't finish in " + pass + " passes, giving up!");
@@ -549,9 +549,9 @@ public class WrongAngleFixer {
 		Way lastWay = null;
 		int numPointsRemoved = 0;
 		boolean lastWasModified = false;
-		List<Coord> removedInWay = new ArrayList<Coord>();
-		List<Coord> obsoletePoints = new ArrayList<Coord>();
-		List<Coord> modifiedPoints = new ArrayList<Coord>();
+		List<Coord> removedInWay = new ArrayList<>();
+		List<Coord> obsoletePoints = new ArrayList<>();
+		List<Coord> modifiedPoints = new ArrayList<>();
 		for (ConvertedWay cw : roads) {
 			if (!cw.isValid())
 				continue;
@@ -640,7 +640,7 @@ public class WrongAngleFixer {
 		}
 		if (gpxPath != null){
 			GpxCreator.createGpx(gpxPath + "obsolete", bbox.toCoords(),
-					new ArrayList<Coord>(obsoletePoints));
+					new ArrayList<>(obsoletePoints));
 			
 		}
 		log.info("Removed", numPointsRemoved, "obsolete points in roads"); 
@@ -655,7 +655,7 @@ public class WrongAngleFixer {
 			return;
 		List<ConvertedWay> badWays = new ArrayList<>();
 		Way lastWay = null;
-		List<Coord> badAngles = new ArrayList<Coord>();
+		List<Coord> badAngles = new ArrayList<>();
 		for (int w = 0; w < roads.size(); w++) {
 			ConvertedWay cw = roads.get(w);
 			if (!cw.isValid())
@@ -710,7 +710,7 @@ public class WrongAngleFixer {
 				badWays.add(cw);
 		}
 		GpxCreator.createGpx(gpxPath + name, bbox.toCoords(),
-				new ArrayList<Coord>(badAngles));
+				new ArrayList<>(badAngles));
 		writeOSM(name, badWays);
 	}
 	
@@ -749,7 +749,7 @@ public class WrongAngleFixer {
 			this.center = center;
 			assert center.isReplaced() == false;
 			this.id = id;
-			neighbours = new ArrayList<CenterOfAngle>(4);
+			neighbours = new ArrayList<>();
 		}
 
 		
@@ -791,7 +791,7 @@ public class WrongAngleFixer {
 		 */
 		public void addBadMergeCandidate(CenterOfAngle other) {
 			if (badMergeCandidates == null)
-				badMergeCandidates = new ArrayList<CenterOfAngle>(4);
+				badMergeCandidates = new ArrayList<>();
 			badMergeCandidates.add(other);
 		}
 
@@ -1249,9 +1249,9 @@ public class WrongAngleFixer {
 		if (outDir.getParentFile() != null) {
 			outDir.getParentFile().mkdirs();
 		} 		
-		Map<String,byte[]> dummyMap = new HashMap<String, byte[]>();
+		Map<String,byte[]> dummyMap = new HashMap<>();
 		for (int pass = 1; pass <= 2; pass ++){
-			IdentityHashMap<Coord, Integer> allPoints = new IdentityHashMap<Coord, Integer>();
+			IdentityHashMap<Coord, Integer> allPoints = new IdentityHashMap<>();
 			uk.me.parabola.splitter.Area bounds = new uk.me.parabola.splitter.Area(
 					bbox.getMinLat(),bbox.getMinLong(),bbox.getMaxLat(),bbox.getMaxLong());
 
@@ -1370,7 +1370,7 @@ public class WrongAngleFixer {
 	 * @return reduced list 
 	 */
 	public static List<Coord> fixAnglesInShape(List<Coord> points) {
-		List<Coord> modifiedPoints = new ArrayList<Coord>(points.size());
+		List<Coord> modifiedPoints = new ArrayList<>(points.size());
 		double maxErrorDistance = calcMaxErrorDistance(points.get(0));
 		
 		int n = points.size();

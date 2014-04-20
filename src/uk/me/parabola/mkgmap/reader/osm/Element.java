@@ -169,9 +169,8 @@ public abstract class Element implements Iterable<String> {
 		return new Iterable<Map.Entry<String, String>>() {
 			public Iterator<Map.Entry<String, String>> iterator() {
 				if (tags == null)
-					return Collections.<String, String>emptyMap().entrySet().iterator();
-				else
-					return tags.entryIterator();
+					return Collections.emptyIterator();
+				return tags.entryIterator();
 			}
 		};
 	}

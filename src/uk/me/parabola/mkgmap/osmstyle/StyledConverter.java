@@ -90,9 +90,9 @@ public class StyledConverter implements OsmConverter {
 	private final List<RestrictionRelation> restrictions = new ArrayList<>();
 	private final MultiHashMap<Long, RestrictionRelation> wayRelMap = new MultiHashMap<>();
 	
-	private Map<Node, List<Way>> poiRestrictions = new LinkedHashMap<Node, List<Way>>();
+	private Map<Node, List<Way>> poiRestrictions = new LinkedHashMap<>();
 	 
-	private final List<Relation> throughRouteRelations = new ArrayList<Relation>();
+	private final List<Relation> throughRouteRelations = new ArrayList<>();
 
 	// limit line length to avoid problems with portions of really
 	// long lines being assigned to the wrong subdivision
@@ -104,14 +104,14 @@ public class StyledConverter implements OsmConverter {
 	private static final int MAX_NODES_IN_WAY = 64; // possibly could be increased
 
 	// nodeIdMap maps a Coord into a CoordNode
-	private IdentityHashMap<Coord, CoordNode> nodeIdMap = new IdentityHashMap<Coord, CoordNode>();
+	private IdentityHashMap<Coord, CoordNode> nodeIdMap = new IdentityHashMap<>();
 
 	public final static String WAY_POI_NODE_IDS = "mkgmap:way-poi-node-ids";
 	
 	private List<ConvertedWay> roads = new ArrayList<>();
 	private List<ConvertedWay> lines = new ArrayList<>();
 	private HashMap<Long, ConvertedWay> modifiedRoads = new HashMap<>();
-	private HashSet<Long> deletedRoads = new HashSet<Long>();
+	private HashSet<Long> deletedRoads = new HashSet<>();
 
 	private int nextNodeId = 1;
 	
@@ -686,7 +686,7 @@ public class StyledConverter implements OsmConverter {
 			List<Way> wayList = entry.getValue();
 
 			byte exceptMask = AccessTagsAndBits.evalAccessTags(node);
-			Map<Long,CoordNode> otherNodeIds = new LinkedHashMap<Long, CoordNode>();
+			Map<Long,CoordNode> otherNodeIds = new LinkedHashMap<>();
 			CoordNode viaNode = null;
 			boolean viaIsUnique = true;
 			for (Way way:wayList){
@@ -773,7 +773,7 @@ public class StyledConverter implements OsmConverter {
 	
 	private void addLine(Way way, GType gt, int replType) {
 		List<Coord> wayPoints = way.getPoints();
-		List<Coord> points = new ArrayList<Coord>(wayPoints.size());
+		List<Coord> points = new ArrayList<>(wayPoints.size());
 		double lineLength = 0;
 		Coord lastP = null;
 		for (Coord p : wayPoints) {
@@ -787,7 +787,7 @@ public class StyledConverter implements OsmConverter {
 					if (log.isInfoEnabled())
 						log.info("Splitting line", way.toBrowseURL(), "at", p.toOSMURL(), "to limit its length to", (long)lineLength + "m");
 					addLine(way, gt, replType, points);
-					points = new ArrayList<Coord>(wayPoints.size() - points.size() + 1);
+					points = new ArrayList<>(wayPoints.size() - points.size() + 1);
 					points.add(p);
 					lineLength = 0;
 				}
@@ -1085,7 +1085,7 @@ public class StyledConverter implements OsmConverter {
 				if (lineSegs.isEmpty()){
 					removeRestrictionsWithWay(Level.WARNING, way, "ends on tile boundary, restriction is ignored");
 				}
-				clippedWays = new ArrayList<Way>();
+				clippedWays = new ArrayList<>();
 
 				for (List<Coord> lco : lineSegs) {
 					Way nWay = new Way(way.getId());
@@ -1263,7 +1263,7 @@ public class StyledConverter implements OsmConverter {
 	private void addRoadWithoutLoops(ConvertedWay cw) {
 		Way way = cw.getWay();
 		GType gt = cw.getType();
-		List<Integer> nodeIndices = new ArrayList<Integer>();
+		List<Integer> nodeIndices = new ArrayList<>();
 		List<Coord> points = way.getPoints();
 		Way trailingWay = null;
 		String debugWayName = way.getDebugName();
@@ -1375,7 +1375,7 @@ public class StyledConverter implements OsmConverter {
 							if (nodeAccess != cw.getAccess()){
 								List<Way> wayList = poiRestrictions.get(cp.getNode());
 								if (wayList == null){
-									wayList = new ArrayList<Way>(4);
+									wayList = new ArrayList<>();
 									poiRestrictions.put(cp.getNode(), wayList);
 								}
 								wayList.add(way);
@@ -1562,7 +1562,7 @@ public class StyledConverter implements OsmConverter {
 	private void setHighwayCounts(){
 		log.info("Maintaining highway counters");
 		long lastId = 0;
-		List<Way> dupIdHighways = new ArrayList<Way>();
+		List<Way> dupIdHighways = new ArrayList<>();
 		for (ConvertedWay cw :roads){
 			if (!cw.isValid())
 				continue;
@@ -1626,10 +1626,10 @@ public class StyledConverter implements OsmConverter {
 	 * If such a road has the mkgmap:set_unconnected_type tag, add it as line, not as a road. 
 	 */
 	private void findUnconnectedRoads(){
-		Map<Coord, HashSet<Way>> connectors = new IdentityHashMap<Coord, HashSet<Way>>(roads.size()*2);
+		Map<Coord, HashSet<Way>> connectors = new IdentityHashMap<>(roads.size()*2);
 		
 		// for dead-end-check only: will contain ways with loops (also simply closed ways)
-		HashSet<Way> selfConnectors = new HashSet<Way>();
+		HashSet<Way> selfConnectors = new HashSet<>();
 		
 		// collect nodes that might connect roads
 		long lastId = 0;
@@ -1642,7 +1642,7 @@ public class StyledConverter implements OsmConverter {
 				if (p.getHighwayCount() > 1){
 					HashSet<Way> ways = connectors.get(p);
 					if (ways == null){
-						ways = new HashSet<Way>(4);
+						ways = new HashSet<>();
 						connectors.put(p, ways);
 					}
 					boolean wasNew = ways.add(way);

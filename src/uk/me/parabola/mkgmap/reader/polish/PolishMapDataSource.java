@@ -170,7 +170,6 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	
 	@Override
 	public LevelInfo[] overviewMapLevels() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -245,14 +244,14 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 						polyline.setExtTypeAttributes(makeExtTypeAttributes());
 					final int maxPointsInLine = LineSplitterFilter.MAX_POINTS_IN_LINE;
 					if(points.size() > maxPointsInLine) {
-						List<Coord> segPoints = new ArrayList<Coord>(maxPointsInLine);
+						List<Coord> segPoints = new ArrayList<>(maxPointsInLine);
 						for(Coord p : points) {
 							segPoints.add(p);
 							if(segPoints.size() == maxPointsInLine) {
 								MapLine seg = polyline.copy();
 								seg.setPoints(segPoints);
 								mapper.addLine(seg);
-								segPoints = new ArrayList<Coord>(maxPointsInLine);
+								segPoints = new ArrayList<>(maxPointsInLine);
 								segPoints.add(p);
 							}
 						}
@@ -366,7 +365,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		}
 		else {
 			if(extraAttributes == null)
-				extraAttributes = new HashMap<String, String>();
+				extraAttributes = new HashMap<>();
 			extraAttributes.put(name, value);
 		}
 	}
@@ -411,14 +410,14 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			roadHelper.addNumbers(value);
 		} else {
 			if (extraAttributes == null)
-				extraAttributes = new HashMap<String, String>();
+				extraAttributes = new HashMap<>();
 			extraAttributes.put(name, value);
 		}
 	}
 
 	private List<Coord> coordsFromString(String value) {
 		String[] ords = value.split("\\) *, *\\(");
-		List<Coord> points = new ArrayList<Coord>();
+		List<Coord> points = new ArrayList<>();
 
 		for (String s : ords) {
 			Coord co = makeCoord(s);
@@ -476,7 +475,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		}
 		else {
 			if(extraAttributes == null)
-				extraAttributes = new HashMap<String, String>();
+				extraAttributes = new HashMap<>();
 			extraAttributes.put(name, value);
 		}
 	}
@@ -696,7 +695,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	}
 
 	private ExtTypeAttributes makeExtTypeAttributes() {
-		Map<String, String> eta = new HashMap<String, String>();
+		Map<String, String> eta = new HashMap<>();
 		int colour = 0;
 		int style = 0;
 
