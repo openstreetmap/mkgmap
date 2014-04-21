@@ -42,7 +42,7 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 	private Node currentNodeInWay;
 
 	
-	private final static Set<String> usedTags = new HashSet<String>() {
+	private final Set<String> usedTags = new HashSet<String>() {
 		{
 			add("highway");
 			add("access");
