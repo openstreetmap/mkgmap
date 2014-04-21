@@ -210,6 +210,8 @@ public class WrongAngleFixer {
 					continue;
 				lastWay = way;
 				List<Coord> points = way.getPoints();
+				if (points.size() < 2)
+					continue;
 				
 				// scan through the way's points looking for line segments with big 
 				// bearing errors 
