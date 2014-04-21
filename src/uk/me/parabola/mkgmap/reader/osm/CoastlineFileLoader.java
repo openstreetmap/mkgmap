@@ -257,7 +257,7 @@ public final class CoastlineFileLoader {
 		}
 
 		@Override
-		public Iterable<Entry<String, String>> getEntryIteratable() {
+		public Iterable<Entry<String, String>> getEntrySetIterator() {
 			return Collections.singletonMap("natural", "coastline").entrySet();
 		}
 

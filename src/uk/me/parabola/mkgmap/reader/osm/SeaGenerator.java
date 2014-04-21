@@ -1160,7 +1160,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				Way w1 = new Way(FakeIdGenerator.makeFakeId());
 				w1.getPoints().addAll(w.getPoints());
 				// only copy the name tags
-				for (Entry<String, String> tagEntry : w.getEntryIteratable()){
+				for (Entry<String, String> tagEntry : w.getEntrySetIterator()){
 					if(tagEntry.getKey().equals("name") || tagEntry.getKey().contains("name"))
 						w1.addTag(tagEntry.getKey(), tagEntry.getValue());
 				}
@@ -1239,7 +1239,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 						Way w1 = new Way(FakeIdGenerator.makeFakeId());
 						w1.getPoints().addAll(w.getPoints());
 						// only copy the name tags
-						for (Entry<String, String> tagEntry : w.getEntryIteratable()){
+						for (Entry<String, String> tagEntry : w.getEntrySetIterator()){
 							if(tagEntry.getKey().equals("name") || tagEntry.getKey().contains("name"))
 								w1.addTag(tagEntry.getKey(), tagEntry.getValue());
 						}

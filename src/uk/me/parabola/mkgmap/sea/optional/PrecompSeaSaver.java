@@ -118,7 +118,7 @@ class PrecompSeaSaver implements Runnable {
 						uk.me.parabola.splitter.Way pbfWay = new uk.me.parabola.splitter.Way();
 						pbfWay.set(w.getId());
 						for (Entry<String, String> tag : w
-								.getEntryIteratable()) {
+								.getEntrySetIterator()) {
 							pbfWay.addTag(tag.getKey(), tag.getValue());
 						}
 						for (Coord c : w.getPoints()) {

@@ -169,7 +169,7 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 
 			if (makeOppositeCycleways && !"cycleway".equals(highway)){
 				String onewayTag = way.getTag("oneway");
-				boolean oneway = way.isBoolTag("oneway");
+				boolean oneway = way.tagIsLikeYes("oneway");
 				if (!oneway & onewayTag != null && ("-1".equals(onewayTag) || "reverse".equals(onewayTag)))
 					oneway = true;
 				if (oneway){

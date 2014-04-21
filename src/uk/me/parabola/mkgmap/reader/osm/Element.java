@@ -22,7 +22,7 @@ import java.util.Map;
 /**
  * Superclass of the node, segment and way OSM elements.
  */
-public abstract class Element implements Iterable<String> {
+public abstract class Element {
 	private Tags tags;
 	private long id;
 
@@ -61,13 +61,6 @@ public abstract class Element implements Iterable<String> {
 		return old;
 	}
 
-	public Iterator<String> iterator() {
-		if (tags == null) 
-			return Collections.<String>emptyList().iterator();
-
-		return tags.iterator();
-	}
-
 	/**
 	 * Retrieves if the given tag has a "positive" boolean value which means its value is
 	 * one of
@@ -79,7 +72,7 @@ public abstract class Element implements Iterable<String> {
 	 * @param s tag name
 	 * @return <code>true</code> if the tag value is a boolean tag with a "positive" value
 	 */
-	public boolean isBoolTag(String s) {
+	public boolean tagIsLikeYes(String s) {
 		String val = getTag(s);
 		if (val == null)
 			return false;
@@ -101,7 +94,7 @@ public abstract class Element implements Iterable<String> {
 	 * @param s tag name
 	 * @return <code>true</code> if the tag value is a boolean tag with a "negative" value
 	 */
-	public boolean isNotBoolTag(String s) {
+	public boolean tagIsLikeNo(String s) {
 		String val = getTag(s);
 		if (val == null)
 			return false;
@@ -165,7 +158,7 @@ public abstract class Element implements Iterable<String> {
 		tags = null;
 	}
 
-	public Iterable<Map.Entry<String, String>> getEntryIteratable() {
+	public Iterable<Map.Entry<String, String>> getEntrySetIterator() {
 		return new Iterable<Map.Entry<String, String>>() {
 			public Iterator<Map.Entry<String, String>> iterator() {
 				if (tags == null)

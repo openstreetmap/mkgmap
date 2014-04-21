@@ -65,20 +65,20 @@ public class RoadMerger {
 	 * @author WanMil
 	 */
 	/** 
-	 * For these tags two ways need to return the same value for {@link Way#isNotBoolTag(String)} 
+	 * For these tags two ways need to return the same value for {@link Way#tagIsLikeNo(String)} 
 	 * so that their roads can be merged.
 	 */
-	private final static Set<String> mergeTagsNotBool = new HashSet<String>() {
+	private final static Set<String> mergeNoTags = new HashSet<String>() {
 		{
 			add("mkgmap:throughroute");
 		}
 	};
 
 	/** 
-	 * For these tags two ways need to return the same value for {@link Way#isBoolTag(String)} 
+	 * For these tags two ways need to return the same value for {@link Way#tagIsLikeYes(String)} 
 	 * so that their roads can be merged.
 	 */
-	private final static Set<String> mergeTagsBool = new HashSet<String>() {
+	private final static Set<String> mergeYesTags = new HashSet<String>() {
 		{
 			add("mkgmap:carpool");
 			add("mkgmap:toll");
@@ -556,9 +556,9 @@ public class RoadMerger {
 
 		if (road1.getRouteFlags() != road2.getRouteFlags()){
 		// second: tags for which only the NotBool value must be equal 
-			for (String tagname : mergeTagsNotBool) {
-				boolean flag1No = way1.isNotBoolTag(tagname);
-				boolean flag2No = way2.isNotBoolTag(tagname);
+			for (String tagname : mergeNoTags) {
+				boolean flag1No = way1.tagIsLikeNo(tagname);
+				boolean flag2No = way2.tagIsLikeNo(tagname);
 				if (flag1No != flag2No) {
 					if (log.isDebugEnabled()){
 						log.debug(tagname, "does not match", way1.getId(), "("
@@ -570,9 +570,9 @@ public class RoadMerger {
 			}
 
 			// third: tags for which only the bool value must be equal 
-			for (String tagname : mergeTagsBool) {
-				boolean flag1Yes = way1.isBoolTag(tagname);
-				boolean flag2Yes = way2.isBoolTag(tagname);
+			for (String tagname : mergeYesTags) {
+				boolean flag1Yes = way1.tagIsLikeYes(tagname);
+				boolean flag2Yes = way2.tagIsLikeYes(tagname);
 				if (flag1Yes != flag2Yes) {
 					if (log.isDebugEnabled()){
 						log.debug(tagname, "does not match", way1.getId(), "("

@@ -57,7 +57,7 @@ public final class AccessTagsAndBits {
 	public static byte evalAccessTags(Element el){
 		byte noAccess = 0;
 		for (Entry<String, Byte> entry : ACCESS_TAGS.entrySet()){
-			if (el.isNotBoolTag(entry.getKey()))
+			if (el.tagIsLikeNo(entry.getKey()))
 				noAccess |= entry.getValue();
 		}
 		return  (byte) ~noAccess;
@@ -67,16 +67,16 @@ public final class AccessTagsAndBits {
 	public static byte evalRouteTags(Element el){
 		byte routeFlags = 0;
 		
-		if (el.isBoolTag("mkgmap:carpool"))
+		if (el.tagIsLikeYes("mkgmap:carpool"))
 			routeFlags |= R_CARPOOL;
-		if (el.isBoolTag("mkgmap:toll"))
+		if (el.tagIsLikeYes("mkgmap:toll"))
 			routeFlags |= R_TOLL;
-		if (el.isBoolTag("mkgmap:unpaved"))
+		if (el.tagIsLikeYes("mkgmap:unpaved"))
 			routeFlags |= R_UNPAVED;
-		if (el.isBoolTag("mkgmap:ferry"))
+		if (el.tagIsLikeYes("mkgmap:ferry"))
 			routeFlags |= R_FERRY;
 
-		if (el.isNotBoolTag("mkgmap:throughroute")) 
+		if (el.tagIsLikeNo("mkgmap:throughroute")) 
 			routeFlags &= ~R_THROUGHROUTE;
 		else 
 			routeFlags |= R_THROUGHROUTE;

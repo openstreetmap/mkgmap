@@ -633,7 +633,7 @@ public class StyleTester implements OsmConverter {
 			}
 
 			public void resolveType(Element el, TypeResult result) {
-				String tagsBefore = wayTags(el);
+				String tagsBefore = el.toTagString();
 				if (showMatches) {
 					out.println("# Tags before: " + tagsBefore);
 				}
@@ -653,17 +653,8 @@ public class StyleTester implements OsmConverter {
 					if (a.isResolved())
 						break;
 				}
-				if (showMatches && !tagsBefore.equals(wayTags(el)))
-					out.println("# Way tags after: " + wayTags(el));
-			}
-
-			private String wayTags(Element el) {
-				StringBuilder sb = new StringBuilder();
-				for (String t : el) {
-					sb.append(t);
-					sb.append(",");
-				}
-				return sb.toString();
+				if (showMatches && !tagsBefore.equals(el.toTagString()))
+					out.println("# Way tags after: " + el.toTagString());
 			}
 
 			public void setFinalizeRule(Rule finalizeRule) {

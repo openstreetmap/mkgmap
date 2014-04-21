@@ -260,7 +260,7 @@ public class StyledConverter implements OsmConverter {
 				way.addTag("oneway", "yes");
 			}
 
-			if (way.isBoolTag("oneway")) {
+			if (way.tagIsLikeYes("oneway")) {
 				way.addTag("oneway", "yes");
 				if (foundType.isRoad() && checkFixmeCoords(way) )
 					way.addTag("mkgmap:dead-end-check", "false");
@@ -599,8 +599,8 @@ public class StyledConverter implements OsmConverter {
 		// least 3 points and it has not been marked as "don't
 		// check", check its direction
 		if (checkRoundabouts && points.size() > 2
-				&& !way.isBoolTag("mkgmap:no-dir-check")
-				&& !way.isNotBoolTag("mkgmap:dir-check")) {
+				&& !way.tagIsLikeYes("mkgmap:no-dir-check")
+				&& !way.tagIsLikeNo("mkgmap:dir-check")) {
 			Coord centre = way.getCofG();
 			int dir = 0;
 			// check every third segment
@@ -807,7 +807,7 @@ public class StyledConverter implements OsmConverter {
 		line.setPoints(points);
 
 		
-		if (way.isBoolTag("oneway"))
+		if (way.tagIsLikeYes("oneway"))
 			line.setDirection(true);
 
 		clipper.clipLine(line, lineAdder);
@@ -885,11 +885,11 @@ public class StyledConverter implements OsmConverter {
 		ms.setMinResolution(gt.getMinResolution());
 		ms.setMaxResolution(gt.getMaxResolution());
 
-		if (element.isBoolTag("mkgmap:highest-resolution-only")){
+		if (element.tagIsLikeYes("mkgmap:highest-resolution-only")){
 			ms.setMinResolution(ms.getMaxResolution());
 		}
 		
-		if (element.isBoolTag("mkgmap:skipSizeFilter") && ms instanceof MapLine){
+		if (element.tagIsLikeYes("mkgmap:skipSizeFilter") && ms instanceof MapLine){
 			((MapLine)ms).setSkipSizeFilter(true);
 		}
 		
@@ -1415,15 +1415,15 @@ public class StyledConverter implements OsmConverter {
 			doFlareCheck = false;
 		}
 
-		if(way.isBoolTag("mkgmap:synthesised")) {
+		if(way.tagIsLikeYes("mkgmap:synthesised")) {
 			road.setSynthesised(true);
 			doFlareCheck = false;
 		}
 
-		if(way.isNotBoolTag("mkgmap:flare-check")) {
+		if(way.tagIsLikeNo("mkgmap:flare-check")) {
 			doFlareCheck = false;
 		}
-		else if(way.isBoolTag("mkgmap:flare-check")) {
+		else if(way.tagIsLikeYes("mkgmap:flare-check")) {
 			doFlareCheck = true;
 		}
 		road.doFlareCheck(doFlareCheck);
@@ -1436,7 +1436,7 @@ public class StyledConverter implements OsmConverter {
 		road.setRoadClass(cw.getRoadClass());
 		road.setSpeed(cw.getRoadSpeed());
 		
-		if (way.isBoolTag("oneway")) {
+		if (way.tagIsLikeYes("oneway")) {
 			road.setDirection(true);
 			road.setOneway();
 		}
@@ -1660,7 +1660,7 @@ public class StyledConverter implements OsmConverter {
 			Way way = cw.getWay();
 			if(reportDeadEnds > 0){
 				// report dead ends of oneway roads 
-				if (way.isBoolTag("oneway") && !way.isNotBoolTag("mkgmap:dead-end-check")) {
+				if (way.tagIsLikeYes("oneway") && !way.tagIsLikeNo("mkgmap:dead-end-check")) {
 					List<Coord> points = way.getPoints();
 					int[] pointsToCheck = {0, points.size()-1};
 					if (points.get(pointsToCheck[0]) == points.get(pointsToCheck[1]))
@@ -1712,7 +1712,7 @@ public class StyledConverter implements OsmConverter {
 								List<Coord> otherPoints = connectedWay.getPoints();
 								Coord otherFirst = otherPoints.get(0);
 								Coord otherLast = otherPoints.get(otherPoints.size()-1);
-								if (otherFirst == otherLast || connectedWay.isBoolTag("oneway") == false)
+								if (otherFirst == otherLast || connectedWay.tagIsLikeYes("oneway") == false)
 									isDeadEnd = false;  
 								else {
 									Coord pOther;
