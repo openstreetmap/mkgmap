@@ -158,7 +158,10 @@ public abstract class Element {
 		tags = null;
 	}
 
-	public Iterable<Map.Entry<String, String>> getEntrySetIterator() {
+	/**
+	 * @return a Map iterator for the key + value pairs  
+	 */
+	public Iterable<Map.Entry<String, String>> getTagEntryIterator() {
 		return new Iterable<Map.Entry<String, String>>() {
 			public Iterator<Map.Entry<String, String>> iterator() {
 				if (tags == null)

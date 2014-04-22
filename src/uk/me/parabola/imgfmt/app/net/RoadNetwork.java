@@ -560,7 +560,7 @@ public class RoadNetwork {
 	 * @param exceptionMask
 	 * @return
 	 */
-	private boolean isUsable(byte roadAccess, byte exceptionMask) {
+	private static boolean isUsable(byte roadAccess, byte exceptionMask) {
 		if ((roadAccess & (byte) ~exceptionMask) == 0)
 			return false; // no allowed vehicle is concerned by this restriction
 		return true;
@@ -613,7 +613,7 @@ public class RoadNetwork {
 	 * @param toArc arc with last via node as source
 	 * @return angle at in degree [-180;180]
 	 */
-	private float getAngle(RouteArc fromArc, RouteArc toArc){
+	private static float getAngle(RouteArc fromArc, RouteArc toArc){
 		// note that the values do not depend on the isForward() attribute
 		float headingFrom = fromArc.getFinalHeading();
 		float headingTo = toArc.getInitialHeading();
@@ -625,7 +625,7 @@ public class RoadNetwork {
 		return angle;
 	}
 	
-	private RouteArc getReverseArc(RouteArc arc){
+	private static RouteArc getReverseArc(RouteArc arc){
 		return arc.getDest().getDirectArcTo(arc.getSource(), arc.getRoadDef());
 	}
 		
@@ -637,7 +637,7 @@ public class RoadNetwork {
 	 * @param dirIndicator l:left, r:right, u:u_turn, s: straight_on
 	 * @return
 	 */
-	private Integer getBetterAngle (Integer angle1, Integer angle2, char dirIndicator){
+	private static Integer getBetterAngle (Integer angle1, Integer angle2, char dirIndicator){
 		switch (dirIndicator){
 		case 'l':
 			if (Math.abs(-90-angle2) < Math.abs(-90-angle1))
@@ -668,7 +668,7 @@ public class RoadNetwork {
 	 * @param dirIndicator l:left, r:right, u:u_turn, s: straight_on 
 	 * @return
 	 */
-	private boolean matchDirectionInfo (float angle, char dirIndicator){
+	private static boolean matchDirectionInfo (float angle, char dirIndicator){
 		switch (dirIndicator){
 		case 'l':
 			if (angle < -3 && angle > - 177)

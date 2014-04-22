@@ -35,8 +35,8 @@ public class ConvertedWay {
 	private final Way way;				// with tags after Style processing
 	private final GType gt;								
 
-	private byte roadClass;
-	private byte roadSpeed;
+	private byte roadClass;			// 0-4
+	private byte roadSpeed;			// 0-7
 	private byte mkgmapAccess; 		// bit mask, see ACCESS_TAGS 
 	private final byte routeFlags;	// bit mask, see ROUTING_TAGS
 	
@@ -224,5 +224,32 @@ public class ConvertedWay {
 	public String toString(){
 		return getType() + " " + getWay().getId() + " " + getWay().toTagString();
 
+	}
+	
+	public boolean isOneway(){
+		return (routeFlags & R_ONEWAY) != 0;
+	}
+
+	public boolean isRoundabout(){
+		return (routeFlags & R_ROUNDABOUT) != 0;
+	}
+	public boolean isToll(){
+		return (routeFlags & R_TOLL) != 0; 
+	}
+
+	public boolean isUnpaved(){
+		return (routeFlags & R_UNPAVED) != 0; 
+	}
+
+	public boolean isFerry(){
+		return (routeFlags & R_FERRY) != 0; 
+	}
+
+	public boolean isCarpool(){
+		return (routeFlags & R_CARPOOL) != 0; 
+	}
+
+	public boolean isThroughroute(){
+		return (routeFlags & R_THROUGHROUTE) != 0; 
 	}
 }

@@ -169,7 +169,7 @@ public class StyledConverter implements OsmConverter {
 		// undocumented option - usually used for debugging only
 		mergeRoads = props.getProperty("no-mergeroads", false) == false;
 
-		wrongAngleFixer = new WrongAngleFixer();
+		wrongAngleFixer = new WrongAngleFixer(bbox);
 	}
 
 	/** One type result for ways to avoid recreating one for each way. */ 
@@ -269,7 +269,7 @@ public class StyledConverter implements OsmConverter {
 			
 			if(foundType.isRoad() && !MapObject.hasExtendedType(foundType.getType())){
 				ConvertedWay cw = new ConvertedWay(roadIndex++, way, foundType);
-				if (wasReversed && AccessTagsAndBits.isRoundabout(cw.getRouteFlags()))
+				if (wasReversed && cw.isRoundabout())
 					log.warn("Roundabout", way.getId(), "has reverse oneway tag (" + way.getPoints().get(0).toOSMURL() + ")");
 		    	roads.add(cw);
 			}
@@ -345,7 +345,7 @@ public class StyledConverter implements OsmConverter {
 	 * @param way The original way.
 	 * @return The new way, which will have the same points and have suitable cycle tags.
 	 */
-	private Way makeCycleWay(Way way) {
+	private static Way makeCycleWay(Way way) {
 		Way cycleWay = new Way(way.getId(), way.getPoints());
 		cycleWay.copyTags(way);
 
@@ -366,7 +366,7 @@ public class StyledConverter implements OsmConverter {
 	/**
 	 * Built in rules to run after converting the element.
 	 */
-	private void postConvertRules(Element el, GType type) {
+	private static void postConvertRules(Element el, GType type) {
 		// Set the default_name if no name is set
 		if (type.getDefaultName() != null && el.getName() == null)
 			el.addTag("mkgmap:label:1", type.getDefaultName());
@@ -435,7 +435,6 @@ public class StyledConverter implements OsmConverter {
 		rotateClosedWaysToFirstNode();
 		filterCoordPOI();
 
-		wrongAngleFixer.setBounds(bbox);
 		wrongAngleFixer.optimizeWays(roads, lines, modifiedRoads, deletedRoads, restrictions);
 
 		// make sure that copies of modified roads have equal points 
@@ -591,7 +590,7 @@ public class StyledConverter implements OsmConverter {
 	 * 
 	 */
 	private void checkRoundabout(ConvertedWay cw) {
-		if (AccessTagsAndBits.isRoundabout(cw.getRouteFlags()) == false)
+		if (cw.isRoundabout() == false)
 			return;
 		Way way = cw.getWay();
 		List<Coord> points = way.getPoints();
@@ -866,7 +865,7 @@ public class StyledConverter implements OsmConverter {
 		collector.addPoint(mp);
 	}
 
-	private void elementSetup(MapElement ms, GType gt, Element element) {
+	private static void elementSetup(MapElement ms, GType gt, Element element) {
 		String[] labels = new String[4];
 		int noLabels = 0;
 		for (int labelNo = 1; labelNo <= 4; labelNo++) {
@@ -1223,7 +1222,7 @@ public class StyledConverter implements OsmConverter {
 	 * @param ceiling upper limit of points to test (inclusive)
 	 * @return true if is OK to split as pos
 	 */
-	private boolean safeToSplitWay(List<Coord> points, int pos, int floor, int ceiling) {
+	private static boolean safeToSplitWay(List<Coord> points, int pos, int floor, int ceiling) {
 		Coord candidate = points.get(pos);
 		// avoid running off the ends of the list
 		if(floor < 0)
@@ -1410,7 +1409,7 @@ public class StyledConverter implements OsmConverter {
 
 		boolean doFlareCheck = true;
 		
-		if (AccessTagsAndBits.isRoundabout(cw.getRouteFlags())){
+		if (cw.isRoundabout()){
 			road.setRoundabout(true);
 			doFlareCheck = false;
 		}
@@ -1436,30 +1435,29 @@ public class StyledConverter implements OsmConverter {
 		road.setRoadClass(cw.getRoadClass());
 		road.setSpeed(cw.getRoadSpeed());
 		
-		if (way.tagIsLikeYes("oneway")) {
+		if (cw.isOneway()) {
 			road.setDirection(true);
 			road.setOneway();
 		}
 
 		road.setAccess(cw.getAccess());
-		byte routeFlags = cw.getRouteFlags();
 		
 		// does the road have a carpool lane?
-		if (AccessTagsAndBits.isCarpool(routeFlags))
+		if (cw.isCarpool())
 			road.setCarpoolLane();
 
-		if (AccessTagsAndBits.isThroughroute(routeFlags) == false)
+		if (cw.isThroughroute() == false)
 			road.setNoThroughRouting();
 
-		if(AccessTagsAndBits.isToll(routeFlags))
+		if(cw.isToll())
 			road.setToll();
 
 		// by default, ways are paved
-		if(AccessTagsAndBits.isUnpaved(routeFlags))
+		if(cw.isUnpaved())
 			road.paved(false);
 
 		// by default, way's are not ferry routes
-		if(AccessTagsAndBits.isFerry(routeFlags))
+		if(cw.isFerry())
 			road.ferry(true);
 
 		int numNodes = nodeIndices.size();
@@ -1514,7 +1512,7 @@ public class StyledConverter implements OsmConverter {
 	 * @param way the way to check 
 	 * @return true if fixme flag was found
 	 */
-	private boolean checkFixmeCoords(Way way) {
+	private static boolean checkFixmeCoords(Way way) {
 		if (way.getPoints().get(0).isFixme())
 			return true;
 		if (way.getPoints().get(way.getPoints().size()-1).isFixme())
@@ -1529,7 +1527,7 @@ public class StyledConverter implements OsmConverter {
 	 * @param index the split position. 
 	 * @return the trailing part of the way
 	 */
-	private Way splitWayAt(Way way, int index) {
+	private static Way splitWayAt(Way way, int index) {
 		if (way.isViaWay()){
 			log.warn("via way of restriction is split, restriction will be ignored",way);
 		}
@@ -1660,7 +1658,7 @@ public class StyledConverter implements OsmConverter {
 			Way way = cw.getWay();
 			if(reportDeadEnds > 0){
 				// report dead ends of oneway roads 
-				if (way.tagIsLikeYes("oneway") && !way.tagIsLikeNo("mkgmap:dead-end-check")) {
+				if (cw.isOneway() && !way.tagIsLikeNo("mkgmap:dead-end-check")) {
 					List<Coord> points = way.getPoints();
 					int[] pointsToCheck = {0, points.size()-1};
 					if (points.get(pointsToCheck[0]) == points.get(pointsToCheck[1]))

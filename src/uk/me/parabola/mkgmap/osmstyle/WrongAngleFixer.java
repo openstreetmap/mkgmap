@@ -53,16 +53,16 @@ public class WrongAngleFixer {
 	static private final double MAX_BEARING_ERROR = 15;
 	static private final double MAX_DIFF_ANGLE_STRAIGHT_LINE = 3;
 	
-	private Area bbox;
-	private String gpxPath = null;
+	private final Area bbox;
+	private final String gpxPath = null;
 	static final int MODE_ROADS = 0;
 	static final int MODE_LINES = 1;
 	private int mode = MODE_ROADS;
 	
-	public void setBounds(Area bbox){
+	public WrongAngleFixer(Area bbox) {
 		this.bbox = bbox;
 	}
-	
+
 	/**
 	 * Find wrong angles caused by rounding to map units. Try to fix them by
 	 * moving, removing or merging points. 
@@ -123,7 +123,7 @@ public class WrongAngleFixer {
 	 * @param replacements the Map containing the replaced points
 	 * @return the replacement
 	 */
-	private Coord getReplacement(Coord p, Way way,
+	private static Coord getReplacement(Coord p, Way way,
 			Map<Coord, Coord> replacements) {
 		// check if this point is to be replaced because
 		// it was previously merged into another point
@@ -305,7 +305,7 @@ public class WrongAngleFixer {
 										// way has only two points, don't merge them
 										coa1.addBadMergeCandidate(coa2);
 									}
-									if ("roundabout".equals(way.getTag("junction"))) {
+									if (cw.isRoundabout()) {
 										// avoid to merge exits of roundabouts
 										coa1.addBadMergeCandidate(coa2);
 									}
@@ -403,8 +403,6 @@ public class WrongAngleFixer {
 						points.remove(i);
 						anotherPassRequired = true;
 						lastWayModified = true;
-						if (mode == MODE_ROADS)
-							modifiedRoads.put(way.getId(), cw);
 						if (i > 0 && i < points.size()) {
 							// special case: handle micro loop
 							if (points.get(i - 1) == points.get(i))
@@ -429,8 +427,6 @@ public class WrongAngleFixer {
 					if (p.getHighwayCount() >= 2)
 						numNodesMerged++;
 					lastWayModified = true;
-					if (mode == MODE_ROADS)
-						modifiedRoads.put(way.getId(), cw);
 					if (i + 1 < points.size() && points.get(i + 1) == p) {
 						points.remove(i);
 						anotherPassRequired = true;
@@ -440,6 +436,9 @@ public class WrongAngleFixer {
 						anotherPassRequired = true;
 					}
 				}
+				if (lastWayModified && mode == MODE_ROADS){
+					modifiedRoads.put(way.getId(), cw);
+				}
 			}
 		}
 		// finish: remove remaining duplicate points
@@ -447,8 +446,6 @@ public class WrongAngleFixer {
 		lastWay = null;
 		boolean lastWayModified = false;
 		for (ConvertedWay cw : convertedWays) {
-			if (!cw.isValid())
-				continue;
 			Way way = cw.getWay();
 			if (mode == MODE_LINES && modifiedRoads.containsKey(way.getId()))
 				continue;
@@ -632,7 +629,7 @@ public class WrongAngleFixer {
 				if (mode == MODE_ROADS)
 					modifiedRoads.put(way.getId(), cw);
 				if (gpxPath != null){
-					if (draw || "roundabout".equals(way.getTag("junction"))) {
+					if (draw || cw.isRoundabout()) {
 						GpxCreator.createGpx(gpxPath+way.getId()+"_dpmod", points,removedInWay);
 					}
 				}
@@ -1298,9 +1295,6 @@ public class WrongAngleFixer {
 						wayOut.addTag(tagEntry.getKey(), tagEntry.getValue());
 					}
 					
-					if ("roundabout".equals(way.getTag("junction"))) {
-						wayOut.addTag("junction", "roundabout");
-					}
 					wayOut.setId(way.getId());
 					
 					writer.write(wayOut);

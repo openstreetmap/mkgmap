@@ -12,7 +12,8 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
@@ -33,17 +34,17 @@ public final class AccessTagsAndBits {
 	public static final byte BUS       = 0x20;
 	public static final byte TAXI      = 0x40;
 	public static final byte EMERGENCY = (byte) 0x80;
-	
+
 	// other routing attributes
 	public static final byte R_THROUGHROUTE	= 0x001; // note: 1 means throughroute is allowed
 	public static final byte R_CARPOOL      = 0x002; 	
-//	public static final byte R_ONEWAY       = 0x004;
+	public static final byte R_ONEWAY       = 0x004;
 	public static final byte R_TOLL		    = 0x008;
 	public static final byte R_UNPAVED      = 0x010;
 	public static final byte R_FERRY        = 0x020;
 	public static final byte R_ROUNDABOUT   = 0x040;
 
-	public final static HashMap<String, Byte> ACCESS_TAGS = new HashMap<String, Byte>(){{
+	public final static Map<String, Byte> ACCESS_TAGS = new LinkedHashMap<String, Byte>(){{
 		put("mkgmap:foot", FOOT);
 		put("mkgmap:bicycle", BIKE);
 		put("mkgmap:car", CAR);
@@ -53,7 +54,17 @@ public final class AccessTagsAndBits {
 		put("mkgmap:taxi", TAXI);
 		put("mkgmap:emergency", EMERGENCY);
 	}};
-	
+
+	public final static Map<String, Byte> ROUTE_TAGS = new LinkedHashMap<String, Byte>(){{
+		put("mkgmap:throughroute", R_THROUGHROUTE);
+		put("mkgmap:carpool", R_CARPOOL); 
+		put("oneway", R_ONEWAY);
+		put("mkgmap:toll", R_TOLL);
+		put("mkgmap:unpaved", R_UNPAVED);
+		put("mkgmap:ferry", R_FERRY);
+		put("junction", R_ROUNDABOUT);
+	}};
+
 	public static byte evalAccessTags(Element el){
 		byte noAccess = 0;
 		for (Entry<String, Byte> entry : ACCESS_TAGS.entrySet()){
@@ -63,10 +74,11 @@ public final class AccessTagsAndBits {
 		return  (byte) ~noAccess;
 	}
 
-	
+
 	public static byte evalRouteTags(Element el){
 		byte routeFlags = 0;
-		
+
+		// Style has to set "yes"
 		if (el.tagIsLikeYes("mkgmap:carpool"))
 			routeFlags |= R_CARPOOL;
 		if (el.tagIsLikeYes("mkgmap:toll"))
@@ -76,38 +88,19 @@ public final class AccessTagsAndBits {
 		if (el.tagIsLikeYes("mkgmap:ferry"))
 			routeFlags |= R_FERRY;
 
+		// Style has to set "no" 
 		if (el.tagIsLikeNo("mkgmap:throughroute")) 
 			routeFlags &= ~R_THROUGHROUTE;
 		else 
 			routeFlags |= R_THROUGHROUTE;
-		
+
+		// tags without the mkgmap: prefix
 		if ("roundabout".equals(el.getTag("junction"))) 
 			routeFlags |= R_ROUNDABOUT;
-		
+		if (el.tagIsLikeYes("oneway"))
+			routeFlags |= R_ONEWAY;
+
 		return routeFlags;
 	}
-	
-	public static boolean isToll(byte routeFlags){
-		return (routeFlags & R_TOLL) != 0; 
-	}
-	
-	public static boolean isUnpaved(byte routeFlags){
-		return (routeFlags & R_UNPAVED) != 0; 
-	}
 
-	public static boolean isFerry(byte routeFlags){
-		return (routeFlags & R_FERRY) != 0; 
-	}
-	
-	public static boolean isCarpool(byte routeFlags){
-		return (routeFlags & R_CARPOOL) != 0; 
-	}
-
-	public static boolean isRoundabout(byte routeFlags){
-		return (routeFlags & R_ROUNDABOUT) != 0; 
-	}
-
-	public static boolean isThroughroute(byte routeFlags){
-		return (routeFlags & R_THROUGHROUTE) != 0; 
-	}
 }

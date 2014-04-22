@@ -1017,7 +1017,7 @@ public class MultiPolygonRelation extends Relation {
 
 						// all cut polygons have the same tags - copy them from the first polygon
 						Way outerWay = singularOuterPolygons.get(0);
-						for (Entry<String, String> tag : outerWay.getEntrySetIterator()) {
+						for (Entry<String, String> tag : outerWay.getTagEntryIterator()) {
 							outerTags.put(tag.getKey(), tag.getValue());
 						}
 						outmostPolygonProcessing = false;
@@ -1634,7 +1634,7 @@ public class MultiPolygonRelation extends Relation {
 			}
 		}
 		
-		for (Map.Entry<String, String> tagEntry : element.getEntrySetIterator()) {
+		for (Map.Entry<String, String> tagEntry : element.getTagEntryIterator()) {
 			String tagName = tagEntry.getKey();
 			// all tags are style relevant
 			// except: type (for relations), mkgmap:* 
@@ -2150,7 +2150,7 @@ public class MultiPolygonRelation extends Relation {
 		Map<String, String> tags;
 		if (hasStyleRelevantTags(this)) {
 			tags = new HashMap<String, String>();
-			for (Entry<String, String> relTag : getEntrySetIterator()) {
+			for (Entry<String, String> relTag : getTagEntryIterator()) {
 				tags.put(relTag.getKey(), relTag.getValue());
 			}
 		} else {
@@ -2192,7 +2192,7 @@ public class MultiPolygonRelation extends Relation {
 	 *            a joined way
 	 */
 	private void removeTagsInOrgWays(Element tagElement, JoinedWay way) {
-		for (Entry<String, String> tag : tagElement.getEntrySetIterator()) {
+		for (Entry<String, String> tag : tagElement.getTagEntryIterator()) {
 			removeTagInOrgWays(way, tag.getKey(), tag.getValue());
 		}
 	}
@@ -2449,7 +2449,7 @@ public class MultiPolygonRelation extends Relation {
 			for (Way way : ways) {
 				if (first) {
 					// the tags of the first way are copied completely 
-					for (Map.Entry<String, String> tag : way.getEntrySetIterator()) {
+					for (Map.Entry<String, String> tag : way.getTagEntryIterator()) {
 						mergedTags.put(tag.getKey(), tag.getValue());
 					}
 					first = false;

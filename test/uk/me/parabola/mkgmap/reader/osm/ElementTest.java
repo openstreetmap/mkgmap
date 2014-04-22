@@ -38,7 +38,7 @@ public class ElementTest {
 		List<String> keys = new ArrayList<String>();
 		List<String> values = new ArrayList<String>();
 
-		for (Map.Entry<String, String> ent : el.getEntrySetIterator()) {
+		for (Map.Entry<String, String> ent : el.getTagEntryIterator()) {
 			keys.add(ent.getKey());
 			values.add(ent.getValue());
 		}
