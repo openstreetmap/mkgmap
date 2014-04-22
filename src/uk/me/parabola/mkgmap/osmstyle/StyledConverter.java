@@ -1771,7 +1771,8 @@ public class StyledConverter implements OsmConverter {
 								log.warn("road not connected to other roads, but replacement type is invalid. Dropped:", way.toBrowseURL());
 							}
 						}
-						roads.set(i, null);
+						roads.remove(i);
+						
 					}
 				}
 			}
