@@ -112,6 +112,7 @@ public class TypeReader {
 			}
 			if (usedTypes == null)
 				usedTypes = Arrays.asList(gt.getType());
+			
 			for (int i = 0; i < usedTypes.size(); i++){
 				int usedType = usedTypes.get(i);
 				String typeOverlaidMsg = ". Type is overlaid with " + GType.formatType(usedType);
@@ -121,18 +122,28 @@ public class TypeReader {
 						msg += typeOverlaidMsg;
 					System.out.println(msg);
 				}
-				if (kind == FeatureKind.POLYLINE && gt.getMinLevel() == 0 && gt.getMaxLevel() >= 0 && GType.isRoutableLineType(usedType)){
-					if (gt.isRoad() == false){
-						String msg = "Warning: routable type " + type  + " is used for non-routable line with level 0. This may break routing. Style file "+ ts.getFileName() + ", line " + ts.getLinenumber();
-						if (fromOverlays)
-							msg += typeOverlaidMsg;
-						System.out.println(msg);
-					}
-					else if (i > 0){
-						System.out.println("Warning: routable type " + type + " is used for non-routable line with level 0. " +
-								"This may break routing. Style file " + ts.getFileName() + ", line " + ts.getLinenumber() + 
-								typeOverlaidMsg +
-								" which is used for adding the non-routable copy of the way.");
+				if (kind == FeatureKind.POLYLINE && gt.getMinLevel() == 0 && gt.getMaxLevel() >= 0){ 
+					if (GType.isRoutableLineType(usedType)){
+						if (gt.isRoad() == false){
+							String msg = "Warning: routable type " + type  + " is used for non-routable line with level 0. This may break routing. Style file "+ ts.getFileName() + ", line " + ts.getLinenumber();
+							if (fromOverlays)
+								msg += typeOverlaidMsg;
+							System.out.println(msg);
+						}
+						else if (i > 0){
+							System.out.println("Warning: routable type " + type + " is used for non-routable line with level 0. " +
+									"This may break routing. Style file " + ts.getFileName() + ", line " + ts.getLinenumber() + 
+									typeOverlaidMsg +
+									" which is used for adding the non-routable copy of the way.");
+						}
+					} else {
+						if (gt.isRoad()){
+							String msg = "Warning: non-routable type " + type  + " is used in combination with road_class/road_speed. Line will not be routable. Style file "+ ts.getFileName() + ", line " + ts.getLinenumber();
+							if (fromOverlays)
+								msg += typeOverlaidMsg;
+							System.out.println(msg);
+						}
+						
 					}
 				}
 			}
