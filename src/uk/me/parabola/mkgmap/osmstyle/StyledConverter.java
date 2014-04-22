@@ -1651,8 +1651,10 @@ public class StyledConverter implements OsmConverter {
 		}
 		
 		// find roads that are not connected
-		for (int i = 0; i < roads.size(); i++){
-			ConvertedWay cw = roads.get(i);
+		// count downwards because we are removing elements
+		Iterator<ConvertedWay> iter = roads.iterator();
+		while(iter.hasNext()){
+			ConvertedWay cw = iter.next();
 			if (!cw.isValid())
 				continue;
 			Way way = cw.getWay();
@@ -1771,8 +1773,7 @@ public class StyledConverter implements OsmConverter {
 								log.warn("road not connected to other roads, but replacement type is invalid. Dropped:", way.toBrowseURL());
 							}
 						}
-						roads.remove(i);
-						
+						iter.remove();
 					}
 				}
 			}
