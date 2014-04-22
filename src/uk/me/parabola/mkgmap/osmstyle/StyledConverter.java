@@ -688,7 +688,7 @@ public class StyledConverter implements OsmConverter {
 			Map<Long,CoordNode> otherNodeIds = new LinkedHashMap<>();
 			CoordNode viaNode = null;
 			boolean viaIsUnique = true;
-			for (Way way:wayList){
+			for (Way way : wayList) {
 				CoordNode lastNode = null;
 				for (Coord co: way.getPoints()){
 					// not 100% fail safe: points may have been replaced before
@@ -724,14 +724,17 @@ public class StyledConverter implements OsmConverter {
 				log.info("Access restriction in POI node " + node.toBrowseURL() + " was ignored, has no effect on any connected way");
 				continue;
 			}
-			
 			GeneralRouteRestriction rr = new GeneralRouteRestriction("no_through", exceptMask, "CoordPOI at " + p.toOSMURL());
 			rr.setViaNodes(Arrays.asList(viaNode));
 			int added = collector.addRestriction(rr);
 			if (added == 0){
 				log.info("Access restriction in POI node " + node.toBrowseURL() + " was ignored, has no effect on any connected way");
-			} else 
-				log.info("Access restriction in POI node " + node.toBrowseURL() + " was translated to",added,"route restriction(s)");
+			} else { 
+				log.info("Access restriction in POI node", node.toBrowseURL(), "was translated to",added,"route restriction(s)");
+			}
+			if (wayList.size() > 1 && added > 2){
+				log.warn("Access restriction in POI node", node.toBrowseURL(), "affects routing on multiple ways");
+			}
 		}
 	}
 
