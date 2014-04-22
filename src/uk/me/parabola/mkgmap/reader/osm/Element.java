@@ -22,7 +22,7 @@ import java.util.Map;
 /**
  * Superclass of the node, segment and way OSM elements.
  */
-public abstract class Element implements Iterable<String> {
+public abstract class Element {
 	private Tags tags;
 	private long id;
 
@@ -49,20 +49,16 @@ public abstract class Element implements Iterable<String> {
 		return tags.get(key);
 	}
 
-	public void deleteTag(String tagname) {
+	public String deleteTag(String tagname) {
+		String old = null;
 		if(tags != null) {
-			tags.remove(tagname);
+			old = tags.remove(tagname);
 			if (tags.size() == 0) {
 				tags = null;
 			}
+			
 		}
-	}
-
-	public Iterator<String> iterator() {
-		if (tags == null) 
-			return Collections.<String>emptyList().iterator();
-
-		return tags.iterator();
+		return old;
 	}
 
 	/**
@@ -76,7 +72,7 @@ public abstract class Element implements Iterable<String> {
 	 * @param s tag name
 	 * @return <code>true</code> if the tag value is a boolean tag with a "positive" value
 	 */
-	public boolean isBoolTag(String s) {
+	public boolean tagIsLikeYes(String s) {
 		String val = getTag(s);
 		if (val == null)
 			return false;
@@ -98,7 +94,7 @@ public abstract class Element implements Iterable<String> {
 	 * @param s tag name
 	 * @return <code>true</code> if the tag value is a boolean tag with a "negative" value
 	 */
-	public boolean isNotBoolTag(String s) {
+	public boolean tagIsLikeNo(String s) {
 		String val = getTag(s);
 		if (val == null)
 			return false;
@@ -162,13 +158,15 @@ public abstract class Element implements Iterable<String> {
 		tags = null;
 	}
 
-	public Iterable<Map.Entry<String, String>> getEntryIteratable() {
+	/**
+	 * @return a Map iterator for the key + value pairs  
+	 */
+	public Iterable<Map.Entry<String, String>> getTagEntryIterator() {
 		return new Iterable<Map.Entry<String, String>>() {
 			public Iterator<Map.Entry<String, String>> iterator() {
 				if (tags == null)
-					return Collections.<String, String>emptyMap().entrySet().iterator();
-				else
-					return tags.entryIterator();
+					return Collections.emptyIterator();
+				return tags.entryIterator();
 			}
 		};
 	}
@@ -185,4 +183,16 @@ public abstract class Element implements Iterable<String> {
 		// Can be implemented in subclasses
 		throw new UnsupportedOperationException("unsupported element copy");
 	}
+	
+	public String getDebugName() {
+		String name = getName();
+		if(name == null)
+			name = getTag("ref");
+		if(name == null)
+			name = "";
+		else
+			name += " ";
+		return name + "(OSM id " + getId() + ")";
+	}
+	
 }

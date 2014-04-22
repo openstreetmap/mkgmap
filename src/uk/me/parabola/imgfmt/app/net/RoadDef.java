@@ -62,31 +62,27 @@ public class RoadDef implements Comparable<RoadDef> {
 	private static final int NET_FLAG_ONEWAY   = 0x02;
 
 	private static final int NOD2_FLAG_UNK        = 0x01;
-	private static final int NOD2_FLAG_EXTRA_DATA = 0x80;
+//	private static final int NOD2_FLAG_EXTRA_DATA = 0x80; just documentation
 
 	// first byte of Table A info in NOD 1
 	private static final int TABA_FLAG_TOLL = 0x80;
-	private static final int TABA_MASK_CLASS = 0x70;
+//	private static final int TABA_MASK_CLASS = 0x70; just documentation
 	private static final int TABA_FLAG_ONEWAY = 0x08;
-	private static final int TABA_MASK_SPEED = 0x07;
+//	private static final int TABA_MASK_SPEED = 0x07; just documentation
 
 	private static final int TABAACCESS_FLAG_CARPOOL = 0x0008;
 	private static final int TABAACCESS_FLAG_NOTHROUGHROUTE = 0x0080;
 	
-	// second byte: access flags - order must correspond to constants
-	// in RoadNetwork 
-	// bits 0x08, 0x80 are set separately
-	private static final int[] ACCESS = {
-		0x8000, // emergency (net pointer bit 31)
-		0x4000, // delivery (net pointer bit 30)
-		0x0001, // car
-		0x0002, // bus
-		0x0004, // taxi
-		0x0010, // foot
-		0x0020, // bike
-		0x0040, // truck
-	};
-
+	// second byte: access flags, bits 0x08, 0x80 are set separately 
+	private static final int TABAACCESS_FLAG_NO_EMERGENCY = 0x8000;
+	private static final int TABAACCESS_FLAG_NO_DELIVERY  = 0x4000;
+	private static final int TABAACCESS_FLAG_NO_CAR     = 0x0001;
+	private static final int TABAACCESS_FLAG_NO_BUS     = 0x0002;
+	private static final int TABAACCESS_FLAG_NO_TAXI    = 0x0004;
+	private static final int TABAACCESS_FLAG_NO_FOOT    = 0x0010;
+	private static final int TABAACCESS_FLAG_NO_BIKE    = 0x0020;
+	private static final int TABAACCESS_FLAG_NO_TRUCK   = 0x0040;
+	
 	// the offset in Nod2 of our Nod2 record
 	private int offsetNod2;
 
@@ -98,6 +94,9 @@ public class RoadDef implements Comparable<RoadDef> {
 	 */
 	private int netFlags = NET_FLAG_UNK1;
 
+	// the allowed vehicles in mkgmap internal format
+	private byte mkgmapAccess; 
+	
 	// The road length units may be affected by other flags in the header as
 	// there is doubt as to the formula.
 	private int roadLength;
@@ -108,7 +107,7 @@ public class RoadDef implements Comparable<RoadDef> {
 	private final Label[] labels = new Label[MAX_LABELS];
 	private int numlabels;
 
-	private final SortedMap<Integer,List<RoadIndex>> roadIndexes = new TreeMap<Integer,List<RoadIndex>>();
+	private final SortedMap<Integer,List<RoadIndex>> roadIndexes = new TreeMap<>();
 
 	private City city;
 	private Zip zip;
@@ -120,7 +119,7 @@ public class RoadDef implements Comparable<RoadDef> {
 	private boolean flareCheck;
 	private Set<String> messageIssued;
 
-	private final List<Offset> rgnOffsets = new ArrayList<Offset>(4);
+	private final List<Offset> rgnOffsets = new ArrayList<>();
 
 	/*
 	 * Everything that's relevant for writing out Nod 2.
@@ -211,9 +210,8 @@ public class RoadDef implements Comparable<RoadDef> {
 		}
 
 		writeLabels(writer);
-		if (numbers != null) { // TODO combine if
-			if (numbers.getSwapped())
-				netFlags |= 0x20; // swapped default; left=even, right=odd
+		if (numbers != null && numbers.getSwapped()) {
+			netFlags |= 0x20; // swapped default; left=even, right=odd
 		}
 		writer.put((byte) netFlags);
 		writer.put3(roadLength);
@@ -352,12 +350,11 @@ public class RoadDef implements Comparable<RoadDef> {
 		int level = pl.getSubdiv().getZoom().getLevel();
 		List<RoadIndex> l = roadIndexes.get(level);
 		if (l == null) {
-			l = new ArrayList<RoadIndex>(4);
+			l = new ArrayList<>();
 			roadIndexes.put(level, l);
 		}
 		l.add(new RoadIndex(pl));
 
-		// XXX needs to be the lowest level, which might not always be zero in the future
 		if (level == 0) {
 			nodeCount += pl.getNodeCount();
 		}
@@ -588,13 +585,43 @@ public class RoadDef implements Comparable<RoadDef> {
 		tabAAccess |= TABAACCESS_FLAG_NOTHROUGHROUTE;
 	}
 
-	public void setAccess(boolean[] access) {
-		assert access.length <= ACCESS.length;
-		for (int i = 0; i < access.length; i++)
-			if (access[i])
-				tabAAccess |= ACCESS[i];
+	/**
+	 * @return allowed vehicles in mkgmap format  
+	 */
+	public byte getAccess() {
+		return mkgmapAccess;
 	}
 
+	/**
+	 * Set allowed vehicles
+	 * @param mkgmapAccess bit mask in mkgmap format
+	 */
+	public void setAccess(byte mkgmapAccess) {
+		this.mkgmapAccess = mkgmapAccess;
+		// translate internal format to that used in TableA
+		//clear the corresponding bits
+		tabAAccess &= ~(0xc077);
+		if (mkgmapAccess == 0xff)
+			return; // all vehicles allowed
+
+		if ((mkgmapAccess & AccessTagsAndBits.FOOT) == 0)
+			tabAAccess |= TABAACCESS_FLAG_NO_FOOT; 
+		if ((mkgmapAccess & AccessTagsAndBits.BIKE) == 0)
+			tabAAccess |=TABAACCESS_FLAG_NO_BIKE;
+		if ((mkgmapAccess & AccessTagsAndBits.CAR) == 0)
+			tabAAccess |=TABAACCESS_FLAG_NO_CAR;
+		if ((mkgmapAccess & AccessTagsAndBits.DELIVERY) == 0)
+			tabAAccess |=TABAACCESS_FLAG_NO_DELIVERY;
+		if ((mkgmapAccess & AccessTagsAndBits.TRUCK) == 0)
+			tabAAccess |=TABAACCESS_FLAG_NO_TRUCK;
+		if ((mkgmapAccess & AccessTagsAndBits.BUS) == 0)
+			tabAAccess |=TABAACCESS_FLAG_NO_BUS;
+		if ((mkgmapAccess & AccessTagsAndBits.TAXI) == 0)
+			tabAAccess |=TABAACCESS_FLAG_NO_TAXI;
+		if ((mkgmapAccess & AccessTagsAndBits.EMERGENCY) == 0)
+			tabAAccess |=TABAACCESS_FLAG_NO_EMERGENCY;
+	}
+	
 	public int getTabAInfo() {
 		return tabAInfo;
 	}
@@ -733,9 +760,10 @@ public class RoadDef implements Comparable<RoadDef> {
 
 	public boolean messagePreviouslyIssued(String key) {
 		if(messageIssued == null)
-			messageIssued = new HashSet<String>();
+			messageIssued = new HashSet<>();
 		boolean previouslyIssued = messageIssued.contains(key);
 		messageIssued.add(key);
 		return previouslyIssued;
 	}
+
 }

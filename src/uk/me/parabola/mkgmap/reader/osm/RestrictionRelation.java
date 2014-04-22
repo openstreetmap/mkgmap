@@ -14,6 +14,7 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.ArrayList;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -27,10 +28,11 @@ import java.util.Set;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
+import uk.me.parabola.imgfmt.app.net.AccessTagsAndBits;
 import uk.me.parabola.imgfmt.app.net.GeneralRouteRestriction;
-import uk.me.parabola.imgfmt.app.net.RouteRestriction;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapCollector;
+
 
 /**
  * Representation of an OSM turn restriction
@@ -102,7 +104,7 @@ public class RestrictionRelation extends Relation {
 		final String browseURL = toBrowseURL();
 		valid = true;
 		// find out what kind of restriction we have and to which vehicles it applies
-		exceptMask = RouteRestriction.EXCEPT_FOOT | RouteRestriction.EXCEPT_EMERGENCY;
+		exceptMask = AccessTagsAndBits.FOOT | AccessTagsAndBits.EMERGENCY;
 		String specifc_type = getTag("restriction");
 		int count_unknown = 0;
 		Map<String, String> vehicles = getTagsWithPrefix("restriction:", true);
@@ -440,7 +442,7 @@ public class RestrictionRelation extends Relation {
 	}
 
 	/** 
-	 * match the vehicle type in a restriction with the garmin type
+	 * Match the vehicle type in a restriction with the mkgmap type
 	 * and modify the exceptMask 
 	 * @param vehicle
 	 * @param b true: restriction should not apply for vehicle, false: restriction should apply  
@@ -449,32 +451,31 @@ public class RestrictionRelation extends Relation {
 	private boolean setExceptMask(String vehicle, boolean b){
 		byte flag = 0;
 		if(vehicle.equals("motorcar") || vehicle.equals("motorcycle"))
-			flag = RouteRestriction.EXCEPT_CAR;
+			flag = AccessTagsAndBits.CAR;
 		else if(vehicle.equals("motor_vehicle"))
-			flag = (byte) (~(RouteRestriction.EXCEPT_BICYCLE | RouteRestriction.EXCEPT_FOOT) & 0xff);
+			flag = (byte) (~(AccessTagsAndBits.BIKE | AccessTagsAndBits.FOOT) & 0xff);
 		else if(vehicle.equals("psv") || vehicle.equals("bus"))
-			flag = RouteRestriction.EXCEPT_BUS;
+			flag = AccessTagsAndBits.BUS;
 		else if(vehicle.equals("taxi"))
-			flag = RouteRestriction.EXCEPT_TAXI;
+			flag = AccessTagsAndBits.TAXI;
 		else if(vehicle.equals("delivery") || vehicle.equals("goods"))
-			flag = RouteRestriction.EXCEPT_DELIVERY;
+			flag = AccessTagsAndBits.DELIVERY;
 		else if(vehicle.equals("bicycle"))
-			flag = RouteRestriction.EXCEPT_BICYCLE;
+			flag = AccessTagsAndBits.BIKE;
 		else if(vehicle.equals("hgv") || vehicle.equals("truck"))
-			flag = RouteRestriction.EXCEPT_TRUCK;
+			flag = AccessTagsAndBits.TRUCK;
 		else if(vehicle.equals("emergency"))
-			flag = RouteRestriction.EXCEPT_EMERGENCY;
+			flag = AccessTagsAndBits.EMERGENCY;
 		else if(vehicle.equals("foot"))
-			flag = RouteRestriction.EXCEPT_FOOT;
+			flag = AccessTagsAndBits.FOOT;
 		if (flag == 0){
 			log.warn(messagePrefix, "ignoring unsupported vehicle class '" + vehicle + "' in turn restriction");
 			return false;
-		} else {
-			if (b)
-				exceptMask |= flag;
-			else 
-				exceptMask &= ~flag;
-		}
+		} 
+		if (b)
+			exceptMask |= flag;
+		else 
+			exceptMask &= ~flag;
 		return true;			
 	}
 	
@@ -509,8 +510,7 @@ public class RestrictionRelation extends Relation {
 				log.error(messagePrefix,"via node is not a routing node");
 				return;
 			}
-			else 
-				viaNodes.add(vn);
+			viaNodes.add(vn);
 		}
 
 		if (viaNodes.size() > 6){

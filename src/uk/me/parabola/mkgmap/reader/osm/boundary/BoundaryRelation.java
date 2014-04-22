@@ -54,7 +54,7 @@ public class BoundaryRelation extends MultiPolygonRelation {
 			if (outerResultArea == null) {
 				return null;
 			}
-			boundary = new Boundary(outerResultArea, this.getEntryIteratable(),"r"+this.getId());
+			boundary = new Boundary(outerResultArea, this.getTagEntryIterator(),"r"+this.getId());
 			outerResultArea = null;
 		}
 		return boundary;
@@ -280,7 +280,7 @@ public class BoundaryRelation extends MultiPolygonRelation {
 
 				for (Way outerWay : currentPolygon.polygon.getOriginalWays()) {
 					if (outmostPolygonProcessing) {
-						for (Entry<String, String> tag : outerWay.getEntryIteratable()) {
+						for (Entry<String, String> tag : outerWay.getTagEntryIterator()) {
 							outerTags.put(tag.getKey(), tag.getValue());
 						}
 						outmostPolygonProcessing = false;
@@ -338,7 +338,7 @@ public class BoundaryRelation extends MultiPolygonRelation {
 		
 		if (hasStyleRelevantTags(this)) {
 			outerTags.clear();
-			for (Entry<String,String> mpTags : getEntryIteratable()) {
+			for (Entry<String,String> mpTags : getTagEntryIterator()) {
 				if ("type".equals(mpTags.getKey())==false) {
 					outerTags.put(mpTags.getKey(), mpTags.getValue());
 				}

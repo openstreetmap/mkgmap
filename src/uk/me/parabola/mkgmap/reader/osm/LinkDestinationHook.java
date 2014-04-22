@@ -742,7 +742,7 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 	 * @return <code>true</code> way is oneway
 	 */
 	private boolean isOnewayInDirection(Way w) {
-		if (w.isBoolTag("oneway")) {
+		if (w.tagIsLikeYes("oneway")) {
 			return true;
 		}
 		

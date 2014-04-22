@@ -18,6 +18,7 @@ package uk.me.parabola.mkgmap.reader.polish;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -38,7 +39,7 @@ import java.util.Map;
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.net.RouteRestriction;
+import uk.me.parabola.imgfmt.app.net.AccessTagsAndBits;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
@@ -169,7 +170,6 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	
 	@Override
 	public LevelInfo[] overviewMapLevels() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -244,14 +244,14 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 						polyline.setExtTypeAttributes(makeExtTypeAttributes());
 					final int maxPointsInLine = LineSplitterFilter.MAX_POINTS_IN_LINE;
 					if(points.size() > maxPointsInLine) {
-						List<Coord> segPoints = new ArrayList<Coord>(maxPointsInLine);
+						List<Coord> segPoints = new ArrayList<>(maxPointsInLine);
 						for(Coord p : points) {
 							segPoints.add(p);
 							if(segPoints.size() == maxPointsInLine) {
 								MapLine seg = polyline.copy();
 								seg.setPoints(segPoints);
 								mapper.addLine(seg);
-								segPoints = new ArrayList<Coord>(maxPointsInLine);
+								segPoints = new ArrayList<>(maxPointsInLine);
 								segPoints.add(p);
 							}
 						}
@@ -365,7 +365,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		}
 		else {
 			if(extraAttributes == null)
-				extraAttributes = new HashMap<String, String>();
+				extraAttributes = new HashMap<>();
 			extraAttributes.put(name, value);
 		}
 	}
@@ -410,14 +410,14 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			roadHelper.addNumbers(value);
 		} else {
 			if (extraAttributes == null)
-				extraAttributes = new HashMap<String, String>();
+				extraAttributes = new HashMap<>();
 			extraAttributes.put(name, value);
 		}
 	}
 
 	private List<Coord> coordsFromString(String value) {
 		String[] ords = value.split("\\) *, *\\(");
-		List<Coord> points = new ArrayList<Coord>();
+		List<Coord> points = new ArrayList<>();
 
 		for (String s : ords) {
 			Coord co = makeCoord(s);
@@ -475,7 +475,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		}
 		else {
 			if(extraAttributes == null)
-				extraAttributes = new HashMap<String, String>();
+				extraAttributes = new HashMap<>();
 			extraAttributes.put(name, value);
 		}
 	}
@@ -695,7 +695,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	}
 
 	private ExtTypeAttributes makeExtTypeAttributes() {
-		Map<String, String> eta = new HashMap<String, String>();
+		Map<String, String> eta = new HashMap<>();
 		int colour = 0;
 		int style = 0;
 
@@ -829,6 +829,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
      * will NOT apply for Delivery and Car.
      *
      * @param value Tag value
+     * @return the exceptMask in mkgmap internal format
      */
     private byte getRestrictionExceptionMask(String value) {
         String[] params = value.split(",");
@@ -838,28 +839,28 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
                 if ("1".equals(params[i])) {
                     switch(i) {
 					case 0:
-						exceptMask |= RouteRestriction.EXCEPT_EMERGENCY;
+						exceptMask |= AccessTagsAndBits.EMERGENCY;
 						break;
 					case 1:
-						exceptMask |= RouteRestriction.EXCEPT_DELIVERY;
+						exceptMask |= AccessTagsAndBits.DELIVERY;
 						break;
 					case 2:
-						exceptMask |= RouteRestriction.EXCEPT_CAR;
+						exceptMask |= AccessTagsAndBits.CAR;
 						break;
 					case 3:
-						exceptMask |= RouteRestriction.EXCEPT_BUS;
+						exceptMask |= AccessTagsAndBits.BUS;
 						break;
 					case 4:
-						exceptMask |= RouteRestriction.EXCEPT_TAXI;
+						exceptMask |= AccessTagsAndBits.TAXI;
 						break;
 					case 5:
-						exceptMask |= RouteRestriction.EXCEPT_FOOT;
+						exceptMask |= AccessTagsAndBits.FOOT;
 						break;
 					case 6:
-						exceptMask |= RouteRestriction.EXCEPT_BICYCLE;
+						exceptMask |= AccessTagsAndBits.BIKE;
 						break;
 					case 7:
-						exceptMask |= RouteRestriction.EXCEPT_TRUCK;
+						exceptMask |= AccessTagsAndBits.TRUCK;
 						break;
                     }
                 }

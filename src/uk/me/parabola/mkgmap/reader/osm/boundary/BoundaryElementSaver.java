@@ -68,7 +68,7 @@ public class BoundaryElementSaver extends ElementSaver {
 					// This should abandon all non country admin_level 2 boundaries
 					if (element.getTag("admin_level").equals("2")) {
 						Tags copyTags = new Tags();
-						for (Entry<String,String> tag : element.getEntryIteratable()) {
+						for (Entry<String,String> tag : element.getTagEntryIterator()) {
 							copyTags.put(tag.getKey(), tag.getValue());
 						}
 						String iso = locator.getCountryISOCode(copyTags);
@@ -78,7 +78,7 @@ public class BoundaryElementSaver extends ElementSaver {
 						}
 					}
 					// and a name must be set (check only for a tag containing name
-					for (Entry<String,String> tag : element.getEntryIteratable()) {
+					for (Entry<String,String> tag : element.getTagEntryIterator()) {
 						if (tag.getKey().contains("name")) {
 							return true;
 						}
@@ -93,7 +93,7 @@ public class BoundaryElementSaver extends ElementSaver {
 						return true;
 					}
 					// and a name must be set (check only for a tag containing name
-					for (Entry<String,String> tag : element.getEntryIteratable()) {
+					for (Entry<String,String> tag : element.getTagEntryIterator()) {
 						if (tag.getKey().contains("name")) {
 							return true;
 						}
@@ -126,7 +126,7 @@ public class BoundaryElementSaver extends ElementSaver {
 				// This should abandon all non country admin_level 2 boundaries
 				if (element.getTag("admin_level").equals("2")) {
 					Tags copyTags = new Tags();
-					for (Entry<String,String> tag : element.getEntryIteratable()) {
+					for (Entry<String,String> tag : element.getTagEntryIterator()) {
 						copyTags.put(tag.getKey(), tag.getValue());
 					}
 					String iso = locator.getCountryISOCode(copyTags);
@@ -137,7 +137,7 @@ public class BoundaryElementSaver extends ElementSaver {
 				}
 				
 				// and a name must be set (check only for a tag containing name)
-				for (Entry<String,String> tag : element.getEntryIteratable()) {
+				for (Entry<String,String> tag : element.getTagEntryIterator()) {
 					if (tag.getKey().contains("name")) {
 						return true;
 					}

@@ -40,24 +40,14 @@ import uk.me.parabola.util.EnhancedProperties;
 public class RoadNetwork {
 	private static final Logger log = Logger.getLogger(RoadNetwork.class);
 
-	public static final int NO_EMERGENCY = 0;
-	public static final int NO_DELIVERY = 1;
-	public static final int NO_CAR = 2;
-	public static final int NO_BUS = 3;
-	public static final int NO_TAXI = 4;
-	public static final int NO_FOOT = 5;
-	public static final int NO_BIKE = 6;
-	public static final int NO_TRUCK = 7;
-	public static final int NO_MAX = 8;
-
 	private final static int MAX_RESTRICTIONS_ARCS = 7;
-	private final Map<Long, RouteNode> nodes = new LinkedHashMap<Long, RouteNode>();
+	private final Map<Long, RouteNode> nodes = new LinkedHashMap<>();
 
 	// boundary nodes
 	// a node should be in here if the nodes boundary flag is set
-	private final List<RouteNode> boundary = new ArrayList<RouteNode>();
-	private final List<RoadDef> roadDefs = new ArrayList<RoadDef>();
-	private List<RouteCenter> centers = new ArrayList<RouteCenter>();
+	private final List<RouteNode> boundary = new ArrayList<>();
+	private final List<RoadDef> roadDefs = new ArrayList<>();
+	private List<RouteCenter> centers = new ArrayList<>();
 	private int adjustTurnHeadings ;
 	private boolean checkRoundabouts;
 	private boolean checkRoundaboutFlares;
@@ -80,8 +70,7 @@ public class RoadNetwork {
 	}
 
 	public void addRoad(RoadDef roadDef, List<Coord> coordList) {
-		//mapRoads.add(road);
-		roadDefs.add(roadDef); //XXX
+		roadDefs.add(roadDef);
 
 		CoordNode lastCoord = null;
 		int lastIndex = 0;
@@ -356,8 +345,8 @@ public class RoadNetwork {
 			if (fn == null){
 				log.warn(sourceDesc, "can't locate 'from' RouteNode for 'from' way", grr.getFromWayId());
 				return 0;
-			} else 
-				fromId = fn.getCoord().getId();
+			} 
+			fromId = fn.getCoord().getId();
 		}
 		List<RouteArc> fromArcs = fn.getDirectArcsTo(firstViaNode, grr.getFromWayId()); 
 		if (fromArcs.isEmpty()){
@@ -426,8 +415,8 @@ public class RoadNetwork {
 			if (bestAngle == null){
 				log.warn(sourceDesc,"the angle of the from and to way don't match the restriction");
 				return 0;
-			} else 
-				toArcs = angleMap.get(bestAngle);
+			} 
+			toArcs = angleMap.get(bestAngle);
 		}
 		if (toArcs.isEmpty()){
 			log.error(sourceDesc, "can't locate arc from 'via' node ",lastViaId,"to 'to' node",toId,"on way",grr.getToWayId());
@@ -481,7 +470,7 @@ public class RoadNetwork {
 			int countOneway= 0;
 			for (int j = arcs.size()-1; j >= 0; --j){
 				RouteArc arc = arcs.get(j);
-				if (isUsable(arc.getRoadDef().getTabAAccess(), grr.getExceptionMask()) == false){
+				if (isUsable(arc.getRoadDef().getAccess(), grr.getExceptionMask()) == false){
 					countNoEffect++;
 					arcs.remove(j);
 				}
@@ -531,7 +520,7 @@ public class RoadNetwork {
 			for (RouteNode vn : viaNodes){
 				path.clear();
 				boolean viaNodeFound = false;
-				int pathNoAccessMask = 0;
+				byte pathNoAccessMask = 0;
 				for (int j = 0; j < indexes.length; j++){
 					RouteArc arc = arcLists.get(j).get(indexes[j]);
 					if (arc.getDest() == vn || viaNodeFound == false){
@@ -539,10 +528,11 @@ public class RoadNetwork {
 						if (arc.getSource() == vn)
 							viaNodeFound = true;
 					}
-					pathNoAccessMask |= arc.getRoadDef().getTabAAccess();
+					pathNoAccessMask |= ~arc.getRoadDef().getAccess();
 					path.add(arc);
 				}
-				if (isUsable(pathNoAccessMask, grr.getExceptionMask())){
+				byte pathAccessMask = (byte)~pathNoAccessMask;
+				if (isUsable(pathAccessMask, grr.getExceptionMask())){
 					vn.addRestriction(new RouteRestriction(vn, path, grr.getExceptionMask()));
 					++added;
 				} 
@@ -564,46 +554,14 @@ public class RoadNetwork {
 		return added;
 	}
 
-	/*
-	 * Match the access mask of the road and the exception mask of the 
-	 * restriction. If 
-	 * TabA:
-	 * 	0x8000, // emergency (net pointer bit 31)
-		0x4000, // delivery (net pointer bit 30)
-		0x0001, // car
-		0x0002, // bus
-		0x0004, // taxi
-		0x0010, // foot
-		0x0020, // bike
-		0x0040, // truck
-
-	public final static byte EXCEPT_CAR      = 0x01;
-	public final static byte EXCEPT_BUS      = 0x02;
-	public final static byte EXCEPT_TAXI     = 0x04;
-	public final static byte EXCEPT_DELIVERY = 0x10;
-	public final static byte EXCEPT_BICYCLE  = 0x20;
-	public final static byte EXCEPT_TRUCK    = 0x40;
-	// additional flags that can be passed via exceptMask  
-	public final static byte EXCEPT_FOOT      = 0x08; // not written as such
-	public final static byte EXCEPT_EMERGENCY = (byte)0x80; // not written as such
-	
-
+	/**
+	 * Compare the disallowed vehicles for the path with the exceptions from the restriction
+	 * @param roadNoAccess
+	 * @param exceptionMask
+	 * @return
 	 */
-	 // TODO: rewrite using named constants, unit tests 
-	private boolean isUsable(int roadTabAAccess, byte exceptionMask) {
-		// bit positions for car,bus,taxi,bicycle and truck are equal
-		// move the other bits to match the meaning in the restriction 
-		int roadNoAccess = roadTabAAccess & 0x67;
-		if ((roadTabAAccess & 0x8000) != 0)
-			roadNoAccess |= RouteRestriction.EXCEPT_EMERGENCY;
-		if ((roadTabAAccess & 0x4000) != 0)
-			roadNoAccess |= RouteRestriction.EXCEPT_DELIVERY;
-		if ((roadTabAAccess & 0x010) != 0)
-			roadNoAccess |= RouteRestriction.EXCEPT_FOOT;
-		int access = ~roadNoAccess & 0xff;
-		int restrAccess = exceptionMask;
-		restrAccess = ~restrAccess & 0xff;
-		if ((access & restrAccess) == 0)
+	private static boolean isUsable(byte roadAccess, byte exceptionMask) {
+		if ((roadAccess & (byte) ~exceptionMask) == 0)
 			return false; // no allowed vehicle is concerned by this restriction
 		return true;
 	}
@@ -625,8 +583,8 @@ public class RoadNetwork {
 			for (RouteArc in: vn.arcsIteration()){
 				if (!in.isDirect() || in == out || in.getDest() == out.getDest())
 					continue;
-				int pathNoAccessMask = out.getRoadDef().getTabAAccess() | in.getRoadDef().getTabAAccess();
-				if (isUsable(pathNoAccessMask, grr.getExceptionMask())){
+				byte pathAccessMask = (byte) (out.getRoadDef().getAccess() & in.getRoadDef().getAccess());
+				if (isUsable(pathAccessMask, grr.getExceptionMask())){
 					vn.addRestriction(new RouteRestriction(vn, Arrays.asList(in,out), grr.getExceptionMask()));
 					added++;
 				} else {
@@ -655,7 +613,7 @@ public class RoadNetwork {
 	 * @param toArc arc with last via node as source
 	 * @return angle at in degree [-180;180]
 	 */
-	private float getAngle(RouteArc fromArc, RouteArc toArc){
+	private static float getAngle(RouteArc fromArc, RouteArc toArc){
 		// note that the values do not depend on the isForward() attribute
 		float headingFrom = fromArc.getFinalHeading();
 		float headingTo = toArc.getInitialHeading();
@@ -667,7 +625,7 @@ public class RoadNetwork {
 		return angle;
 	}
 	
-	private RouteArc getReverseArc(RouteArc arc){
+	private static RouteArc getReverseArc(RouteArc arc){
 		return arc.getDest().getDirectArcTo(arc.getSource(), arc.getRoadDef());
 	}
 		
@@ -679,7 +637,7 @@ public class RoadNetwork {
 	 * @param dirIndicator l:left, r:right, u:u_turn, s: straight_on
 	 * @return
 	 */
-	private Integer getBetterAngle (Integer angle1, Integer angle2, char dirIndicator){
+	private static Integer getBetterAngle (Integer angle1, Integer angle2, char dirIndicator){
 		switch (dirIndicator){
 		case 'l':
 			if (Math.abs(-90-angle2) < Math.abs(-90-angle1))
@@ -710,7 +668,7 @@ public class RoadNetwork {
 	 * @param dirIndicator l:left, r:right, u:u_turn, s: straight_on 
 	 * @return
 	 */
-	private boolean matchDirectionInfo (float angle, char dirIndicator){
+	private static boolean matchDirectionInfo (float angle, char dirIndicator){
 		switch (dirIndicator){
 		case 'l':
 			if (angle < -3 && angle > - 177)

@@ -88,46 +88,6 @@ public class GType {
 		}
 	}
 
-	public GType(GType other) {
-		this.continueSearch = other.continueSearch;
-		this.defaultName = other.defaultName;
-		this.featureKind = other.featureKind;
-		this.maxLevel = other.maxLevel;
-		this.maxResolution = other.maxResolution;
-		this.minLevel = other.minLevel;
-		this.minResolution = other.minResolution;
-		this.propogateActionsOnContinue = other.propogateActionsOnContinue;
-		this.road = other.road;
-		this.roadClass = other.roadClass;
-		this.roadSpeed = other.roadSpeed;
-		this.type = other.type;
-	}
-	
-	/**
-	 * Copy all attributes and replace type to a non-routable one.
-	 * @param other
-	 * @param nonRoutableType
-	 */
-	public GType(GType other, String nonRoutableType) {
-		assert other.featureKind == FeatureKind.POLYLINE;
-		
-		this.continueSearch = other.continueSearch;
-		this.defaultName = other.defaultName;
-		this.featureKind = other.featureKind;
-		this.maxLevel = other.maxLevel;
-		this.maxResolution = other.maxResolution;
-		this.minLevel = other.minLevel;
-		this.minResolution = other.minResolution;
-		this.propogateActionsOnContinue = other.propogateActionsOnContinue;
-		this.road = false;
-		try {
-			this.type = Integer.decode(nonRoutableType);
-		} catch (NumberFormatException e) {
-			log.error("not numeric " + nonRoutableType);
-			throw new ExitException("non-numeric type in style file");
-		}
-	}
-
 	public FeatureKind getFeatureKind() {
 		return featureKind;
 	}
@@ -199,7 +159,9 @@ public class GType {
 		if (propogateActionsOnContinue)
 			fmt.format(" propagate");
 		sb.append(']');
-		return sb.toString();
+		String res = sb.toString();
+		fmt.close();
+		return res;
 	}
 
 	public int getMinLevel() {

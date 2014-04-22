@@ -202,7 +202,7 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 			}
 
 			// do not add POIs for polygons created by multipolygon processing
-			if (w.isBoolTag(MultiPolygonRelation.MP_CREATED_TAG)) {
+			if (w.tagIsLikeYes(MultiPolygonRelation.MP_CREATED_TAG)) {
 				if (log.isDebugEnabled())
 					log.debug("MP processed: Do not create POI for", w.toTagString());
 				continue;

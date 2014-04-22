@@ -17,14 +17,15 @@
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import java.util.ArrayList;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import uk.me.parabola.mkgmap.osmstyle.StyledConverter;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.Token;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
+import static uk.me.parabola.imgfmt.app.net.AccessTagsAndBits.*;
 
 /**
  * Read an action block.  This is contained within braces and contains
@@ -35,15 +36,15 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
 public class ActionReader {
 	private final TokenScanner scanner;
 
-	private final Set<String> usedTags = new HashSet<String>();
+	private final Set<String> usedTags = new HashSet<>();
 
 	public ActionReader(TokenScanner scanner) {
 		this.scanner = scanner;
 	}
 
 	public ActionList readActions() {
-		List<Action> actions = new ArrayList<Action>();
-		Set<String> changeableTags = new HashSet<String>();
+		List<Action> actions = new ArrayList<>();
+		Set<String> changeableTags = new HashSet<>();
 		scanner.skipSpace();
 		if (!scanner.checkToken("{"))
 			return new ActionList(actions, changeableTags);
@@ -209,10 +210,10 @@ public class ActionReader {
 			// If the value contains a variable, then we do not know what the
 			// value will be.  Otherwise save the full tag=value
 			if (val.contains("$")) {
-				for (String accessTag : StyledConverter.ACCESS_TAGS)
+				for (String accessTag : ACCESS_TAGS.keySet())
 					changeableTags.add(accessTag);
 			} else {
-				for (String accessTag : StyledConverter.ACCESS_TAGS)
+				for (String accessTag : ACCESS_TAGS.keySet())
 					changeableTags.add(accessTag + "=" + val);
 			}
 			if (scanner.checkToken("|"))
