@@ -14,4 +14,9 @@ highway=trunk & mkgmap:country=NLD	{ add bicycle=no; add foot=no }
 highway=cycleway & mkgmap:country=NLD	{ add foot=yes }
 highway=bridleway & mkgmap:country=NLD	{ add foot=yes }
 
+# Spain (ESP)
+
+highway=trunk & mkgmap:country=ESP	{ add bicycle=yes; add foot=yes }
+highway=bridleway & mkgmap:country=ESP	{ add bicycle=yes; add foot=yes }
+
 
