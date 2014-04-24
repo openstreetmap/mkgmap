@@ -33,25 +33,29 @@ public class ConvertedWay {
 	private static final Logger log = Logger.getLogger(ConvertedWay.class);
 	private final int index;
 	private final Way way;				// with tags after Style processing
-	private final GType gt;								
+	private final GType gt;
 
 	private byte roadClass;			// 0-4
 	private byte roadSpeed;			// 0-7
 	private byte mkgmapAccess; 		// bit mask, see ACCESS_TAGS 
 	private final byte routeFlags;	// bit mask, see ROUTING_TAGS
+	private boolean isRoad;
+	
 	
 
 	public ConvertedWay(int index, Way way, GType type) {
 		this.index = index;
 		this.way = way;
 		this.gt = type;
-		if (type.isRoad()) {
+		this.isRoad = type.isRoad();
+		if (type.isRoad() & GType.isRoutableLineType(type.getType())) {
 			this.roadClass = (byte) gt.getRoadClass();
 			this.roadSpeed = (byte) gt.getRoadSpeed();
 			recalcRoadClass(way);
 			recalcRoadSpeed(way);
 			mkgmapAccess = evalAccessTags(way);
 			routeFlags = evalRouteTags(way);
+			isRoad = true;
 		} else {
 			roadClass = 0;
 			roadSpeed = 0;
@@ -251,5 +255,9 @@ public class ConvertedWay {
 
 	public boolean isThroughroute(){
 		return (routeFlags & R_THROUGHROUTE) != 0; 
+	}
+	
+	public boolean isRoad(){
+		return isRoad;
 	}
 }

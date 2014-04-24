@@ -49,9 +49,6 @@ public class RoadMerger {
 	/** maps which coord of a way(id) are restricted - they should not be merged */
 	private final MultiIdentityHashMap<Coord, Long> restrictions = new MultiIdentityHashMap<>();
 
-	/** Contains a list of all roads (GType + Way) */
-	private final List<ConvertedWay> roads;
-
 	/** maps the start point of a road to its road definition */
 	private final MultiIdentityHashMap<Coord, ConvertedWay> startPoints = new MultiIdentityHashMap<>();
 	/** maps the end point of a road to its road definition */
@@ -72,7 +69,6 @@ public class RoadMerger {
 			add("mkgmap:country");
 			add("mkgmap:is_in");
 			add("mkgmap:skipSizeFilter");
-			add("junction"); // should be removed, only junction=roundabout matters
 			add("mkgmap:synthesised");
 			add("mkgmap:highest-resolution-only");
 			add("mkgmap:flare-check");
@@ -92,16 +88,6 @@ public class RoadMerger {
 		return s1.equals(s2);
 	}
 
-
-	public RoadMerger(List<ConvertedWay> convertedWays) {
-		this.roads = new ArrayList<>(convertedWays.size());
-
-		for (int i = 0; i < convertedWays.size(); i++) {
-			ConvertedWay cw = convertedWays.get(i);
-			if (cw.isValid())
-				roads.add(cw);
-		}
-	}
 
 	/**
 	 * We must not merge roads at via points of restriction relations
@@ -224,14 +210,19 @@ public class RoadMerger {
 	 * @param resultingWays list for the merged (and not mergeable) ways
 	 * @param resultingGTypes list for the merged (and not mergeable) GTypes
 	 */
-	public void merge(List<ConvertedWay> resultingWays,
+	public List<ConvertedWay>  merge(List<ConvertedWay> convertedWays,
 			List<RestrictionRelation> restrictions,
 			List<Relation> throughRouteRelations) {
+		List<ConvertedWay> result = new ArrayList<>();
+		List<ConvertedWay> roadsToMerge = new ArrayList<>(convertedWays.size());
+		for (int i = 0; i < convertedWays.size(); i++) {
+			ConvertedWay cw = convertedWays.get(i);
+			if (cw.isValid() && cw.isRoad())
+				roadsToMerge.add(cw);
+		}
 
-		int noRoadsBeforeMerge = this.roads.size();
+		int noRoadsBeforeMerge = roadsToMerge.size();
 		int noMerges = 0;
-		List<ConvertedWay> roadsToMerge = new ArrayList<>(this.roads);
-		this.roads.clear();
 		
 		List<Coord> mergePoints = new ArrayList<>();
 
@@ -244,7 +235,7 @@ public class RoadMerger {
 
 			if (start == end) {
 				// do not merge closed roads
-				roads.add(road);
+				result.add(road);
 				continue;
 			}
 
@@ -337,26 +328,24 @@ public class RoadMerger {
 
 		// copy all merged roads to the roads list
 		for (List<ConvertedWay> mergedRoads : endPoints.values()) {
-			this.roads.addAll(mergedRoads);
+			result.addAll(mergedRoads);
 		}
 
 		// sort the roads to ensure that the order of roads is constant for two runs
-		Collections.sort(this.roads, new Comparator<ConvertedWay>() {
+		Collections.sort(result, new Comparator<ConvertedWay>() {
 			public int compare(ConvertedWay o1, ConvertedWay o2) {
 				return Integer.compare(o1.getIndex(), o2.getIndex());
 			}
 		});
 		
-		// copy the roads to the resulting lists
-		resultingWays.addAll(roads);
-		
 		// print out some statistics
-		int noRoadsAfterMerge = this.roads.size();
+		int noRoadsAfterMerge = result.size();
 		log.info("Roads before/after merge:", noRoadsBeforeMerge, "/",
 				noRoadsAfterMerge);
 		int percentage = (int) Math.round((noRoadsBeforeMerge - noRoadsAfterMerge) * 100.0d
 						/ noRoadsBeforeMerge);
 		log.info("Road network reduced by", percentage, "%",noMerges,"merges");
+		return result;
 	}
 
 	/**

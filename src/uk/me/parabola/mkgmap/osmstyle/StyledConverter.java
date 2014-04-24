@@ -192,6 +192,7 @@ public class StyledConverter implements OsmConverter {
 		}
 	}
 	
+	
 	/**
 	 * This takes the way and works out what kind of map feature it is and makes
 	 * the relevant call to the mapper callback.
@@ -201,12 +202,12 @@ public class StyledConverter implements OsmConverter {
 	 *
 	 * @param way The OSM way.
 	 */
+	private long lastRoadId = 0; 
 	public void convertWay(final Way way) {
 		if (way.getPoints().size() < 2 || way.getTagCount() == 0){
 			// no tags or no points => nothing to convert
 			removeRestrictionsWithWay(Level.WARNING, way, "is ignored");
 		}
-
 		preConvertRules(way);
 
 		housenumberGenerator.addWay(way);
@@ -239,47 +240,55 @@ public class StyledConverter implements OsmConverter {
 			wayTypeResult.setWay(cycleWay);
 			rules.resolveType(cycleWay, wayTypeResult);
 		}
-		if (roads.isEmpty() || roads.get(roads.size()-1).getWay().getId() != way.getId()){
+		if (lastRoadId != way.getId()){
+			// this way was not added to the roads list
 			removeRestrictionsWithWay(Level.WARNING, way, "is not routable");
 		}
 	}
 
-	private int roadIndex = 0;
 	private int lineIndex = 0;
+	private boolean wrongTypeMsgPrinted = false;
 	private void addConvertedWay(Way way, GType foundType) {
-		if (foundType.getFeatureKind() == FeatureKind.POLYLINE) {
-			
-			String oneWay = way.getTag("oneway");
-			boolean wasReversed = false;
-			if("-1".equals(oneWay) || "reverse".equals(oneWay)) {
-				// it's a oneway street in the reverse direction
-				// so reverse the order of the nodes and change
-				// the oneway tag to "yes"
-				way.reverse();
-				wasReversed = true;
-				way.addTag("oneway", "yes");
-			}
-
-			if (way.tagIsLikeYes("oneway")) {
-				way.addTag("oneway", "yes");
-				if (foundType.isRoad() && checkFixmeCoords(way) )
-					way.addTag("mkgmap:dead-end-check", "false");
-			} else 
-				way.deleteTag("oneway");
-			
-			if(foundType.isRoad() && !MapObject.hasExtendedType(foundType.getType())){
-				ConvertedWay cw = new ConvertedWay(roadIndex++, way, foundType);
-				if (wasReversed && cw.isRoundabout())
-					log.warn("Roundabout", way.getId(), "has reverse oneway tag (" + way.getPoints().get(0).toOSMURL() + ")");
-		    	roads.add(cw);
-			}
-		    else { 
-				ConvertedWay cw = new ConvertedWay(lineIndex++, way, foundType);
-		    	lines.add(cw);
-		    }
-		}
-		else
+		if (foundType.getFeatureKind() == FeatureKind.POLYGON){ 
 			addShape(way, foundType);
+			return;
+		}
+		
+		String oneWay = way.getTag("oneway");
+		boolean wasReversed = false;
+		if("-1".equals(oneWay) || "reverse".equals(oneWay)) {
+			// it's a oneway street in the reverse direction
+			// so reverse the order of the nodes and change
+			// the oneway tag to "yes"
+			way.reverse();
+			wasReversed = true;
+			way.addTag("oneway", "yes");
+		}
+
+		if (way.tagIsLikeYes("oneway")) {
+			way.addTag("oneway", "yes");
+			if (foundType.isRoad() && checkFixmeCoords(way) )
+				way.addTag("mkgmap:dead-end-check", "false");
+		} else 
+			way.deleteTag("oneway");
+		ConvertedWay cw = new ConvertedWay(lineIndex++, way, foundType);
+		if (cw.isRoad()){
+			roads.add(cw);
+			if (wasReversed && cw.isRoundabout())
+				log.warn("Roundabout", way.getId(), "has reverse oneway tag (" + way.getPoints().get(0).toOSMURL() + ")");
+			lastRoadId = way.getId();
+		}
+		else 
+			lines.add(cw);
+
+		// old code allowed all non-extended types for roads. Now print error message in this case.
+		if(foundType.isRoad() && !cw.isRoad()){
+			if (wrongTypeMsgPrinted == false){
+				log.error("Non-routable type in combination with road_class/road_speed used for routable map.",
+						"Try --check-styles to check the style.");
+
+			}
+		}
 	}
 
 	/** One type result for nodes to avoid recreating one for each node. */ 
@@ -412,7 +421,7 @@ public class StyledConverter implements OsmConverter {
 	}
 
 	/**
-	 * Merges roads with identical attributes (gtype, OSM tags) to reduce the size of the 
+	 * Merges roads with identical attributes (GType, OSM tags) to reduce the size of the 
 	 * road network.
 	 */
 	private void mergeRoads() {
@@ -421,12 +430,8 @@ public class StyledConverter implements OsmConverter {
 			return;
 		}
 		
-		// instantiate the RoadMerger - the roads and roadTypes lists are copied
-		RoadMerger merger = new RoadMerger(roads);
-		// clear the lists
-		roads.clear();
-		// merge the roads and copy the results to the roads and roadTypes list
-		merger.merge(roads, restrictions, throughRouteRelations);
+		RoadMerger merger = new RoadMerger();
+		roads = merger.merge(roads, restrictions, throughRouteRelations);
 	}
 	
 	public void end() {
@@ -462,7 +467,7 @@ public class StyledConverter implements OsmConverter {
 		modifiedRoads = null;
 
 		mergeRoads();
-
+		
 		resetHighwayCounts();
 		setHighwayCounts();
 		
@@ -473,7 +478,7 @@ public class StyledConverter implements OsmConverter {
 		lines = null;
 		if (roadLog.isInfoEnabled()) {
 			roadLog.info("Flags: oneway,no-emergency, no-delivery, no-throughroute, no-truck, no-bike, no-foot, carpool, no-taxi, no-bus, no-car");
-			roadLog.info(String.format("%19s %4s %11s %s", "Road-OSM-Id","Type","Flags", "Labels"));
+			roadLog.info(String.format("%19s %4s %11s %6s %s", "Road-OSM-Id","Type","Flags", "Points", "Labels"));
 		}
 		// add the roads after the other lines
 		for (ConvertedWay cw : roads){
@@ -1499,7 +1504,7 @@ public class StyledConverter implements OsmConverter {
 				cmpAccess |= 1<<10;
 			}
 			String access = String.format("%11s",Integer.toBinaryString(cmpAccess)).replace(' ', '0');
-			roadLog.info(String.format("%19d 0x%-2x %11s %s", way.getId(), road.getType(), access, Arrays.toString(road.getLabels())));
+			roadLog.info(String.format("%19d 0x%-2x %11s %6d %s", way.getId(), road.getType(), access, road.getPoints().size(),Arrays.toString(road.getLabels())));
 		}
 		
 		// add the road to the housenumber generator
