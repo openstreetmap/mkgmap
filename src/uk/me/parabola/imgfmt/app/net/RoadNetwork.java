@@ -523,10 +523,14 @@ public class RoadNetwork {
 				byte pathNoAccessMask = 0;
 				for (int j = 0; j < indexes.length; j++){
 					RouteArc arc = arcLists.get(j).get(indexes[j]);
-					if (arc.getDest() == vn || viaNodeFound == false){
+					if (arc.getDest() == vn || (viaNodeFound == false && arc.getSource() != vn)){
 						arc = getReverseArc(arc);
-						if (arc.getSource() == vn)
-							viaNodeFound = true;
+					}
+					if (arc.getSource() == vn)
+						viaNodeFound = true;
+					if (arc.getDest() == vn){
+						log.error(sourceDesc, "restriction incompletely written because dest in arc is via node");
+						return added;
 					}
 					pathNoAccessMask |= ~arc.getRoadDef().getAccess();
 					path.add(arc);
