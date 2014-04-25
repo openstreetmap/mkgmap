@@ -504,7 +504,10 @@ public class RoadNetwork {
 				return 0;
 			}
 		}
-		
+		if (viaNodes.contains(fn)){
+			log.warn(sourceDesc, "restriction not written because from node appears also as via node");
+			return 0;
+		}
 		// determine all possible combinations of arcs. In most cases,
 		// this will be 0 or one, but if the style creates multiple roads for one
 		// OSM way, this can be a larger number
@@ -523,13 +526,16 @@ public class RoadNetwork {
 				byte pathNoAccessMask = 0;
 				for (int j = 0; j < indexes.length; j++){
 					RouteArc arc = arcLists.get(j).get(indexes[j]);
-					if (arc.getDest() == vn || (viaNodeFound == false && arc.getSource() != vn)){
+					if (arc.getDest() == vn || viaNodeFound == false){
 						arc = getReverseArc(arc);
 					}
 					if (arc.getSource() == vn)
 						viaNodeFound = true;
 					if (arc.getDest() == vn){
-						log.error(sourceDesc, "restriction incompletely written because dest in arc is via node");
+						if (added > 0)
+							log.error(sourceDesc, "restriction incompletely written because dest in arc is via node");
+						else 
+							log.warn(sourceDesc, "restriction not written because dest in arc is via node");
 						return added;
 					}
 					pathNoAccessMask |= ~arc.getRoadDef().getAccess();
