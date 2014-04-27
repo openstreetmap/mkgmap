@@ -55,13 +55,16 @@ public class RestrictionRelation extends Relation {
     private boolean evalWasCalled;
     
 	// These tags are not loaded by default but if they exist issue a warning
-	final static String[] unsupportedTags = { "day_on", "day_off", "hour_on", "hour_off" };
+	private final static String[] unsupportedTags = { "day_on", "day_off", "hour_on", "hour_off" };
 	
-	final static List<String> supportedRestrictions = Arrays.asList(
+	private final static byte DEFAULT_EXCEPT_MASK = AccessTagsAndBits.FOOT  | AccessTagsAndBits.EMERGENCY;
+	
+	private final static List<String> supportedRestrictions = Arrays.asList(
 		"no_right_turn", "no_left_turn", "no_u_turn", "no_straight_on", 
 		"only_right_turn", "only_left_turn", "only_straight_on", 
 		"no_entry", "no_exit"	     
 	);
+	
 	/**
 	 * Create an instance based on an existing relation.  We need to do
 	 * this because the type of the relation is not known until after all
@@ -104,7 +107,7 @@ public class RestrictionRelation extends Relation {
 		final String browseURL = toBrowseURL();
 		valid = true;
 		// find out what kind of restriction we have and to which vehicles it applies
-		exceptMask = AccessTagsAndBits.FOOT | AccessTagsAndBits.EMERGENCY;
+		exceptMask = DEFAULT_EXCEPT_MASK;
 		String specifc_type = getTag("restriction");
 		int count_unknown = 0;
 		Map<String, String> vehicles = getTagsWithPrefix("restriction:", true);
@@ -127,6 +130,7 @@ public class RestrictionRelation extends Relation {
 			if (valid && vehicles.size() == count_unknown){
 				log.warn(messagePrefix, "no supported vehicle in turn restriction");				
 				valid = false;
+				return;
 			}
 		}
 		if (specifc_type == null){
@@ -450,18 +454,26 @@ public class RestrictionRelation extends Relation {
 	 */
 	private boolean setExceptMask(String vehicle, boolean b){
 		byte flag = 0;
-		if(vehicle.equals("motorcar") || vehicle.equals("motorcycle"))
-			flag = AccessTagsAndBits.CAR;
+		if (vehicle == null)
+			return false;
+		// inverted 
+		if(vehicle.equals("vehicle"))
+			flag = (byte) ~(DEFAULT_EXCEPT_MASK); 
 		else if(vehicle.equals("motor_vehicle"))
-			flag = (byte) (~(AccessTagsAndBits.BIKE | AccessTagsAndBits.FOOT) & 0xff);
-		else if(vehicle.equals("psv") || vehicle.equals("bus"))
+			flag = (byte) ~(AccessTagsAndBits.BIKE | DEFAULT_EXCEPT_MASK);
+		// normal
+		else if(vehicle.equals("psv"))
+			flag = (byte) (AccessTagsAndBits.TAXI | AccessTagsAndBits.BUS);
+		else if(vehicle.equals("bicycle"))
+			flag = AccessTagsAndBits.BIKE;
+		else if(vehicle.equals("motorcar"))
+			flag = AccessTagsAndBits.CAR;
+		else if(vehicle.equals("bus"))
 			flag = AccessTagsAndBits.BUS;
 		else if(vehicle.equals("taxi"))
 			flag = AccessTagsAndBits.TAXI;
-		else if(vehicle.equals("delivery") || vehicle.equals("goods"))
+		else if(vehicle.equals("goods"))
 			flag = AccessTagsAndBits.DELIVERY;
-		else if(vehicle.equals("bicycle"))
-			flag = AccessTagsAndBits.BIKE;
 		else if(vehicle.equals("hgv") || vehicle.equals("truck"))
 			flag = AccessTagsAndBits.TRUCK;
 		else if(vehicle.equals("emergency"))
@@ -472,6 +484,7 @@ public class RestrictionRelation extends Relation {
 			log.warn(messagePrefix, "ignoring unsupported vehicle class '" + vehicle + "' in turn restriction");
 			return false;
 		} 
+		
 		if (b)
 			exceptMask |= flag;
 		else 
@@ -594,6 +607,11 @@ public class RestrictionRelation extends Relation {
 		wayIds.addAll(viaWayIds);
 		wayIds.addAll(toWayIds);
 		return wayIds;
+	}
+	
+	public byte getExceptMask(){
+		assert evalWasCalled;
+		return exceptMask;
 	}
 	
 	/**
