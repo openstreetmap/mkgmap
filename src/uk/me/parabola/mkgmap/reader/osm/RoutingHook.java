@@ -37,7 +37,7 @@ public class RoutingHook extends OsmReadingHooksAdaptor {
 		usedTags.add("restriction:foot");
 		usedTags.add("restriction:hgv");
 		usedTags.add("restriction:motorcar");
-		usedTags.add("restriction:motorcycle");
+		usedTags.add("restriction:vehicle");
 		usedTags.add("restriction:motor_vehicle");
 		usedTags.add("restriction:bicycle");
 		usedTags.add("restriction:bus");
