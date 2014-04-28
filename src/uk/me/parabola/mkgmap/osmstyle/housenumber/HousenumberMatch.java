@@ -64,13 +64,10 @@ public class HousenumberMatch {
 	 * @return the house number (or {@code null} if no house number set)
 	 */
 	public static String getHousenumber(Element e) {
-		if (e.getTag("mkgmap:housenumber") != null) {
-			return e.getTag("mkgmap:housenumber");
-		}
-		if (e.getTag("addr:housenumber") != null) {
-			return e.getTag("addr:housenumber");
-		}	
-		return null;
+		String res = e.getTag("mkgmap:housenumber"); 
+		if (res != null)
+			return res;
+		return e.getTag("addr:housenumber");
 	}
 	
 	/**
