@@ -22,9 +22,10 @@ must be between 0x00 and 0x1f, so e.g. 0x011f is ok, 0x0120 is not.
 . If a type is &ge; 0x010000, it is an extended type, which can be used for points, lines, and polygons.
 . If the type is not extended, it must be &ge; 0x0100 for a point, &le; 0x3f for a line, and &le; 0x7f
 for a polygon. 
-. The polygon type 0x4a is reserved for the overview map. 
+. The polygon type 0x4a is reserved for the overview map.
 . It is known that the usage of routable types for non-routable lines in resolution 24 can cause
 routing problems (e.g. address search doesn't work). The check will flag rules that assign a routable type for a line in resolution 24 without giving road_class or road_speed. A routable type is between 0x01 and 0x13 or one of: 0x1a, 0x1b, 0x16.
+. If road_class or road_speed is given in combination with a non-routable type, the rule is flagged.  
 
 [[style-packaging]]
 == Making a style package ==
