@@ -58,7 +58,7 @@ public class RuleSet implements Rule, Iterable<Rule> {
 
 		// Get all the rules that could match from the index.  
 		BitSet candidates = new BitSet();
-		for (Entry<String, String> tagEntry : el.getTagEntryIterator()) {
+		for (Entry<Short, String> tagEntry : el.getFastTagEntryIterator()) {
 			BitSet rules = index.getRulesForTag(tagEntry.getKey(), tagEntry.getValue());
 			if (rules != null && !rules.isEmpty() )
 				candidates.or(rules);

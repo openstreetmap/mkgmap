@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.TagDict;
 
 /**
  * Deletes a tag.
@@ -24,10 +25,10 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  * @author Steve Ratcliffe
  */
 public class DeleteAction implements Action {
-	private final String tag;
+	private final short tag;
 
 	public DeleteAction(String tag) {
-		this.tag = tag;
+		this.tag = TagDict.getInstance().xlate(tag);
 	}
 
 	public void perform(Element el) {
@@ -35,6 +36,6 @@ public class DeleteAction implements Action {
 	}
 
 	public String toString() {
-		return "delete " + tag + ";";
+		return "delete " + TagDict.getInstance().get(tag) + ";";
 	}
 }

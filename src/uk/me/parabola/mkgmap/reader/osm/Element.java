@@ -43,16 +43,47 @@ public abstract class Element {
 		tags.put(key, val);
 	}
 
+	/**
+	 * Add a tag to the way.  Some tags are recognised separately and saved in
+	 * separate fields.
+	 *
+	 * @param tagKey The tag id created by TagDict
+	 * @param val Its value.
+	 */
+	public void addTag(short tagKey, String val) {
+		if (tags == null)
+			tags = new Tags();
+		tags.put(tagKey, val);
+	}
+
 	public String getTag(String key) {
 		if (tags == null)
 			return null;
 		return tags.get(key);
 	}
+	public String getTag(short tagKey) {
+		if (tags == null)
+			return null;
+		return tags.get(tagKey);
+	}
+
 
 	public String deleteTag(String tagname) {
 		String old = null;
 		if(tags != null) {
 			old = tags.remove(tagname);
+			if (tags.size() == 0) {
+				tags = null;
+			}
+			
+		}
+		return old;
+	}
+
+	public String deleteTag(short tagKey) {
+		String old = null;
+		if(tags != null) {
+			old = tags.remove(tagKey);
 			if (tags.size() == 0) {
 				tags = null;
 			}
@@ -161,12 +192,26 @@ public abstract class Element {
 	/**
 	 * @return a Map iterator for the key + value pairs  
 	 */
+	
 	public Iterable<Map.Entry<String, String>> getTagEntryIterator() {
 		return new Iterable<Map.Entry<String, String>>() {
 			public Iterator<Map.Entry<String, String>> iterator() {
 				if (tags == null)
 					return Collections.emptyIterator();
 				return tags.entryIterator();
+			}
+		};
+	}
+
+	/**
+	 * @return a Map iterator for the key + value pairs  
+	 */
+	public Iterable<Map.Entry<Short, String>> getFastTagEntryIterator() {
+		return new Iterable<Map.Entry<Short, String>>() {
+			public Iterator<Map.Entry<Short, String>> iterator() {
+				if (tags == null)
+					return Collections.emptyIterator();
+				return tags.entryShortIterator();
 			}
 		};
 	}
@@ -194,5 +239,4 @@ public abstract class Element {
 			name += " ";
 		return name + "(OSM id " + getId() + ")";
 	}
-	
 }

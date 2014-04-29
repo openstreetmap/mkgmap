@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 import uk.me.parabola.mkgmap.reader.osm.Rule;
+import uk.me.parabola.mkgmap.reader.osm.TagDict;
 
 /**
  * An index to reduce the number of rules that have to be executed.
@@ -61,7 +62,8 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
 public class RuleIndex {
 	private final List<RuleDetails> ruleDetails = new ArrayList<RuleDetails>();
 
-	private final Map<String, TagHelper> tagKeys = new HashMap<>();
+	private final Map<Short, TagHelper> tagKeyMap = new HashMap<>();
+	private TagHelper[] tagKeyArray = null;
 
 	private boolean inited;
 
@@ -133,32 +135,16 @@ public class RuleIndex {
 	 * @return A BitSet of rules numbers.
 	 * If there are no rules then null will be returned.
 	 */
-	/*
-	public BitSet getRulesForTag(String tagval) {
-		BitSet set = tagVals.get(tagval);
-
-		// Need to also look up all rules that might match highway=*
-		int i = tagval.indexOf('=');
-		String s2 = tagval.substring(0, i);
-		BitSet set2 = existKeys.get(s2);
-		
-		BitSet res = new BitSet();
-		if (set != null)
-			res.or(set);
-		if (set2 != null) 
-			res.or(set2);
-		return res;
-	}
-*/
-	
-	/**
-	 * Get a list of rules that might be matched by this tag.
-	 * @param tagval The tag and its value eg highway=primary.
-	 * @return A BitSet of rules numbers.
-	 * If there are no rules then null will be returned.
-	 */
-	public BitSet getRulesForTag(String tagKey, String tagVal) {
-		TagHelper th = tagKeys.get(tagKey);
+	public BitSet getRulesForTag(short tagKey, String tagVal) {
+		TagHelper th;
+		if (tagKeyArray != null){
+			if (tagKey >= 0 & tagKey < tagKeyArray.length){
+				th = tagKeyArray[tagKey];
+			} else 
+				th = null;
+		} else {
+			th = tagKeyMap.get(tagKey);
+		}
 		if (th == null)
 			return new BitSet();
 		return th.getBitSet(tagVal);
@@ -273,27 +259,41 @@ public class RuleIndex {
 		}
 
 		// compress the index: create one hash map with one entry for each key
+		int highestKey = 0;
 		for (Map.Entry<String, BitSet> entry  : existKeys.entrySet()){
-			tagKeys.put(entry.getKey(), new TagHelper(entry.getValue()));
+			Short skey = TagDict.getInstance().xlate(entry.getKey());
+			if (skey > highestKey)
+				highestKey = skey;
+			tagKeyMap.put(skey, new TagHelper(entry.getValue()));
 		}
 		for (Map.Entry<String, BitSet> entry  : tagVals.entrySet()){
 			String keyString = entry.getKey();
 			int ind = keyString.indexOf('=');
 			if (ind >= 0) {
-				String key = keyString.substring(0, ind);
+				short key = TagDict.getInstance().xlate(keyString.substring(0, ind));
 				String val = keyString.substring(ind+1);
-				TagHelper th = tagKeys.get(key);
+				if (key > highestKey)
+					highestKey = key;
+				TagHelper th = tagKeyMap.get(key);
 				if (th == null){
 					th = new TagHelper(null);
-					tagKeys.put(key, th);
+					tagKeyMap.put(key, th);
 				} 
 				th.addTag(val, entry.getValue());
 			}
 		}
+		if (highestKey > 0 && highestKey < 1024){
+			tagKeyArray = new TagHelper[highestKey+1];
+			for (Map.Entry<Short, TagHelper> entry  : tagKeyMap.entrySet()){
+				tagKeyArray[entry.getKey()] = entry.getValue();
+			}
+			tagKeyMap.clear();
+		}
+			
 		inited = true;
 	}
 
-	private void addNumberToMap(Map<String, BitSet> map, String key, int ruleNumber) {
+	private static void addNumberToMap(Map<String, BitSet> map, String key, int ruleNumber) {
 		BitSet set = map.get(key);
 		if (set == null) {
 			set = new BitSet();
@@ -310,7 +310,7 @@ public class RuleIndex {
 	 * matched.
 	 * @param ruleNumber The rule number.
 	 */
-	private void addChangables(Map<Integer, List<String>> changeTags, Set<String> changeableTags, int ruleNumber) {
+	private static void addChangables(Map<Integer, List<String>> changeTags, Set<String> changeableTags, int ruleNumber) {
 		List<String> tags = changeTags.get(ruleNumber);
 		if (tags == null) {
 			tags = new ArrayList<String>();

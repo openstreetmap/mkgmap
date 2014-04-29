@@ -14,6 +14,7 @@
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.TagDict;
 
 /**
  * This can be used to filter out redundant values.
@@ -25,18 +26,18 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  */
 public class NotEqualFilter extends ValueFilter {
 
-	private final String tagName; 
+	private final short tagKey; 
 
 	public NotEqualFilter(String s) {
 
-		tagName = s;
+		tagKey = TagDict.getInstance().xlate(s);
 
 	}
 
 	public String doFilter(String value, Element el) {
 		if (value == null) return value;
 
-		String tagValue = el.getTag(tagName);
+		String tagValue = el.getTag(tagKey);
 
 		if (tagValue == null)
 			return value;

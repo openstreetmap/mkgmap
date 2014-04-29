@@ -19,6 +19,7 @@ package uk.me.parabola.mkgmap.osmstyle.actions;
 import java.util.List;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.TagDict;
 
 /**
  * Add a tag, optionally changing it if it already exists.  The value that
@@ -29,6 +30,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
 public class AddTagAction extends ValueBuildedAction {
 	private final boolean modify;
 	private final String tag;
+	private final short tagKey;
 
 	// The tags used to build the value.
 	private Element valueTags;
@@ -41,20 +43,22 @@ public class AddTagAction extends ValueBuildedAction {
 	public AddTagAction(String tag, String value, boolean modify) {
 		this.modify = modify;
 		this.tag = tag;
+		this.tagKey = TagDict.getInstance().xlate(tag);
 		add(value);
 	}
 
 	public void perform(Element el) {
-		String tv = el.getTag(tag);
-		if (tv != null && !modify)
-			return;
-
+		if (!modify){
+			String tv = el.getTag(tagKey);
+			if (tv != null)
+				return;
+		}
 		Element tags = valueTags!=null? valueTags: el;
 
 		for (ValueBuilder value : getValueBuilder()) {
 			String newval = value.build(tags, el);
 			if (newval != null) {
-				el.addTag(tag, newval);
+				el.addTag(tagKey, newval);
 				break;
 			}
 		}
