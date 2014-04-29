@@ -41,15 +41,15 @@ public class AndOp extends AbstractBinaryOp {
 				lastRes = getSecond().eval(cacheId, el);
 			lastCachedId = cacheId;
 		}
-		else { 
+//		else { 
 //			System.out.println("cached: " + cacheId + " " + toString());
-			boolean testRes = getFirst().eval(cacheId, el);
-			if (testRes == true)
-				testRes = getSecond().eval(cacheId, el);
-			if (lastRes != testRes){
-				System.out.println("invalid cached result");
-			}
-		}
+//			boolean testRes = getFirst().eval(cacheId, el);
+//			if (testRes == true)
+//				testRes = getSecond().eval(cacheId, el);
+//			if (lastRes != testRes){
+//				System.out.println("invalid cached result");
+//			}
+//		}
 		return lastRes;
 	}
 

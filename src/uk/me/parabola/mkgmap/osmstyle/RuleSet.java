@@ -234,7 +234,8 @@ public class RuleSet implements Rule, Iterable<Rule> {
 		String test = op.toString();
 		Op commonOp = tests.get(test);
 		if (commonOp == null){
-			((AbstractOp)op).resetCache();
+			if (op instanceof AbstractOp)
+				((AbstractOp)op).resetCache();
 			tests.put(test, op);
 			commonOp = op;
 		}

@@ -78,12 +78,6 @@ public abstract class AbstractOp implements Op {
 			lastRes = eval(el);
 			lastCachedId = cacheId;
 		}
-		else {
-			boolean testRes = eval(el);
-			if (testRes != lastRes){
-				long dd = 4;
-			}
-		}
 		return lastRes;
 			
 	}
