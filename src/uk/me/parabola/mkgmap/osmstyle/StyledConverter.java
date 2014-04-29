@@ -258,13 +258,14 @@ public class StyledConverter implements OsmConverter {
 
 	private int lineIndex = 0;
 	private boolean wrongTypeMsgPrinted = false;
+	private final static short onewayTagKey = TagDict.getInstance().xlate("oneway"); 
 	private void addConvertedWay(Way way, GType foundType) {
 		if (foundType.getFeatureKind() == FeatureKind.POLYGON){ 
 			addShape(way, foundType);
 			return;
 		}
 		
-		String oneWay = way.getTag("oneway");
+		String oneWay = way.getTag(onewayTagKey);
 		boolean wasReversed = false;
 		if("-1".equals(oneWay) || "reverse".equals(oneWay)) {
 			// it's a oneway street in the reverse direction
@@ -272,15 +273,15 @@ public class StyledConverter implements OsmConverter {
 			// the oneway tag to "yes"
 			way.reverse();
 			wasReversed = true;
-			way.addTag("oneway", "yes");
+			way.addTag(onewayTagKey, "yes");
 		}
 
-		if (way.tagIsLikeYes("oneway")) {
-			way.addTag("oneway", "yes");
+		if (way.tagIsLikeYes(onewayTagKey)) {
+			way.addTag(onewayTagKey, "yes");
 			if (foundType.isRoad() && checkFixmeCoords(way) )
 				way.addTag("mkgmap:dead-end-check", "false");
 		} else 
-			way.deleteTag("oneway");
+			way.deleteTag(onewayTagKey);
 		ConvertedWay cw = new ConvertedWay(lineIndex++, way, foundType);
 		if (cw.isRoad()){
 			roads.add(cw);
