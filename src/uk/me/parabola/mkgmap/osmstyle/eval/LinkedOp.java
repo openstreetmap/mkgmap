@@ -58,6 +58,16 @@ public class LinkedOp implements Op {
 		return b;
 	}
 
+	public boolean eval(int cacheId, Element el){
+		if (el == current)
+			return false;
+
+		boolean b = wrapped.eval(cacheId, el);
+		if (link != null && b)
+			link.setMatched(el);
+		return b;
+	}
+	
 	public String toString() {
 		if (first) {
 			StringBuilder sb = new StringBuilder();

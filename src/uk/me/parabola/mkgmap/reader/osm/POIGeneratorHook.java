@@ -69,9 +69,9 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 	private boolean poisToLines = false;
 	
 	/** Name of the bool tag that is set to true if a POI is created from an area */
-	public static final String AREA2POI_TAG = "mkgmap:area2poi";
-	public static final String LINE2POI_TAG = "mkgmap:line2poi";
-	public static final String LINE2POI_TYPE_TAG  = "mkgmap:line2poitype";
+	public static final short AREA2POI_TAG = TagDict.getInstance().xlate("mkgmap:area2poi");
+	public static final short LINE2POI_TAG = TagDict.getInstance().xlate("mkgmap:line2poi");
+	public static final short LINE2POI_TYPE_TAG  = TagDict.getInstance().xlate("mkgmap:line2poitype");
 	
 	public boolean init(ElementSaver saver, EnhancedProperties props) {
 		poisToAreas = props.containsKey("add-pois-to-areas");
@@ -264,6 +264,7 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 		saver.addNode(poi);
 	}
 	
+	
 	private int addPOItoLine(Way line) {
 		Node startNode = createPOI(line, line.getPoints().get(0), LINE2POI_TAG);
 		startNode.addTag(LINE2POI_TYPE_TAG,"start");
@@ -323,11 +324,11 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 
 	}
 
-	private Node createPOI(Element source, Coord poiCoord, String poiTypeTag) {
+	private static Node createPOI(Element source, Coord poiCoord, short poiTypeTagKey) {
 		Node poi = new Node(FakeIdGenerator.makeFakeId(), poiCoord);
 		poi.copyTags(source);
 		poi.deleteTag(MultiPolygonRelation.STYLE_FILTER_TAG);
-		poi.addTag(poiTypeTag, "true");
+		poi.addTag(poiTypeTagKey, "true");
 		if (log.isDebugEnabled()) {
 			log.debug("Create POI",poi.toTagString(),"from",source.getId(),source.toTagString());
 		}

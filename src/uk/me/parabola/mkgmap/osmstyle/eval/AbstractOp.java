@@ -28,6 +28,8 @@ public abstract class AbstractOp implements Op {
 	
 	protected Op first;
 	private NodeType type;
+	protected boolean lastRes;
+	protected int lastCachedId = -1;
 
 	public static Op createOp(String value) {
 		char c = value.charAt(0);
@@ -71,6 +73,22 @@ public abstract class AbstractOp implements Op {
 		return op;
 	}
 
+	public boolean eval(int cacheId, Element el){
+		if (lastCachedId != cacheId){
+			lastRes = eval(el);
+			lastCachedId = cacheId;
+		}
+		else {
+			boolean testRes = eval(el);
+			if (testRes != lastRes){
+				long dd = 4;
+			}
+		}
+		return lastRes;
+			
+	}
+	
+	
 	/**
 	 * Does this operation have a higher priority that the other one?
 	 * @param other The other operation.
@@ -85,6 +103,7 @@ public abstract class AbstractOp implements Op {
 
 	public void setFirst(Op first) {
 		this.first = first;
+		lastCachedId = -1;
 	}
 
 	/**
@@ -120,4 +139,9 @@ public abstract class AbstractOp implements Op {
 	public boolean isType(NodeType value) {
 		return type == value;
 	}
+	
+	public void resetCache(){
+		lastCachedId = -1;
+	}
+
 }

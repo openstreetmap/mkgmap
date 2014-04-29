@@ -228,9 +228,11 @@ public class ElementSaver {
 		for (Relation r : relationMap.values())
 			converter.convertRelation(r);
 
+		short fixmeTagKey = TagDict.getInstance().xlate("fixme"); 
+		short fixmeTagKey2 = TagDict.getInstance().xlate("FIXME"); 
 		for (Node n : nodeMap.values()){
 			converter.convertNode(n);
-			if (n.getTag("fixme") != null || n.getTag("FIXME") != null){
+			if (n.getTag(fixmeTagKey) != null || n.getTag(fixmeTagKey2) != null){
 				n.getLocation().setFixme(true);
 			}
 		}

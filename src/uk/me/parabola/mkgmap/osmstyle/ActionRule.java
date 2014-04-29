@@ -36,7 +36,7 @@ import uk.me.parabola.mkgmap.reader.osm.TypeResult;
  * @author Steve Ratcliffe
  */
 public class ActionRule implements Rule {
-	private final Op expression;
+	private Op expression;
 	private final List<Action> actions;
 	private final GType type;
 	private Rule finalizeRule;
@@ -61,6 +61,45 @@ public class ActionRule implements Rule {
 		this.actions = actions;
 		this.type = null;
 	}
+	
+	
+	public int resolveType(int cacheId, Element el, TypeResult result) {
+		Element element = el;
+		if (expression != null) {
+			if (!expression.eval(cacheId, element))
+				return cacheId;
+				
+			// If this is a continue and we are not to propagate the effects
+			// of the action on the element to further rules, then make
+			// a copy of the element so that the original is unsullied.
+			//
+			// There is another reason we need to copy: since there will be
+			if (type != null && !type.isPropogateActions() && !(element instanceof Relation)) {
+				element = element.copy();
+			}
+		}
+
+		// an action will be performed, so we have to invalidate the caches
+		// TODO: maybe the performed actions do not invalidate the cached 
+		// values. How could we detect this?
+		cacheId++;
+		for (Action a : actions)
+			a.perform(element);
+		if (type != null && finalizeRule != null) {
+			if (el == element && type.isContinueSearch())
+				// if there is a continue statement changes performed in 
+				// the finalize block must not be persistent
+				element = element.copy();
+			// there is a type so first execute the finalize rules
+			if (type.getDefaultName() != null)
+				element.addTag("mkgmap:default_name", type.getDefaultName());
+			finalizeRule.resolveType(element, finalizeTypeResult);
+		}
+		
+		result.add(element, type);
+		return cacheId;
+	}
+	
 	
 	public void resolveType(Element el, TypeResult result) {
 		Element element = el;
@@ -115,4 +154,14 @@ public class ActionRule implements Rule {
 	public void setFinalizeRule(Rule finalizeRule) {
 		this.finalizeRule = finalizeRule;
 	}
+
+
+	public Op getOp(){
+		return expression;
+	}
+	
+	public void setOp(Op expression){
+		this.expression = expression;
+	}
+	
 }

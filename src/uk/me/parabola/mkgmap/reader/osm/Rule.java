@@ -34,10 +34,24 @@ public interface Rule {
 	public void resolveType(Element el, TypeResult result);
 	
 	/**
+	 * 
+	 * Given the element return the garmin type that should be used to
+	 * represent it.
+	 *
+	 * @param cacheId
+	 * @param el The element as read from an OSM xml file in 'tag' format.
+	 * @param result The resolved Garmin type that will go into the map.
+	 * @return
+	 */
+	public int resolveType(int cacheId, Element el, TypeResult result);
+	
+	/**
 	 * Sets the finalize rules that are executed when 
 	 * an element type definition matches.
 	 * 
 	 * @param finalizeRule finalize rule(s)
 	 */
 	public void setFinalizeRule(Rule finalizeRule);
+	
+	
 }

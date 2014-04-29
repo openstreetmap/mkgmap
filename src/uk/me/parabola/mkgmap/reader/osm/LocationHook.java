@@ -202,9 +202,9 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 		}
 		else{
 			// tag the element with all tags referenced by the boundary
-			Iterator<Entry<String,String>> tagIter = tags.entryIterator();
+			Iterator<Entry<Short,String>> tagIter = tags.entryShortIterator();
 			while (tagIter.hasNext()) {
-				Entry<String,String> tag = tagIter.next();
+				Entry<Short,String> tag = tagIter.next();
 				if (elem.getTag(tag.getKey()) == null){
 					elem.addTag(tag.getKey(),tag.getValue());
 				}

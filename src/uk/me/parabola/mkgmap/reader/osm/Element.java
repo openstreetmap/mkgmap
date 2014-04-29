@@ -104,7 +104,22 @@ public abstract class Element {
 	 * @return <code>true</code> if the tag value is a boolean tag with a "positive" value
 	 */
 	public boolean tagIsLikeYes(String s) {
-		String val = getTag(s);
+		return tagIsLikeYes(TagDict.getInstance().xlate(s));
+	}
+
+	/**
+	 * Retrieves if the given tag has a "positive" boolean value which means its value is
+	 * one of
+	 * <ul>
+	 * <li><code>true</code></li>
+	 * <li><code>yes</code></li>
+	 * <li><code>1</code></li>
+	 * </ul>
+	 * @param tagKey tag id returned by TagDict
+	 * @return <code>true</code> if the tag value is a boolean tag with a "positive" value
+	 */
+	public boolean tagIsLikeYes(short tagKey) {
+		String val = getTag(tagKey);
 		if (val == null)
 			return false;
 
@@ -126,7 +141,22 @@ public abstract class Element {
 	 * @return <code>true</code> if the tag value is a boolean tag with a "negative" value
 	 */
 	public boolean tagIsLikeNo(String s) {
-		String val = getTag(s);
+		return tagIsLikeNo(TagDict.getInstance().xlate(s));
+	}
+	
+	/**
+	 * Retrieves if the given tag has a "negative" boolean value which means its value is
+	 * one of
+	 * <ul>
+	 * <li><code>false</code></li>
+	 * <li><code>no</code></li>
+	 * <li><code>0</code></li>
+	 * </ul>
+	 * @param tagKey tag id returned by TagDict
+	 * @return <code>true</code> if the tag value is a boolean tag with a "negative" value
+	 */
+	public boolean tagIsLikeNo(short tagKey) {
+		String val = getTag(tagKey);
 		if (val == null)
 			return false;
 

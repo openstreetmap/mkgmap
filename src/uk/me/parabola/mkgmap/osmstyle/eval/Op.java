@@ -31,6 +31,15 @@ public interface Op {
 	 * @return True if the expression is true for the given element.
 	 */
 	public boolean eval(Element el);
+	
+	/**
+	 * Evaluate the expression using a cache.
+	 * @param cacheId used to recognise an invalid cache
+	 * @param el The OSM element to be tested.
+	 * @return True if the expression is true for the given element.
+	 */
+	public boolean eval(int cacheId, Element el);
+
 
 	/**
 	 * Does this operation have a higher priority that the other one?
