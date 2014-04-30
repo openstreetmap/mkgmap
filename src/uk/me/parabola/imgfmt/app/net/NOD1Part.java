@@ -185,9 +185,9 @@ public class NOD1Part {
 	// The area that actually has nodes.
 	private final BBox bboxActual = new BBox();
 
-	private final List<RouteNode> nodes = new ArrayList<RouteNode>();
-	private final TableA tabA = new TableA();
-	private final Map<RouteNode,RouteNode> destNodes = new LinkedHashMap<RouteNode, RouteNode>();
+	private List<RouteNode> nodes = new ArrayList<RouteNode>();
+	private TableA tabA = new TableA();
+	private Map<RouteNode,RouteNode> destNodes = new LinkedHashMap<RouteNode, RouteNode>();
 
 	/**
 	 * Create an unbounded NOD1Part.
@@ -296,14 +296,17 @@ public class NOD1Part {
 
 		for (int i = 0; i < split.length; i++)
 			parts[i] = new NOD1Part(split[i]);
-
+		
+		
 		for (RouteNode node : nodes) {
 			int i = 0;
 			while (!split[i].contains(node.getCoord()))
 				i++;
 			parts[i].addNode(node);
 		}
-
+		this.tabA = null;
+		this.destNodes = null;
+		this.nodes = null;
 		for (NOD1Part part : parts)
 			if(!part.bboxActual.empty)
 				centers.addAll(part.subdivideHelper(depth + 1));
