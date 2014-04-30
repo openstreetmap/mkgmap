@@ -660,7 +660,8 @@ public class StyleTester implements OsmConverter {
 
 			@Override
 			public int resolveType(int cacheId, Element el, TypeResult result) {
-				throw new UnsupportedOperationException(); 
+				resolveType(el, result);
+				return cacheId;
 			}
 
 
