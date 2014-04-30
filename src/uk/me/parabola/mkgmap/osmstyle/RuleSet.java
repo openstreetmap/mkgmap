@@ -54,6 +54,12 @@ public class RuleSet implements Rule, Iterable<Rule> {
 	private RuleIndex index = new RuleIndex();
 	private final Set<String> usedTags = new HashSet<String>();
 	
+	@Override
+	public void resolveType(Element el, TypeResult result) {
+		cacheId = resolveType(cacheId, el, result);
+	}
+	
+	
 	/**
 	 * Resolve the type for this element by running the rules in order.
 	 *
@@ -66,7 +72,7 @@ public class RuleSet implements Rule, Iterable<Rule> {
 	 * one type may be saved here.  If there are no matches then nothing will
 	 * be saved.
 	 */
-	public void resolveType(Element el, TypeResult result) {
+	public int resolveType(int cacheId, Element el, TypeResult result) {
 		WatchableTypeResult a = new WatchableTypeResult(result);
 		if (!compiled || cacheId == Integer.MAX_VALUE)
 			compile();
@@ -84,8 +90,9 @@ public class RuleSet implements Rule, Iterable<Rule> {
 			a.reset();
 			cacheId = rules[i].resolveType(cacheId, el, a);
 			if (a.isResolved())
-				return;
+				return cacheId;
 		}
+		return cacheId;
 	}
 
 	public Iterator<Rule> iterator() {
@@ -161,6 +168,7 @@ public class RuleSet implements Rule, Iterable<Rule> {
 	public void prepare() {
 		index.prepare();
 		rules = index.getRules();
+		compile();
 	}
 
 	public Set<String> getUsedTags() {
@@ -171,12 +179,6 @@ public class RuleSet implements Rule, Iterable<Rule> {
 		this.usedTags.addAll(usedTags);
 	}
 
-	@Override
-	public int resolveType(int cacheId, Element el, TypeResult result) {
-		log.error("this method should not be called");
-		return cacheId;
-	}
-	
 	/**
 	 * Compile the rules and reset caches. Detect common sub-expressions and
 	 * make sure that all rules use the same instance of these common

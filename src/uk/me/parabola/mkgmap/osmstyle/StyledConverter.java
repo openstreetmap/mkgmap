@@ -213,6 +213,7 @@ public class StyledConverter implements OsmConverter {
 	private final static short styleFilterTagKey = TagDict.getInstance().xlate("mkgmap:stylefilter");
 	private final static short makeCycleWayTagKey = TagDict.getInstance().xlate("mkgmap:make-cycle-way");
 	private long lastRoadId = 0; 
+	private int lineCacheId = 0;
 	public void convertWay(final Way way) {
 		if (way.getPoints().size() < 2 || way.getTagCount() == 0){
 			// no tags or no points => nothing to convert
@@ -245,10 +246,10 @@ public class StyledConverter implements OsmConverter {
 			way.addTag("bicycle", "no"); // make sure that bicycles are using the added bicycle way 
 		}
 		wayTypeResult.setWay(way);
-		rules.resolveType(way, wayTypeResult);
+		lineCacheId = rules.resolveType(lineCacheId, way, wayTypeResult);
 		if (cycleWay != null){
 			wayTypeResult.setWay(cycleWay);
-			rules.resolveType(cycleWay, wayTypeResult);
+			lineCacheId = rules.resolveType(lineCacheId, cycleWay, wayTypeResult);
 		}
 		if (lastRoadId != way.getId()){
 			// this way was not added to the roads list
@@ -354,7 +355,10 @@ public class StyledConverter implements OsmConverter {
 		for (short tagKey : nameTagList) {
 			String val = el.getTag(tagKey);
 			if (val != null) {
-				el.addTag(nameTagKey, val);
+				if (tagKey != nameTagKey) {
+					// add or replace name 
+					el.addTag(nameTagKey, val);
+				}
 				break;
 			}
 		}

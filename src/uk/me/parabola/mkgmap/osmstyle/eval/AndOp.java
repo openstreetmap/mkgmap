@@ -35,6 +35,9 @@ public class AndOp extends AbstractBinaryOp {
 	}
 
 	public boolean eval(int cacheId, Element el){
+		if (lastCachedId > cacheId){
+			System.err.println("fatal error: cache id invalid");
+		}
 		if (lastCachedId != cacheId){
 			lastRes = getFirst().eval(cacheId, el);
 			if (lastRes == true)

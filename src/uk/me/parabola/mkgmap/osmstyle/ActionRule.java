@@ -93,7 +93,7 @@ public class ActionRule implements Rule {
 			// there is a type so first execute the finalize rules
 			if (type.getDefaultName() != null)
 				element.addTag("mkgmap:default_name", type.getDefaultName());
-			finalizeRule.resolveType(element, finalizeTypeResult);
+			cacheId = finalizeRule.resolveType(cacheId, element, finalizeTypeResult);
 		}
 		
 		result.add(element, type);

@@ -71,7 +71,7 @@ public class ExpressionRule implements Rule {
 				// run the finalize rules
 				if (gtype.getDefaultName() != null)
 					el.addTag("mkgmap:default_name", gtype.getDefaultName());
-				finalizeRule.resolveType(el, finalizeTypeResult);
+				cacheId = finalizeRule.resolveType(cacheId, el, finalizeTypeResult);
 			}
 			result.add(el, gtype);
 		}

@@ -33,6 +33,20 @@ public class OrOp extends AbstractBinaryOp {
 		return getFirst().eval(el) || getSecond().eval(el);
 	}
 
+	public boolean eval(int cacheId, Element el){
+		if (lastCachedId > cacheId){
+			System.err.println("fatal error: cache id invalid");
+		}
+		if (lastCachedId != cacheId){
+			lastRes = getFirst().eval(cacheId, el);
+			if (lastRes == false)
+				lastRes = getSecond().eval(cacheId, el);
+			lastCachedId = cacheId;
+		}
+		//else System.out.println("cached: " + cacheId + " " + toString());
+		return lastRes;
+	}
+
 	public int priority() {
 		return 3;
 	}

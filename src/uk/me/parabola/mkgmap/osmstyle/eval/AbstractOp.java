@@ -74,6 +74,9 @@ public abstract class AbstractOp implements Op {
 	}
 
 	public boolean eval(int cacheId, Element el){
+		if (lastCachedId > cacheId){
+			System.err.println("fatal error: cache invalid ");
+		}
 		if (lastCachedId != cacheId){
 			lastRes = eval(el);
 			lastCachedId = cacheId;
