@@ -16,6 +16,7 @@ package uk.me.parabola.mkgmap.osmstyle;
 //import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -374,6 +375,7 @@ public class WrongAngleFixer {
 			// Step 5: apply the calculated corrections to the ways
 			lastWay = null;
 			boolean lastWayModified = false;
+			ConvertedWay lastConvertedWay = null;
 			for (ConvertedWay cw : convertedWays) {
 				if (!cw.isValid()) 
 					continue;
@@ -387,10 +389,13 @@ public class WrongAngleFixer {
 					if (lastWayModified){
 						points.clear();
 						points.addAll(lastWay.getPoints());
+						if (cw.isReversed() != lastConvertedWay.isReversed())
+							Collections.reverse(points);
 					}
 					continue;
 				}
 				lastWay = way;
+				lastConvertedWay = cw;
 				lastWayModified = false;
 				// loop backwards because we may delete points
 				for (int i = points.size() - 1; i >= 0; i--) {
@@ -441,6 +446,7 @@ public class WrongAngleFixer {
 		int numWaysDeleted = 0;
 		lastWay = null;
 		boolean lastWayModified = false;
+		ConvertedWay lastConvertedWay = null;
 		for (ConvertedWay cw : convertedWays) {
 			Way way = cw.getWay();
 			if (mode == MODE_LINES && modifiedRoads.containsKey(way.getId()))
@@ -462,10 +468,14 @@ public class WrongAngleFixer {
 				if (lastWayModified){
 					points.clear();
 					points.addAll(lastWay.getPoints());
+					if (cw.isReversed() != lastConvertedWay.isReversed())
+						Collections.reverse(points);
+					
 				}
 				continue;
 			}
 			lastWay = way;
+			lastConvertedWay = cw;
 			lastWayModified = false;
 			Coord prev = points.get(points.size() - 1);
 			// loop backwards because we may delete points
@@ -539,26 +549,30 @@ public class WrongAngleFixer {
 	 * @param modifiedRoads 
 	 */
 	private void removeObsoletePoints(List<ConvertedWay> convertedWays, HashMap<Long, ConvertedWay> modifiedRoads){
-		Way lastWay = null;
+		ConvertedWay lastConvertedWay = null;
 		int numPointsRemoved = 0;
 		boolean lastWasModified = false;
 		List<Coord> removedInWay = new ArrayList<>();
 		List<Coord> obsoletePoints = new ArrayList<>();
 		List<Coord> modifiedPoints = new ArrayList<>();
+		
 		for (ConvertedWay cw : convertedWays) {
 			if (!cw.isValid())
 				continue;
 			Way way = cw.getWay();
 			if (mode == MODE_LINES && modifiedRoads.containsKey(way.getId()))
 				continue;
-			if (way.equals(lastWay)) {
+			if (lastConvertedWay != null && way.equals(lastConvertedWay.getWay())) {
 				if (lastWasModified){
-					way.getPoints().clear();
-					way.getPoints().addAll(lastWay.getPoints());
+					List<Coord> points = way.getPoints();
+					points.clear();
+					points.addAll(lastConvertedWay.getPoints());
+					if (cw.isReversed() != lastConvertedWay.isReversed())
+						Collections.reverse(points);
 				}
 				continue;
 			}
-			lastWay = way;
+			lastConvertedWay = cw;
 			lastWasModified = false;
 			List<Coord> points = way.getPoints();
 			modifiedPoints.clear();
