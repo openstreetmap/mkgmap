@@ -284,6 +284,7 @@ public class StyledConverter implements OsmConverter {
 		} else 
 			way.deleteTag(onewayTagKey);
 		ConvertedWay cw = new ConvertedWay(lineIndex++, way, foundType);
+		cw.setReversed(wasReversed);
 		if (cw.isRoad()){
 			roads.add(cw);
 			if (wasReversed && cw.isRoundabout())
@@ -472,6 +473,8 @@ public class StyledConverter implements OsmConverter {
 				List<Coord> points = line.getPoints();
 				points.clear();
 				points.addAll(modWay.getPoints());
+				if (modWay.isReversed() != line.isReversed())
+					Collections.reverse(points);
 			}
 		}
 		for (Long wayId: deletedRoads){

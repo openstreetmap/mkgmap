@@ -40,6 +40,7 @@ public class ConvertedWay {
 	private byte mkgmapAccess; 		// bit mask, see ACCESS_TAGS 
 	private final byte routeFlags;	// bit mask, see ROUTING_TAGS
 	private boolean isRoad;
+	private boolean reversed;		// points were reversed
 	
 	
 
@@ -259,5 +260,13 @@ public class ConvertedWay {
 	
 	public boolean isRoad(){
 		return isRoad;
+	}
+
+	public boolean isReversed() {
+		return reversed;
+	}
+
+	public void setReversed(boolean reversed) {
+		this.reversed = reversed;
 	}
 }
