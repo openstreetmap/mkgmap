@@ -43,7 +43,7 @@ public class ConvertedWay {
 	private final byte routeFlags;	// bit mask, see ROUTING_TAGS
 	private boolean isRoad;
 	private boolean reversed;		// points were reversed
-	
+	private boolean overlay;		// this is a non-routable overlay line that for a road 
 	
 
 	public ConvertedWay(int index, Way way, GType type) {
@@ -271,5 +271,13 @@ public class ConvertedWay {
 
 	public void setReversed(boolean reversed) {
 		this.reversed = reversed;
+	}
+
+	public void setOverlay(boolean b) {
+		this.overlay = b;
+	}
+
+	public boolean isOverlay() {
+		return overlay;
 	}
 }
