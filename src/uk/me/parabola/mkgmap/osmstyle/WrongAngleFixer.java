@@ -203,12 +203,10 @@ public class WrongAngleFixer {
 			// Step 1: detect points which are parts of line segments with wrong bearings
 			lastWay = null;
 			for (ConvertedWay cw : convertedWays) {
-				if (!cw.isValid()) 
+				if (!cw.isValid() || cw.isOverlay()) 
 					continue;
 				Way way = cw.getWay();
 				if (way.equals(lastWay)) 
-					continue;
-				if (mode == MODE_LINES && modifiedRoads.containsKey(way.getId()))
 					continue;
 				if (pass != 1 && waysWithBearingErrors.contains(way) == false)
 					continue;
@@ -254,12 +252,10 @@ public class WrongAngleFixer {
 				
 			lastWay = null;
 			for (ConvertedWay cw : convertedWays) {
-				if (!cw.isValid()) 
+				if (!cw.isValid() || cw.isOverlay()) 
 					continue;
 				Way way = cw.getWay();
 				if (way.equals(lastWay)) 
-					continue;
-				if (mode == MODE_LINES && modifiedRoads.containsKey(way.getId()))
 					continue;
 				if (pass != 1 && waysWithBearingErrors.contains(way) == false)
 					continue;
@@ -323,12 +319,10 @@ public class WrongAngleFixer {
 			// Step 3: Update list of ways with bearing errors or points next to them 
 			lastWay = null;
 			for (ConvertedWay cw : convertedWays) {
-				if (!cw.isValid()) 
+				if (!cw.isValid() || cw.isOverlay())
 					continue;
 				Way way = cw.getWay();
 				if (way.equals(lastWay)) 
-					continue;
-				if (mode == MODE_LINES && modifiedRoads.containsKey(way.getId()))
 					continue;
 				lastWay = way;
 				if (waysWithBearingErrors.contains(way))
@@ -377,11 +371,9 @@ public class WrongAngleFixer {
 			boolean lastWayModified = false;
 			ConvertedWay lastConvertedWay = null;
 			for (ConvertedWay cw : convertedWays) {
-				if (!cw.isValid()) 
+				if (!cw.isValid() || cw.isOverlay())
 					continue;
 				Way way = cw.getWay();
-				if (mode == MODE_LINES && modifiedRoads.containsKey(way.getId()))
-					continue;
 				if (waysWithBearingErrors.contains(way) == false)
 					continue;
 				List<Coord> points = way.getPoints();
@@ -448,9 +440,9 @@ public class WrongAngleFixer {
 		boolean lastWayModified = false;
 		ConvertedWay lastConvertedWay = null;
 		for (ConvertedWay cw : convertedWays) {
-			Way way = cw.getWay();
-			if (mode == MODE_LINES && modifiedRoads.containsKey(way.getId()))
+			if (cw.isOverlay())
 				continue;
+			Way way = cw.getWay();
 			
 			List<Coord> points = way.getPoints();
 			if (points.size() < 2) {
@@ -496,13 +488,9 @@ public class WrongAngleFixer {
 			// treat special case: non-routable ways may be connected to moved
 			// points in roads
 			for (ConvertedWay cw : lines) {
-				if (!cw.isValid())
+				if (!cw.isValid() || cw.isOverlay())
 					continue;
 				Way way = cw.getWay();
-				if (modifiedRoads.containsKey(way.getId())){ 
-					// overlay line is handled later
-					continue;
-				}
 				List<Coord> points = way.getPoints();
 				int n = points.size();
 				boolean hasReplacedPoints = false;
@@ -557,11 +545,9 @@ public class WrongAngleFixer {
 		List<Coord> modifiedPoints = new ArrayList<>();
 		
 		for (ConvertedWay cw : convertedWays) {
-			if (!cw.isValid())
+			if (!cw.isValid() || cw.isOverlay())
 				continue;
 			Way way = cw.getWay();
-			if (mode == MODE_LINES && modifiedRoads.containsKey(way.getId()))
-				continue;
 			if (lastConvertedWay != null && way.equals(lastConvertedWay.getWay())) {
 				if (lastWasModified){
 					List<Coord> points = way.getPoints();

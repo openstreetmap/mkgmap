@@ -264,6 +264,16 @@ public class StyledConverter implements OsmConverter {
 		if (lastRoadId != way.getId()){
 			// this way was not added to the roads list
 			removeRestrictionsWithWay(Level.WARNING, way, "is not routable");
+		} else {
+			// way was added as road, check if we also have non-routable lines for the way
+			// which have to be skipped by WrongAngleFixer
+			for (int i = lines.size()-1; i >= 0; --i){
+				ConvertedWay cw = lines.get(i); 
+				if (cw.getWay().getId() == way.getId())
+					cw.setOverlay(true);
+				else 
+					break;
+			}
 		}
 	}
 
@@ -468,6 +478,8 @@ public class StyledConverter implements OsmConverter {
 				line.getPoints().clear();
 				continue;
 			}
+			if (!line.isOverlay())
+				continue;
 			ConvertedWay modWay = modifiedRoads.get(way.getId());
 			if (modWay != null){
 				List<Coord> points = line.getPoints();
@@ -475,7 +487,7 @@ public class StyledConverter implements OsmConverter {
 				points.addAll(modWay.getPoints());
 				if (modWay.isReversed() != line.isReversed())
 					Collections.reverse(points);
-			}
+			} 
 		}
 		for (Long wayId: deletedRoads){
 			if (wayRelMap.containsKey(wayId)){
