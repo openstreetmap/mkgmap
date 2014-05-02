@@ -66,7 +66,7 @@ public class HousenumberGenerator {
 	 * @param e an OSM element
 	 * @return the street name (or {@code null} if no street name set)
 	 */
-	private String getStreetname(Element e) {
+	private static String getStreetname(Element e) {
 		String streetname = e.getTag("mkgmap:street");
 		if (streetname == null) {
 			streetname = e.getTag("addr:street");
@@ -192,7 +192,7 @@ public class HousenumberGenerator {
 	 * @param elements a list of OSM elements belonging to this street name
 	 * @param roads a list of roads with the given street name
 	 */
-	private void match(String streetname, List<Element> elements, List<MapRoad> roads) {
+	private static void match(String streetname, List<Element> elements, List<MapRoad> roads) {
 		List<HousenumberMatch> numbersList = new ArrayList<HousenumberMatch>(
 				elements.size());
 		for (Element node : elements) {
@@ -313,7 +313,7 @@ public class HousenumberGenerator {
 	 * @param maxSegment the highest segment number to use
 	 * @param left {@code true} the left side of the street; {@code false} the right side of the street
 	 */
-	private void applyNumbers(Numbers numbers, List<HousenumberMatch> housenumbers, int maxSegment, boolean left) {
+	private static void applyNumbers(Numbers numbers, List<HousenumberMatch> housenumbers, int maxSegment, boolean left) {
 		NumberStyle style = NumberStyle.NONE;
 
 		if (housenumbers.isEmpty() == false) {
@@ -372,7 +372,7 @@ public class HousenumberGenerator {
 	 * @param point the point to check
 	 * @return {@code true} point lies on the left side; {@code false} point lies on the right side
 	 */
-	private boolean isLeft(Coord spoint1, Coord spoint2, Coord point) {
+	private static boolean isLeft(Coord spoint1, Coord spoint2, Coord point) {
 		
 		boolean left =  ((spoint2.getLongitude() - spoint1.getLongitude())
 				* (point.getLatitude() - spoint1.getLatitude()) - (spoint2.getLatitude() - spoint1
@@ -388,7 +388,7 @@ public class HousenumberGenerator {
 	 * @param point point
 	 * @return the distance in meter
 	 */
-	private double distanceToSegment(Coord spoint1, Coord spoint2, Coord point, double frac) {
+	private static double distanceToSegment(Coord spoint1, Coord spoint2, Coord point, double frac) {
 
 		if (frac <= 0) {
 			return spoint1.distance(point);
@@ -407,7 +407,7 @@ public class HousenumberGenerator {
 	 * @param point point
 	 * @return the fraction
 	 */
-	private double getFrac(Coord spoint1, Coord spoint2, Coord point) {
+	private static double getFrac(Coord spoint1, Coord spoint2, Coord point) {
 
 		double dx = spoint2.getLongitude() - spoint1.getLongitude();
 		double dy = spoint2.getLatitude() - spoint1.getLatitude();
