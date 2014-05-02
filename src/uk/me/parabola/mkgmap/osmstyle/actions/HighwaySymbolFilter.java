@@ -15,6 +15,8 @@ package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
@@ -34,6 +36,8 @@ public class HighwaySymbolFilter extends ValueFilter {
 	private int maxAlphaNum = MAX_REF_LENGTH; // Max. length for alphanumeric (e.g., 'A67')
 	private int maxAlpha = MAX_REF_LENGTH; // Max. length for alpha only signs (e.g., 'QEW')
 
+	private static final Pattern spacePattern = Pattern.compile(" ", Pattern.LITERAL);
+	private static final Pattern semicolonPattern = Pattern.compile(";", Pattern.LITERAL);
 	static {
 		//symbols.put("ele", "\u001f"); // name.height separator
 
@@ -89,10 +93,11 @@ public class HighwaySymbolFilter extends ValueFilter {
 
 
 		// Nuke all spaces
-		String shieldText = value.replace(" ", "");
-
+//		String shieldText = value.replace(" ", "");
+		String shieldText = spacePattern.matcher(value).replaceAll(Matcher.quoteReplacement(""));
 		// Also replace ";" with "/", to change B3;B4 to B3/B4
-		shieldText = shieldText.replace(";", "/");
+		//shieldText = shieldText.replace(";", "/");
+		shieldText = semicolonPattern.matcher(shieldText).replaceAll(Matcher.quoteReplacement("/"));
 		
 		// Check if value is alphanumeric
 		boolean isAlphaNum = false;

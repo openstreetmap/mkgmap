@@ -12,6 +12,9 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
@@ -27,6 +30,7 @@ public class SubstitutionFilter extends ValueFilter {
 	private final String from;
 	private final String to;
 	private boolean isRegexp = false;
+	private final Pattern pattern;
 
 	public SubstitutionFilter(String arg) {
 		int i = arg.indexOf("=>");
@@ -43,14 +47,16 @@ public class SubstitutionFilter extends ValueFilter {
 			from = arg;
 			to = "";
 		}
+		if (isRegexp)
+			pattern = Pattern.compile(from);
+		else
+			pattern = Pattern.compile(from, Pattern.LITERAL);
 	}
 
 	public String doFilter(String value, Element el) {
 		if (value == null) return null;
-		if (from == null || to == null)
-			// can't happen!
-			return value;
+		return pattern.matcher(value).replaceAll(isRegexp ? to : Matcher.quoteReplacement(to));
 		// replaceAll expects a regexp as 1st argument
-		return (isRegexp ? value.replaceAll(from, to) : value.replace(from, to) );
+//				return (isRegexp ? value.replaceAll(from, to) : value.replace(from, to) );
 	}
 }
