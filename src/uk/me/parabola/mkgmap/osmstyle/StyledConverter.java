@@ -130,10 +130,20 @@ public class StyledConverter implements OsmConverter {
 	private final boolean mergeRoads;
 	private WrongAngleFixer wrongAngleFixer;
 
+	private boolean wrongTypeMsgPrinted = false;
 	private LineAdder lineAdder = new LineAdder() {
 		public void add(MapLine element) {
-			if (element instanceof MapRoad)
+			if (element instanceof MapRoad){
+				if (GType.isRoutableLineType(element.getType()) == false){
+					if (wrongTypeMsgPrinted == false){
+						log.error("Non-routable type", GType.formatType(element.getType()), 
+								"in combination with road_class/road_speed used for routable map.",
+								"Try --check-styles to check the style.");
+						wrongTypeMsgPrinted = true;
+					}
+				}
 				collector.addRoad((MapRoad) element);
+			}
 			else
 				collector.addLine(element);
 		}
@@ -247,7 +257,6 @@ public class StyledConverter implements OsmConverter {
 	}
 
 	private int lineIndex = 0;
-	private boolean wrongTypeMsgPrinted = false;
 	private void addConvertedWay(Way way, GType foundType) {
 		if (foundType.getFeatureKind() == FeatureKind.POLYGON){ 
 			addShape(way, foundType);
@@ -281,15 +290,6 @@ public class StyledConverter implements OsmConverter {
 		}
 		else 
 			lines.add(cw);
-
-		// old code allowed all non-extended types for roads. Now print error message in this case.
-		if(foundType.isRoad() && !cw.isRoad()){
-			if (wrongTypeMsgPrinted == false){
-				log.error("Non-routable type in combination with road_class/road_speed used for routable map.",
-						"Try --check-styles to check the style.");
-
-			}
-		}
 	}
 
 	/** One type result for nodes to avoid recreating one for each node. */ 

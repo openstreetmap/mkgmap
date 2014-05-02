@@ -16,7 +16,9 @@ package uk.me.parabola.mkgmap.osmstyle;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.trergn.MapObject;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Way;
@@ -48,8 +50,8 @@ public class ConvertedWay {
 		this.index = index;
 		this.way = way;
 		this.gt = type;
-		this.isRoad = type.isRoad();
-		if (type.isRoad() & GType.isRoutableLineType(type.getType())) {
+		// note that the gt.getType() may not be a routable type when overlays are used
+		if (type.isRoad() && MapObject.hasExtendedType(gt.getType()) == false) {
 			this.roadClass = (byte) gt.getRoadClass();
 			this.roadSpeed = (byte) gt.getRoadSpeed();
 			recalcRoadClass(way);
@@ -62,6 +64,7 @@ public class ConvertedWay {
 			roadSpeed = 0;
 			mkgmapAccess = 0;
 			routeFlags = 0;
+			isRoad = false;
 		}
 	}
 	
