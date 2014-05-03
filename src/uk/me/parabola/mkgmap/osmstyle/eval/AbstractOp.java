@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 
@@ -75,7 +76,7 @@ public abstract class AbstractOp implements Op {
 
 	public boolean eval(int cacheId, Element el){
 		if (lastCachedId > cacheId){
-			System.err.println("fatal error: cache invalid ");
+			throw new ExitException("fatal error: cache id invalid");
 		}
 		if (lastCachedId != cacheId){
 			lastRes = eval(el);

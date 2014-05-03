@@ -31,7 +31,6 @@ public class GetTagFunction extends StyleFunction {
 	}
 
 	public String value(Element el) {
-//		return el.getTag(getKeyValue());
 		return el.getTag(tagKey);
 	}
 

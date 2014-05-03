@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
@@ -36,7 +37,7 @@ public class AndOp extends AbstractBinaryOp {
 
 	public boolean eval(int cacheId, Element el){
 		if (lastCachedId > cacheId){
-			System.err.println("fatal error: cache id invalid");
+			throw new ExitException("fatal error: cache id invalid");
 		}
 		if (lastCachedId != cacheId){
 			lastRes = getFirst().eval(cacheId, el);
@@ -44,15 +45,7 @@ public class AndOp extends AbstractBinaryOp {
 				lastRes = getSecond().eval(cacheId, el);
 			lastCachedId = cacheId;
 		}
-//		else { 
-//			System.out.println("cached: " + cacheId + " " + toString());
-//			boolean testRes = getFirst().eval(cacheId, el);
-//			if (testRes == true)
-//				testRes = getSecond().eval(cacheId, el);
-//			if (lastRes != testRes){
-//				System.out.println("invalid cached result");
-//			}
-//		}
+		//else System.out.println("cached: " + cacheId + " " + toString());
 		return lastRes;
 	}
 
