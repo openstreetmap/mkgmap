@@ -41,7 +41,7 @@ public class RoadNetwork {
 	private static final Logger log = Logger.getLogger(RoadNetwork.class);
 
 	private final static int MAX_RESTRICTIONS_ARCS = 7;
-	private final Map<Long, RouteNode> nodes = new LinkedHashMap<>();
+	private final Map<Integer, RouteNode> nodes = new LinkedHashMap<>();
 
 	// boundary nodes
 	// a node should be in here if the nodes boundary flag is set
@@ -88,7 +88,7 @@ public class RoadNetwork {
 				roadLength += d;
 			}
 
-			long id = co.getId();
+			int id = co.getId();
 
 			pointsHash += co.hashCode();
 
@@ -100,7 +100,7 @@ public class RoadNetwork {
 			// If this is the not the first node, then create an arc from
 			// the previous node to this one (and back again).
 			if (lastCoord != null) {
-				long lastId = lastCoord.getId();
+				int lastId = lastCoord.getId();
 				if(log.isDebugEnabled()) {
 					log.debug("lastId = " + lastId + " curId = " + id);
 					log.debug("from " + lastCoord.toDegreeString() 
@@ -108,8 +108,8 @@ public class RoadNetwork {
 					log.debug("arclength=" + arcLength + " roadlength=" + roadLength);
 				}
 
-				RouteNode node1 = getNode(lastId, lastCoord);
-				RouteNode node2 = getNode(id, co);
+				RouteNode node1 = getOrAddNode(lastId, lastCoord);
+				RouteNode node2 = getOrAddNode(id, co);
 
 				if(node1 == node2)
 					log.error("Road " + roadDef + " contains consecutive identical nodes at " + co.toOSMURL() + " - routing will be broken");
@@ -163,10 +163,9 @@ public class RoadNetwork {
 											pointsHash);
 				arc.setForward();
 				node1.addArc(arc);
-				node2.addIncomingArc(arc);
 				
 				// Create the reverse arc
-				arc = new RouteArc(roadDef,
+				RouteArc reverseArc = new RouteArc(roadDef,
 								   node2, node1,
 								   reverseInitialBearing,
 								   reverseFinalBearing,
@@ -175,11 +174,13 @@ public class RoadNetwork {
 								   arcLength,
 								   directLength,
 								   pointsHash);
-				node2.addArc(arc);
-				node1.addIncomingArc(arc);
+				node2.addArc(reverseArc);
+				// link the two arcs
+				arc.setReverseArc(reverseArc);
+				reverseArc.setReverseArc(arc);
 			} else {
 				// This is the first node in the road
-				roadDef.setNode(getNode(id, co));
+				roadDef.setNode(getOrAddNode(id, co));
 			}
 
 			lastCoord = (CoordNode) co;
@@ -190,7 +191,7 @@ public class RoadNetwork {
 		roadDef.setLength(roadLength);
 	}
 
-	private RouteNode getNode(long id, Coord coord) {
+	private RouteNode getOrAddNode(int id, Coord coord) {
 		RouteNode node = nodes.get(id);
 		if (node == null) {
 			node = new RouteNode(coord);
@@ -301,8 +302,8 @@ public class RoadNetwork {
 			viaNodes.add(vn);
 		}
 		
-		long firstViaId = grr.getViaNodes().get(0).getId();
-		long lastViaId = grr.getViaNodes().get(grr.getViaNodes().size()-1).getId();
+		int firstViaId = grr.getViaNodes().get(0).getId();
+		int lastViaId = grr.getViaNodes().get(grr.getViaNodes().size()-1).getId();
 		RouteNode firstViaNode = nodes.get(firstViaId);
 		RouteNode lastViaNode = nodes.get(lastViaId);
 		List<List<RouteArc>> viaArcsList = new ArrayList<>();
@@ -322,7 +323,7 @@ public class RoadNetwork {
 		}
 		
 		// determine the from node and arc(s)
-		long fromId = 0;
+		int fromId = 0;
 		RouteNode fn = null;
 		if (grr.getFromNode() != null){
 			fromId = grr.getFromNode().getId();
@@ -359,7 +360,7 @@ public class RoadNetwork {
 		long uTurnWay = (viaNodes.size() > 1) ? grr.getViaWayIds().get(grr.getViaWayIds().size()-1) : grr.getFromWayId(); 
 		
 		RouteNode tn = null;
-		long toId = 0; 
+		int toId = 0; 
 		List<RouteArc> toArcs = new ArrayList<>();
 		if (grr.getToNode() != null){ 
 			// polish input data provides id
@@ -527,7 +528,7 @@ public class RoadNetwork {
 				for (int j = 0; j < indexes.length; j++){
 					RouteArc arc = arcLists.get(j).get(indexes[j]);
 					if (arc.getDest() == vn || viaNodeFound == false){
-						arc = getReverseArc(arc);
+						arc = arc.getReverseArc();
 					}
 					if (arc.getSource() == vn)
 						viaNodeFound = true;
@@ -579,7 +580,7 @@ public class RoadNetwork {
 	private int addNoThroughRoute(GeneralRouteRestriction grr) {
 		assert grr.getViaNodes() != null;
 		assert grr.getViaNodes().size() == 1;
-		long viaId = grr.getViaNodes().get(0).getId();
+		int viaId = grr.getViaNodes().get(0).getId();
 		RouteNode vn = nodes.get(viaId);
 		if (vn == null){
 			log.error(grr.getSourceDesc(), "can't locate 'via' RouteNode with id", viaId);
@@ -606,7 +607,7 @@ public class RoadNetwork {
 		return added;
 	}
 	
-	public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {
+	public void addThroughRoute(int junctionNodeId, long roadIdA, long roadIdB) {
 		RouteNode node = nodes.get(junctionNodeId);
 		assert node != null :  "Can't find node with id " + junctionNodeId;
 
@@ -635,10 +636,6 @@ public class RoadNetwork {
 		return angle;
 	}
 	
-	private static RouteArc getReverseArc(RouteArc arc){
-		return arc.getDest().getDirectArcTo(arc.getSource(), arc.getRoadDef());
-	}
-		
 	/**
 	 * Find the angle that comes closer to the direction indicated.
 	 * 

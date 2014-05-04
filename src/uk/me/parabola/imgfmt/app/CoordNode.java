@@ -23,7 +23,7 @@ package uk.me.parabola.imgfmt.app;
  * @author Steve Ratcliffe
  */
 public class CoordNode extends Coord {
-	private final long id;
+	private final int id;
 
 	/**
 	 * Construct from co-ordinates that are already in map-units.
@@ -33,21 +33,21 @@ public class CoordNode extends Coord {
 	 * @param id The ID of this routing node.
 	 * @param boundary This is a routing node on the boundary.
 	 */
-	public CoordNode(int latitude, int longitude, long id, boolean boundary) {
+	public CoordNode(int latitude, int longitude, int id, boolean boundary) {
 		super(latitude, longitude);
 		this.id = id;
 		setOnBoundary(boundary);
 		preserved(true);
 	}
 
-	public CoordNode(Coord other, long id, boolean boundary){
+	public CoordNode(Coord other, int id, boolean boundary){
 		super(other);
 		this.id = id;
 		setOnBoundary(boundary);
 		preserved(true);
 		
 	}
-	public long getId() {
+	public int getId() {
 		return id;
 	}
 }

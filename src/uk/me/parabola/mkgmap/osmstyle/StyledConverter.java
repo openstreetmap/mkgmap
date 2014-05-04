@@ -723,7 +723,7 @@ public class StyledConverter implements OsmConverter {
 			List<Way> wayList = entry.getValue();
 
 			byte exceptMask = AccessTagsAndBits.evalAccessTags(node);
-			Map<Long,CoordNode> otherNodeIds = new LinkedHashMap<>();
+			Map<Integer,CoordNode> otherNodeIds = new LinkedHashMap<>();
 			CoordNode viaNode = null;
 			boolean viaIsUnique = true;
 			for (Way way : wayList) {

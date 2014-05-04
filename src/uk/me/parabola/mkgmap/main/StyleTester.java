@@ -811,7 +811,7 @@ public class StyleTester implements OsmConverter {
 			return 0;
 		}
 
-		public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {
+		public void addThroughRoute(int junctionNodeId, long roadIdA, long roadIdB) {
 		}
 	}
 
@@ -854,7 +854,7 @@ public class StyleTester implements OsmConverter {
 			return 0;
 		}
 
-		public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {
+		public void addThroughRoute(int junctionNodeId, long roadIdA, long roadIdB) {
 		}
 
 		public long getStart() {

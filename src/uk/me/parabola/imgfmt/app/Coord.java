@@ -124,7 +124,10 @@ public class Coord implements Comparable<Coord> {
 		return longitude;
 	}
 
-	public long getId() {
+	/**
+	 * @return the route node id
+	 */
+	public int getId() {
 		return 0;
 	}
 

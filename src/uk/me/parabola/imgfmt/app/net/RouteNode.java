@@ -63,8 +63,6 @@ public class RouteNode implements Comparable<RouteNode> {
 	private final List<RouteArc> arcs = new ArrayList<RouteArc>(4);
 	// restrictions at (via) this node
 	private final List<RouteRestriction> restrictions = new ArrayList<RouteRestriction>();
-	// arcs to this node
-	private final List<RouteArc> incomingArcs = new ArrayList<RouteArc>(4);
 
 	private int flags;
 
@@ -108,10 +106,6 @@ public class RouteNode implements Comparable<RouteNode> {
 		if (cl > nodeClass)
 			nodeClass = cl;
 		flags |= F_ARCS;
-	}
-
-	public void addIncomingArc(RouteArc arc) {
-		incomingArcs.add(arc);
 	}
 
 	public void addRestriction(RouteRestriction restr) {
@@ -465,7 +459,11 @@ public class RouteNode implements Comparable<RouteNode> {
 			List<RouteArc> outgoingArcs = new ArrayList<RouteArc>();
 
 			// sort incoming arcs by decreasing class/speed
-			List<RouteArc> inArcs = new ArrayList<RouteArc>(incomingArcs);
+			List<RouteArc> inArcs = new ArrayList<RouteArc>();
+			for (RouteArc arc : arcs){
+				if (arc.isDirect())
+					inArcs.add(arc.getReverseArc());
+			}
 
 			Collections.sort(inArcs, new Comparator<RouteArc>() {
 					public int compare(RouteArc ra1, RouteArc ra2) {
@@ -540,43 +538,6 @@ public class RouteNode implements Comparable<RouteNode> {
 					}
 				}
 
-				/*
-				if(false && outArc == null) {
-					// last ditch attempt to find the outgoing arc -
-					// try and find a single arc that has the same
-					// road class and speed as the incoming arc
-					int inArcClass = inArc.getRoadDef().getRoadClass();
-					int inArcSpeed = inArc.getRoadDef().getRoadSpeed();
-					for(RouteArc oa : arcs) {
-						if(oa.getDest() != inArc.getSource() &&
-						   oa.getRoadDef().getRoadClass() == inArcClass &&
-						   oa.getRoadDef().getRoadSpeed() == inArcSpeed) {
-							if(outArc != null) {
-								// multiple arcs have the same road
-								// class/speed as the incoming arc so
-								// don't use any of them as the
-								// outgoing arc
-								outArc = null;
-								break;
-							}
-							// oa has the same class/speed as inArc,
-							// now check that oa is not part of
-							// another road by matching names rather
-							// than class/speed because they could be
-							// different
-							boolean paired = false;
-							for(RouteArc z : arcs)
-								if(z != oa && possiblySameRoad(z, oa))
-									paired = true;
-							if(!paired)
-								outArc = oa;
-						}
-					}
-					if(outArc != null)
-						log.info("Matched outgoing arc " + outArc.getRoadDef() + " to " + inRoadDef + " using road class (" + inArcClass + ") and speed (" + inArcSpeed + ") at " + coord.toOSMURL()); 
-				}
-				 */
-				
 				// if we did not find the outgoing arc, give up with
 				// this incoming arc
 				if(outArc == null) {
@@ -739,7 +700,7 @@ public class RouteNode implements Comparable<RouteNode> {
 	}
 
 	// determine "distance" between two nodes on a roundabout
-	private int roundaboutSegmentLength(final RouteNode n1, final RouteNode n2) {
+	private static int roundaboutSegmentLength(final RouteNode n1, final RouteNode n2) {
 		List<RouteNode> seen = new ArrayList<RouteNode>();
 		int len = 0;
 		RouteNode n = n1;
@@ -914,6 +875,27 @@ public class RouteNode implements Comparable<RouteNode> {
 		if(throughRoutes == null)
 			throughRoutes = new ArrayList<RouteArc[]>();
 		boolean success = false;
+		for(RouteArc arc1 : arcs) {
+			if(arc1.getRoadDef().getId() == roadIdA) {
+				for(RouteArc arc2 : arcs) {
+					if(arc2.getRoadDef().getId() == roadIdB) {
+						throughRoutes.add(new RouteArc[] { arc1.getReverseArc(), arc2 });
+						success = true;
+						break;
+					}
+				}
+			}
+			else if(arc1.getRoadDef().getId() == roadIdB) {
+				for(RouteArc arc2 : arcs) {
+					if(arc2.getRoadDef().getId() == roadIdA) {
+						throughRoutes.add(new RouteArc[] { arc1.getReverseArc(), arc2 });
+						success = true;
+						break;
+					}
+				}
+			}
+		}
+		/*
 		for(RouteArc arc1 : incomingArcs) {
 			if(arc1.getRoadDef().getId() == roadIdA) {
 				for(RouteArc arc2 : arcs) {
@@ -934,6 +916,7 @@ public class RouteNode implements Comparable<RouteNode> {
 				}
 			}
 		}
+		*/
 		if(success)
 			log.info("Added through route between ways " + roadIdA + " and " + roadIdB + " at " + coord.toOSMURL());
 		else
@@ -1125,4 +1108,7 @@ public class RouteNode implements Comparable<RouteNode> {
 		return arcs;
 	}
 
+	public int hashCode(){
+		return getCoord().getId();
+	}
 }
