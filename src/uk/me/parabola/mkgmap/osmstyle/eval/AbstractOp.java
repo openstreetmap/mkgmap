@@ -75,10 +75,10 @@ public abstract class AbstractOp implements Op {
 	}
 
 	public boolean eval(int cacheId, Element el){
-		if (lastCachedId > cacheId){
-			throw new ExitException("fatal error: cache id invalid");
-		}
 		if (lastCachedId != cacheId){
+			if (lastCachedId > cacheId){
+				throw new ExitException("fatal error: cache id invalid");
+			}
 			lastRes = eval(el);
 			lastCachedId = cacheId;
 		}
