@@ -21,7 +21,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  * We have a list of possible substitutions.
  */
 public class AddLabelAction extends ValueBuildedAction {
-
+	
 	/**
 	 * Search for the first matching pattern and set the first unset element label
 	 * to it.
@@ -29,8 +29,9 @@ public class AddLabelAction extends ValueBuildedAction {
 	 * If all four labels are already set, then nothing is done.
 	 *
 	 * @param el The element on which a label may be set.
+	 * @return 
 	 */
-	public void perform(Element el) {
+	public boolean perform(Element el) {
 		for (int index = 1; index <=4; index++) {
 			// find the first unset label and set it
 			if (el.getTag("mkgmap:label:"+index) == null) {
@@ -42,18 +43,19 @@ public class AddLabelAction extends ValueBuildedAction {
 							if (s.equals(el.getTag("mkgmap:label:"+n))) {
 								// value is equal to a previous label
 								// do not use it
-								return;
+								return false;
 							}
 						}
 						
 						// set the label
 						el.addTag("mkgmap:label:"+index, s);
-						return;
+						return true;
 					}
 				}
-				return;
+				return false;
 			}
 		}
+		return false;
 	}
 
 	public String toString() {

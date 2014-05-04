@@ -33,11 +33,13 @@ public class RenameAction implements Action {
 		this.to = TagDict.getInstance().xlate(to);
 	}
 
-	public void perform(Element el) {
+	public boolean perform(Element el) {
 		String fromval = el.getTag(from);
 		if (fromval != null) {
 			el.addTag(to, fromval);
 			el.deleteTag(from);
+			return true;
 		}
+		return false;
 	}
 }

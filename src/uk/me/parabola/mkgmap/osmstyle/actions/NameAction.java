@@ -36,18 +36,20 @@ public class NameAction extends ValueBuildedAction {
 	 * If the element name is already set, then nothing is done.
 	 *
 	 * @param el The element on which the name may be set.
+	 * @return 
 	 */
-	public void perform(Element el) {
+	public boolean perform(Element el) {
 		if (el.getTag(label1TagKey) != null)
-			return;
+			return false;
 		
 		for (ValueBuilder vb : getValueBuilder()) {
 			String s = vb.build(el, el);
 			if (s != null) {
 				el.addTag(label1TagKey, s);
-				break;
+				return true;
 			}
 		}
+		return false;
 	}
 
 	public String toString() {

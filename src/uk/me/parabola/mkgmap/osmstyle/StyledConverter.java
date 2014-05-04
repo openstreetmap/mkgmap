@@ -285,23 +285,25 @@ public class StyledConverter implements OsmConverter {
 			return;
 		}
 		
-		String oneWay = way.getTag(onewayTagKey);
 		boolean wasReversed = false;
-		if("-1".equals(oneWay) || "reverse".equals(oneWay)) {
-			// it's a oneway street in the reverse direction
-			// so reverse the order of the nodes and change
-			// the oneway tag to "yes"
-			way.reverse();
-			wasReversed = true;
-			way.addTag(onewayTagKey, "yes");
-		}
+		String oneWay = way.getTag(onewayTagKey);
+		if (oneWay != null){
+			if("-1".equals(oneWay) || "reverse".equals(oneWay)) {
+				// it's a oneway street in the reverse direction
+				// so reverse the order of the nodes and change
+				// the oneway tag to "yes"
+				way.reverse();
+				wasReversed = true;
+				way.addTag(onewayTagKey, "yes");
+			}
 
-		if (way.tagIsLikeYes(onewayTagKey)) {
-			way.addTag(onewayTagKey, "yes");
-			if (foundType.isRoad() && checkFixmeCoords(way) )
-				way.addTag("mkgmap:dead-end-check", "false");
-		} else 
-			way.deleteTag(onewayTagKey);
+			if (way.tagIsLikeYes(onewayTagKey)) {
+				way.addTag(onewayTagKey, "yes");
+				if (foundType.isRoad() && checkFixmeCoords(way) )
+					way.addTag("mkgmap:dead-end-check", "false");
+			} else 
+				way.deleteTag(onewayTagKey);
+		}
 		ConvertedWay cw = new ConvertedWay(lineIndex++, way, foundType);
 		cw.setReversed(wasReversed);
 		if (cw.isRoad()){

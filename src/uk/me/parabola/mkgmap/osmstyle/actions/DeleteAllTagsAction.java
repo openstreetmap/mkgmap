@@ -30,9 +30,10 @@ public class DeleteAllTagsAction implements Action {
 		this.noTagElement = new Node(0, new Coord(0,0));
 	}
 
-	public void perform(Element el) {
+	public boolean perform(Element el) {
 		// remove all tags by copying the tags from a no tag element
 		el.copyTags(noTagElement);
+		return true;
 	}
 
 	public String toString() {

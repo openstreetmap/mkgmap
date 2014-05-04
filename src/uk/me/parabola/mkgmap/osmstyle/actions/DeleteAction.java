@@ -31,8 +31,9 @@ public class DeleteAction implements Action {
 		this.tag = TagDict.getInstance().xlate(tag);
 	}
 
-	public void perform(Element el) {
-		el.deleteTag(tag);
+	public boolean perform(Element el) {
+		String oldVal = el.deleteTag(tag);
+		return oldVal != null;
 	}
 
 	public String toString() {

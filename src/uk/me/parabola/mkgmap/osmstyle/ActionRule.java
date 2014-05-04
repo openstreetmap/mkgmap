@@ -79,12 +79,16 @@ public class ActionRule implements Rule {
 			}
 		}
 
-		// an action will be performed, so we have to invalidate the caches
-		// TODO: maybe the performed actions do not invalidate the cached 
-		// values. How could we detect this?
-		cacheId++;
-		for (Action a : actions)
-			a.perform(element);
+		// an action will be performed, so we may have to invalidate the cache
+		boolean invalidate_cache = false;
+		for (Action a : actions){
+			if (a.perform(element)){
+				invalidate_cache = true;
+			}
+		}
+		if (invalidate_cache)
+			cacheId++;
+		
 		if (type != null && finalizeRule != null) {
 			if (el == element && type.isContinueSearch())
 				// if there is a continue statement changes performed in 

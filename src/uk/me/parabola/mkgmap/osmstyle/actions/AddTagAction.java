@@ -47,11 +47,11 @@ public class AddTagAction extends ValueBuildedAction {
 		add(value);
 	}
 
-	public void perform(Element el) {
+	public boolean perform(Element el) {
 		if (!modify){
 			String tv = el.getTag(tagKey);
 			if (tv != null)
-				return;
+				return false;
 		}
 		Element tags = valueTags!=null? valueTags: el;
 
@@ -59,9 +59,10 @@ public class AddTagAction extends ValueBuildedAction {
 			String newval = value.build(tags, el);
 			if (newval != null) {
 				el.addTag(tagKey, newval);
-				break;
+				return true;
 			}
 		}
+		return false;
 	}
 
 
