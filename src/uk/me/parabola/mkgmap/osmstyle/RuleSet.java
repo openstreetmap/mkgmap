@@ -233,6 +233,10 @@ public class RuleSet implements Rule, Iterable<Rule> {
 			binOp.setFirst(compileOp(tests, binOp.getFirst()));
 			binOp.setSecond(compileOp(tests, binOp.getSecond()));
 		}
+		if (op instanceof LinkedOp){
+			// LinkedOp is referenced by other OPs, don't replace it 
+			return op;
+		}
 		String test = op.toString();
 		Op commonOp = tests.get(test);
 		if (commonOp == null){

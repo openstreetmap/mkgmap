@@ -69,21 +69,19 @@ public class LinkedOp implements Op {
 	}
 	
 	public String toString() {
-		if (first) {
-			StringBuilder sb = new StringBuilder();
-			sb.append('(');
-			sb.append(wrapped);
-			LinkedOp l = link;
-			while (l != null) {
-				sb.append(" | ");
-				sb.append(l.wrapped);
-				l = l.link;
-			}
-			sb.append(')');
-			return sb.toString();
-		} else {
-			return "# Part of the previous OR expression.";
+		StringBuilder sb = new StringBuilder();
+		if (!first)
+			sb.append("# Part of the previous OR expression: ");
+		sb.append('(');
+		sb.append(wrapped);
+		LinkedOp l = link;
+		while (l != null) {
+			sb.append(" | ");
+			sb.append(l.wrapped);
+			l = l.link;
 		}
+		sb.append(')');
+		return sb.toString();
 	}
 
 	public int priority() {
@@ -152,5 +150,9 @@ public class LinkedOp implements Op {
 		} else {
 			return new LinkedOp(op, first);
 		}
+	}
+	
+	public boolean isFirstPart(){
+		return first;
 	}
 }
