@@ -132,18 +132,9 @@ public class StyledConverter implements OsmConverter {
 	private final boolean mergeRoads;
 	private WrongAngleFixer wrongAngleFixer;
 
-	private boolean wrongTypeMsgPrinted = false;
 	private LineAdder lineAdder = new LineAdder() {
 		public void add(MapLine element) {
 			if (element instanceof MapRoad){
-				if (GType.isRoutableLineType(element.getType()) == false){
-					if (wrongTypeMsgPrinted == false){
-						log.error("Non-routable type", GType.formatType(element.getType()), 
-								"in combination with road_class/road_speed used for routable map.",
-								"Try --check-styles to check the style.");
-						wrongTypeMsgPrinted = true;
-					}
-				}
 				collector.addRoad((MapRoad) element);
 			}
 			else

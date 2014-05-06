@@ -84,7 +84,6 @@ import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.imgfmt.app.net.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
-import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.util.Configurable;
 import uk.me.parabola.util.EnhancedProperties;
@@ -111,7 +110,6 @@ public class MapBuilder implements Configurable {
 	private List<String> copyrights = new ArrayList<String>();
 
 	private boolean doRoads;
-	private boolean routingErrorMsgPrinted;
 
 	private Locator locator;
 
@@ -703,7 +701,7 @@ public class MapBuilder implements Configurable {
 	 * @param zoom The zoom level.
 	 * @return The new top level subdivision.
 	 */
-	private Subdivision makeTopArea(MapDataSource src, Map map, Zoom zoom) {
+	private static Subdivision makeTopArea(MapDataSource src, Map map, Zoom zoom) {
 		Subdivision topdiv = map.topLevelSubdivision(src.getBounds(), zoom);
 		topdiv.setLast(true);
 		return topdiv;
@@ -1128,7 +1126,7 @@ public class MapBuilder implements Configurable {
 	 * @return The largest number of bits where we can still represent the
 	 *         whole map.
 	 */
-	private int getMaxBits(MapDataSource src) {
+	private static int getMaxBits(MapDataSource src) {
 		int topshift = Integer.numberOfLeadingZeros(src.getBounds().getMaxDimension());
 		int minShift = Math.max(CLEAR_TOP_BITS - topshift, 0);
 		return 24 - minShift;
@@ -1257,15 +1255,6 @@ public class MapBuilder implements Configurable {
 						pl.setLastSegment(false);
 					
 					roaddef.addPolylineRef(pl);
-				} else if (routingErrorMsgPrinted == false){
-					if (div.getZoom().getLevel() == 0 && GType.isRoutableLineType(line.getType())){
-						Coord start = line.getPoints().get(0);
-						log.error("Non-routable way with routable type " + GType.formatType(line.getType()) + " starting at " +
-								start.toOSMURL() + 
-								" is used for a routable map. This leads to routing errors. Try --check-styles to check the style.");
-						
-						routingErrorMsgPrinted = true;
-					}
 				}
 			}
 			map.addMapObject(pl);

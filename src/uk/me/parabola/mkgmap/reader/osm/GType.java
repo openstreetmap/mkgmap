@@ -220,7 +220,8 @@ public class GType {
 	 * @return true if the type is known as routable.
 	 */
 	public static boolean isRoutableLineType(int type){
-		return type >= 0x01 && type <= 0x13 || type == 0x1a || type == 0x1b || type == 0x16;
+		//return type >= 0x01 && type <= 0x13 || type == 0x1a || type == 0x1b || type == 0x16;
+		return type >= 0x01 && type <= 0x3f;
 	}
 	
 	/**

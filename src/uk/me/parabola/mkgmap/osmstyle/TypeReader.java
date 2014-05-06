@@ -122,27 +122,11 @@ public class TypeReader {
 						msg += typeOverlaidMsg;
 					System.out.println(msg);
 				}
-				if (kind == FeatureKind.POLYLINE && gt.getMinLevel() == 0 && gt.getMaxLevel() >= 0){ 
-					if (GType.isRoutableLineType(usedType)){
+				if (kind == FeatureKind.POLYLINE && GType.isRoutableLineType(usedType)){
 						foundRoutableType = true;
-						if (gt.isRoad() == false){
-							String msg = "Warning: routable type " + type  + " is used for non-routable line with level 0. This may break routing. Style file "+ ts.getFileName() + ", line " + ts.getLinenumber();
-							if (fromOverlays)
-								msg += typeOverlaidMsg;
-							System.out.println(msg);
-						}
-						else if (i > 0){
-							System.out.println("Warning: routable type " + type + " is used for non-routable line with level 0. " +
-									"This may break routing. Style file " + ts.getFileName() + ", line " + ts.getLinenumber() + 
-									typeOverlaidMsg +
-									" which is used for adding the non-routable copy of the way.");
-						}
-					} else {
-						
-					}
 				}
 			}
-			if (gt.isRoad() && foundRoutableType == false){
+			if (gt.isRoad() && foundRoutableType == false && gt.getMinLevel() == 0 && gt.getMaxLevel() >= 0){
 				String msg = "Warning: non-routable type " + type  + " is used in combination with road_class/road_speed. Line will not be routable. Style file "+ ts.getFileName() + ", line " + ts.getLinenumber();
 				if (fromOverlays)
 					msg += ". Type is overlaid, but not with a routable type";
@@ -154,7 +138,7 @@ public class TypeReader {
 		return gt;
 	}
 
-	private int nextIntValue(TokenScanner ts) {
+	private static int nextIntValue(TokenScanner ts) {
 		if (ts.checkToken("="))
 			ts.nextToken();
 		try {
@@ -167,7 +151,7 @@ public class TypeReader {
 	/**
 	 * Get the value in a 'name=value' pair.
 	 */
-	private String nextValue(TokenScanner ts) {
+	private static String nextValue(TokenScanner ts) {
 		if (ts.checkToken("="))
 			ts.nextToken();
 		return ts.nextWord();
@@ -177,7 +161,7 @@ public class TypeReader {
 	 * A resolution can be just a single number, in which case that is the
 	 * min resolution and the max defaults to 24.  Or a min to max range.
 	 */
-	private void setResolution(TokenScanner ts, GType gt) {
+	private static void setResolution(TokenScanner ts, GType gt) {
 		String str = ts.nextWord();
 		log.debug("res word value", str);
 		try {
