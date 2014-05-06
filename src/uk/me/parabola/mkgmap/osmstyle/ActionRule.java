@@ -36,7 +36,7 @@ import uk.me.parabola.mkgmap.reader.osm.TypeResult;
  * @author Steve Ratcliffe
  */
 public class ActionRule implements Rule {
-	private final Op expression;
+	private Op expression;
 	private final List<Action> actions;
 	private final GType type;
 	private Rule finalizeRule;
@@ -61,6 +61,49 @@ public class ActionRule implements Rule {
 		this.actions = actions;
 		this.type = null;
 	}
+	
+	
+	public int resolveType(int cacheId, Element el, TypeResult result) {
+		Element element = el;
+		if (expression != null) {
+			if (!expression.eval(cacheId, element))
+				return cacheId;
+				
+			// If this is a continue and we are not to propagate the effects
+			// of the action on the element to further rules, then make
+			// a copy of the element so that the original is unsullied.
+			//
+			// There is another reason we need to copy: since there will be
+			if (type != null && !type.isPropogateActions() && !(element instanceof Relation)) {
+				element = element.copy();
+			}
+		}
+
+		// an action will be performed, so we may have to invalidate the cache
+		boolean invalidate_cache = false;
+		for (Action a : actions){
+			if (a.perform(element)){
+				invalidate_cache = true;
+			}
+		}
+		if (invalidate_cache)
+			cacheId++;
+		
+		if (type != null && finalizeRule != null) {
+			if (el == element && type.isContinueSearch())
+				// if there is a continue statement changes performed in 
+				// the finalize block must not be persistent
+				element = element.copy();
+			// there is a type so first execute the finalize rules
+			if (type.getDefaultName() != null)
+				element.addTag("mkgmap:default_name", type.getDefaultName());
+			cacheId = finalizeRule.resolveType(cacheId, element, finalizeTypeResult);
+		}
+		
+		result.add(element, type);
+		return cacheId;
+	}
+	
 	
 	public void resolveType(Element el, TypeResult result) {
 		Element element = el;
@@ -115,4 +158,14 @@ public class ActionRule implements Rule {
 	public void setFinalizeRule(Rule finalizeRule) {
 		this.finalizeRule = finalizeRule;
 	}
+
+
+	public Op getOp(){
+		return expression;
+	}
+	
+	public void setOp(Op expression){
+		this.expression = expression;
+	}
+	
 }

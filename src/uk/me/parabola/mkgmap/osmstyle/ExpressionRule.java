@@ -29,7 +29,7 @@ import uk.me.parabola.mkgmap.reader.osm.TypeResult;
  * @author Steve Ratcliffe
  */
 public class ExpressionRule implements Rule {
-	private final Op expression;
+	private Op expression;
 	private final GType gtype;
 	private Rule finalizeRule;
 
@@ -45,6 +45,7 @@ public class ExpressionRule implements Rule {
 		this.gtype = gtype;
 	}
 
+	
 	public void resolveType(Element el, TypeResult result) {
 		if (expression.eval(el)) {
 			// expression matches
@@ -61,6 +62,22 @@ public class ExpressionRule implements Rule {
 		}
 	}
 
+	public int resolveType(int cacheId, Element el, TypeResult result) {
+		if (expression.eval(cacheId, el)){
+			if (finalizeRule != null) {
+				if (gtype.isContinueSearch()) {
+					el = el.copy();
+				}
+				// run the finalize rules
+				if (gtype.getDefaultName() != null)
+					el.addTag("mkgmap:default_name", gtype.getDefaultName());
+				cacheId = finalizeRule.resolveType(cacheId, el, finalizeTypeResult);
+			}
+			result.add(el, gtype);
+		}
+		return cacheId;
+	}
+
 	public String toString() {
 		return expression.toString() + ' ' + gtype;
 	}
@@ -68,4 +85,13 @@ public class ExpressionRule implements Rule {
 	public void setFinalizeRule(Rule finalizeRule) {
 		this.finalizeRule = finalizeRule;
 	}
+	
+	public Op getOp(){
+		return expression;
+	}
+
+	public void setOp(Op expression){
+		this.expression = expression;
+	}
+	
 }

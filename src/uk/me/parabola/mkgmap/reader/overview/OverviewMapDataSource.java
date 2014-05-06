@@ -160,7 +160,7 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 		return 0;
 	}
 
-	public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {
+	public void addThroughRoute(int junctionNodeId, long roadIdA, long roadIdB) {
 		log.error("This is not supposed to be called");
 	}
 }

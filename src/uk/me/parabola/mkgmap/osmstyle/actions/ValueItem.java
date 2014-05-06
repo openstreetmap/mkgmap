@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.TagDict;
 
 /**
  * Part of a substitution string.  This can represent a constant
@@ -26,9 +27,10 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  */
 public class ValueItem {
 	private String tagname;
-	private boolean tagname_is_local;
+	private short tagKey;
 	private ValueFilter filter;
 	private String value;
+	private boolean tagname_is_local;
 
 	public ValueItem() {
 	}
@@ -43,7 +45,7 @@ public class ValueItem {
 
 		if (tagname != null) {
 			Element e = tagname_is_local ? local_el : el;
-			String tagval = e.getTag(tagname);
+			String tagval = e.getTag(tagKey);
 			if (filter != null)
 				value = filter.filter(tagval,el);
 			else
@@ -67,6 +69,7 @@ public class ValueItem {
 	public void setTagname(String tagname, boolean local) {
 		this.tagname = tagname;
 		this.tagname_is_local = local;
+		this.tagKey = TagDict.getInstance().xlate(tagname);
 	}
 
 	public String toString() {

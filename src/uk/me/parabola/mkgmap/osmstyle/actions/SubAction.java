@@ -43,9 +43,10 @@ public class SubAction implements Action {
 		this.once = once;
 	}
 
-	public void perform(Element el) {
+	public boolean perform(Element el) {
 		if (el instanceof Relation)
 			performOnSubElements((Relation) el);
+		return true; // probably false, but relation may contain itself in complex recursive structures 
 	}
 
 	private void performOnSubElements(Relation rel) {

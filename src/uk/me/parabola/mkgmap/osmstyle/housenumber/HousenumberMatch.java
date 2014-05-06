@@ -20,6 +20,7 @@ import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.Node;
+import uk.me.parabola.mkgmap.reader.osm.TagDict;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 
 /**
@@ -63,11 +64,13 @@ public class HousenumberMatch {
 	 * @param e an OSM element
 	 * @return the house number (or {@code null} if no house number set)
 	 */
+	private static final short housenumberTagKey1 =  TagDict.getInstance().xlate("mkgmap:housenumber");
+	private static final short housenumberTagKey2 =  TagDict.getInstance().xlate("addr:housenumber");
 	public static String getHousenumber(Element e) {
-		String res = e.getTag("mkgmap:housenumber"); 
+		String res = e.getTag(housenumberTagKey1); 
 		if (res != null)
 			return res;
-		return e.getTag("addr:housenumber");
+		return e.getTag(housenumberTagKey2);
 	}
 	
 	/**

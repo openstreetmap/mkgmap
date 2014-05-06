@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
@@ -31,6 +32,20 @@ public class OrOp extends AbstractBinaryOp {
 
 	public boolean eval(Element el) {
 		return getFirst().eval(el) || getSecond().eval(el);
+	}
+
+	public boolean eval(int cacheId, Element el){
+		if (lastCachedId != cacheId){
+			if (lastCachedId > cacheId){
+				throw new ExitException("fatal error: cache id invalid");
+			}
+			lastRes = getFirst().eval(cacheId, el);
+			if (lastRes == false)
+				lastRes = getSecond().eval(cacheId, el);
+			lastCachedId = cacheId;
+		}
+		//else System.out.println("cached: " + cacheId + " " + toString());
+		return lastRes;
 	}
 
 	public int priority() {

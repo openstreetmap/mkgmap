@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.TagDict;
 
 /**
  * Set the name on the given element.  The tags of the element may be
@@ -27,7 +28,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  * @author Steve Ratcliffe
  */
 public class NameAction extends ValueBuildedAction {
-
+	private final short label1TagKey = TagDict.getInstance().xlate("mkgmap:label:1"); 
 	/**
 	 * search for the first matching name pattern and set the element name
 	 * to it.
@@ -35,18 +36,20 @@ public class NameAction extends ValueBuildedAction {
 	 * If the element name is already set, then nothing is done.
 	 *
 	 * @param el The element on which the name may be set.
+	 * @return 
 	 */
-	public void perform(Element el) {
-		if (el.getTag("mkgmap:label:1") != null)
-			return;
+	public boolean perform(Element el) {
+		if (el.getTag(label1TagKey) != null)
+			return false;
 		
 		for (ValueBuilder vb : getValueBuilder()) {
 			String s = vb.build(el, el);
 			if (s != null) {
-				el.addTag("mkgmap:label:1", s);
-				break;
+				el.addTag(label1TagKey, s);
+				return true;
 			}
 		}
+		return false;
 	}
 
 	public String toString() {

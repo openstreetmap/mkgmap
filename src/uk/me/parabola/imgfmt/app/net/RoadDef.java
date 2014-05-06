@@ -601,7 +601,7 @@ public class RoadDef implements Comparable<RoadDef> {
 		// translate internal format to that used in TableA
 		//clear the corresponding bits
 		tabAAccess &= ~(0xc077);
-		if (mkgmapAccess == 0xff)
+		if (mkgmapAccess == (byte) 0xff)
 			return; // all vehicles allowed
 
 		if ((mkgmapAccess & AccessTagsAndBits.FOOT) == 0)

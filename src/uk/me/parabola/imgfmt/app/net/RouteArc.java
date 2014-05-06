@@ -71,6 +71,9 @@ public class RouteArc {
 
 	// this field may limit the arcs destination class
 	private byte maxDestClass = -1;
+	
+	// pointer to the reverse arc if this is a direct arc
+	private RouteArc reverseArc;
 
 	/**
 	 * Create a new arc. An arc can contain multiple points (eg. A->B->C->D->E)
@@ -437,5 +440,11 @@ public class RouteArc {
 				+ roadDef +  " " + dest + "]";
 	}
 
-	
+	public RouteArc getReverseArc() {
+		return reverseArc;
+	}
+
+	public void setReverseArc(RouteArc reverseArc) {
+		this.reverseArc = reverseArc;
+	}
 }

@@ -621,6 +621,7 @@ public class StyleTester implements OsmConverter {
 		 */
 		private class ReferenceRuleSet implements Rule {
 			private final List<Rule> rules = new ArrayList<Rule>();
+			int cacheId = 0;
 			
 			public void add(Rule rule) {
 				rules.add(rule);
@@ -641,8 +642,8 @@ public class StyleTester implements OsmConverter {
 				// Start by literally running through the rules in order.
 				for (Rule rule : rules) {
 					a.reset();
-					rule.resolveType(el, a);
-
+					cacheId = rule.resolveType(cacheId, el, a);
+					
 					if (showMatches) {
 						if (a.isFound()) {
 							out.println("# Matched: " + rule);
@@ -656,6 +657,13 @@ public class StyleTester implements OsmConverter {
 				if (showMatches && !tagsBefore.equals(el.toTagString()))
 					out.println("# Way tags after: " + el.toTagString());
 			}
+
+			@Override
+			public int resolveType(int cacheId, Element el, TypeResult result) {
+				resolveType(el, result);
+				return cacheId;
+			}
+
 
 			public void setFinalizeRule(Rule finalizeRule) {
 				for (Rule rule : rules) {
@@ -803,7 +811,7 @@ public class StyleTester implements OsmConverter {
 			return 0;
 		}
 
-		public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {
+		public void addThroughRoute(int junctionNodeId, long roadIdA, long roadIdB) {
 		}
 	}
 
@@ -846,7 +854,7 @@ public class StyleTester implements OsmConverter {
 			return 0;
 		}
 
-		public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {
+		public void addThroughRoute(int junctionNodeId, long roadIdA, long roadIdB) {
 		}
 
 		public long getStart() {

@@ -27,9 +27,10 @@ public class EchoTagsAction implements Action {
 		this.value = new ValueBuilder(str, false);
 	}
 
-	public void perform(Element el) {
+	public boolean perform(Element el) {
 		String e = value.build(el, el);
 		System.err.println(el.getId() + " - " + el.toTagString()+" " + e);
+		return false;
 	}
 	
 	public String toString() {

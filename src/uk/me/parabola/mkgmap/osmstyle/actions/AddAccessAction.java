@@ -39,7 +39,7 @@ public class AddAccessAction extends ValueBuildedAction {
 		add(value);
 	}
 
-	public void perform(Element el) {
+	public boolean perform(Element el) {
 		// 1st build the value
 		Element tags = valueTags!=null? valueTags: el;
 		String accessValue = null;
@@ -50,11 +50,12 @@ public class AddAccessAction extends ValueBuildedAction {
 			}
 		}
 		if (accessValue == null) {
-			return;
+			return false;
 		}
 		for (String accessTag : ACCESS_TAGS.keySet()) {
 			setTag(el, accessTag, accessValue);
 		}
+		return true;
 	}
 	
 	/**

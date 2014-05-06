@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
+import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 import java.util.ArrayList;
 
 import java.util.Arrays;
@@ -64,6 +65,7 @@ import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.RestrictionRelation;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
+import uk.me.parabola.mkgmap.reader.osm.TagDict;
 import uk.me.parabola.mkgmap.reader.osm.TypeResult;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.util.EnhancedProperties;
@@ -80,7 +82,7 @@ public class StyledConverter implements OsmConverter {
 	private static final Logger log = Logger.getLogger(StyledConverter.class);
 	private static final Logger roadLog = Logger.getLogger(StyledConverter.class.getName()+".roads");
 
-	private final List<String> nameTagList;
+	private final ShortArrayList nameTagList;
 
 	private final MapCollector collector;
 
@@ -152,7 +154,13 @@ public class StyledConverter implements OsmConverter {
 	public StyledConverter(Style style, MapCollector collector, EnhancedProperties props) {
 		this.collector = collector;
 
-		nameTagList = LocatorUtil.getNameTags(props);
+		List<String> nameTags = LocatorUtil.getNameTags(props);
+		if (nameTags != null){
+			nameTagList = new ShortArrayList();
+			for(String n : nameTags)
+				nameTagList.add(TagDict.getInstance().xlate(n));
+		} else 
+			nameTagList = null;
 
 		wayRules = style.getWayRules();
 		nodeRules = style.getNodeRules();
@@ -212,7 +220,10 @@ public class StyledConverter implements OsmConverter {
 	 *
 	 * @param way The OSM way.
 	 */
+	private final static short styleFilterTagKey = TagDict.getInstance().xlate("mkgmap:stylefilter");
+	private final static short makeCycleWayTagKey = TagDict.getInstance().xlate("mkgmap:make-cycle-way");
 	private long lastRoadId = 0; 
+	private int lineCacheId = 0;
 	public void convertWay(final Way way) {
 		if (way.getPoints().size() < 2 || way.getTagCount() == 0){
 			// no tags or no points => nothing to convert
@@ -221,7 +232,7 @@ public class StyledConverter implements OsmConverter {
 		preConvertRules(way);
 
 		housenumberGenerator.addWay(way);
-		String styleFilterTag = way.getTag("mkgmap:stylefilter");
+		String styleFilterTag = way.getTag(styleFilterTagKey);
 		Rule rules;
 		if ("polyline".equals(styleFilterTag))
 			rules = lineRules;
@@ -238,17 +249,17 @@ public class StyledConverter implements OsmConverter {
 		}
 
 		Way cycleWay = null;
-		String cycleWayTag = way.getTag("mkgmap:make-cycle-way");
+		String cycleWayTag = way.getTag(makeCycleWayTagKey);
 		if ("yes".equals(cycleWayTag)){
 			way.deleteTag("mkgmap:make-cycle-way");
 			cycleWay = makeCycleWay(way);
 			way.addTag("bicycle", "no"); // make sure that bicycles are using the added bicycle way 
 		}
 		wayTypeResult.setWay(way);
-		rules.resolveType(way, wayTypeResult);
+		lineCacheId = rules.resolveType(lineCacheId, way, wayTypeResult);
 		if (cycleWay != null){
 			wayTypeResult.setWay(cycleWay);
-			rules.resolveType(cycleWay, wayTypeResult);
+			lineCacheId = rules.resolveType(lineCacheId, cycleWay, wayTypeResult);
 		}
 		if (lastRoadId != way.getId()){
 			// this way was not added to the roads list
@@ -267,29 +278,32 @@ public class StyledConverter implements OsmConverter {
 	}
 
 	private int lineIndex = 0;
+	private final static short onewayTagKey = TagDict.getInstance().xlate("oneway"); 
 	private void addConvertedWay(Way way, GType foundType) {
 		if (foundType.getFeatureKind() == FeatureKind.POLYGON){ 
 			addShape(way, foundType);
 			return;
 		}
 		
-		String oneWay = way.getTag("oneway");
 		boolean wasReversed = false;
-		if("-1".equals(oneWay) || "reverse".equals(oneWay)) {
-			// it's a oneway street in the reverse direction
-			// so reverse the order of the nodes and change
-			// the oneway tag to "yes"
-			way.reverse();
-			wasReversed = true;
-			way.addTag("oneway", "yes");
-		}
+		String oneWay = way.getTag(onewayTagKey);
+		if (oneWay != null){
+			if("-1".equals(oneWay) || "reverse".equals(oneWay)) {
+				// it's a oneway street in the reverse direction
+				// so reverse the order of the nodes and change
+				// the oneway tag to "yes"
+				way.reverse();
+				wasReversed = true;
+				way.addTag(onewayTagKey, "yes");
+			}
 
-		if (way.tagIsLikeYes("oneway")) {
-			way.addTag("oneway", "yes");
-			if (foundType.isRoad() && checkFixmeCoords(way) )
-				way.addTag("mkgmap:dead-end-check", "false");
-		} else 
-			way.deleteTag("oneway");
+			if (way.tagIsLikeYes(onewayTagKey)) {
+				way.addTag(onewayTagKey, "yes");
+				if (foundType.isRoad() && checkFixmeCoords(way) )
+					way.addTag("mkgmap:dead-end-check", "false");
+			} else 
+				way.deleteTag(onewayTagKey);
+		}
 		ConvertedWay cw = new ConvertedWay(lineIndex++, way, foundType);
 		cw.setReversed(wasReversed);
 		if (cw.isRoad()){
@@ -343,6 +357,7 @@ public class StyledConverter implements OsmConverter {
 	}
 	
 
+	private static final short nameTagKey = TagDict.getInstance().xlate("name");  
 	/**
 	 * Rules to run before converting the element.
 	 */
@@ -350,10 +365,13 @@ public class StyledConverter implements OsmConverter {
 		if (nameTagList == null)
 			return;
 
-		for (String t : nameTagList) {
-			String val = el.getTag(t);
+		for (short tagKey : nameTagList) {
+			String val = el.getTag(tagKey);
 			if (val != null) {
-				el.addTag("name", val);
+				if (tagKey != nameTagKey) {
+					// add or replace name 
+					el.addTag(nameTagKey, val);
+				}
 				break;
 			}
 		}
@@ -705,7 +723,7 @@ public class StyledConverter implements OsmConverter {
 			List<Way> wayList = entry.getValue();
 
 			byte exceptMask = AccessTagsAndBits.evalAccessTags(node);
-			Map<Long,CoordNode> otherNodeIds = new LinkedHashMap<>();
+			Map<Integer,CoordNode> otherNodeIds = new LinkedHashMap<>();
 			CoordNode viaNode = null;
 			boolean viaIsUnique = true;
 			for (Way way : wayList) {
@@ -888,11 +906,29 @@ public class StyledConverter implements OsmConverter {
 		collector.addPoint(mp);
 	}
 
+	private static final short[] labelTagKeys = {
+		TagDict.getInstance().xlate("mkgmap:label:1"),
+		TagDict.getInstance().xlate("mkgmap:label:2"),
+		TagDict.getInstance().xlate("mkgmap:label:3"),
+		TagDict.getInstance().xlate("mkgmap:label:4"),
+	};
+	private static final short highResOnlyTagKey = TagDict.getInstance().xlate("mkgmap:highest-resolution-only");
+	private static final short skipSizeFilterTagKey = TagDict.getInstance().xlate("mkgmap:skipSizeFilter");
+
+	private static final short countryTagKey = TagDict.getInstance().xlate("mkgmap:country");
+	private static final short regionTagKey = TagDict.getInstance().xlate("mkgmap:region");
+	private static final short cityTagKey = TagDict.getInstance().xlate("mkgmap:city");
+	private static final short postal_codeTagKey = TagDict.getInstance().xlate("mkgmap:postal_code");
+	private static final short streetTagKey = TagDict.getInstance().xlate("mkgmap:street");
+	private static final short housenumberTagKey = TagDict.getInstance().xlate("mkgmap:housenumber");
+	private static final short phoneTagKey = TagDict.getInstance().xlate("mkgmap:phone");
+	private static final short is_inTagKey = TagDict.getInstance().xlate("mkgmap:is_in");
+	
 	private static void elementSetup(MapElement ms, GType gt, Element element) {
 		String[] labels = new String[4];
 		int noLabels = 0;
-		for (int labelNo = 1; labelNo <= 4; labelNo++) {
-			String label1 = element.getTag("mkgmap:label:"+labelNo);
+		for (int labelNo = 0; labelNo < 4; labelNo++) {
+			String label1 = element.getTag(labelTagKeys[labelNo]);
 			String label = Label.squashSpaces(label1);
 			if (label != null) {
 				labels[noLabels] = label;
@@ -907,24 +943,24 @@ public class StyledConverter implements OsmConverter {
 		ms.setMinResolution(gt.getMinResolution());
 		ms.setMaxResolution(gt.getMaxResolution());
 
-		if (element.tagIsLikeYes("mkgmap:highest-resolution-only")){
+		if (element.tagIsLikeYes(highResOnlyTagKey)){
 			ms.setMinResolution(ms.getMaxResolution());
 		}
 		
-		if (element.tagIsLikeYes("mkgmap:skipSizeFilter") && ms instanceof MapLine){
+		if (ms instanceof MapLine && element.tagIsLikeYes(skipSizeFilterTagKey)){
 			((MapLine)ms).setSkipSizeFilter(true);
 		}
 		
 		// Now try to get some address info for POIs
 		
-		String country      = element.getTag("mkgmap:country");
-		String region       = element.getTag("mkgmap:region");
-		String city         = element.getTag("mkgmap:city");
-		String zip          = element.getTag("mkgmap:postal_code");
-		String street 	    = element.getTag("mkgmap:street");
-		String houseNumber  = element.getTag("mkgmap:housenumber");
-		String phone        = element.getTag("mkgmap:phone");
-		String isIn         = element.getTag("mkgmap:is_in");
+		String country      = element.getTag(countryTagKey);
+		String region       = element.getTag(regionTagKey);
+		String city         = element.getTag(cityTagKey);
+		String zip          = element.getTag(postal_codeTagKey);
+		String street 	    = element.getTag(streetTagKey);
+		String houseNumber  = element.getTag(housenumberTagKey);
+		String phone        = element.getTag(phoneTagKey);
+		String isIn         = element.getTag(is_inTagKey);
 
 		if(country != null)
 			ms.setCountry(country);

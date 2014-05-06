@@ -131,7 +131,7 @@ public class MapDetails implements MapCollector, MapDataSource {
 		return roadNetwork.addRestriction(grr);
 	}
 
-	public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {
+	public void addThroughRoute(int junctionNodeId, long roadIdA, long roadIdB) {
 		roadNetwork.addThroughRoute(junctionNodeId, roadIdA, roadIdB);
 	}
 
@@ -211,7 +211,7 @@ public class MapDetails implements MapCollector, MapDataSource {
 		return ovlist;
 	}
 
-	private void updateOverview(Map<Integer, Integer> overviews, int type, int minResolution) {
+	private static void updateOverview(Map<Integer, Integer> overviews, int type, int minResolution) {
 		Integer prev = overviews.get(type);
 		if (prev == null || minResolution < prev)
 			overviews.put(type, minResolution);

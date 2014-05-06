@@ -26,7 +26,13 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
 public interface Action {
 
 	/**
-	 * Perform the action on the element.
+	 * 
+	 * 
 	 */
-	public void perform(Element el);
+	/**
+	 * Perform the action on the element.
+	 * @param el
+	 * @return true if one or more tags of the element were changed.
+	 */
+	public boolean perform(Element el);
 }

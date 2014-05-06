@@ -18,7 +18,6 @@ import java.util.List;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.trergn.MapObject;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Way;
