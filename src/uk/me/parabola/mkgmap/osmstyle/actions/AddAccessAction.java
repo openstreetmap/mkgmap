@@ -52,7 +52,7 @@ public class AddAccessAction extends ValueBuildedAction {
 		if (accessValue == null) {
 			return false;
 		}
-		for (String accessTag : ACCESS_TAGS.keySet()) {
+		for (Short accessTag : ACCESS_TAGS_COMPILED.keySet()) {
 			setTag(el, accessTag, accessValue);
 		}
 		return true;
@@ -63,15 +63,15 @@ public class AddAccessAction extends ValueBuildedAction {
 	 * is {@code true} the tag is always set. Otherwise the tag
 	 * is set only if it does not already exist.
 	 * @param el OSM element
-	 * @param tag the tag name
+	 * @param tagKey the compiled tag key 
 	 * @param value the value to be set
 	 */
-	private void setTag(Element el, String tag, String value) {
-		String tv = el.getTag(tag);
+	private void setTag(Element el, Short tagKey, String value) {
+		String tv = el.getTag(tagKey);
 		if (tv != null && !modify)
 			return;
 
-		el.addTag(tag, value);
+		el.addTag(tagKey, value);
 	}
 
 	public void setValueTags(Element valueTags) {

@@ -14,9 +14,8 @@ package uk.me.parabola.imgfmt.app.net;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.TagDict;
 
 /**
  * mkgmap internal representation of (vehicle) access.
@@ -55,6 +54,11 @@ public final class AccessTagsAndBits {
 		put("mkgmap:emergency", EMERGENCY);
 	}};
 
+	public final static Map<Short, Byte> ACCESS_TAGS_COMPILED = new LinkedHashMap<Short, Byte>(){{
+		for (Map.Entry<String, Byte> entry : ACCESS_TAGS.entrySet())
+			put(TagDict.getInstance().xlate(entry.getKey()),entry.getValue());
+	}};
+
 	public final static Map<String, Byte> ROUTE_TAGS = new LinkedHashMap<String, Byte>(){{
 		put("mkgmap:throughroute", R_THROUGHROUTE);
 		put("mkgmap:carpool", R_CARPOOL); 
@@ -67,7 +71,7 @@ public final class AccessTagsAndBits {
 
 	public static byte evalAccessTags(Element el){
 		byte noAccess = 0;
-		for (Entry<String, Byte> entry : ACCESS_TAGS.entrySet()){
+		for (Map.Entry<Short,Byte> entry : ACCESS_TAGS_COMPILED.entrySet()){
 			if (el.tagIsLikeNo(entry.getKey()))
 				noAccess |= entry.getValue();
 		}
@@ -75,29 +79,36 @@ public final class AccessTagsAndBits {
 	}
 
 
+	private static final short carpoolTagKey = TagDict.getInstance().xlate("mkgmap:carpool"); 
+	private static final short tollTagKey = TagDict.getInstance().xlate("mkgmap:toll"); 
+	private static final short unpavedTagKey = TagDict.getInstance().xlate("mkgmap:unpaved"); 
+	private static final short ferryTagKey = TagDict.getInstance().xlate("mkgmap:ferry"); 
+	private static final short throughrouteTagKey = TagDict.getInstance().xlate("mkgmap:throughroute"); 
+	private static final short junctionTagKey = TagDict.getInstance().xlate("junction"); 
+	private static final short onewayTagKey = TagDict.getInstance().xlate("oneway"); 
 	public static byte evalRouteTags(Element el){
 		byte routeFlags = 0;
 
 		// Style has to set "yes"
-		if (el.tagIsLikeYes("mkgmap:carpool"))
+		if (el.tagIsLikeYes(carpoolTagKey))
 			routeFlags |= R_CARPOOL;
-		if (el.tagIsLikeYes("mkgmap:toll"))
+		if (el.tagIsLikeYes(tollTagKey))
 			routeFlags |= R_TOLL;
-		if (el.tagIsLikeYes("mkgmap:unpaved"))
+		if (el.tagIsLikeYes(unpavedTagKey))
 			routeFlags |= R_UNPAVED;
-		if (el.tagIsLikeYes("mkgmap:ferry"))
+		if (el.tagIsLikeYes(ferryTagKey))
 			routeFlags |= R_FERRY;
 
 		// Style has to set "no" 
-		if (el.tagIsLikeNo("mkgmap:throughroute")) 
+		if (el.tagIsLikeNo(throughrouteTagKey))
 			routeFlags &= ~R_THROUGHROUTE;
 		else 
 			routeFlags |= R_THROUGHROUTE;
 
 		// tags without the mkgmap: prefix
-		if ("roundabout".equals(el.getTag("junction"))) 
+		if ("roundabout".equals(el.getTag(junctionTagKey))) 
 			routeFlags |= R_ROUNDABOUT;
-		if (el.tagIsLikeYes("oneway"))
+		if (el.tagIsLikeYes(onewayTagKey))
 			routeFlags |= R_ONEWAY;
 
 		return routeFlags;

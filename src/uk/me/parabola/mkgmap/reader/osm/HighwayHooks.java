@@ -108,51 +108,51 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 	}
 
 	public void onCoordAddedToWay(Way way, long id, Coord co) {
+		if (!linkPOIsToWays)
+			return;
+			
 		currentNodeInWay = saver.getNode(id);
+		// if this Coord is also a POI, replace it with an
+		// equivalent CoordPOI that contains a reference to
+		// the POI's Node so we can access the POI's tags
+		if (!(co instanceof CoordPOI) && currentNodeInWay != null) {
+			// for now, only do this for nodes that have
+			// certain tags otherwise we will end up creating
+			// a CoordPOI for every node in the way
+			final String[] coordPOITags = { "barrier", "highway" };
+			for (String cpt : coordPOITags) {
+				if (currentNodeInWay.getTag(cpt) != null) {
+					// the POI has one of the approved tags so
+					// replace the Coord with a CoordPOI
+					CoordPOI cp = new CoordPOI(co);
+					saver.addPoint(id, cp);
 
-		if (linkPOIsToWays) {
-			// if this Coord is also a POI, replace it with an
-			// equivalent CoordPOI that contains a reference to
-			// the POI's Node so we can access the POI's tags
-			if (!(co instanceof CoordPOI) && currentNodeInWay != null) {
-				// for now, only do this for nodes that have
-				// certain tags otherwise we will end up creating
-				// a CoordPOI for every node in the way
-				final String[] coordPOITags = { "barrier", "highway" };
-				for (String cpt : coordPOITags) {
-					if (currentNodeInWay.getTag(cpt) != null) {
-						// the POI has one of the approved tags so
-						// replace the Coord with a CoordPOI
-						CoordPOI cp = new CoordPOI(co);
-						saver.addPoint(id, cp);
-
-						// we also have to jump through hoops to
-						// make a new version of Node because we
-						// can't replace the Coord that defines
-						// its location
-						Node newNode = new Node(id, cp);
-						newNode.copyTags(currentNodeInWay);
-						saver.addNode(newNode);
-						// tell the CoordPOI what node it's
-						// associated with
-						cp.setNode(newNode);
-						co = cp;
-						// if original node is in exits, replace it
-						if (exits.remove(currentNodeInWay))
-							exits.add(newNode);
-						currentNodeInWay = newNode;
-						break;
-					}
+					// we also have to jump through hoops to
+					// make a new version of Node because we
+					// can't replace the Coord that defines
+					// its location
+					Node newNode = new Node(id, cp);
+					newNode.copyTags(currentNodeInWay);
+					saver.addNode(newNode);
+					// tell the CoordPOI what node it's
+					// associated with
+					cp.setNode(newNode);
+					co = cp;
+					// if original node is in exits, replace it
+					if (exits.remove(currentNodeInWay))
+						exits.add(newNode);
+					currentNodeInWay = newNode;
+					break;
 				}
 			}
+		}
 
-			if (co instanceof CoordPOI) {
-				// flag this Way as having a CoordPOI so it
-				// will be processed later
-				way.addTag("mkgmap:way-has-pois", "true");
-				if (log.isInfoEnabled())
-					log.info("Linking POI", currentNodeInWay.toBrowseURL(), "to way at", co.toOSMURL());
-			}
+		if (co instanceof CoordPOI) {
+			// flag this Way as having a CoordPOI so it
+			// will be processed later
+			way.addTag("mkgmap:way-has-pois", "true");
+			if (log.isInfoEnabled())
+				log.info("Linking POI", currentNodeInWay.toBrowseURL(), "to way at", co.toOSMURL());
 		}
 	}
 

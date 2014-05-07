@@ -388,7 +388,7 @@ public class StyledConverter implements OsmConverter {
 		cycleWay.addTag("bicycle", "yes");
 		cycleWay.addTag("foot", "no");
 		cycleWay.addTag("mkgmap:synthesised", "yes");
-		cycleWay.addTag("oneway", "no");
+		cycleWay.addTag(onewayTagKey, "no");
 		return cycleWay;
 	}
 	
@@ -838,7 +838,7 @@ public class StyledConverter implements OsmConverter {
 		line.setPoints(points);
 
 		
-		if (way.tagIsLikeYes("oneway"))
+		if (way.tagIsLikeYes(onewayTagKey))
 			line.setDirection(true);
 
 		clipper.clipLine(line, lineAdder);
@@ -1762,7 +1762,7 @@ public class StyledConverter implements OsmConverter {
 								List<Coord> otherPoints = connectedWay.getPoints();
 								Coord otherFirst = otherPoints.get(0);
 								Coord otherLast = otherPoints.get(otherPoints.size()-1);
-								if (otherFirst == otherLast || connectedWay.tagIsLikeYes("oneway") == false)
+								if (otherFirst == otherLast || connectedWay.tagIsLikeYes(onewayTagKey) == false)
 									isDeadEnd = false;  
 								else {
 									Coord pOther;

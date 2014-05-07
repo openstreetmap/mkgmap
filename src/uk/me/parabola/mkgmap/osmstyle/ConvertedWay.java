@@ -20,6 +20,7 @@ import uk.me.parabola.imgfmt.app.trergn.MapObject;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
+import uk.me.parabola.mkgmap.reader.osm.TagDict;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import static uk.me.parabola.imgfmt.app.net.AccessTagsAndBits.*;
 
@@ -119,12 +120,12 @@ public class ConvertedWay {
 	 * @param el an element 
 	 * @return {@code true} the road class has been changed, else {@code false} 
 	 */
-	
+	private final static short roadClassTagKey = TagDict.getInstance().xlate("mkgmap:road-class");
 	public boolean recalcRoadClass(Element el) {
 		// save the original road class value
 		byte oldRoadClass = roadClass;
 		
-		String val = el.getTag("mkgmap:road-class");
+		String val = el.getTag(roadClassTagKey);
 		if (val != null) {
 			if (val.startsWith("-")) {
 				roadClass -= Byte.decode(val.substring(1));
@@ -163,12 +164,14 @@ public class ConvertedWay {
 	 * @param el an element 
 	 * @return {@code true} the road speed has been changed, else {@code false} 
 	 */
+	private final static short roadSpeedTagKey = TagDict.getInstance().xlate("mkgmap:road-speed");
+	private final static short roadSpeedClassTagKey = TagDict.getInstance().xlate("mkgmap:road-speed-class");
 	public boolean recalcRoadSpeed(Element el) {
 		// save the original road speed value
 		byte oldRoadSpeed = roadSpeed;
 		
 		// check if the road speed is modified
-		String roadSpeedOverride = el.getTag("mkgmap:road-speed-class");
+		String roadSpeedOverride = el.getTag(roadSpeedClassTagKey);
 		if (roadSpeedOverride != null) {
 			try {
 				byte rs = Byte.decode(roadSpeedOverride);
@@ -188,7 +191,7 @@ public class ConvertedWay {
 		}
 		
 		// check if the road speed should be modified more
-		String val = el.getTag("mkgmap:road-speed");
+		String val = el.getTag(roadSpeedTagKey);
 		if(val != null) {
 			if(val.startsWith("-")) {
 				roadSpeed -= Byte.decode(val.substring(1));
