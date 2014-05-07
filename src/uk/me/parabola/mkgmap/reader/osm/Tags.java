@@ -81,22 +81,8 @@ public class Tags implements Iterable<String> {
 
 	public String put(String key, String value) {
 		assert key != null : "key is null";
-		assert value != null : "value is null";
-		ensureSpace();
 		short dictIdx = tagDict.xlate(key);
-		int ind = keyPos(dictIdx);
-		if (ind < 0)
-			assert false : "keyPos(" + key + ") returns null - size = " + keySize + ", capacity = " + capacity;
-		keys[ind] = dictIdx;
-
-		String old = values[ind];
-		if (old == null) {
-			keySize++;
-			size++;
-		}
-		values[ind] = value;;
-
-		return old;
+		return put(dictIdx,value);
 	}
 
 	public String put(short key, String value) {
