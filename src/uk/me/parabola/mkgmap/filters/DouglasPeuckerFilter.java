@@ -85,10 +85,13 @@ public class DouglasPeuckerFilter implements MapFilter {
 		}
 		// Simplify the rest
 		douglasPeucker(coords, 0, endIndex, maxErrorDistance);
-		MapLine newline = line.copy();
-
-		newline.setPoints(coords);
-		next.doFilter(newline);
+		if (coords.size() == points.size())
+			next.doFilter(line); // nothing changed, no need to copy 
+		else {
+			MapLine newline = line.copy();
+			newline.setPoints(coords);
+			next.doFilter(newline);
+		}
 	}
 
 	/**
