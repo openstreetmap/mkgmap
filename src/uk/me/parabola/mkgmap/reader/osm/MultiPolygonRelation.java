@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -42,7 +43,6 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
-import java.util.LinkedHashMap;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -1704,6 +1704,10 @@ public class MultiPolygonRelation extends Relation {
 			JoinedWay potentialOuterPolygon = polygonList.get(rowIndex);
 			BitSet containsColumns = containsMatrix.get(rowIndex);
 			BitSet finishedCol = finishedMatrix.get(rowIndex);
+			
+			// the polygon need to be created only sometimes
+			// so use a lazy creation to improve performance
+			WayAndLazyPolygon lazyPotOuterPolygon = new WayAndLazyPolygon(potentialOuterPolygon);
 
 			// get all non calculated columns of the matrix
 			for (int colIndex = finishedCol.nextClearBit(0); colIndex >= 0
@@ -1715,9 +1719,8 @@ public class MultiPolygonRelation extends Relation {
 				if (potentialOuterPolygon.getBounds().intersects(
 						innerPolygon.getBounds()))
 				{
-					boolean contains = contains(potentialOuterPolygon,
-							innerPolygon);
-
+					boolean contains = contains(lazyPotOuterPolygon, innerPolygon);
+					
 					if (contains) {
 						containsColumns.set(colIndex);
 
@@ -1764,6 +1767,31 @@ public class MultiPolygonRelation extends Relation {
 		}
 	}
 
+	
+	/**
+	 * This is a helper class that creates a high precision polygon for a way 
+	 * on request only.
+	 */
+	private static class WayAndLazyPolygon {
+		private final JoinedWay way;
+		private Polygon polygon;
+		
+		public WayAndLazyPolygon(JoinedWay way) {
+			this.way = way;
+		}
+
+		public final JoinedWay getWay() {
+			return this.way;
+		}
+
+		public final Polygon getPolygon() {
+			if (this.polygon == null) {
+				this.polygon = Java2DConverter.createHighPrecPolygon(this.way.getPoints());
+			}
+			return this.polygon;
+		}
+	}
+	
 	/**
 	 * Checks if the polygon with polygonIndex1 contains the polygon with polygonIndex2.
 	 * 
@@ -1782,17 +1810,16 @@ public class MultiPolygonRelation extends Relation {
 	 *            a 2nd closed way
 	 * @return true if polygon1 contains polygon2
 	 */
-	private boolean contains(JoinedWay polygon1, JoinedWay polygon2) {
-		if (!polygon1.hasIdenticalEndPoints()) {
+	private boolean contains(WayAndLazyPolygon polygon1, JoinedWay polygon2) {
+		if (!polygon1.getWay().hasIdenticalEndPoints()) {
 			return false;
 		}
 		// check if the bounds of polygon2 are completely inside/enclosed the bounds
 		// of polygon1
-		if (!polygon1.getBounds().contains(polygon2.getBounds())) {
+		if (!polygon1.getWay().getBounds().contains(polygon2.getBounds())) {
 			return false;
 		}
 
-		Polygon highPrecPolygon = Java2DConverter.createHighPrecPolygon(polygon1.getPoints());
 		// check first if one point of polygon2 is in polygon1
 
 		// ignore intersections outside the bounding box
@@ -1801,18 +1828,18 @@ public class MultiPolygonRelation extends Relation {
 		boolean onePointContained = false;
 		boolean allOnLine = true;
 		for (Coord px : polygon2.getPoints()) {
-			if (highPrecPolygon.contains(px.getHighPrecLon(), px.getHighPrecLat())){
+			if (polygon1.getPolygon().contains(px.getHighPrecLon(), px.getHighPrecLat())){
 				// there's one point that is in polygon1 and in the bounding
 				// box => polygon1 may contain polygon2
 				onePointContained = true;
-				if (!locatedOnLine(px, polygon1.getPoints())) {
+				if (!locatedOnLine(px, polygon1.getWay().getPoints())) {
 					allOnLine = false;
 					break;
 				}
 			} else if (bbox.contains(px)) {
 				// we have to check if the point is on one line of the polygon1
 				
-				if (!locatedOnLine(px, polygon1.getPoints())) {
+				if (!locatedOnLine(px, polygon1.getWay().getPoints())) {
 					// there's one point that is not in polygon1 but inside the
 					// bounding box => polygon1 does not contain polygon2
 					//allOnLine = false;
@@ -1836,7 +1863,7 @@ public class MultiPolygonRelation extends Relation {
 			}
 			
 			for (Coord px : middlePoints2) {
-				if (highPrecPolygon.contains(px.getHighPrecLon(), px.getHighPrecLat())){
+				if (polygon1.getPolygon().contains(px.getHighPrecLon(), px.getHighPrecLat())){
 					// there's one point that is in polygon1 and in the bounding
 					// box => polygon1 may contain polygon2
 					onePointContained = true;
@@ -1844,7 +1871,7 @@ public class MultiPolygonRelation extends Relation {
 				} else if (bbox.contains(px)) {
 					// we have to check if the point is on one line of the polygon1
 					
-					if (!locatedOnLine(px, polygon1.getPoints())) {
+					if (!locatedOnLine(px, polygon1.getWay().getPoints())) {
 						// there's one point that is not in polygon1 but inside the
 						// bounding box => polygon1 does not contain polygon2
 						return false;
@@ -1858,7 +1885,7 @@ public class MultiPolygonRelation extends Relation {
 			return false;
 		}
 		
-		Iterator<Coord> it1 = polygon1.getPoints().iterator();
+		Iterator<Coord> it1 = polygon1.getWay().getPoints().iterator();
 		Coord p1_1 = it1.next();
 
 		while (it1.hasNext()) {
@@ -1923,7 +1950,7 @@ public class MultiPolygonRelation extends Relation {
 					&& linesCutEachOther(p1_1, p1_2, p2_1, p2_2);
 				
 				if (intersects) {
-					if ((polygon1.isClosedArtificially() && !it1.hasNext())
+					if ((polygon1.getWay().isClosedArtificially() && !it1.hasNext())
 							|| (polygon2.isClosedArtificially() && !it2.hasNext())) {
 						// don't care about this intersection
 						// one of the polygons is closed by this mp code and the
@@ -1944,7 +1971,7 @@ public class MultiPolygonRelation extends Relation {
 						// store them in the intersection polygons set
 						// the error message will be printed out in the end of
 						// the mp handling
-						intersectingPolygons.add(polygon1);
+						intersectingPolygons.add(polygon1.getWay());
 						intersectingPolygons.add(polygon2);
 						return false;
 					}
