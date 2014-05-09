@@ -33,7 +33,7 @@ public class TestSourceTest extends Base {
 	@Test
 	public void testAllElements() {
 		checkNoStdFile();
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				"test-map:all-elements"
 		});
 		checkStdFile();
@@ -44,7 +44,7 @@ public class TestSourceTest extends Base {
 	 */
 	@Test
 	public void testAllPoints() {
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				"test-map:test-points"
 		});
 		checkStdFile();

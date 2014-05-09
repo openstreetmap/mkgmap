@@ -790,8 +790,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
                             [END-RESTRICT]
                          */
                         restriction.setValid(false);
-                        log.info("Restrictions composed\n" +
-                                "from 3 roads are not yet supported\n");
+                        log.info("Restrictions composed from 3 or more roads are not yet supported");
                     }
                 } else if (name.equals("TraffRoads")) {
                     String[] traffRoads = value.split(",");

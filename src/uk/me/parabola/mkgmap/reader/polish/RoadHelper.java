@@ -270,7 +270,7 @@ class RoadHelper {
 			if (f.length > 2)
 				boundary = Integer.parseInt(f[2]) > 0;
 			if (log.isDebugEnabled())
-				log.debug("ind=%d, node=%d, bound=%b\n", index, nodeId, boundary);
+				log.debug("ind=" + index + "node=" + nodeId + "bound=" + boundary);
 		}
 
 		public String toString() {

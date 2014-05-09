@@ -36,7 +36,7 @@ public class SimpleRouteTest extends Base {
 	 */
 	@Test
 	public void testSize() throws FileNotFoundException {
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				Args.TEST_STYLE_ARG,
 				"--route",
 				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz",

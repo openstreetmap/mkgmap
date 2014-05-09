@@ -119,7 +119,7 @@ public class TestUtils {
 		try {
 			System.setOut(out);
 			System.setErr(err);
-			Main.main(args.toArray(new String[args.size()]));
+			Main.mainNoSystemExit(args.toArray(new String[args.size()]));
 		} finally {
 			out.close();
 			err.close();

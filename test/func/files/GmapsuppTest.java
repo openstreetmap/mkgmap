@@ -47,7 +47,7 @@ public class GmapsuppTest extends Base {
 		File f = new File(GMAPSUPP_IMG);
 		assertFalse("does not pre-exist", f.exists());
 
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				Args.TEST_STYLE_ARG,
 				"--gmapsupp",
 				Args.TEST_RESOURCE_IMG + "63240001.img",
@@ -72,7 +72,7 @@ public class GmapsuppTest extends Base {
 	 */
 	@Test
 	public void testMpsFile() throws IOException {
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				Args.TEST_STYLE_ARG,
 				"--gmapsupp",
 				"--family-id=150",
@@ -108,7 +108,7 @@ public class GmapsuppTest extends Base {
 	@Test
 	public void testCombiningSupps() throws IOException {
 		TestUtils.registerFile("g1.img", "g2.img");
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				Args.TEST_STYLE_ARG,
 				"--gmapsupp",
 				"--family-id=150",
@@ -122,7 +122,7 @@ public class GmapsuppTest extends Base {
 		File f = new File("gmapsupp.img");
 		f.renameTo(new File("g1.img"));
 
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				Args.TEST_STYLE_ARG,
 				"--gmapsupp",
 				"--family-id=152",
@@ -134,7 +134,7 @@ public class GmapsuppTest extends Base {
 		});
 		f.renameTo(new File("g2.img"));
 
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				Args.TEST_STYLE_ARG,
 				"--gmapsupp",
 				"g1.img",
@@ -173,7 +173,7 @@ public class GmapsuppTest extends Base {
 	 */
 	@Test
 	public void testDifferentFamilies() throws IOException {
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				Args.TEST_STYLE_ARG,
 				"--gmapsupp",
 
@@ -212,7 +212,7 @@ public class GmapsuppTest extends Base {
 	 */
 	@Test
 	public void testProductBlocks() throws IOException {
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				Args.TEST_STYLE_ARG,
 				"--gmapsupp",
 
@@ -259,7 +259,7 @@ public class GmapsuppTest extends Base {
 	 */
 	@Test
 	public void testProductWithSeveralMaps() throws IOException {
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 						Args.TEST_STYLE_ARG,
 						"--gmapsupp",
 
@@ -279,7 +279,7 @@ public class GmapsuppTest extends Base {
 	@Test
 	public void testWithIndex() throws IOException {
 		new File("osmmap_mdr.img").delete();
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				Args.TEST_STYLE_ARG,
 				"--gmapsupp",
 				"--index",
@@ -315,7 +315,7 @@ public class GmapsuppTest extends Base {
 	public void testWithTwoIndexes() throws IOException {
 		TestUtils.registerFile("osmmap_mdr.img", "osmmap.img", "osmmap.tbd", "osmmap.mdx");
 
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				Args.TEST_STYLE_ARG,
 				"--gmapsupp",
 				"--index",
@@ -355,7 +355,7 @@ public class GmapsuppTest extends Base {
 	public void testTwoFamilyIndex() throws IOException {
 		TestUtils.registerFile("osmmap_mdr.img", "osmmap.img", "osmmap.tbd", "osmmap.mdx");
 
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				Args.TEST_STYLE_ARG,
 				"--gmapsupp",
 				"--index",
@@ -407,14 +407,14 @@ public class GmapsuppTest extends Base {
 	public void testImplicitCodePageIndex() throws IOException {
 		TestUtils.registerFile("osmmap_mdr.img", "osmmap.img", "osmmap.tbd", "osmmap.mdx");
 
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				Args.TEST_STYLE_ARG,
 				"--code-page=1256",
 
 				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz",
 		});
 
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				Args.TEST_STYLE_ARG,
 				"--gmapsupp",
 				"--index",
@@ -442,7 +442,7 @@ public class GmapsuppTest extends Base {
 	public void testWarningOnMismatchedCodePages() throws IOException {
 		TestUtils.registerFile("osmmap.img");
 
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				Args.TEST_STYLE_ARG,
 				"--route",
 				"--code-page=1256",

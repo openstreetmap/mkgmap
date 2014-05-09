@@ -91,6 +91,22 @@ public class Main implements ArgumentProcessor {
 	// used for messages in listStyles and checkStyles
 	private String searchedStyleName;
 
+	private volatile int programRC = 0;
+
+	/**
+	 * Used for unit tests
+	 * @param args
+	 */
+	public static void mainNoSystemExit(String[] args) {
+		Main.mainStart(args);
+	}
+	
+	public static void main(String[] args) {
+		int rc = Main.mainStart(args);
+		if (rc != 0)
+			System.exit(1);
+	}
+	
 	/**
 	 * The main program to make or combine maps.  We now use a two pass process,
 	 * first going through the arguments and make any maps and collect names
@@ -98,36 +114,53 @@ public class Main implements ArgumentProcessor {
 	 *
 	 * @param args The command line arguments.
 	 */
-	public static void main(String[] args) {
+	private static int mainStart(String[] args) {
 		long start = System.currentTimeMillis();
 		System.out.println("Time started: " + new Date());
 		// We need at least one argument.
 		if (args.length < 1) {
 			printUsage();
 			printHelp(System.err, getLang(), "options");
-			return;
+			return 0;
 		}
 
 		Main mm = new Main();
 
+		int numExitExceptions = 0;
 		try {
 			// Read the command line arguments and process each filename found.
 			CommandArgsReader commandArgs = new CommandArgsReader(mm);
 			commandArgs.setValidOptions(getValidOptions(System.err));
 			commandArgs.readArgs(args);
 		} catch (MapFailedException e) {
-			System.err.println(e.getMessage());
+			System.err.println(e.getMessage()); // should not happen
 		} catch (ExitException e) {
+			++numExitExceptions;
 			System.err.println(e.getMessage());
 		}
+		
+		System.out.println("Number of ExitExceptions: " + numExitExceptions);
+		
 		System.out.println("Time finished: " + new Date());
-		System.out.println("Total time taken: " + (System.currentTimeMillis() - start) + "ms"); 
+		System.out.println("Total time taken: " + (System.currentTimeMillis() - start) + "ms");
+		if (numExitExceptions > 0 || mm.getProgramRC() != 0){
+			return 1;
+		}
+		return 0;
 	}
 	
 	private static void printUsage (){
 		System.err.println("Usage: mkgmap [options...] <file.osm>");
 	}
 
+	private void setProgramRC(int rc){
+		programRC = rc;
+	}
+
+	private int getProgramRC(){
+		return programRC;
+	}
+	
 	/**
 	 * Grab the options help file and print it.
 	 * @param err The output print stream to write to.
@@ -420,7 +453,9 @@ public class Main implements ArgumentProcessor {
 
 
 		List<FilenameTask> filenames = new ArrayList<FilenameTask>();
-
+		
+		int numMapFailedExceptions = 0;
+		
 		if (threadPool != null) {
 			threadPool.shutdown();
 			while (!futures.isEmpty()) {
@@ -451,7 +486,9 @@ public class Main implements ArgumentProcessor {
 				} catch (ExitException ee) {
 					throw ee;
 				} catch (MapFailedException mfe) {
-					System.err.println(mfe.getMessage());
+//					System.err.println(mfe.getMessage()); // already printed via log
+					numMapFailedExceptions++;
+					setProgramRC(-1);
 				} catch (Throwable t) {
 					t.printStackTrace();
 					if (!args.getProperties().getProperty("keep-going", false)) {
@@ -460,6 +497,7 @@ public class Main implements ArgumentProcessor {
 				}
 			}
 		}
+		System.out.println("Number of MapFailedExceptions: " + numMapFailedExceptions);
 
 		if (combiners.isEmpty())
 			return;
@@ -574,7 +612,7 @@ public class Main implements ArgumentProcessor {
 	 * @param filename The original filename.
 	 * @return The file extension.
 	 */
-	private String extractExtension(String filename) {
+	private static String extractExtension(String filename) {
 		String[] parts = filename.toLowerCase(Locale.ENGLISH).split("\\.");
 		List<String> ignore = Arrays.asList("gz", "bz2", "bz");
 

@@ -53,7 +53,7 @@ public class SimpleTest extends Base {
 	@Test
 	public void testBasic() throws FileNotFoundException {
 
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				Args.TEST_STYLE_ARG,
 				"--preserve-element-order",
 				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz"
@@ -77,7 +77,7 @@ public class SimpleTest extends Base {
 
 	@Test
 	public void testNoSuchFile() {
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				"no-such-file-xyz.osm",
 		});
 		assertFalse("no file generated", new File(Args.DEF_MAP_FILENAME).exists());
@@ -85,7 +85,7 @@ public class SimpleTest extends Base {
 
 	@Test
 	public void testPolish() throws FileNotFoundException {
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				Args.TEST_STYLE_ARG,
 				Args.TEST_RESOURCE_MP + "test1.mp"
 		});
