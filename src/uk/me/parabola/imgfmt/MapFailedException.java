@@ -67,7 +67,9 @@ public class MapFailedException extends RuntimeException {
 			int callerPosInStack = 3; 
 			String[] caller = stackTraceElements[callerPosInStack].getClassName().split("\\.");
 			thrownBy = "(thrown in " + caller[caller.length-1]+ "." +stackTraceElements[callerPosInStack].getMethodName() + "()) ";
-		} catch(Exception e){}
+		} catch(Exception e){
+			log.info(e);
+		}
 		log.error(thrownBy + message);
 	}
 }

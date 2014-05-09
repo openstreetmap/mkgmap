@@ -237,7 +237,7 @@ public class StyleImpl implements Style {
 			set.addAll(nameTagList);
 
 		// There are a lot of tags that are used within mkgmap that 
-		InputStream is = getClass().getResourceAsStream("/styles/builtin-tag-list");
+		InputStream is = this.getClass().getResourceAsStream("/styles/builtin-tag-list");
 		try {
 			if (is != null) {
 				BufferedReader br = new BufferedReader(new InputStreamReader(is));
