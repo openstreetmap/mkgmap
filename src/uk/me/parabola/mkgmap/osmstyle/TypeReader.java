@@ -123,7 +123,7 @@ public class TypeReader {
 					System.out.println(msg);
 				}
 				if (kind == FeatureKind.POLYLINE && gt.getMinLevel() == 0 && gt.getMaxLevel() >= 0){ 
-					if (GType.isProtectedRoutableLineType(usedType)){
+					if (GType.isSpecialRoutableLineType(usedType)){
 						if (gt.isRoad() == false){
 							String msg = "Warning: routable type " + type  + " is used for non-routable line with level 0. This may break routing. Style file "+ ts.getFileName() + ", line " + ts.getLinenumber();
 							if (fromOverlays)
