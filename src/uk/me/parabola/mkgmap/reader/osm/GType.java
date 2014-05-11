@@ -217,11 +217,18 @@ public class GType {
 	/**
 	 * 
 	 * @param type the type value
-	 * @return true if the type is known as routable.
+	 * @return true if the type is can be used for routable lines
 	 */
 	public static boolean isRoutableLineType(int type){
-		//return type >= 0x01 && type <= 0x13 || type == 0x1a || type == 0x1b || type == 0x16;
 		return type >= 0x01 && type <= 0x3f;
+	}
+	/**
+	 * 
+	 * @param type the type value
+	 * @return true if the type is known as routable in Garmin maps.
+	 */
+	public static boolean isProtectedRoutableLineType(int type){
+		return type >= 0x01 && type <= 0x09;
 	}
 	
 	/**

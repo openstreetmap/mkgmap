@@ -20,6 +20,7 @@ import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 import java.util.ArrayList;
 
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -215,6 +216,7 @@ public class StyledConverter implements OsmConverter {
 	private final static short makeCycleWayTagKey = TagDict.getInstance().xlate("mkgmap:make-cycle-way");
 	private long lastRoadId = 0; 
 	private int lineCacheId = 0;
+	private BitSet routingWarningWasPrinted = new BitSet();
 	public void convertWay(final Way way) {
 		if (way.getPoints().size() < 2 || way.getTagCount() == 0){
 			// no tags or no points => nothing to convert
@@ -260,8 +262,18 @@ public class StyledConverter implements OsmConverter {
 			// which have to be skipped by WrongAngleFixer
 			for (int i = lines.size()-1; i >= 0; --i){
 				ConvertedWay cw = lines.get(i); 
-				if (cw.getWay().getId() == way.getId())
+				if (cw.getWay().getId() == way.getId()){
 					cw.setOverlay(true);
+					int lineType = cw.getGType().getType();
+					if (GType.isProtectedRoutableLineType(lineType)){
+						if (!routingWarningWasPrinted.get(lineType)){
+							log.error("routable type", GType.formatType(cw.getGType().getType()),
+							"is used with a non-routable way which was also added as a routable way. This leads to routing errors.",
+							"Try --check-styles to check the style.");
+							routingWarningWasPrinted.set(lineType);
+						}
+					}
+				}
 				else 
 					break;
 			}
