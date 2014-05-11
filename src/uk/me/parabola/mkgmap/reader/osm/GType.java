@@ -223,12 +223,13 @@ public class GType {
 		return type >= 0x01 && type <= 0x3f;
 	}
 	/**
-	 * 
+	 *  
 	 * @param type the type value
-	 * @return true if the type is known as routable in Garmin maps.
+	 * @return true if the type is known as routable in Garmin maps. These are 
+	 * known to cause routing errors if used for non-routable lines. 
 	 */
-	public static boolean isProtectedRoutableLineType(int type){
-		return type >= 0x01 && type <= 0x09;
+	public static boolean isSpecialRoutableLineType(int type){
+		return type >= 0x01 && type <= 0x13 || type == 0x16 || type == 0x1b; 
 	}
 	
 	/**
