@@ -497,7 +497,7 @@ public class StyledConverter implements OsmConverter {
 		
 		for (ConvertedWay cw : lines){
 			if (cw.isValid())
-				addLine(cw.getWay(), cw.getType());
+				addLine(cw.getWay(), cw.getGType());
 		}
 		lines = null;
 		if (roadLog.isInfoEnabled()) {
@@ -1311,7 +1311,7 @@ public class StyledConverter implements OsmConverter {
 
 	private void addRoadWithoutLoops(ConvertedWay cw) {
 		Way way = cw.getWay();
-		GType gt = cw.getType();
+		GType gt = cw.getGType();
 		List<Integer> nodeIndices = new ArrayList<>();
 		List<Coord> points = way.getPoints();
 		Way trailingWay = null;
@@ -1453,7 +1453,7 @@ public class StyledConverter implements OsmConverter {
 		}
 
 		MapLine line = new MapLine();
-		elementSetup(line, cw.getType(), way);
+		elementSetup(line, cw.getGType(), way);
 		line.setPoints(points);
 		MapRoad road = new MapRoad(way.getId(), line);
 
@@ -1818,7 +1818,7 @@ public class StyledConverter implements OsmConverter {
 							}
 							if (typeNoConnection != -1 ){
 								log.info("road not connected to other roads, added as line with type", replType + ":", way.toBrowseURL());
-								addLine(way, cw.getType(), typeNoConnection);
+								addLine(way, cw.getGType(), typeNoConnection);
 							} else {
 								log.warn("road not connected to other roads, but replacement type is invalid. Dropped:", way.toBrowseURL());
 							}

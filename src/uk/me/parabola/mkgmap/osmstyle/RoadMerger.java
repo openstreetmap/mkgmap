@@ -406,7 +406,7 @@ public class RoadMerger {
 		}
 
 		// check if certain fields in the GType objects are the same
-		if (isGTypeMergeable(road1.getType(), road2.getType()) == false) {
+		if (isGTypeMergeable(road1.getGType(), road2.getGType()) == false) {
 			return false;
 		}
 

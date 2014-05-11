@@ -83,7 +83,7 @@ public class ConvertedWay {
 		return index;
 	}
 	
-	public GType getType(){
+	public GType getGType(){
 		return gt;
 	}
 
@@ -232,7 +232,7 @@ public class ConvertedWay {
 	}
 	
 	public String toString(){
-		return getType() + " " + getWay().getId() + " " + getWay().toTagString();
+		return getGType() + " " + getWay().getId() + " " + getWay().toTagString();
 
 	}
 	
