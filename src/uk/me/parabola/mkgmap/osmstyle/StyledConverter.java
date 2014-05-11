@@ -265,7 +265,7 @@ public class StyledConverter implements OsmConverter {
 				if (cw.getWay().getId() == way.getId()){
 					cw.setOverlay(true);
 					int lineType = cw.getGType().getType();
-					if (GType.isProtectedRoutableLineType(lineType)){
+					if (GType.isProtectedRoutableLineType(lineType) && cw.getGType().getMinLevel() == 0){
 						if (!routingWarningWasPrinted.get(lineType)){
 							log.error("routable type", GType.formatType(cw.getGType().getType()),
 							"is used with a non-routable way which was also added as a routable way. This leads to routing errors.",
