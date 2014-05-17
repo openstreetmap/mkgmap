@@ -58,6 +58,12 @@ public class SortExpandTest {
 		assertEquals(0, compareKey("asssst", "asßst"));
 	}
 
+	@Test
+	public void testExpandSize() {
+		// make sure buffer doesn't overflow when all characters are expanded.
+		assertEquals(0, compareKey("……………………", "……………………"));
+	}
+
 	private int compareKey(String s1, String s2) {
 		SortKey<Object> key1 = sort.createSortKey(null, s1);
 		SortKey<Object> key2 = sort.createSortKey(null, s2);
