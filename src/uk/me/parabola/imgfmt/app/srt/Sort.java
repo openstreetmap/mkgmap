@@ -66,6 +66,7 @@ public class Sort {
 	private int maxExpSize = 1;
 
 	private CharsetEncoder encoder;
+	private boolean multi;
 
 	public Sort() {
 		pages[0] = new Page();
@@ -396,7 +397,7 @@ public class Sort {
 	 * @param inFlags The initial flags, eg if it is a letter or not.
 	 * @param expansionList The letters that this letter sorts as, as code points in the codepage.
 	 */
-	public void addExpansion(byte bval, int inFlags, List<Byte> expansionList) {
+	public void addExpansion(int bval, int inFlags, List<Integer> expansionList) {
 		int idx = bval & 0xff;
 		setFlags(idx, (byte) ((inFlags & 0xf) | (((expansionList.size()-1) << 4) & 0x30)));
 
@@ -409,7 +410,7 @@ public class Sort {
 		setTertiary(idx, 0);
 		maxExpSize = Math.max(maxExpSize, expansionList.size());
 
-		for (Byte b : expansionList) {
+		for (Integer b : expansionList) {
 			CodePosition cp = new CodePosition();
 			cp.setPrimary((byte) getPrimary(b & 0xff));
 
@@ -475,6 +476,14 @@ public class Sort {
 			break;
 		}
 		return charset;
+	}
+
+	public void setMulti(boolean multi) {
+		this.multi = multi;
+	}
+
+	public boolean isMulti() {
+		return multi;
 	}
 
 	private static class Page {
