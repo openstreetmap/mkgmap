@@ -67,12 +67,14 @@ public class Sort {
 
 	private CharsetEncoder encoder;
 	private boolean multi;
+	private int maxPage;
 
 	public Sort() {
 		pages[0] = new Page();
 	}
 
 	public void add(int ch, int primary, int secondary, int tertiary, int flags) {
+		ensurePage(ch >>> 8);
 		if (getPrimary(ch) != 0)
 			throw new ExitException(String.format("Repeated primary index 0x%x", ch & 0xff));
 		setPrimary (ch, primary);
@@ -505,6 +507,21 @@ public class Sort {
 
 	public int writePos(int type, int ch, byte[] outkey, int start) {
 		return pages[ch >>> 8].writePos(type, ch, outkey, start);
+	}
+
+	/**
+	 * Ensure that the given page exists in the page array.
+	 *
+	 * @param n The page index.
+	 */
+	private void ensurePage(int n) {
+		assert n == 0 || isMulti();
+		if (this.pages[n] == null)
+			if (this.pages[n] == null) {
+				this.pages[n] = new Page();
+				if (n > maxPage)
+					maxPage = n;
+			}
 	}
 
 	private static class Page {
