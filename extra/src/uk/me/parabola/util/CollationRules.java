@@ -13,18 +13,21 @@
 package uk.me.parabola.util;
 
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
-import java.util.Arrays;
 import java.util.Formatter;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.ibm.icu.text.CollationElementIterator;
 import com.ibm.icu.text.Collator;
@@ -65,11 +68,10 @@ public class CollationRules {
 			isUnicode = true;
 		decoder = charset.newDecoder();
 
-		List<Integer> blocks = Arrays.asList(0);
 		if (isUnicode)
-			blocks = Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7);
-		for (int block : blocks)
-			addBlock(col, block);
+			addUnicode();
+		else
+			addBlock(col, 0);
 
 		printCharMap();
 		printExpansions();
@@ -80,7 +82,7 @@ public class CollationRules {
 			int ch = (block << 8) + i;
 			String testString = getString(ch);
 			char conv = testString.charAt(0);
-			if (Character.getType(conv) == Character.UNASSIGNED || conv == 65533)
+			if (Character.getType(conv) == Character.UNASSIGNED || conv == 0xfffd)
 				continue;
 			CollationElementIterator it = col.getCollationElementIterator(testString);
 
@@ -93,11 +95,12 @@ public class CollationRules {
 					cp = new CharPosition(ch);
 					cp.setOrder(next);
 				} else {
-					if (next > 0xffff) {
+					assert index < 3;
+					if ((next & 0xffff0000) == 0) {
+						cp.addOrder(next, index);
+					} else {
 						cp.addChar(new CharPosition(ch));
 						cp.setOrder(next);
-					} else {
-						cp.addOrder(next, index);
 					}
 				}
 
@@ -116,6 +119,66 @@ public class CollationRules {
 		}
 	}
 
+	private void addUnicode() {
+		Pattern pat = Pattern.compile("([0-9A-F]{4,5}) ? ; \\[[.*](.*)\\] #.*");
+		try (FileReader r = new FileReader("allkeys.txt")) {
+			try (BufferedReader br = new BufferedReader(r)) {
+				String line;
+				while ((line = br.readLine()) != null) {
+					Matcher matcher = pat.matcher(line);
+					if (matcher.matches()) {
+						String weights = matcher.group(2);
+						int ch = Integer.parseInt(matcher.group(1), 16);
+						if (ch > 0xffff)
+							continue;
+
+						System.out.printf("# %04x %s ", ch, fmtChar(ch));
+
+						String[] split = weights.split("]\\[[.*]");
+
+						int index = 0;
+						CharPosition cp = new CharPosition(0);
+
+						for (String s : split) {
+							String[] ws = s.split("\\.");
+							int next = Integer.parseInt(ws[0], 16) << 16
+									| ((Integer.parseInt(ws[1], 16) << 8) & 0xff00)
+									| ((Integer.parseInt(ws[2], 16)) & 0xff);
+
+							if (index == 0) {
+								cp = new CharPosition(ch);
+								cp.setOrder(next);
+							} else {
+								if ((next & 0xffff0000) == 0) {
+									cp.addOrder(next, index);
+								} else {
+									cp.addChar(new CharPosition(ch));
+									cp.setOrder(next);
+								}
+							}
+							index++;
+						}
+
+						System.out.printf(" %s %d\n", cp, Character.getType(cp.getUnicode()));
+
+						tweak(cp);
+						if (ch > 0)
+							positionMap.add(cp);
+						if (cp.nextChar == null) {
+							basePositionMap.add(cp);
+							charMap.put((char) ch, cp);
+						}
+					} else {
+						System.out.println("# NOMATCH: " + line);
+					}
+				}
+
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 	/**
 	 * Fix up a few characters that we always want to be in well known places.
 	 *
@@ -125,33 +188,30 @@ public class CollationRules {
 		if (cp.val < 8)
 			cp.third = cp.val + 7;
 
+		if (!isUnicode) {
+			switch (cp.getUnicode()) {
+			case '¼':
+				cp.nextChar = charMap.get('/').copy();
+				cp.nextChar.nextChar = charMap.get('4');
+				break;
+			case '½':
+				cp.nextChar = charMap.get('/').copy();
+				cp.nextChar.nextChar = charMap.get('2');
+				break;
+			case '¾':
+				cp.nextChar = charMap.get('/').copy();
+				cp.nextChar.nextChar = charMap.get('4');
+				break;
+			}
+		}
+
 		switch (cp.getUnicode()) {
-		case '¼':
-			cp.nextChar = charMap.get('/').copy();
-			cp.nextChar.nextChar = charMap.get('4');
-			break;
-		case '½':
-			cp.nextChar = charMap.get('/').copy();
-			cp.nextChar.nextChar = charMap.get('2');
-			break;
-		case '¾':
-			cp.nextChar = charMap.get('/').copy();
-			cp.nextChar.nextChar = charMap.get('4');
-			break;
 		case '˜':
 			CharPosition tilde = charMap.get('~');
 			cp.first = tilde.first;
 			cp.second = tilde.second + 1;
 			cp.third = tilde.third + 1;
 			cp.nextChar = null;
-			break;
-		case '™':
-			CharPosition o = charMap.get('T');
-			cp.first = o.first;
-			cp.second = o.second;
-			cp.third = o.third;
-			cp.nextChar = charMap.get('M').copy();
-			System.out.println("TM as " + cp);
 			break;
 		}
 	}
@@ -198,30 +258,35 @@ public class CollationRules {
 			if (!cp.isExpansion())
 				continue;
 
+			Formatter fmt = new Formatter();
+
 			//noinspection MalformedFormatString
-			System.out.printf("expand %c to ", cp.getUnicode());
+			fmt.format("expand %c to", cp.getUnicode());
 
+			boolean ok = true;
 			for (CharPosition cp2 = cp; cp2 != null; cp2 = cp2.nextChar) {
-				cp2.second &= 0xff0000;
-				cp2.third = cp2.third >= 0x8f0000 ? 0x8f0000 - 1 : 0x000000;
+				cp2.second = 0x50000;
+				int top = (cp2.third >> 16) & 0xff;
+				cp2.third = (top == 0x9e || top == 0xa2 || top == 0x2b) ? 0x9b0000 : 0;
+
 				CharPosition floor = basePositionMap.ceiling(cp2);
-				if (floor == null) {
-					System.out.printf(" NF");
-					continue;
+				if (floor == null || floor.getUnicode() == 0xfffd) {
+					fmt.format(" NF");
+					ok = false;
+				} else {
+					fmt.format(" %s", fmtChar(floor.getUnicode()));
 				}
-				System.out.printf(" %s", fmtChar(floor.getUnicode()));
 			}
-			System.out.println();
 
+			System.out.println((ok ? "" : "# ") + fmt.toString());
+
+			// Print comments to help find problems.
 			for (CharPosition cp2 = cp; cp2 != null; cp2 = cp2.nextChar) {
-				cp2.second &= 0xff0000;
-				cp2.third = cp2.third>=0x8f0000? 0x8f0000: 0x000000;
 				CharPosition floor = basePositionMap.ceiling(cp2);
 				if (floor == null) {
 					System.out.println("#FIX: NF ref=" + cp2);
 				} else {
-					//System.out.println("floor is " + fmtChar(toUnicode(floor.val)) + ", " +
-					//		"" + floor + ", ref is " + cp2);
+					System.out.println("#floor is " + fmtChar(toUnicode(floor.val)) + ", " + floor + ", ref is " + cp2);
 				}
 			}
 		}
@@ -336,7 +401,7 @@ public class CollationRules {
 		}
 
 		public void addOrder(int next, int count) {
-			assert ((next >> 16) & 0xffff) == 0;
+			assert ((next >>> 16) & 0xffff) == 0;
 			if (this.nextChar != null) {
 				this.nextChar.addOrder(next, count);
 				return;
