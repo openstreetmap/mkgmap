@@ -99,11 +99,11 @@ public class Sort {
 
 			for (int i = 0; i < 256; i++) {
 				if (((p.flags[i] >>> 4) & 0x3) == 0) {
-					if (p.primary[i] != 0) {
-						byte second = p.secondary[i];
+					if (p.getPrimary(i) != 0) {
+						byte second = p.getSecondary(i);
 						maxSecondary = Math.max(maxSecondary, second);
 						if (second != 0) {
-							maxTertiary = Math.max(maxTertiary, p.tertiary[i]);
+							maxTertiary = Math.max(maxTertiary, p.getTertiary(i));
 						}
 					}
 				}
@@ -117,13 +117,13 @@ public class Sort {
 			for (int i = 0; i < 256; i++) {
 				if (((p.flags[i] >>> 4) & 0x3) != 0) continue;
 
-				if (p.primary[i] == 0) {
-					if (p.secondary[i] == 0) {
-						if (p.tertiary[i] != 0) {
-							p.tertiary[i] += maxTertiary;
+				if (p.getPrimary(i) == 0) {
+					if (p.getSecondary(i) == 0) {
+						if (p.getTertiary(i) != 0) {
+							p.setTertiary(i, p.getTertiary(i) + maxTertiary);
 						}
 					} else {
-						p.secondary[i] += maxSecondary;
+						p.setSecondary(i, p.getSecondary(i) + maxSecondary);
 					}
 				}
 			}
@@ -188,7 +188,7 @@ public class Sort {
 				fillCompleteKey(bval, key);
 			} catch (ArrayIndexOutOfBoundsException e) {
 				// Ok try again with the max possible key size allocated.
-				key = new byte[bval.length * 3 * maxExpSize + 3];
+				key = new byte[bval.length * 4 * maxExpSize + 4];
 				fillCompleteKey(bval, key);
 			}
 
@@ -201,6 +201,17 @@ public class Sort {
 		}
 	}
 
+	/**
+	 * Create a sort key based on a Label.
+	 *
+	 * The label will contain the actual characters (after transliteration for example)
+	 * @param object This is saved in the sort key for later retrieval and plays no part in the sorting.
+	 * @param label The label, the actual written bytes/chars will be used as input to the sort.
+	 * @param second Secondary sort key.
+	 * @param cache A cache for the created keys. This is for saving memory so it is essential that this
+	 * is managed by the caller.
+	 * @return A sort key.
+	 */
 	public <T> SortKey<T> createSortKey(T object, Label label, int second, Map<Label, byte[]> cache) {
 		byte[] key;
 		if (cache != null) {
@@ -266,13 +277,13 @@ public class Sort {
 	/**
 	 * Fill in the key from the given byte string.
 	 *
-	 * @param bval The string for which we are creating the sort key.
+	 * @param bVal The string for which we are creating the sort key.
 	 * @param key The sort key. This will be filled in.
 	 */
-	private void fillCompleteKey(byte[] bval, byte[] key) {
-		int start = fillKey(Collator.PRIMARY, pages[0].primary, bval, key, 0);
-		start = fillKey(Collator.SECONDARY, pages[0].secondary, bval, key, start);
-		fillKey(Collator.TERTIARY, pages[0].tertiary, bval, key, start);
+	private void fillCompleteKey(byte[] bVal, byte[] key) {
+		int start = fillKey(Collator.PRIMARY, pages[0], bVal, key, 0);
+		start = fillKey(Collator.SECONDARY, pages[0], bVal, key, start);
+		fillKey(Collator.TERTIARY, pages[0], bVal, key, start);
 	}
 
 	/**
@@ -284,46 +295,51 @@ public class Sort {
 	 * @param start The index into the output key to start at.
 	 * @return The next position in the output key.
 	 */
-	private int fillKey(int type, byte[] sortPositions, byte[] input, byte[] outKey, int start) {
+	private int fillKey(int type, Page sortPositions, byte[] input, byte[] outKey, int start) {
 		int index = start;
 		for (byte inb : input) {
 			int b = inb & 0xff;
 
 			int exp = (getFlags(b) >> 4) & 0x3;
 			if (exp == 0) {
-				byte pos = sortPositions[b];
-				if (pos != 0)
-					outKey[index++] = pos;
+				index = sortPositions.writePos(type, (byte) b, outKey, index);
 			} else {
 				// now have to redirect to a list of input chars, get the list via the primary value always.
 				int idx = getPrimary(b);
 				//List<CodePosition> list = expansions.get(idx-1);
 
 				for (int i = idx - 1; i < idx + exp; i++) {
-					byte pos = expansions.get(i).getPosition(type);
-					if (pos != 0)
-						outKey[index++] = pos;
+					int pos = expansions.get(i).getPosition(type);
+					if (pos != 0) {
+						if (type == Collator.PRIMARY)
+							outKey[index++] = (byte) ((pos>>>8) & 0xff);
+						outKey[index++] = (byte) pos;
+					}
 				}
 			}
 		}
 
+		if (type == Collator.PRIMARY)
+			outKey[index++] = '\0';
 		outKey[index++] = '\0';
 		return index;
 	}
 
 	public int getPrimary(int ch) {
-		return this.pages[ch >>> 8].primary[ch & 0xff];
+		return this.pages[ch >>> 8].getPrimary(ch);
 	}
 
 	public int getSecondary(int ch) {
-		return this.pages[ch >>> 8].secondary[ch & 0xff];
+		return this.pages[ch >>> 8].getSecondary(ch);
 	}
 
 	public int getTertiary(int ch) {
-		return this.pages[ch >>> 8].tertiary[ch & 0xff];
+		return this.pages[ch >>> 8].getTertiary(ch);
 	}
 
 	public byte getFlags(int ch) {
+		assert ch > 0;
+		assert ch < 256 : "char " + ch;
 		return this.pages[ch >>> 8].flags[ch & 0xff];
 	}
 
@@ -393,12 +409,12 @@ public class Sort {
 	 * The case were two letters sort as if the were just one (and more complex cases) are
 	 * not supported or are unknown to us.
 	 *
-	 * @param bval The code point of this letter in the code page.
+	 * @param bVal The code point of this letter in the code page.
 	 * @param inFlags The initial flags, eg if it is a letter or not.
 	 * @param expansionList The letters that this letter sorts as, as code points in the codepage.
 	 */
-	public void addExpansion(int bval, int inFlags, List<Integer> expansionList) {
-		int idx = bval & 0xff;
+	public void addExpansion(int bVal, int inFlags, List<Integer> expansionList) {
+		int idx = bVal & 0xff;
 		setFlags(idx, (byte) ((inFlags & 0xf) | (((expansionList.size()-1) << 4) & 0x30)));
 
 		// Check for repeated definitions
@@ -412,7 +428,7 @@ public class Sort {
 
 		for (Integer b : expansionList) {
 			CodePosition cp = new CodePosition();
-			cp.setPrimary((byte) getPrimary(b & 0xff));
+			cp.setPrimary((char) getPrimary(b & 0xff));
 
 			// Currently sort without secondary or tertiary differences to the base letters.
 			cp.setSecondary((byte) getSecondary(b & 0xff));
@@ -442,15 +458,15 @@ public class Sort {
 	}
 
 	private void setPrimary(int ch, int val) {
-		this.pages[ch >>> 8].primary[ch & 0xff] = (byte) val;
+		this.pages[ch >>> 8].setPrimary(ch, val);
 	}
 
 	private void setSecondary(int ch, int val) {
-		this.pages[ch >>> 8].secondary[ch & 0xff] = (byte) val;
+		this.pages[ch >>> 8].setSecondary(ch, val);
 	}
 
 	private void setTertiary(int ch, int val) {
-		this.pages[ch >>> 8].tertiary[ch & 0xff] = (byte) val;
+		this.pages[ch >>> 8].setTertiary(ch, val);
 	}
 
 	private void setFlags(int ch, int val) {
@@ -486,11 +502,67 @@ public class Sort {
 		return multi;
 	}
 
+	public int getPos(int type, int ch) {
+		return pages[ch >>> 8].getPos(type, ch);
+	}
+
+	public int writePos(int type, int ch, byte[] outkey, int start) {
+		return pages[ch >>> 8].writePos(type, ch, outkey, start);
+	}
+
 	private static class Page {
-		private final byte[] primary = new byte[256];
+		private final char[] primary = new char[256];
 		private final byte[] secondary = new byte[256];
 		private final byte[] tertiary = new byte[256];
 		private final byte[] flags = new byte[256];
+
+		char getPrimary(int ch) {
+			return primary[ch & 0xff];
+		}
+
+		void setPrimary(int ch, int val) {
+			primary[ch & 0xff] = (char) val;
+		}
+
+		byte getSecondary(int ch) {
+			return secondary[ch & 0xff];
+		}
+
+		void setSecondary(int ch, int val) {
+			secondary[ch & 0xff] = (byte) val;
+		}
+
+		byte getTertiary(int ch) {
+			return tertiary[ch & 0xff];
+		}
+
+		void setTertiary(int ch, int val) {
+			tertiary[ch & 0xff] = (byte) val;
+		}
+
+		public int getPos(int type, int b) {
+			switch (type) {
+			case Collator.PRIMARY:
+				return getPrimary(b) & 0xffff;
+			case Collator.SECONDARY:
+				return getSecondary(b) & 0xff;
+			case Collator.TERTIARY:
+				return getTertiary(b) & 0xff;
+			default:
+				assert false : "bad collation type passed";
+				return 0;
+			}
+		}
+
+		public int writePos(int type, int b, byte[] outKey, int start) {
+			int pos = getPos(type, b);
+			if (pos != 0) {
+				if (type == Collator.PRIMARY)
+					outKey[start++] = (byte) ((pos >> 8) & 0xff); // for 2 byte charsets
+				outKey[start++] = (byte) (pos & 0xff);
+			}
+			return start;
+		}
 	}
 
 	/**
@@ -511,22 +583,28 @@ public class Sort {
 		public int compare(String source, String target) {
 			CharBuffer in1 = CharBuffer.wrap(source);
 			CharBuffer in2 = CharBuffer.wrap(target);
-			byte[] bytes1;
-			byte[] bytes2;
+			char[] chars1;
+			char[] chars2;
 			try {
-				bytes1 = encoder.encode(in1).array();
-				bytes2 = encoder.encode(in2).array();
+				byte[] bytes1 = encoder.encode(in1).array();
+				byte[] bytes2 = encoder.encode(in2).array();
+				chars1 = new char[bytes1.length];
+				for (int i = 0; i < bytes1.length; i++)
+					chars1[i] = (char) (bytes1[i] & 0xff);
+				chars2 = new char[bytes2.length];
+				for (int i = 0; i < bytes2.length; i++)
+					chars2[i] = (char) (bytes2[i] & 0xff);
 			} catch (CharacterCodingException e) {
 				throw new ExitException("character encoding failed unexpectedly", e);
 			}
 
 			int strength = getStrength();
-			int res = compareOneStrength(bytes1, bytes2, pages[0].primary, Collator.PRIMARY);
+			int res = compareOneStrength(chars1, chars2, pages[0], Collator.PRIMARY);
 
 			if (res == 0 && strength != PRIMARY) {
-				res = compareOneStrength(bytes1, bytes2, pages[0].secondary, Collator.SECONDARY);
+				res = compareOneStrength(chars1, chars2, pages[0], Collator.SECONDARY);
 				if (res == 0 && strength != SECONDARY) {
-					res = compareOneStrength(bytes1, bytes2, pages[0].tertiary, Collator.TERTIARY);
+					res = compareOneStrength(chars1, chars2, pages[0], Collator.TERTIARY);
 				}
 			}
 
@@ -535,16 +613,16 @@ public class Sort {
 
 		/**
 		 * Compare the bytes against primary, secondary or tertiary arrays.
-		 * @param bytes1 Bytes for the first string in the codepage encoding.
-		 * @param bytes2 Bytes for the second string in the codepage encoding.
+		 * @param char1 Bytes for the first string in the codepage encoding.
+		 * @param char2 Bytes for the second string in the codepage encoding.
 		 * @param typePositions The strength array to use in the comparison.
 		 * @return Comparison result -1, 0 or 1.
 		 */
-		private int compareOneStrength(byte[] bytes1, byte[] bytes2, byte[] typePositions, int type) {
+		private int compareOneStrength(char[] char1, char[] char2, Page typePositions, int type) {
 			int res = 0;
 
-			PositionIterator it1 = new PositionIterator(bytes1, typePositions, type);
-			PositionIterator it2 = new PositionIterator(bytes2, typePositions, type);
+			PositionIterator it1 = new PositionIterator(char1, typePositions, type);
+			PositionIterator it2 = new PositionIterator(char2, typePositions, type);
 
 			while (it1.hasNext() || it2.hasNext()) {
 				int p1 = it1.next();
@@ -581,8 +659,8 @@ public class Sort {
 		}
 
 		class PositionIterator implements Iterator<Integer> {
-			private final byte[] bytes;
-			private final byte[] sortPositions;
+			private final char[] bytes;
+			private final Page sortPositions;
 			private final int len;
 			private final int type;
 
@@ -592,10 +670,10 @@ public class Sort {
 			private int expEnd;
 			private int expPos;
 
-			PositionIterator(byte[] bytes, byte[] sortPositions, int type) {
-				this.bytes = bytes;
+			PositionIterator(char[] chars, Page sortPositions, int type) {
+				this.bytes = chars;
 				this.sortPositions = sortPositions;
-				this.len = bytes.length;
+				this.len = chars.length;
 				this.type = type;
 			}
 
@@ -621,23 +699,23 @@ public class Sort {
 						}
 
 						// Get the first non-ignorable at this level
-						byte b = bytes[(pos++ & 0xff)];
-						next = sortPositions[b & 0xff] & 0xff;
-						int nExpand = (getFlags(b & 0xff) >> 4) & 0x3;
+						int b = bytes[(pos++ & 0xff)];
+						next = sortPositions.getPos(type, b);
+						int nExpand = (getFlags(b) >> 4) & 0x3;
 
 						// Check if this is an expansion.
 						if (nExpand > 0) {
-							expStart = getPrimary(b & 0xff) - 1;
+							expStart = getPrimary(b) - 1;
 							expEnd = expStart + nExpand;
 							expPos = expStart;
-							next = expansions.get(expPos).getPosition(type) & 0xff;
+							next = expansions.get(expPos).getPosition(type);
 
 							if (++expPos > expEnd)
 								expPos = 0;
 						}
 					} while (next == 0);
 				} else {
-					next = expansions.get(expPos).getPosition(type) & 0xff;
+					next = expansions.get(expPos).getPosition(type);
 					if (++expPos > expEnd)
 						expPos = 0;
 				}

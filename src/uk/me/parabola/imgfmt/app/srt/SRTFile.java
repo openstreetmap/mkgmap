@@ -101,7 +101,7 @@ public class SRTFile extends ImgFile {
 		int size = sort.getExpansionSize();
 		for (int j = 1; j <= size; j++) {
 			CodePosition b = sort.getExpansion(j);
-			writer.put(b.getPrimary());
+			writer.put((byte) b.getPrimary());
 			writer.put((byte) ((b.getTertiary() << 4) | (b.getSecondary() & 0xf)));
 		}
 
