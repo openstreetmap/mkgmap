@@ -183,12 +183,12 @@ public class Sort {
 			//
 			// We need +1 for the null bytes, we also +2 for a couple of expanded characters. For a complete
 			// german map this was always enough in tests.
-			key = new byte[(bval.length + 1 + 2) * 3];
+			key = new byte[(bval.length + 1 + 2) * 4];
 			try {
 				fillCompleteKey(bval, key);
 			} catch (ArrayIndexOutOfBoundsException e) {
 				// Ok try again with the max possible key size allocated.
-				key = new byte[bval.length * 4 * maxExpSize + 4];
+				key = new byte[(bval.length+1) * 4 * maxExpSize];
 				fillCompleteKey(bval, key);
 			}
 
@@ -281,33 +281,30 @@ public class Sort {
 	 * @param key The sort key. This will be filled in.
 	 */
 	private void fillCompleteKey(byte[] bVal, byte[] key) {
-		int start = fillKey(Collator.PRIMARY, pages[0], bVal, key, 0);
-		start = fillKey(Collator.SECONDARY, pages[0], bVal, key, start);
-		fillKey(Collator.TERTIARY, pages[0], bVal, key, start);
+		int start = fillKey(Collator.PRIMARY, bVal, key, 0);
+		start = fillKey(Collator.SECONDARY, bVal, key, start);
+		fillKey(Collator.TERTIARY, bVal, key, start);
 	}
 
 	/**
 	 * Fill in the output key for a given strength.
 	 *
-	 * @param sortPositions An array giving the sort position for each of the 256 characters.
 	 * @param input The input string in a particular 8 bit codepage.
 	 * @param outKey The output sort key.
 	 * @param start The index into the output key to start at.
 	 * @return The next position in the output key.
 	 */
-	private int fillKey(int type, Page sortPositions, byte[] input, byte[] outKey, int start) {
+	private int fillKey(int type, byte[] input, byte[] outKey, int start) {
 		int index = start;
 		for (byte inb : input) {
 			int b = inb & 0xff;
 
 			int exp = (getFlags(b) >> 4) & 0x3;
 			if (exp == 0) {
-				index = sortPositions.writePos(type, (byte) b, outKey, index);
+				index = writePos(type, b, outKey, index);
 			} else {
 				// now have to redirect to a list of input chars, get the list via the primary value always.
 				int idx = getPrimary(b);
-				//List<CodePosition> list = expansions.get(idx-1);
-
 				for (int i = idx - 1; i < idx + exp; i++) {
 					int pos = expansions.get(i).getPosition(type);
 					if (pos != 0) {
@@ -599,12 +596,12 @@ public class Sort {
 			}
 
 			int strength = getStrength();
-			int res = compareOneStrength(chars1, chars2, pages[0], Collator.PRIMARY);
+			int res = compareOneStrength(chars1, chars2, Collator.PRIMARY);
 
 			if (res == 0 && strength != PRIMARY) {
-				res = compareOneStrength(chars1, chars2, pages[0], Collator.SECONDARY);
+				res = compareOneStrength(chars1, chars2, Collator.SECONDARY);
 				if (res == 0 && strength != SECONDARY) {
-					res = compareOneStrength(chars1, chars2, pages[0], Collator.TERTIARY);
+					res = compareOneStrength(chars1, chars2, Collator.TERTIARY);
 				}
 			}
 
@@ -615,14 +612,13 @@ public class Sort {
 		 * Compare the bytes against primary, secondary or tertiary arrays.
 		 * @param char1 Bytes for the first string in the codepage encoding.
 		 * @param char2 Bytes for the second string in the codepage encoding.
-		 * @param typePositions The strength array to use in the comparison.
 		 * @return Comparison result -1, 0 or 1.
 		 */
-		private int compareOneStrength(char[] char1, char[] char2, Page typePositions, int type) {
+		private int compareOneStrength(char[] char1, char[] char2, int type) {
 			int res = 0;
 
-			PositionIterator it1 = new PositionIterator(char1, typePositions, type);
-			PositionIterator it2 = new PositionIterator(char2, typePositions, type);
+			PositionIterator it1 = new PositionIterator(char1, type);
+			PositionIterator it2 = new PositionIterator(char2, type);
 
 			while (it1.hasNext() || it2.hasNext()) {
 				int p1 = it1.next();
@@ -659,8 +655,7 @@ public class Sort {
 		}
 
 		class PositionIterator implements Iterator<Integer> {
-			private final char[] bytes;
-			private final Page sortPositions;
+			private final char[] chars;
 			private final int len;
 			private final int type;
 
@@ -670,9 +665,8 @@ public class Sort {
 			private int expEnd;
 			private int expPos;
 
-			PositionIterator(char[] chars, Page sortPositions, int type) {
-				this.bytes = chars;
-				this.sortPositions = sortPositions;
+			PositionIterator(char[] chars, int type) {
+				this.chars = chars;
 				this.len = chars.length;
 				this.type = type;
 			}
@@ -699,8 +693,8 @@ public class Sort {
 						}
 
 						// Get the first non-ignorable at this level
-						int b = bytes[(pos++ & 0xff)];
-						next = sortPositions.getPos(type, b);
+						int b = chars[(pos++ & 0xff)];
+						next = getPos(type, b);
 						int nExpand = (getFlags(b) >> 4) & 0x3;
 
 						// Check if this is an expansion.
