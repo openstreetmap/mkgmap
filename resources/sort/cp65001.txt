@@ -1,7 +1,7 @@
 codepage 65001
 id1 19
 id2 4
-description "unicode"
+description "Unicode sort"
 multi
 
 characters

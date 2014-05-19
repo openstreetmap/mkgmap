@@ -50,7 +50,7 @@ import uk.me.parabola.imgfmt.app.Label;
  * @author Steve Ratcliffe
  */
 public class Sort {
-	private static final byte[] ZERO_KEY = new byte[3];
+	private static final byte[] ZERO_KEY = new byte[4];
 	private static final Integer NO_ORDER = 0;
 
 	private int codepage;
@@ -177,6 +177,9 @@ public class Sort {
 		try {
 			ByteBuffer out = encoder.encode(CharBuffer.wrap(s));
 			byte[] bval = out.array();
+			char[] chars = new char[bval.length];
+			for (int i = 0; i < bval.length; i++)
+				chars[i] = (char) (bval[i] & 0xff);
 
 			// In theory you could have a string where every character expands into maxExpSize separate characters
 			// in the key.  However if we allocate enough space to deal with the worst case, then we waste a
@@ -187,11 +190,11 @@ public class Sort {
 			// german map this was always enough in tests.
 			key = new byte[(bval.length + 1 + 2) * 4];
 			try {
-				fillCompleteKey(bval, key);
+				fillCompleteKey(chars, key);
 			} catch (ArrayIndexOutOfBoundsException e) {
 				// Ok try again with the max possible key size allocated.
 				key = new byte[(bval.length+1) * 4 * maxExpSize];
-				fillCompleteKey(bval, key);
+				fillCompleteKey(chars, key);
 			}
 
 			if (cache != null)
@@ -223,11 +226,6 @@ public class Sort {
 		}
 
 		char[] encText = label.getEncText();
-		byte[] bval = new byte[encText.length];
-		for (int i = 0; i < encText.length; i++) {
-			assert (encText[i] & 0xff00) == 0;
-			bval[i] = (byte) encText[i];
-		}
 
 		// In theory you could have a string where every character expands into maxExpSize separate characters
 		// in the key.  However if we allocate enough space to deal with the worst case, then we waste a
@@ -236,13 +234,13 @@ public class Sort {
 		//
 		// We need +1 for the null bytes, we also +2 for a couple of expanded characters. For a complete
 		// german map this was always enough in tests.
-		key = new byte[(bval.length + 1 + 2) * 3];
+		key = new byte[(encText.length + 1 + 2) * 4];
 		try {
-			fillCompleteKey(bval, key);
+			fillCompleteKey(encText, key);
 		} catch (ArrayIndexOutOfBoundsException e) {
 			// Ok try again with the max possible key size allocated.
-			key = new byte[bval.length * 3 * maxExpSize + 3];
-			fillCompleteKey(bval, key);
+			key = new byte[encText.length * 4 * maxExpSize + 4];
+			fillCompleteKey(encText, key);
 		}
 
 		if (cache != null)
@@ -282,7 +280,7 @@ public class Sort {
 	 * @param bVal The string for which we are creating the sort key.
 	 * @param key The sort key. This will be filled in.
 	 */
-	private void fillCompleteKey(byte[] bVal, byte[] key) {
+	private void fillCompleteKey(char[] bVal, byte[] key) {
 		int start = fillKey(Collator.PRIMARY, bVal, key, 0);
 		start = fillKey(Collator.SECONDARY, bVal, key, start);
 		fillKey(Collator.TERTIARY, bVal, key, start);
@@ -296,17 +294,16 @@ public class Sort {
 	 * @param start The index into the output key to start at.
 	 * @return The next position in the output key.
 	 */
-	private int fillKey(int type, byte[] input, byte[] outKey, int start) {
+	private int fillKey(int type, char[] input, byte[] outKey, int start) {
 		int index = start;
-		for (byte inb : input) {
-			int b = inb & 0xff;
+		for (char inb : input) {
 
-			int exp = (getFlags(b) >> 4) & 0x3;
+			int exp = (getFlags(inb) >> 4) & 0x3;
 			if (exp == 0) {
-				index = writePos(type, b, outKey, index);
+				index = writePos(type, inb, outKey, index);
 			} else {
 				// now have to redirect to a list of input chars, get the list via the primary value always.
-				int idx = getPrimary(b);
+				int idx = getPrimary(inb);
 				for (int i = idx - 1; i < idx + exp; i++) {
 					int pos = expansions.get(i).getPosition(type);
 					if (pos != 0) {
@@ -338,7 +335,6 @@ public class Sort {
 
 	public byte getFlags(int ch) {
 		assert ch > 0;
-		assert ch < 256 : "char " + ch;
 		return this.pages[ch >>> 8].flags[ch & 0xff];
 	}
 
@@ -408,21 +404,21 @@ public class Sort {
 	 * The case were two letters sort as if the were just one (and more complex cases) are
 	 * not supported or are unknown to us.
 	 *
-	 * @param bVal The code point of this letter in the code page.
+	 * @param ch The code point of this letter in the code page.
 	 * @param inFlags The initial flags, eg if it is a letter or not.
 	 * @param expansionList The letters that this letter sorts as, as code points in the codepage.
 	 */
-	public void addExpansion(int bVal, int inFlags, List<Integer> expansionList) {
-		int idx = bVal & 0xff;
-		setFlags(idx, (byte) ((inFlags & 0xf) | (((expansionList.size()-1) << 4) & 0x30)));
+	public void addExpansion(int ch, int inFlags, List<Integer> expansionList) {
+		ensurePage(ch >>> 8);
+		setFlags(ch, (byte) ((inFlags & 0xf) | (((expansionList.size()-1) << 4) & 0xf0)));
 
 		// Check for repeated definitions
-		if (getPrimary(idx) != 0)
-			throw new ExitException(String.format("repeated code point %x", idx));
+		if (getPrimary(ch) != 0)
+			throw new ExitException(String.format("repeated code point %x", ch));
 
-		setPrimary(idx, (expansions.size() + 1));
-		setSecondary(idx,  0);
-		setTertiary(idx, 0);
+		setPrimary(ch, (expansions.size() + 1));
+		setSecondary(ch,  0);
+		setTertiary(ch, 0);
 		maxExpSize = Math.max(maxExpSize, expansionList.size());
 
 		for (Integer b : expansionList) {
