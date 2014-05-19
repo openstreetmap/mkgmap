@@ -17,15 +17,15 @@
 	</publications>
 	<dependencies>
 		<dependency org="com.google.protobuf" name="protobuf-java"
-			    rev="2.4.1"
+			    rev="2.5.0"
 			    conf="compile->compile(*),master(*)" />
 
 		<dependency org="crosby" name="osmpbf"
-			    rev="1.1.1-754a33af"
+			    rev="1.3.3"
 			    conf="compile->compile(*),master(*)" />
 
 		<dependency org="it.unimi.dsi" name="fastutil"
-				rev="6.5.2-mkg.1"
+				rev="6.5.15-mkg.1b"
 				conf="compile->default(*)"
 				/>
 
