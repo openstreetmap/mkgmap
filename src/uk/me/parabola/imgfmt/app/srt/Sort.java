@@ -175,11 +175,16 @@ public class Sort {
 		}
 
 		try {
-			ByteBuffer out = encoder.encode(CharBuffer.wrap(s));
-			byte[] bval = out.array();
-			char[] chars = new char[bval.length];
-			for (int i = 0; i < bval.length; i++)
-				chars[i] = (char) (bval[i] & 0xff);
+			char[] chars;
+			if (isMulti()) {
+				chars = s.toCharArray();
+			} else {
+				ByteBuffer out = encoder.encode(CharBuffer.wrap(s));
+				byte[] bval = out.array();
+				chars = new char[bval.length];
+				for (int i = 0; i < bval.length; i++)
+					chars[i] = (char) (bval[i] & 0xff);
+			}
 
 			// In theory you could have a string where every character expands into maxExpSize separate characters
 			// in the key.  However if we allocate enough space to deal with the worst case, then we waste a
@@ -188,12 +193,12 @@ public class Sort {
 			//
 			// We need +1 for the null bytes, we also +2 for a couple of expanded characters. For a complete
 			// german map this was always enough in tests.
-			key = new byte[(bval.length + 1 + 2) * 4];
+			key = new byte[(chars.length + 1 + 2) * 4];
 			try {
 				fillCompleteKey(chars, key);
 			} catch (ArrayIndexOutOfBoundsException e) {
 				// Ok try again with the max possible key size allocated.
-				key = new byte[(bval.length+1) * 4 * maxExpSize];
+				key = new byte[(chars.length+1) * 4 * maxExpSize];
 				fillCompleteKey(chars, key);
 			}
 
@@ -334,7 +339,7 @@ public class Sort {
 	}
 
 	public byte getFlags(int ch) {
-		assert ch > 0;
+		assert ch >= 0;
 		return this.pages[ch >>> 8].flags[ch & 0xff];
 	}
 
@@ -591,21 +596,26 @@ public class Sort {
 		}
 
 		public int compare(String source, String target) {
-			CharBuffer in1 = CharBuffer.wrap(source);
-			CharBuffer in2 = CharBuffer.wrap(target);
 			char[] chars1;
 			char[] chars2;
-			try {
-				byte[] bytes1 = encoder.encode(in1).array();
-				byte[] bytes2 = encoder.encode(in2).array();
-				chars1 = new char[bytes1.length];
-				for (int i = 0; i < bytes1.length; i++)
-					chars1[i] = (char) (bytes1[i] & 0xff);
-				chars2 = new char[bytes2.length];
-				for (int i = 0; i < bytes2.length; i++)
-					chars2[i] = (char) (bytes2[i] & 0xff);
-			} catch (CharacterCodingException e) {
-				throw new ExitException("character encoding failed unexpectedly", e);
+			if (isMulti()) {
+				chars1 = source.toCharArray();
+				chars2 = target.toCharArray();
+			} else {
+				CharBuffer in1 = CharBuffer.wrap(source);
+				CharBuffer in2 = CharBuffer.wrap(target);
+				try {
+					byte[] bytes1 = encoder.encode(in1).array();
+					byte[] bytes2 = encoder.encode(in2).array();
+					chars1 = new char[bytes1.length];
+					for (int i = 0; i < bytes1.length; i++)
+						chars1[i] = (char) (bytes1[i] & 0xff);
+					chars2 = new char[bytes2.length];
+					for (int i = 0; i < bytes2.length; i++)
+						chars2[i] = (char) (bytes2[i] & 0xff);
+				} catch (CharacterCodingException e) {
+					throw new ExitException("character encoding failed unexpectedly", e);
+				}
 			}
 
 			int strength = getStrength();
