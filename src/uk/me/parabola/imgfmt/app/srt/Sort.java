@@ -525,6 +525,14 @@ public class Sort {
 			}
 	}
 
+	public int getMaxPage() {
+		return maxPage;
+	}
+
+	public boolean hasPage(int p) {
+		return pages[p] != null;
+	}
+
 	private static class Page {
 		private final char[] primary = new char[256];
 		private final byte[] secondary = new byte[256];
