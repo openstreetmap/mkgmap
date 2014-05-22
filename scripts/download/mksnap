@@ -1,10 +1,11 @@
 #!/bin/bash
 
 PROGDIR=$(dirname $(readlink -f $0))
-ANT_JAVAC_TARGET="-Dant.build.javac.target=1.6 -Dant.build.javac.source=1.6"
+#ANT_JAVAC_TARGET="-Dant.build.javac.target=1.6 -Dant.build.javac.source=1.6"
+#ANT_JAVAC_TARGET="-Dant.build.javac.target=1.7 -Dant.build.javac.source=1.7"
 
 export JAVA_HOME=/opt/java
-export PATH=$JAVA_HOME/bin:/opt/jars/apache-ant-1.8.2/bin:/opt/jars/apache-ant-1.7.1/bin:/usr/bin:/bin:/usr/local/bin:$PROGDIR
+export PATH="$JAVA_HOME/bin:$VIRTUAL_ENV/bin:/bin:/usr/bin:/usr/local/bin:$PROGDIR"
 export LANG=en_GB.UTF-8
 
 source mksnapfuncs
@@ -80,7 +81,7 @@ if [ $BRANCH != 'trunk' ]; then
 fi
 
 if [ ! -f $TARGET ]; then
-	echo Rebuilding
+	echo Rebuilding $TARGET
 	cd /usr/tmp
 
 	BUILD_DIR=/usr/tmp/build-mkgmap/$RELNAME
@@ -105,13 +106,14 @@ if [ ! -f $TARGET ]; then
 	(cd $(dirname $BUILD_DIR); zip -r $TARGET_SRC_ZIP $RELNAME) > /dev/null
 
 	if [ "$BUILD_DIST" = 1 ]; then
-		echo BUILDING TARGET
 		ant $ANT_JAVAC_TARGET -Dhave.version=1 $BUILD_TARGETS || {
 			redis-cli lpush svn:build "failed:$PRODUCT:$BRANCH:$VERSION"
+			rm -f $TARGET_SRC_ZIP $TARGET_SRC
 			exit 1
 		}
 
-		if [ -x $PROGDIR/mkdoc ]; then
+		CURRENT=$(redis-cli hget svn:current:$PRODUCT version)
+		if [ -x $PROGDIR/mkdoc -a $VERSION -gt $CURRENT ]; then
 			$PROGDIR/mkdoc $PRODUCT
 		fi
 

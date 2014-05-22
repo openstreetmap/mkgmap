@@ -3,7 +3,8 @@
 PROGDIR=$(dirname $(readlink -f $0))
 
 export JAVA_HOME=/opt/java
-PATH=$JAVA_HOME/bin:/opt/jars/apache-ant-1.7.1/bin:/usr/bin:/bin:/usr/local/bin:$PROGDIR
+export PATH="$JAVA_HOME/bin:$VIRTUAL_ENV/bin:/bin:/usr/bin:/usr/local/bin:$PROGDIR"
+export LANG=en_GB.UTF-8
 
 typeset -i VERSION
 typeset -i MIN_VERSION

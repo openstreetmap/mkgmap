@@ -15,8 +15,7 @@ fi
 
 for f in *.txt
 do
-	export PYTHONPATH=$HOME/www/mkgmap.org.uk
-	python -m wiki.main -t text $f > ../dist/doc/$f
+	mwtext -t text $f > ../dist/doc/$f
 done
 
 DOC=~/www/web/mkgmap/content/doc
