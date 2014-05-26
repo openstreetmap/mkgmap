@@ -104,7 +104,10 @@ public class SRTHeader extends CommonHeader {
 		writer.putChar((char) sort.getId1());
 		writer.putChar((char) sort.getId2());
 		writer.putChar((char) sort.getCodepage());
-		writer.putInt(0x2002);
+		if (sort.isMulti())
+			writer.putInt(0x6f02);
+		else
+			writer.putInt(0x2002);
 
 		chartab.writeSectionInfo(writer, true, true);
 		writer.putChar((char) 0);
