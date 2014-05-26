@@ -301,19 +301,23 @@ public class Sort {
 	 */
 	private int fillKey(int type, char[] input, byte[] outKey, int start) {
 		int index = start;
-		for (char inb : input) {
+		for (char c : input) {
 
-			int exp = (getFlags(inb) >> 4) & 0x3;
+			if (!hasPage(c >>> 8)) {
+				System.out.printf("missing page %c (%x)\n", c, (int) c); // XXX remove
+				continue;
+			}
+			int exp = (getFlags(c) >> 4) & 0x3;
 			if (exp == 0) {
-				index = writePos(type, inb, outKey, index);
+				index = writePos(type, c, outKey, index);
 			} else {
 				// now have to redirect to a list of input chars, get the list via the primary value always.
-				int idx = getPrimary(inb);
+				int idx = getPrimary(c);
 				for (int i = idx - 1; i < idx + exp; i++) {
 					int pos = expansions.get(i).getPosition(type);
 					if (pos != 0) {
 						if (type == Collator.PRIMARY)
-							outKey[index++] = (byte) ((pos>>>8) & 0xff);
+							outKey[index++] = (byte) ((pos >>> 8) & 0xff);
 						outKey[index++] = (byte) pos;
 					}
 				}
@@ -724,20 +728,27 @@ public class Sort {
 						}
 
 						// Get the first non-ignorable at this level
-						int b = chars[(pos++ & 0xff)];
-						next = getPos(type, b);
-						int nExpand = (getFlags(b) >> 4) & 0x3;
+						int c = chars[(pos++ & 0xff)];
+						if (!hasPage(c >>> 8)) {
+							System.out.printf("no page %c (%x)\n", c, c); // XXX remove
+							next = 0;
+							continue;
+						}
 
+						int nExpand = (getFlags(c) >> 4) & 0x3;
 						// Check if this is an expansion.
 						if (nExpand > 0) {
-							expStart = getPrimary(b) - 1;
+							expStart = getPrimary(c) - 1;
 							expEnd = expStart + nExpand;
 							expPos = expStart;
 							next = expansions.get(expPos).getPosition(type);
 
 							if (++expPos > expEnd)
 								expPos = 0;
+						} else {
+							next = getPos(type, c);
 						}
+
 					} while (next == 0);
 				} else {
 					next = expansions.get(expPos).getPosition(type);
