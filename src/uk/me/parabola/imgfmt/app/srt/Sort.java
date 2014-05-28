@@ -529,14 +529,23 @@ public class Sort {
 			}
 	}
 
+	/**
+	 * The max page, top 8+ bits of the character that we have information on.
+	 */
 	public int getMaxPage() {
 		return maxPage;
 	}
 
+	/**
+	 * @return True if there is at least one character with the given page/block number.
+	 */
 	public boolean hasPage(int p) {
 		return pages[p] != null;
 	}
 
+	/**
+	 * Holds the sort positions of a 256 character block.
+	 */
 	private static class Page {
 		private final char[] primary = new char[256];
 		private final byte[] secondary = new byte[256];
@@ -567,24 +576,38 @@ public class Sort {
 			tertiary[ch & 0xff] = (byte) val;
 		}
 
-		public int getPos(int type, int b) {
+		/**
+		 * Get the sort position data for a given strength for a character.
+		 * @param type The collation strength PRIMARY, SECONDARY etc.
+		 * @param ch The character.
+		 * @return The sorting weight for the given character.
+		 */
+		public int getPos(int type, int ch) {
 			switch (type) {
 			case Collator.PRIMARY:
-				return getPrimary(b) & 0xffff;
+				return getPrimary(ch) & 0xffff;
 			case Collator.SECONDARY:
-				return getSecondary(b) & 0xff;
+				return getSecondary(ch) & 0xff;
 			case Collator.TERTIARY:
-				return getTertiary(b) & 0xff;
+				return getTertiary(ch) & 0xff;
 			default:
 				assert false : "bad collation type passed";
 				return 0;
 			}
 		}
 
-		public int writePos(int type, int b, byte[] outKey, int start) {
-			int pos = getPos(type, b);
+		/**
+		 * Write a sort position for a given character to a sort key.
+		 * @param strength The sort strength type.
+		 * @param ch The character.
+		 * @param outKey The output key.
+		 * @param start The offset into outKey, the new position is written here.
+		 * @return The new start offset, after the key information has been written.
+		 */
+		public int writePos(int strength, int ch, byte[] outKey, int start) {
+			int pos = getPos(strength, ch);
 			if (pos != 0) {
-				if (type == Collator.PRIMARY)
+				if (strength == Collator.PRIMARY)
 					outKey[start++] = (byte) ((pos >> 8) & 0xff); // for 2 byte charsets
 				outKey[start++] = (byte) (pos & 0xff);
 			}
@@ -730,7 +753,7 @@ public class Sort {
 						// Get the first non-ignorable at this level
 						int c = chars[(pos++ & 0xff)];
 						if (!hasPage(c >>> 8)) {
-							System.out.printf("no page %c (%x)\n", c, c); // XXX remove
+							//System.out.printf("no page %c (%x)\n", c, c); // XXX remove
 							next = 0;
 							continue;
 						}
