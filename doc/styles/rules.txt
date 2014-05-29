@@ -133,7 +133,7 @@ As above, for less than or equal, greater than and greater than or equal.
 
 |tag ~ REGEX| This is true when the value of the tag matches the given
 regular expression.
-The link::http://docs.oracle.com/javase/1.4.2/docs/api/java/util/regex/Pattern.html[Java
+The link::http://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html[Java
 regular expression] syntax is recognised.
 For example `name ~ '.*[Ll]ane'` would match every name that ended in
 'Lane' or 'lane'.
