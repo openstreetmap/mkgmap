@@ -167,4 +167,9 @@
   <xsl:attribute name="keep-together.within-column">auto</xsl:attribute>
 </xsl:attribute-set>
 
+<!-- Give links a colour -->
+<xsl:attribute-set name="xref.properties">
+	<xsl:attribute name="color">#0000dd</xsl:attribute>
+</xsl:attribute-set>
+
 </xsl:stylesheet>

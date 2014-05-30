@@ -2,7 +2,7 @@
 = About =
 == Licence ==
 This manual is released under the
-link:http://creativecommons.org/licenses/by-sa/2.0/[Creative Commons Attribution-ShareAlike 2.0 license].
+http://creativecommons.org/licenses/by-sa/2.0/[Creative Commons Attribution-ShareAlike 2.0 license].
 It makes use of some material that was added to the OSM Wiki which is
 release under the same licence.
 

@@ -48,7 +48,7 @@ starting with a Polish format file, there is no style involved as the
 garmin types are already fully specified in the input file.
 
 For general information about the OpenStreetMap project see the
-link:http://wiki.openstreetmap.org[OpenStreetMap wiki].
+http://wiki.openstreetmap.org[OpenStreetMap wiki].
 
 
 :leveloffset: 1
