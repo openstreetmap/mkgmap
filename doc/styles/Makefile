@@ -1,4 +1,3 @@
-
 include ../resources/make.param
 
 
@@ -19,7 +18,7 @@ style-manual.html: $(SOURCES)
 	$(ASCIIDOC) $(HTML_ATTRS) -a icons -a iconsdir=$(ICONSDIR) -b html5 $(STYLE_MAIN)
 
 $(TARGET_PDF): $(SOURCES)
-	$(A2X) --xsl-file=$(XSL) --fop $(PDF_OPTS) $(STYLE_MAIN)
+	$(A2X) -L --xsl-file=$(XSL) --fop $(PDF_OPTS) $(STYLE_MAIN)
 
 style-manual.epub: $(SOURCES)
 	mkdir -p build

@@ -1,3 +1,6 @@
+// Set default source language
+:language: mkgmap
+
 [[RULES]]
 = Style rules =
 
@@ -24,6 +27,7 @@ in square brackets `[...]`.
 
 Here is an example of a rule containing all three sections:
 
+[source]
 ----
 natural=cliff { name '${name} cliff' | 'cliff' } [0x10501 resolution 22]
 ----
@@ -38,6 +42,7 @@ lines and add extra spaces wherever you like if it helps to make them
 easier to read.
 
 .Example with lots of extra space and newlines
+[source]
 ----
 natural=cliff
 	{
@@ -52,9 +57,8 @@ natural=cliff
 ----
 
 .Example with all unneeded spaces removed
-----
-natural=cliff{name'${name} cliff'|"cliff"}[0x10501 resolution 22]
-----
+[source]
+  natural=cliff{name'${name} cliff'|"cliff"}[0x10501 resolution 22]
 
 === Tag and text values ===
 Tag names and vales are often single words consisting of letters and
@@ -67,6 +71,7 @@ double quotes (+"+).
 If your text contains a quote then you must use the other kind
 of quote around the value.
 
+[source]
 ----
 highway=primary
 "highway"="primary"  # quotes not needed, but do no harm
@@ -79,14 +84,14 @@ name="Ten O'Clock Tavern"  # Double quotes used because text contains single quo
 The most common test is that a particular OSM tag has a given value.
 So for example if we have
 
-----
+[source]
 highway=motorway
-----
 
 This means that we look up the highway tag in the OSM input file and if it exists and has the value
 'motorway' then this test has matched.
 
 You can also compare numeric quantities:
+[source]
 ----
 population > 10000
 lanes >= 2
@@ -97,9 +102,9 @@ Respectively, these mean: a population greater than ten thousand, a road with at
 and a population less than one million.
 
 You may also use regular expressions:
-----
+[source]
 ele ~ '\d*00'
-----
+
 This checks whether ele is a multiple of 100.
 
 === Allowed operations
@@ -153,6 +158,7 @@ For example, say you want to take roads that are tagged both as
 just +highway=unclassified+.  In this type of case, you might create two
 separate rules as follows:
 
+[source]
 ----
 highway=unclassified & lanes>2 [0x06]
 highway=unclassified [0x05] 
@@ -175,9 +181,8 @@ complex rules.
 
 You can also combine alternatives into the one rule using a logical or, represented
 with a pipe (|) symbol.  For example
-----
+[source]
 highway=footway | highway=path [0x07]
-----
 
 This means if the road has either the *highway=footway* tag or the
 *highway=path* tags (or both), then the condition matches and mkgmap would
@@ -188,9 +193,8 @@ to two separate rules internally when mkgmap runs.
 You are not limited to two tests for a given rule... you can combine and group tests
 in almost whatever way you like.
 So for a slightly forced example the following would be possible:
-----
+[source]
 place=town & (population > 1000000 | capital=true) | place=city
-----
 
 This would match if there was a +place+ tag which had the value +town+
 and either the population was over a million or it was tagged a capital,
@@ -207,24 +211,27 @@ Sometimes you may want to compare the values of two tags, rather than
 the value of one tag with a fixed value.
 Use a dollar sign to indicate that you want the tag value.
 
+[source]
 ----
 # If you had the following tags:
 # name=Fford-y-Mor
 # name:en=Terrace Road
 # name:cy=Fford-y-Mor
 
-name = $name:cy {...}  # this would match
-name = $name:en {...}  # and this would not
+name = $name:cy { }  # this would match
+name = $name:en { }  # and this would not
 ----
 
 This tests if the value of the +name+ tag is the same as the welsh name
 tag (+name:cy+) 
 
 It is worth noting that the normal case
+[source]
 ----
 highway=primary
 ----
 is exactly the same as
+[source]
 ----
 $highway=primary
 ----
@@ -276,9 +283,8 @@ some element ids are changed and some have a faked id > 4611686018427387904.
 |====
 
 The following rule matches for all service ways longer than 50m.
------
-highway=service & length()>50 
------
+[source]
+highway=service & length()>50
 
 [[Action_block]]
 == Action block ==
@@ -304,9 +310,8 @@ For example, motorways are one way by default so we need to add the
 device. But there are some stretches of motorway that are one-way and
 these will be tagged as +oneway=no+. If we used +set+ then that tagging
 would be lost, so we use +add+.
-----
+[source]
  highway=motorway { add oneway=yes }
-----
 
 The other use is in in relations with the 'apply' command.
 
@@ -314,9 +319,8 @@ All the same you can set any tag you want, it might be useful so you can match
 on it elsewhere in the rules.
 
 You can also use substitutions.
-----
-{add name='${ele}'; add name='${ref}';}
-----
+[source]
+  {add name='${ele}'; add name='${ref}';}
 
 These two commands would set the 'name' tag to the value of the 'ele' tag if it exists, or to the value of the 'ref' tag if that exists.
 
@@ -324,9 +328,8 @@ You can also give a list of alternative expressions separated with a
 vertical bar in the same way as on the name command.  The first
 one that is fully defined will be used.
 
-----
-{add key123 = '${name:en}' | '${name}'; } 
-----
+[source]
+  {add key123 = '${name:en}' | '${name}'; }
 
 If 'key123' is not set it will set 'key123' to the value of the 'name:en' tag if it exists and to the 'name' tag if not.
 
@@ -336,15 +339,13 @@ tag, replacing any existing value it had.
 
 === delete ===
 The delete command deletes a tag.
-----
+[source]
  { delete key123 }
-----
 
 === deletealltags ===
 The deletealltags command deletes all tags. Usually this stops all further processing of the element.
-----
+[source]
  { deletealltags }
-----
 
 === addlabel ===
 Each item in the Garmin map can have up to four labels. Usually only the first label is displayed.
@@ -354,9 +355,8 @@ by setting the tags +mkgmap:label:n+ where n is a number between 1 and 4.
 
 The addlabel command assigns the first empty +mkgmap:label:n+ tag with the given value.
 
-----
+[source]
  {addlabel '${name} (${ref})' | '${ref}' | '${name}'}
-----
 
 If both the +name+ and +ref+ tags are are set, then the first alternative would be
 completed and the resulting label might be _Main St (A1)_.
@@ -375,6 +375,7 @@ you view the map.
 This sets the first label of the element but only if it is not already set.
 This is a helper action. The same effect can be produced with different notations
 as it is shown in the following example where all three lines have the same effect.
+[source]
 ----
  {name '${name} (${ref})' | '${ref}' | '${name}'}
  {add mkgmap:label:1='${name} (${ref})' | '${ref}' | '${name}'}
@@ -385,10 +386,12 @@ as it is shown in the following example where all three lines have the same effe
 The "addaccess" action sets all unset mkgmap access restriction tags to the given value.
 This is a helper action to avoid long action blocks.
 
+[source]
 ----
 { addaccess 'no' }
 ----
 is the same as
+[source]
 ----
 { 
   add mkgmap:foot=no; 
@@ -406,10 +409,12 @@ is the same as
 The "setaccess" action sets all mkgmap access restriction tags to the given value no matter if
 they already have a value or not. This is a helper action to avoid long action blocks.
 
+[source]
 ----
 { setaccess 'no' }
 ----
 is the same as
+[source]
 ----
 { 
   set mkgmap:foot=no; 
@@ -430,6 +435,7 @@ relation have any special tags to indicate that they form part of that
 bus route, and you want to be able to tell from looking at the map which
 buses go where.  You can write a rule in the *relations file* such as:
 
+[source]
 ----
 type=route & route=bus {
 	apply {
@@ -450,6 +456,7 @@ The substitution `$(route_ref)` (with parenthesis, rather than curly
 brackets) can be used for accessing the value of the tag on
 the actually processed *member* of the relation, e.g.
 
+[source]
 ----
 type=route & route=bus {
 	apply {
@@ -462,6 +469,7 @@ type=route & route=bus {
 The "apply" action can be limited to members with a special role by adding
 _role=rolevalue_ after the _apply_ keyword.
 
+[source]
 ----
 type=route & route=bus {
 	apply role=forward {
@@ -480,16 +488,14 @@ one way streets.
 === echo ===
 The echo action prints the element id plus a text to standard error. This can be
 used for quality checks and debugging purposes.
-----
-highway=motorway_link & oneway!=* { echo "motorway_link without oneway tag" }
-----
+[source]
+  highway=motorway_link & oneway!=* { echo "motorway_link without oneway tag" }
 
 === echotags ===
 The echotags action prints the element id, all tags and values plus a text to standard error. 
 This can be used for style debugging purposes.
-----
-highway=living_street { echotags "This is a living_street" }
-----
+[source]
+  highway=living_street { echotags "This is a living_street" }
 
 [[VARS]]
 == Variables
@@ -500,9 +506,8 @@ surrounded by curly braces like so `${name}`.
 The most obvious use for variables is in setting the name of the element.
 You are able to use any combination of tags to make the name from.
 Here we name a fuel station by its brand and the name in brackets following.
-----
-amenity=fuel { name '${brand} (${operator})' } [ 0x2f01 ]
-----
+[source]
+  amenity=fuel { name '${brand} (${operator})' } [ 0x2f01 ]
 
 If the operator tag was not set, then the name would not be set because *all*
 substitutions in a string must exist for the result to be valid.
@@ -510,6 +515,7 @@ This is why the "name" command takes a list of possibilities, if operator
 was simply replaced with a blank, then you would have an empty pair of brackets.
 So you would fix the previous rule by adding another name option.
 
+[source]
 ----
  amenity=fuel
     { name '${brand} (${operator})' | '${brand}' }
@@ -529,14 +535,17 @@ by the filter name, then a colon ":" and an argument. If there is more than
 one argument required then they are usually separated by colons too, but
 that is not a rule.
 
+[source]
  ${tagname|filter:arg1:arg2}
 
 You can apply as many filter expressions to a substitution as you like.
 
+[source]
  ${tagname|filter1:arg|filter2:arg}
 
 If the argument contains spaces or symbols it should be quoted.
 
+[source]
  ${tagname|filter1:"arg with spaces"}
 
 For backward compatibility, most cases where you have spaces or symbols
@@ -557,6 +566,7 @@ the style files to change the processing.
 These tags need to be set within the style file to set specific attributes of 
 the Garmin map elements.
 
+[source]
 ----
   highway=* & (bicycle=no | bicycle=private) { set mkgmap:bicycle='no' }
 ----
@@ -635,6 +645,7 @@ TIP: http://en.wikipedia.org/wiki/ISO_3166-1_alpha-3[Wikipedia] has a list of al
 === Tags added by mkgmap ===
 Some tags are added by mkgmap to indicate some property calculated by mkgmap.
 
+[source]
 ----
  mkgmap:admin_level2=* { add mkgmap:country='${mkgmap:admin_level2}' }
 ---- 
@@ -694,6 +705,7 @@ given then it defaults to 0 and so the specified feature will only appear
 at the most detailed level.
 
 In the following example, we set highways to appear from zoom level 4 down to zoom level 0:
+[source]
 -----
 highway=motorway [0x01 level 4]
 -----
@@ -712,6 +724,7 @@ which POI's can be shown at which resolutions.
 You can also give a range (e.g. 1-3) and the map will then contain the
 object only between the specified levels.
 
+[source]
 ----
 highway=motorway [0x01 level 3-5]
 -----
@@ -756,6 +769,7 @@ levels for example it will only show up in the lower one.
 Just as with levels, you can specify a range of resolutions at which an
 object should appear. Here is an example.
 
+[source]
 ----
 highway=residential [0x06 resolution 16-22 continue]
 highway=residential [0x07 resolution 23-24]
@@ -859,6 +873,7 @@ that the action block of this rule is also applied, when this element is
 checked for additional conversions. 
 
 .Example of a full element type definition
+[source]
 ----
 [0x2 road_class=3 road_speed=5 level 2 
 default_name 'example street' continue with_actions]
@@ -869,6 +884,7 @@ Its often convenient to split a file into smaller parts or to use the
 same rules in two different files.  In these cases you can include
 one rule file within another.
 
+[source]
  include "inc/common";
 
 Here some common rules have been included in a rule file from a directory
@@ -891,6 +907,7 @@ It is also possible to include a file from another style.
 To do this you simply add +from stylename+ to the end of the include
 statement.
 
+[source]
  include "points" from default;
 
 That will include the +points+ file from the default style. This might be
@@ -913,15 +930,18 @@ Two elements tagged with
 
 using the lines file
 
- highway=motorway    [0x01 road_class=4 road_speed=7 resolution 15]
- highway=service     [0x07 road_class=0 road_speed=1 resolution 24]
+[source]
+----
+highway=motorway    [0x01 road_class=4 road_speed=7 resolution 15]
+highway=service     [0x07 road_class=0 road_speed=1 resolution 24]
 
- <finalize>
- highway=*        { name '${name} (${ref})' | '${name}' | '${ref}' }
- highway=motorway { add bicycle=no; add foot=no }
- bicycle=*        { add mkgmap:bicycle='${bicycle}' } 
- foot=*           { add mkgmap:foot='${foot}' } 
- access=*         { addaccess '${access}' }
+<finalize>
+highway=*        { name '${name} (${ref})' | '${name}' | '${ref}' }
+highway=motorway { add bicycle=no; add foot=no }
+bicycle=*        { add mkgmap:bicycle='${bicycle}' } 
+foot=*           { add mkgmap:foot='${foot}' } 
+access=*         { addaccess '${access}' }
+----
 
 will result in
 
@@ -962,11 +982,13 @@ The following are some examples of style rules, with explanations of what they d
 In the majority of cases everything is very simple. Say you want roads that are tagged as *highway=motorway* to have the Garmin type 0x01 ("motorway") and for it to appear up until the zoom level 3.
 
 Then you would write the following rule.
+[source]
 ----
 highway=motorway [0x01 level 3]
 ----
 
 Nodes that have an id and a subid are referenced by concatenating both ids.
+[source]
 ----
 amenity=bank [0x2f06 level 3]
 ----
@@ -980,6 +1002,7 @@ create almost any effect.
 
 .Internet cafes 
 ====
+[source]
  amenity=cafe & internet_access=wlan {name '${name} (wifi)'} [0x2a14 resolution 23]
 ====
 Checks to see if an OSM object has both the amenity=cafe and internet_access=wlan key/tag pairs.
@@ -988,6 +1011,7 @@ The Garmin object used will be 0x2a14 and the object will only appear at resolut
 
 .Guideposts
 ====
+[source]
  information=guidepost
      { name '${name} - ${operator} - ${description} '
        | '${name} - ${description}'
@@ -1015,6 +1039,7 @@ The Garmin object used will be 0x4c02 and will only appear at resolutions 23 and
 
 .Car sales rooms
 ====
+[source]
  shop=car {name '${name} (${operator})' | '${name}' |'${operator}'} [0x2f07 resolution 23]
 
 If name="Alice's Car Salesroom" and operator=Nissan, the Garmin object
@@ -1027,6 +1052,7 @@ This is a trick to get opening hours to show up in the postcode field of
 a POI. Tricks like this can enhance the map for certain uses, but of
 course may prevent the proper use of the postcode field.
 
+[source]
  opening_hours=* {set addr:postcode = '${addr:postcode} open ${opening_hours}'
     | 'open ${opening_hours}'}
 
