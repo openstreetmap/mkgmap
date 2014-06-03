@@ -188,8 +188,8 @@ public class ValueBuilder {
 	}
 
 	private void addFilter(ValueItem item, String expr) {
-		Pattern pattern = Pattern.compile("([^:]+):[\"']?(.*?)[\"']?");
-		//pattern.
+		Pattern pattern = Pattern.compile("([^:]+):[\"']?(.*?)[\"']?", Pattern.DOTALL);
+
 		Matcher matcher = pattern.matcher(expr);
 		matcher.matches();
 		String cmd = matcher.group(1);

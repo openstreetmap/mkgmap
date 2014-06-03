@@ -131,6 +131,22 @@ public class ValueBuilderTest {
 	}
 
 	@Test
+	public void testQuotedSplitLines() {
+		String value =
+				"${cs:phone|subst:^00~>+|subst:[-\n" +
+				"()]~>|subst:^0~>+353|subst:^+3530~>+353}";
+		ValueBuilder vb = new ValueBuilder(value);
+
+		Element el = new Way(1);
+		el.addTag("mkgmap:country", "IRL");
+		el.addTag("cs:phone", "00(22)5554-444");
+
+		String s = vb.build(el, null);
+
+		assertEquals("+225554444", s);
+	}
+
+	@Test
 	public void testExample() {
 		ValueBuilder vb = new ValueBuilder("${name|subst:'^(Doctor|Dokter) ~>Dr '}");
 
