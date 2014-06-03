@@ -28,11 +28,11 @@ regular expressions in the +from+ attribute.
 
 Example, if name ="Queen Street" 
 
-`${name\|subst:Queen=>}` returns " Street" 
+`${name\|subst:"Queen=>"}` returns " Street"
 
-`${name\|subst:Queen=>King}` returns "King Street" 
+`${name\|subst:"Queen=>King"}` returns "King Street"
 
-`${name\|subst:.*\s~>}` returns "Street" 
+`${name\|subst:".*\s~>"}` returns "Street"
 
 | part | `separator operator partnumber` |
 Split a value in parts and returns one or more part(s) of it. If +partnumber+ is negative, the part returned is counted from the end of the split
@@ -45,24 +45,24 @@ If the operator is `<` or `>` the correspondent number of parts before or after 
 
 Example: if the value is "Aa#Bb#Cc#Dd#Ee"
 
-`${name\|part:#:1}`  returns Aa
+`${name\|part:"#:1"}`  returns Aa
 
-`${name\|part:#:-1}` returns Ee
+`${name\|part:"#:-1"}` returns Ee
 
-`${name\|part:#:2}`  returns Bb
+`${name\|part:"#:2"}`  returns Bb
 
-`${name\|part:#:-2}` returns Dd
+`${name\|part:"#:-2"}` returns Dd
 
-`${name\|part:#>1}`  returns Bb#Cc#Dd#Ee#
+`${name\|part:"#>1"}`  returns Bb#Cc#Dd#Ee#
 
-`${name\|part:#<5}`  returns Aa#Bb#Cc#Dd#
+`${name\|part:"#<5"}`  returns Aa#Bb#Cc#Dd#
 
-`${name\|part:#<-1}` returns Aa#Bb#Cc#Dd#
+`${name\|part:"#<-1"}` returns Aa#Bb#Cc#Dd#
 
 This can be especially useful for tags like ref, exit_to and destination or to switch words, 
 example if value is "word1 word2 ... wordN-1 wordN"
 
-`${name\|part: :-1}, ${name\|part: <-1}` returns "wordN, word1 word2 ... wordN-1 "
+`${name\|part:" :-1"}, ${name\|part:" <-1"}` returns "wordN, word1 word2 ... wordN-1 "
 
 | highway-symbol | `symbol:max-num:max-alpha` |
 Prepares the value as a highway reference such as "A21" "I-80" and so
@@ -71,7 +71,7 @@ A code is added to the front of the string so that a highway shield is
 displayed, spaces are removed and the text is truncated so as not to overflow the
 symbol.
 
-`${ref\|highway-symbol:box:4:8}`
+`${ref\|highway-symbol:"box:4:8"}`
 
 See below for a list of the +highway-symbol+ values.
 
@@ -85,7 +85,7 @@ This is the same as the +conv+ filter, except that it prepends a special
 separation character before the value which is intended for elevations.
 As with +conv+ the only supported conversion currently is from meters to feet.
 
-`${ele\|height:m=>ft}`
+`${ele\|height:"m=>ft"}`
 
 | not-equal | `tag` |
 Used to check for duplicate tags. If the value of this tag is equal to
@@ -128,9 +128,3 @@ The actual symbol will depend on the device that it is displayed on.
 | oval    | image:img/sym-oval.png[]          | Box for smaller roads
 |====
 
-
-////
-| prefix | symbol code |
-hello
-| `${ref\|prefix:box}`
-////

@@ -1,0 +1,14 @@
+#
+# Test variable substitution with filters that have quoted arguments.
+#
+
+WAY
+highway=primary
+name=Doctor Who
+
+<<<lines>>>
+
+highway=primary {name '${name|subst:"^(Doctor|Dokter) ~>Dr "}' } [0x1]
+
+<<<results>>>
+WAY 1: Line 0x1, labels=[Dr Who, null, null, null], res=24-24 (1/1),(2/2),

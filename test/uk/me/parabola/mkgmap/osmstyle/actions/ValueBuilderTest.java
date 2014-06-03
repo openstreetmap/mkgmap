@@ -28,6 +28,16 @@ import static org.junit.Assert.*;
  * Test substitutions when building values with ValueBuilder.
  */
 public class ValueBuilderTest {
+	@Test
+	public void testVariable() {
+		ValueBuilder vb = new ValueBuilder("${name} road");
+
+		Element el = new Way(1);
+		el.addTag("name", "abc abc");
+
+		String s = vb.build(el, null);
+		assertEquals("abc abc road", s);
+	}
 
 	@Test
 	public void testSimpleSubst() {
@@ -65,6 +75,70 @@ public class ValueBuilderTest {
 
 		String s = vb.build(el, null);
 		assertEquals("Tx y z !", s);
+	}
+
+	@Test
+	public void testQuotedArg() {
+		ValueBuilder vb = new ValueBuilder("${name|subst:'abc=>x y z '}!");
+
+		Element el = new Way(1);
+		el.addTag("name", "Tabc");
+
+		String s = vb.build(el, null);
+		assertEquals("Tx y z !", s);
+	}
+
+	@Test
+	public void testDQuotedArg() {
+		ValueBuilder vb = new ValueBuilder("${name|subst:\"abc=>x y z \"}!");
+
+		Element el = new Way(1);
+		el.addTag("name", "Tabc");
+
+		String s = vb.build(el, null);
+		assertEquals("Tx y z !", s);
+	}
+
+	@Test
+	public void testQuotedArgs() {
+		ValueBuilder vb = new ValueBuilder("${name|subst:'abc=>x|y'|subst:'defg=>w|w\"w'|def:'unset string' }");
+
+		Element el = new Way(1);
+
+		// No tags set, so default value will be applied.
+		String s = vb.build(el, null);
+		assertEquals("name not set, so default is applied", "unset string", s);
+
+		// Name tag is set, so substitutions are made
+		el.addTag("name", "abc defg");
+		s = vb.build(el, null);
+		assertEquals("substitutions in name", "x|y w|w\"w", s);
+	}
+
+	@Test
+	public void testSpacedQuotedArgs() {
+		ValueBuilder vb = new ValueBuilder("${name | subst:'abc=>x|y' | subst:'defg=>w|w' | def:'unset string' }");
+		Element el = new Way(1);
+
+		// No tags set, so default value will be applied.
+		String s = vb.build(el, null);
+		assertEquals("name not set, so default is applied", "unset string", s);
+
+		// Name tag is set, so substitutions are made
+		el.addTag("name", "abc defg");
+		s = vb.build(el, null);
+		assertEquals("substitutions in name", "x|y w|w", s);
+	}
+
+	@Test
+	public void testExample() {
+		ValueBuilder vb = new ValueBuilder("${name|subst:'^(Doctor|Dokter) ~>Dr '}");
+
+		Element el = new Way(1);
+		el.addTag("name", "Doctor Who");
+
+		String s = vb.build(el, null);
+		assertEquals("Dr Who", s);
 	}
 
 	@Test

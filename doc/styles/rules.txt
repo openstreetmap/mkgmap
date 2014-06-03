@@ -1,4 +1,3 @@
-
 [[RULES]]
 = Style rules =
 
@@ -535,6 +534,15 @@ that is not a rule.
 You can apply as many filter expressions to a substitution as you like.
 
  ${tagname|filter1:arg|filter2:arg}
+
+If the argument contains spaces or symbols it should be quoted.
+
+ ${tagname|filter1:"arg with spaces"}
+
+For backward compatibility, most cases where you have spaces or symbols
+do not actually need to be quoted, however we would recommend that you
+do for clarity.  If you need a pipe symbol or a closing curly backet,
+then you must use quotes.
 
 include::rules-filters.txt[]
 
