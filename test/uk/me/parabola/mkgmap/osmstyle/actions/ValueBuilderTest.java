@@ -158,6 +158,26 @@ public class ValueBuilderTest {
 	}
 
 	@Test
+	public void testEmptyArg() {
+		ValueBuilder vb = new ValueBuilder("${name|def:}");
+
+		Element el = new Way(1);
+
+		String s = vb.build(el, null);
+		assertEquals("", s);
+	}
+
+	@Test
+	public void testEmptyQuotedArg() {
+		ValueBuilder vb = new ValueBuilder("${name|def:''}");
+
+		Element el = new Way(1);
+
+		String s = vb.build(el, null);
+		assertEquals("", s);
+	}
+
+	@Test
 	public void testUsedTags() {
 		ValueBuilder vb = new ValueBuilder("${name}");
 

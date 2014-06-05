@@ -37,7 +37,7 @@ public class ValueBuilder {
 			Pattern.compile("[ \t]*([^: \\t|]+:'[^']+')[ \t]*"),
 
 			// This must be last
-			Pattern.compile("([ \t]*[^: \\t|]+:[^|]+)"),
+			Pattern.compile("([ \t]*[^: \\t|]+:[^|]*)"),
 	};
 
 	private final List<ValueItem> items = new ArrayList<>();
@@ -178,6 +178,7 @@ public class ValueBuilder {
 					start = matcher.end() + 1;
 					addFilter(item, matcher.group(1));
 				} else {
+					assert false;
 					start = end;
 				}
 			}
