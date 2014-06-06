@@ -1,8 +1,9 @@
 include ../resources/make.param
 
 
-SOURCES= about.txt creating.txt design.txt files.txt rules.txt rules-filters.txt \
-	style-manual.txt $(XSL) 
+SOURCES= about.txt creating.txt design.txt files.txt rules.txt internal-tags.txt \
+		 rules-filters.txt style-manual.txt $(XSL) 
+
 STYLE_MAIN=style-manual.txt
 TARGET_PDF=style-manual.pdf
 
