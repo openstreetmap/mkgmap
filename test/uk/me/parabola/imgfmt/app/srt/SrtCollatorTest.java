@@ -101,6 +101,11 @@ public class SrtCollatorTest {
 		assertEquals(1, collator.compare("–TÛ‡²", "–"));
 	}
 
+	@Test
+	public void testSpaces() {
+		assertEquals(1, collator.compare("øþõ Ñ", "õþO"));
+	}
+
 	/**
 	 * Test using the java collator, to experiment. Note that our implementation is not
 	 * meant to be identical to the java one.

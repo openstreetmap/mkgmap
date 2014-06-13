@@ -78,7 +78,7 @@ public class SrtTextReader {
 
 	// States
 	private static final int IN_INITIAL = 0;
-	private static final int IN_CODE = 1;
+	private static final int IN_CHARACTER = 1;
 	private static final int IN_EXPAND = 2;
 
 	// Data that is read in, the output of the reading operation
@@ -155,8 +155,8 @@ public class SrtTextReader {
 			case IN_INITIAL:
 				initialState(scanner, tok);
 				break;
-			case IN_CODE:
-				codeState(scanner, tok);
+			case IN_CHARACTER:
+				characterState(scanner, tok);
 				break;
 			case IN_EXPAND:
 				expandState(scanner, tok);
@@ -192,11 +192,15 @@ public class SrtTextReader {
 			case "id2":
 				sort.setId2(scanner.nextInt());
 				break;
+			case "multi":
+				sort.setMulti(true);
+				break;
+
 			case "code":  // The old name; use characters
 			case "characters":
 				if (encoder == null)
 					throw new SyntaxException(scanner, "Missing codepage declaration before code");
-				state = IN_CODE;
+				state = IN_CHARACTER;
 				scanner.skipSpace();
 				break;
 			case "expand":
@@ -210,12 +214,14 @@ public class SrtTextReader {
 	}
 
 	/**
-	 * Inside a code block that describes a set of characters that all sort
-	 * at the same major position.
+	 * Block consisting of characters and relations between them.
+	 *
+	 * The sort order is derived from this.
+	 *
 	 * @param scanner The scanner for more tokens.
 	 * @param tok The current token to process.
 	 */
-	private void codeState(TokenScanner scanner, Token tok) {
+	private void characterState(TokenScanner scanner, Token tok) {
 		String val = tok.getValue();
 		TokType type = tok.getType();
 		if (type == TokType.TEXT) {
@@ -225,7 +231,7 @@ public class SrtTextReader {
 				cflags = scanner.nextWord();
 				// TODO not yet
 				break;
-			case "pos":
+			case "pos": // Used to set the actual sort position value, not used any more
 				scanner.validateNext("=");
 				try {
 					int newPos = Integer.decode(scanner.nextWord());
@@ -236,11 +242,11 @@ public class SrtTextReader {
 					throw new SyntaxException(scanner, "invalid integer for position");
 				}
 				break;
-			case "pos2":
+			case "pos2": // Used to set the actual sort position value, not used any more
 				scanner.validateNext("=");
 				pos2 = Integer.decode(scanner.nextWord());
 				break;
-			case "pos3":
+			case "pos3": // Used to set the actual sort position value, not used any more
 				scanner.validateNext("=");
 				pos3 = Integer.decode(scanner.nextWord());
 				break;
@@ -293,7 +299,7 @@ public class SrtTextReader {
 		if (!s.equals("to"))
 			throw new SyntaxException(scanner, "Expected the word 'to' in expand command");
 
-		List<Byte> expansionList = new ArrayList<>();
+		List<Integer> expansionList = new ArrayList<>();
 		while (!scanner.isEndOfFile()) {
 			Token t = scanner.nextRawToken();
 			if (t.isEol())
@@ -302,10 +308,10 @@ public class SrtTextReader {
 				continue;
 
 			Code r = new Code(scanner, t.getValue()).read();
-			expansionList.add((byte) r.getBval());
+			expansionList.add(r.getBval());
 		}
 
-		sort.addExpansion((byte) code.getBval(), charFlags(code.getCval()), expansionList);
+		sort.addExpansion(code.getBval(), charFlags(code.getCval()), expansionList);
 		state = IN_INITIAL;
 	}
 
@@ -314,7 +320,7 @@ public class SrtTextReader {
 	 * @param scanner Input scanner, for line number information.
 	 * @param val A single character string containing the character to be added. This will
 	 * be either a single character which is the unicode representation of the character, or
-	 * two characters which is the hex representation of the code point in the target codepage.
+	 * two or more characters which is the hex representation of the code point in the target codepage.
 	 */
 	private void addCharacter(TokenScanner scanner, String val) {
 		Code code = new Code(scanner, val).read();
@@ -393,7 +399,6 @@ public class SrtTextReader {
 		SrtTextReader tr = new SrtTextReader(infile);
 		Sort sort1 = tr.getSort();
 		sf.setSort(sort1);
-		sf.setDescription(sort1.getDescription());
 		sf.write();
 		sf.close();
 		chan.close();
@@ -410,17 +415,30 @@ public class SrtTextReader {
 		private final TokenScanner scanner;
 		private final String val;
 		private int cval;
-		private byte bval;
+		private int bval;
 
 		public Code(TokenScanner scanner, String val) {
 			this.scanner = scanner;
 			this.val = val;
 		}
 
+		/**
+		 * Get the character encoded in the code-page encoding.
+		 *
+		 * It will be one byte for the format-9 code pages cp1252 etc.
+		 * @return A character encoded in the code-page.
+		 */
 		public int getBval() {
-			return bval & 0xff;
+			return bval;
 		}
 
+		/**
+		 * Get the character in unicode.
+		 *
+		 * It will in general be a 2 byte value.
+		 *
+		 * @return The character expressed in unicode.
+		 */
 		public int getCval() {
 			return cval;
 		}
@@ -433,18 +451,21 @@ public class SrtTextReader {
 					cval = Integer.parseInt(val, 16);
 				}
 
-				CharBuffer cbuf = CharBuffer.wrap(new char[] {(char) cval});
-				ByteBuffer out = encoder.encode(cbuf);
-				if (out.remaining() > 1)
-					throw new SyntaxException(scanner, "more than one character resulted from conversion of " + val);
+				if (sort.isMulti()) {
+					bval = cval;
+				} else {
+					CharBuffer cbuf = CharBuffer.wrap(new char[] {(char) cval});
+					ByteBuffer out = encoder.encode(cbuf);
+					if (out.remaining() > 1)
+						throw new SyntaxException(scanner, "more than one character resulted from conversion of " + val);
 
-				// TODO: this is only for single byte charsets
-				bval = out.get();
+					bval = out.get() & 0xff;
+				}
+
 			} catch (NumberFormatException e) {
 				throw new SyntaxException(scanner, "Not a valid hex number " + val);
 			} catch (CharacterCodingException e) {
-				throw new SyntaxException(scanner, "Character not valid in character set '"
-						+ val + "'");
+				throw new SyntaxException(scanner, "Character not valid in character set '" + val + "'");
 			}
 			return this;
 		}

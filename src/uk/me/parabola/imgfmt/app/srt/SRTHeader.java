@@ -31,15 +31,18 @@ public class SRTHeader extends CommonHeader {
 	private static final int HEADER_LEN = 29;
 	protected static final int HEADER2_LEN = 16;
 	protected static final int HEADER3_LEN = 52;
+	protected static final int HEADER3_MULTI_LEN = 92;
 
 	// The section structure of this file is somewhat different to other
 	// files, but I am still going to model it using Section.
 	private final Section header = new Section();
-	//private final Section pointers = new Section(header);
+
 	private final Section desc = new Section(header);
 	private final Section subheader = new Section(desc);
 	private final Section chartab = new Section((char) 3);
-	private final Section tab2 = new Section(chartab, (char) 2);
+	private final Section expansions = new Section(chartab, (char) 2);
+	private final Section srt8 = new Section(expansions, (char) 5);
+	private final Section srt7 = new Section(srt8, (char) 4);
 
 	private Sort sort;
 
@@ -64,15 +67,10 @@ public class SRTHeader extends CommonHeader {
 
 		writer.putInt(header.getPosition());
 		writer.putChar((char) header.getSize());
-
-		//writeHeader2(writer);
-
-		//writeDescription(writer);
-		//writeHeader3(writer);
 	}
 
 	/**
-	 * Section writer to write the character and tab2 sections. These two sections are embedded within another
+	 * Section writer to write the character and expansions sections. These two sections are embedded within another
 	 * section and their offsets are relative to that section.
 	 * @param writer The real underlying writer.
 	 * @return A new writer where offsets are relative to the start of the sub-header section.
@@ -97,24 +95,51 @@ public class SRTHeader extends CommonHeader {
 	 * @param writer Header is written here.
 	 */
 	protected void writeHeader3(ImgFileWriter writer) {
-		writer.putChar((char) HEADER3_LEN);
+		if (sort.isMulti()) {
+			writer.putChar((char) HEADER3_MULTI_LEN);
+		} else {
+			writer.putChar((char) HEADER3_LEN);
+		}
+
 		writer.putChar((char) sort.getId1());
 		writer.putChar((char) sort.getId2());
 		writer.putChar((char) sort.getCodepage());
-		writer.putInt(0x2002);
+		if (sort.isMulti())
+			writer.putInt(0x6f02);
+		else
+			writer.putInt(0x2002);
 
 		chartab.writeSectionInfo(writer, true, true);
-
 		writer.putChar((char) 0);
-		tab2.writeSectionInfo(writer, true, true);
 
+		expansions.writeSectionInfo(writer, true, true);
 		writer.putChar((char) 0);
-		writer.putInt(0x34);
+
+		// SRT6 A repeat pointer to the single byte character table
+		writer.putInt(chartab.getPosition());
 		writer.putInt(0);
+
+		if (sort.isMulti()) {
+			writer.putInt(1);
+			writer.putInt(sort.getMaxPage());  // max block in srt7
+
+			srt7.writeSectionInfo(writer, true);
+			writer.putChar((char) 0);
+			writer.putInt(0);
+			srt8.writeSectionInfo(writer, true);
+
+			writer.putChar((char) 0);
+			writer.putInt(0);
+		}
 	}
 
 	public void setSort(Sort sort) {
 		this.sort = sort;
+		if (sort.isMulti()) {
+			chartab.setPosition(HEADER3_MULTI_LEN);
+			chartab.setItemSize((char) 5);
+			expansions.setItemSize((char) 4);
+		}
 	}
 
 	/** Called after the description has been written to record the position. */
@@ -128,9 +153,17 @@ public class SRTHeader extends CommonHeader {
 		chartab.setSize(position - chartab.getPosition());
 	}
 
-	/** Called after the tab2 has been written to record the position. */
+	/** Called after the expansions has been written to record the position. */
 	public void endTab2(int postition) {
 		subheader.setSize(postition - subheader.getPosition());
-		tab2.setSize(postition - tab2.getPosition());
+		expansions.setSize(postition - expansions.getPosition());
+	}
+
+	public void endSrt8(int position) {
+		srt8.setSize(position - srt8.getPosition());
+	}
+
+	public void endSrt7(int position) {
+		srt7.setSize(position - srt7.getPosition());
 	}
 }

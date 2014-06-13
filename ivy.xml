@@ -30,7 +30,7 @@
 				/>
 
 		<dependency org="junit" name="junit"
-			    rev="4.5"
+			    rev="4.11"
 			    conf="test->runtime(*),master(*)" />
 
 		<dependency org="innig" name="macker"
@@ -53,7 +53,7 @@
 			    rev="b9"
 			    conf="macker->compile(*),master(*)" />
 
-		<dependency org="com.ibm.icu" name="icu4j" rev="4.8"
+		<dependency org="com.ibm.icu" name="icu4j" rev="53.1"
 								conf="optional->master"/>
 
 		<dependency org="org.apache.ant" name="ant" rev="1.8.2"

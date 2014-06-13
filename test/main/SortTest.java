@@ -43,9 +43,11 @@ public class SortTest {
 	private Sort sort;
 	private boolean time;
 	private boolean fullOutput;
+	private boolean quiet;
+	private boolean unicode;
 
 	private void test() throws Exception {
-		sort = SrtTextReader.sortForCodepage(1252);
+		sort = SrtTextReader.sortForCodepage(unicode? 65001: 1252);
 
 		//testPairs();
 
@@ -69,9 +71,11 @@ public class SortTest {
 		int n = compareLists(sortWithKeys(list), sortWithCollator(list));
 		System.out.println("N errors " + n);
 
-		System.out.println("Compare our sort with java sort");
-		n = compareLists(sortWithKeys(list), sortWithJavaKeys(list));
-		System.out.println("N errors " + n);
+		if (!unicode) {
+			System.out.println("Compare our sort with java sort");
+			n = compareLists(sortWithKeys(list), sortWithJavaKeys(list));
+			System.out.println("N errors " + n);
+		}
 
 		if (time) {
 			System.out.println("Compare java keys with java collator");
@@ -87,18 +91,35 @@ public class SortTest {
 			int len = rand.nextInt(6)+1;
 			if (len < 2)
 				len = rand.nextInt(5) + 2;
-			byte[] b = new byte[len];
-			for (int i = 0; i < len; i++) {
 
-				int ch;
-				do {
-					ch = rand.nextInt(256);
-					// reject unassigned. Also low chars most of the time
-				} while (reject(rand, ch));
+			if (unicode) {
+				char[] c = new char[len];
+				for (int i = 0; i < len; i++) {
+					int ch;
+					do {
+						if (rand.nextInt(10) > 6)
+							ch = rand.nextInt(6 * 256);
+						else
+							ch = rand.nextInt(256);
+					} while (reject(rand, ch));
 
-				b[i] = (byte) ch;
+					c[i] = (char) ch;
+				}
+				list.add(new String(c));
+			} else {
+				byte[] b = new byte[len];
+				for (int i = 0; i < len; i++) {
+
+					int ch;
+					do {
+						ch = rand.nextInt(256);
+						// reject unassigned. Also low chars most of the time
+					} while (reject(rand, ch));
+
+					b[i] = (byte) ch;
+				}
+				list.add(new String(b, charset));
 			}
-			list.add(new String(b, charset));
 		}
 
 		list = Collections.unmodifiableList(list);
@@ -116,7 +137,7 @@ public class SortTest {
 				count++;
 			}
 
-			if (fullOutput || !mark.isEmpty())
+			if (fullOutput || (!mark.isEmpty() && !quiet))
 				System.out.printf("%6d |%-10s |%-10s %s\n", i, s1, s2, mark);
 		}
 		return count;
@@ -131,8 +152,19 @@ public class SortTest {
 		case 0x90:case 0x9d:
 			return true;
 		}
+		switch (Character.getType(ch)) {
+		case Character.UNASSIGNED:
+			return true;
+		case Character.CONTROL:
+			return true;
+		}
+
 		// Reject low characters most of the time
-		return (ch < 0x20 && rand.nextInt(100) < 95);
+		if (ch < 0x20 && rand.nextInt(100) < 95)
+			return true;
+		if (ch > 255 && rand.nextInt(100) > 99)
+			return true;
+		return false;
 	}
 
 	private List<String> sortWithKeys(List<String> list) {
@@ -263,10 +295,20 @@ public class SortTest {
 	public static void main(String[] args) throws Exception {
 		SortTest sortTest = new SortTest();
 		for (String arg : args) {
-			if (arg.equals("--time"))
+			switch (arg) {
+			case "--time":
 				sortTest.time = true;
-			else if (arg.equals("--full"))
+				break;
+			case "--full":
 				sortTest.fullOutput = true;
+				break;
+			case "--quiet":
+				sortTest.quiet = true;
+				break;
+			case "--unicode":
+				sortTest.unicode = true;
+				break;
+			}
 		}
 		sortTest.test();
 	}

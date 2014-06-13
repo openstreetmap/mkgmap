@@ -106,21 +106,17 @@ public class SortTest {
 		SortKey<Object> k1 = sort.createSortKey(null, s);
 		SortKey<Object> k2 = sort.createSortKey(null, "aa");
 
-		int res = k1.compareTo(k2);
-		assertTrue(res != 0);
+		assertTrue(k1.compareTo(k2) != 0);
 
-		res = k2.compareTo(k1);
-		assertTrue(res != 0);
+		assertTrue(k2.compareTo(k1) != 0);
 
 		// not equal to an empty string.
 		k2 = sort.createSortKey(null, "");
-		res = k1.compareTo(k2);
-		assertTrue(res != 0);
+		assertTrue(k1.compareTo(k2) != 0);
 
 		// character is replaced with '?'
 		k2 = sort.createSortKey(null, "a?b");
-		res = k1.compareTo(k2);
-		assertEquals(0, res);
+		assertEquals(0, k1.compareTo(k2));
 	}
 
 	@Test
@@ -145,6 +141,9 @@ public class SortTest {
 		assertEquals(-1, keyCompare("æ", "aE"));
 		assertEquals(1, keyCompare("AE", "aE"));
 		assertEquals(1, keyCompare("Æ", "aE"));
+
+		assertEquals(-1, keyCompare("–TMO", "–uÊÑÇ"));
+		assertEquals(-1, keyCompare("–™O", "–uÊÑÇ"));
 	}
 
 	@Test
@@ -168,6 +167,11 @@ public class SortTest {
 	@Test
 	public void testSecondaryIgnorable() {
 		assertEquals(1, keyCompare("\u0001A", "A\u0008"));
+	}
+
+	@Test
+	public void testSpaces() {
+		assertEquals(1, keyCompare("øþõ Ñ", "õþO"));
 	}
 
 	private int keyCompare(String s1, String s2) {
