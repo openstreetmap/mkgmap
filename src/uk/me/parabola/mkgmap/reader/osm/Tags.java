@@ -118,7 +118,7 @@ public class Tags implements Iterable<String> {
 	}
 	
 	public String remove(String key) {
-		short kd = tagDict.xlate((String) key);
+		short kd = tagDict.xlate(key);
 		return remove(kd); 
 	}
 	
@@ -249,7 +249,7 @@ public class Tags implements Iterable<String> {
 			}
 
 			public Map.Entry<String, String> next() {
-				Map.Entry<String, String> entry = new AbstractMap.SimpleEntry<String, String>(tagDict.get(keys[pos]), values[pos]);
+				Map.Entry<String, String> entry = new AbstractMap.SimpleEntry<>(tagDict.get(keys[pos]), values[pos]);
 
 				pos++;
 				return entry;
@@ -276,7 +276,7 @@ public class Tags implements Iterable<String> {
 			}
 
 			public Map.Entry<Short, String> next() {
-				Map.Entry<Short, String> entry = new AbstractMap.SimpleEntry<Short, String>(keys[pos], values[pos]);
+				Map.Entry<Short, String> entry = new AbstractMap.SimpleEntry<>(keys[pos], values[pos]);
 
 				pos++;
 				return entry;
@@ -289,7 +289,7 @@ public class Tags implements Iterable<String> {
 	}
 
 	public Map<String, String> getTagsWithPrefix(String prefix, boolean removePrefix) {
-		Map<String, String> map = new HashMap<String, String>();
+		Map<String, String> map = new HashMap<>();
 
 		int prefixLen = prefix.length();
 		for(int i = 0; i < capacity; ++i) {
