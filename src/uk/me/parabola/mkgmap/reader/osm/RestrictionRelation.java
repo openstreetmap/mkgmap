@@ -683,23 +683,31 @@ public class RestrictionRelation extends Relation {
 				break;
 			}
 		}
-		if (posFirst < 0  || posLast < 0 || Math.abs(posLast-posFirst) > 1){
+		if (posFirst < 0  || posLast < 0){
 			log.error(messagePrefix, "internal error: via way doesn't contain expected points");
 			valid = false;
 			return;
 		}
+		
 		List<Coord> midPoints = new ArrayList<>();
 		for (int i = 1; i + 1 < nodeIndices.size(); i++) {
 			midPoints.add(way.getPoints().get(nodeIndices.get(i)));
 		}
-		if (posFirst < posLast)
-			viaPoints.addAll(posFirst + 1, midPoints); 
+		if (posFirst < posLast){
+			if (posLast - posFirst > 1)
+				viaPoints.subList(posFirst+1, posLast).clear();
+			viaPoints.addAll(posFirst + 1, midPoints);
+		}
 		else {
+			if (posFirst - posLast > 1)
+				viaPoints.subList(posLast + 1, posFirst).clear();
 			Collections.reverse(midPoints);
 			viaPoints.addAll(posLast + 1, midPoints);
 		}
 		
 		int wayPos = viaWayIds.indexOf(way.getId());
+		while(viaWayIds.size() > wayPos + 1 && viaWayIds.get(wayPos+1) == way.getId())
+			viaWayIds.remove(wayPos);
 		for (int i = 0; i < midPoints.size(); i++){
 			viaWayIds.add(wayPos+1, way.getId());
 		}
