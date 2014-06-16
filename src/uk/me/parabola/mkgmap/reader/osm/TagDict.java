@@ -14,7 +14,7 @@ package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import uk.me.parabola.imgfmt.MapFailedException;
 
 
 /**
@@ -33,8 +33,8 @@ public class TagDict{
 	 * create an empty dictionary
 	 */
 	private TagDict() {
-		map = new HashMap<String,Short>();
-		list = new ArrayList<String>();
+		map = new HashMap<>();
+		list = new ArrayList<>();
 		map.put("invalid tag", INVALID_TAG_VALUE);
 		list.add("invalid tag");
 	}
@@ -56,14 +56,13 @@ public class TagDict{
 	 * @return a Short > 0 that can be used to retrieve
 	 * the tag name with the get() method
 	 */
-	public synchronized  Short xlate (String keyString){
+	public synchronized  short xlate (String keyString){
 		Short tagKey = map.get(keyString);
 		if (tagKey == null) {
-			Short size = (short) (list.size());
+			short size = (short) list.size();
 			if (size == Short.MAX_VALUE){
 				// very unlikely, typically we have a few hundred tag names
-				System.err.println("Fatal: Too many different tags");
-				System.exit(-1);
+				throw new MapFailedException("Fatal: Too many different tags in style");
 			}
 			String s = keyString;
 			map.put(s, size);
@@ -71,7 +70,7 @@ public class TagDict{
 			list.add(s);
 			return size;
 		}
-		return tagKey;
+		return tagKey.shortValue();
 	}
 
 	/**
@@ -80,27 +79,12 @@ public class TagDict{
 	 * @param key the tagKey (returned by xlate()
 	 * @return the tagName
 	 */
-	public String get(Short key){
+	public String get(short key){
 		if (key == INVALID_TAG_VALUE) return null;
 			
 		return list.get(key);
 	}
 	
-	/**
-	 * translate a List of tags to an array of tagKeys
-	 * @param tags the list of tag names
-	 * @return the array with tagKeys in the order of the input list
-	 */
-	public Short[] toArray (List<String> tags){
-		if (tags == null)
-			return null;
-		Short [] a = new Short[tags.size()];
-		int i=0;
-		for (String s:tags){
-			a[i++] = TagDict.getInstance().xlate(s);
-		}
-		return a;
-	}
 	/**
 	 * The size of the dictionary. The highest known tagKey is 
 	 * size() - 1. 
