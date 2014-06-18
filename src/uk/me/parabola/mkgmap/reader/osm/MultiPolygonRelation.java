@@ -725,6 +725,15 @@ public class MultiPolygonRelation extends Relation {
 			} 
 			polygonStatusList.add(new PolygonStatus("outer".equals(role), polyIndex, polygon));
 		}
+		// sort by role and then by number of points, this improves performance
+		// in the routines which add the polygons to areas
+		Collections.sort(polygonStatusList, new Comparator<PolygonStatus>() {
+			public int compare(PolygonStatus o1, PolygonStatus o2) {
+				if (o1.outer != o2.outer)
+					return (o1.outer) ? -1 : 1;
+				return o1.polygon.getPoints().size() - o2.polygon.getPoints().size();
+			}
+		});
 		return polygonStatusList;
 	}
 
