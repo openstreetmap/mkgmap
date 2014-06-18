@@ -205,7 +205,7 @@ public class BoundarySplitter {
 			num -= 2;
 		if (num < 6)
 			return null;
-		Path2D.Double path = new Path2D.Double(Path2D.WIND_EVEN_ODD, num / 2);
+		Path2D.Double path = new Path2D.Double(Path2D.WIND_NON_ZERO, num / 2);
 		double lastX = points[0], lastY = points[1];
 		path.moveTo(lastX, lastY);
 		int numOut = 1;
