@@ -79,10 +79,11 @@ public class Java2DConverter {
 	 * @return the converted Java2D path
 	 */
 	public static Path2D createPath2D (List<Coord> polygonPoints) {
-		Path2D path = new Path2D.Double();
-		if (polygonPoints.size()<3)
-			return path;
 		int n = polygonPoints.size();
+		if (n < 3)
+			return new Path2D.Double();
+		
+		Path2D path = new Path2D.Double(PathIterator.WIND_NON_ZERO, n);
 		if (polygonPoints.get(0).highPrecEquals(polygonPoints.get(n-1))){
 			// if first and last point are high-prec-equal, ignore last point 
 			// because we use closePath() to signal that

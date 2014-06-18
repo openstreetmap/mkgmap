@@ -75,7 +75,7 @@ public class BoundaryUtil {
 				return Collections.emptyList();
 			}
 
-			List<BoundaryElement> bElements = new ArrayList<BoundaryElement>();
+			List<BoundaryElement> bElements = new ArrayList<>();
 			for (List<Coord> singleElement : areaElements) {
 				if (singleElement.size() <= 3) {
 					// need at least 4 items to describe a polygon
@@ -140,53 +140,49 @@ public class BoundaryUtil {
 	public static Map<String,BoundaryQuadTree> loadQuadTrees (String boundaryDirName, 
 			List<String> boundaryFileNames, 
 			uk.me.parabola.imgfmt.app.Area searchBbox, EnhancedProperties props){
-		Map<String,BoundaryQuadTree>  trees = new HashMap<String,BoundaryQuadTree>();
+		Map<String,BoundaryQuadTree>  trees = new HashMap<>();
 		File boundaryDir = new File(boundaryDirName);
 		BoundaryQuadTree bqt;
-			if (boundaryDir.isDirectory()){
-				for (String boundaryFileName: boundaryFileNames){
+		if (boundaryDir.isDirectory()){
+			for (String boundaryFileName: boundaryFileNames){
+				log.info("loading boundary file:", boundaryFileName);
+				// no support for nested directories
+				File boundaryFile = new File(boundaryDir, boundaryFileName);
+				if (boundaryFile.exists()){
+					try(InputStream stream = new FileInputStream(boundaryFile)){
+						bqt = BoundaryUtil.loadQuadTreeFromStream(stream, boundaryFileName, searchBbox, props);
+						if (bqt != null)
+							trees.put(boundaryFileName,bqt);
+					} catch (IOException exp) {
+						log.error("Cannot load boundary file " +  boundaryFileName + "." + exp);
+					}
+				}					
+			}
+		} else if (boundaryDirName.endsWith(".zip")) {
+			String  currentFileName = "";
+			try(ZipFile zipFile = new ZipFile(boundaryDir)){
+				for (String boundaryFileName : boundaryFileNames){
 					log.info("loading boundary file:", boundaryFileName);
-					// no support for nested directories
-					File boundaryFile = new File(boundaryDir, boundaryFileName);
-					try {
-						if (boundaryFile.exists()){
-							InputStream stream = new FileInputStream(boundaryFile);
+					currentFileName = boundaryFileName;
+					// direct access  
+					ZipEntry entry = zipFile.getEntry(boundaryFileName);
+					if (entry != null){ 
+						try(InputStream stream = zipFile.getInputStream(entry)){
 							bqt = BoundaryUtil.loadQuadTreeFromStream(stream, boundaryFileName, searchBbox, props);
 							if (bqt != null)
 								trees.put(boundaryFileName,bqt);
 						}
-					} catch (IOException exp) {
-						log.error("Cannot load boundary file " +  boundaryFileName + "." + exp);
 					}
-					
 				}
-			} else if (boundaryDirName.endsWith(".zip")) {
-				String  currentFileName = "";
-				try{
-					ZipFile zipFile = new ZipFile(boundaryDir);
-
-					for (String boundaryFileName : boundaryFileNames){
-						log.info("loading boundary file:", boundaryFileName);
-						currentFileName = boundaryFileName;
-						// direct access  
-						ZipEntry entry = zipFile.getEntry(boundaryFileName);
-						if (entry != null){ 
-							bqt = BoundaryUtil.loadQuadTreeFromStream(zipFile.getInputStream(entry), 
-									boundaryFileName, searchBbox, props);
-							if (bqt != null)
-								trees.put(boundaryFileName,bqt);
-						}
-					}
-					zipFile.close();
-				} catch (IOException exp) {
-					log.error("Cannot load boundary file " + currentFileName + "." + exp);
-				}
-			} else{ 
-				log.error("Cannot read " + boundaryDirName);
+			} catch (IOException exp) {
+				log.error("Cannot load boundary file " + currentFileName + "." + exp);
 			}
+		} else{ 
+			log.error("Cannot read " + boundaryDirName);
+		}
 		return trees;
 	}
-	
+
 	
 	/**
 	 * read path iterator info from stream and create Area. 
@@ -197,7 +193,7 @@ public class BoundaryUtil {
 	 */
 	public static Area readAreaAsPath(DataInputStream inpStream) throws IOException{
 		double[] res = new double[2];
-		Path2D.Double path = new Path2D.Double();
+		Path2D.Double path = new Path2D.Double(PathIterator.WIND_NON_ZERO, 1024);
 		int windingRule = inpStream.readInt();
 		path.setWindingRule(windingRule);
 		int type = inpStream.readInt(); 
@@ -282,7 +278,7 @@ public class BoundaryUtil {
 	private static List<Boundary> readStreamRawFormat(
 			DataInputStream inpStream, String fname,
 			uk.me.parabola.imgfmt.app.Area bbox) throws IOException			{
-		List<Boundary> boundaryList = new ArrayList<Boundary>();
+		List<Boundary> boundaryList = new ArrayList<>();
 
 		try {
 			while (true) {
@@ -290,7 +286,8 @@ public class BoundaryUtil {
 				int minLong = inpStream.readInt();
 				int maxLat = inpStream.readInt();
 				int maxLong = inpStream.readInt();
-				log.debug("Next boundary. Lat min:",minLat,"max:",maxLat,"Long min:",minLong,"max:",maxLong);
+				if (log.isDebugEnabled())
+					log.debug("Next boundary. Lat min:",minLat,"max:",maxLat,"Long min:",minLong,"max:",maxLong);
 				uk.me.parabola.imgfmt.app.Area rBbox = new uk.me.parabola.imgfmt.app.Area(
 						minLat, minLong, maxLat, maxLong);
 				int bSize = inpStream.readInt();
@@ -332,7 +329,7 @@ public class BoundaryUtil {
 	 * @return a List with the names
 	 */
 	public static List<String> getRequiredBoundaryFileNames(uk.me.parabola.imgfmt.app.Area bbox) {
-		List<String> names = new ArrayList<String>();
+		List<String> names = new ArrayList<>();
 		for (int latSplit = BoundaryUtil.getSplitBegin(bbox.getMinLat()); latSplit <= BoundaryUtil
 				.getSplitBegin(bbox.getMaxLat()); latSplit += BoundaryUtil.RASTER) {
 			for (int lonSplit = BoundaryUtil.getSplitBegin(bbox.getMinLong()); lonSplit <= BoundaryUtil
@@ -350,7 +347,7 @@ public class BoundaryUtil {
 	 * @return the available *.bnd files in dirName.
 	 */
 	public static List<String> getBoundaryDirContent(String dirName) {
-		List<String> names = new ArrayList<String>();
+		List<String> names = new ArrayList<>();
 		File boundaryDir = new File(dirName);
 		if (!boundaryDir.exists())
 			log.error("boundary directory/zip does not exist: " + dirName);
@@ -364,8 +361,7 @@ public class BoundaryUtil {
 				}
 			}
 			else if (boundaryDir.getName().endsWith(".zip")){
-				try {
-					ZipFile zipFile = new ZipFile(boundaryDir);
+				try (ZipFile zipFile = new ZipFile(boundaryDir)){
 					Enumeration<? extends ZipEntry> entries = zipFile.entries();
 					boolean isFlat = true;
 					while(entries.hasMoreElements()) {
@@ -376,7 +372,6 @@ public class BoundaryUtil {
 						if (entry.getName().endsWith(".bnd"))
 							names.add(entry.getName());
 					}
-					zipFile.close();
 					if (!isFlat){
 						log.error("boundary zip file contains directories. Files in directories will be ignored." + dirName);			
 					}
@@ -428,8 +423,8 @@ public class BoundaryUtil {
 		filename = filename.substring(0,filename.length()-4);
 		String[] fParts = filename.split(Pattern.quote("_"));
 		
-		int lat = Integer.valueOf(fParts[1]);
-		int lon = Integer.valueOf(fParts[2]);
+		int lat = Integer.parseInt(fParts[1]);
+		int lon = Integer.parseInt(fParts[2]);
 		
 		return new uk.me.parabola.imgfmt.app.Area(lat, lon, lat+RASTER, lon+RASTER);
 	}
@@ -451,10 +446,7 @@ public class BoundaryUtil {
 			EnhancedProperties props)throws IOException{
 		BoundaryQuadTree bqt = null;
 		uk.me.parabola.imgfmt.app.Area qtBbox = BoundaryUtil.getBbox(fname);
-		try {
-			DataInputStream inpStream = new DataInputStream(
-					new BufferedInputStream(stream, 1024 * 1024));
-
+		try (DataInputStream inpStream = new DataInputStream(new BufferedInputStream(stream, 1024 * 1024))){
 			try {
 				// 1st read the mkgmap release the boundary file is created by
 				String mkgmapRel = "?";
@@ -472,9 +464,8 @@ public class BoundaryUtil {
 					int nBytes = inpStream.read(header, bytesRead, headerLength-bytesRead);
 					if (nBytes<0) {
 						throw new IOException("Cannot read header with size "+headerLength);
-					} else {
-						bytesRead += nBytes;
 					}
+					bytesRead += nBytes;
 				}
 					
 				ByteArrayInputStream rawHeaderStream = new ByteArrayInputStream(header);
@@ -513,11 +504,7 @@ public class BoundaryUtil {
 			catch (FormatException exp) {
 				log.error("Failed to read boundary file " + fname + " " + exp.getMessage());
 			} 
-			inpStream.close();
-		} finally {
-			if (stream != null)
-				stream.close();
-		}
+		} 
 		return bqt;
 	}
 	
@@ -527,9 +514,9 @@ public class BoundaryUtil {
 	 * @return the boundary list with postal code areas merged
 	 */
 	private static List<Boundary> mergePostalCodes(List<Boundary> boundaries) {
-		List<Boundary> mergedList = new ArrayList<Boundary>(boundaries.size());
+		List<Boundary> mergedList = new ArrayList<>(boundaries.size());
 		
-		MultiHashMap<String, Boundary> equalPostalCodes = new MultiHashMap<String, Boundary>();
+		MultiHashMap<String, Boundary> equalPostalCodes = new MultiHashMap<>();
 		for (Boundary boundary : boundaries) {
 			String postalCode = getPostalCode(boundary.getTags());
 			if (postalCode == null) {
@@ -595,26 +582,21 @@ public class BoundaryUtil {
 			
 			if ("boundary".equals(type) || "multipolygon".equals(type)) {
 				String boundaryVal = b.getTags().get("boundary");
-				if ("administrative".equals(boundaryVal)) {
-					// for boundary=administrative the admin_level must be set
-					if (b.getTags().get("admin_level") == null) {
-						return false;
-					}
-					// and a name must be set (check only for a tag containing name
-					Iterator<Entry<String,String>> tagIterator = b.getTags().entryIterator();
-					while (tagIterator.hasNext()) {
-						Entry<String,String> tag  = tagIterator.next();
-						if (tag.getKey().contains("name")) {
-							return true;
-						}
-					}
-					// does not contain a name tag => do not use it
-					return false;					
-				}  else {
+				if ("administrative".equals(boundaryVal) == false) 
+					return false;
+				// for boundary=administrative the admin_level must be set
+				if (b.getTags().get("admin_level") == null) {
 					return false;
 				}
-			} else {
-				return false;
+				// and a name must be set (check only for a tag containing name
+				Iterator<Entry<String,String>> tagIterator = b.getTags().entryIterator();
+				while (tagIterator.hasNext()) {
+					Entry<String,String> tag  = tagIterator.next();
+					if (tag.getKey().contains("name")) {
+						return true;
+					}
+				}
+				// does not contain a name tag => do not use it
 			}
 		} else if (b.getId().startsWith("w")) {
 			// the boundary tag must be "administrative" or "postal_code"
@@ -633,13 +615,9 @@ public class BoundaryUtil {
 					}
 				}
 				// does not contain a name tag => do not use it
-				return false;
-			} else {
-				return false;
 			}
-		} else {
-			return false;
-		}
+		} 
+		return false;
 	}
 	
 	
@@ -718,5 +696,4 @@ public class BoundaryUtil {
 		}
 		return Double.longBitsToDouble(res);
 	}
-
-		}
+}
