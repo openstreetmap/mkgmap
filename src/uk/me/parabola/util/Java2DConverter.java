@@ -14,6 +14,7 @@ package uk.me.parabola.util;
 
 import java.awt.Polygon;
 import java.awt.Rectangle;
+import java.awt.Shape;
 import java.awt.geom.Area;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
@@ -47,16 +48,17 @@ public class Java2DConverter {
 	}
 
 	/**
-	 * Converts the bounding box of a Java2D {@link Area} object to an mkgmap
+	 * Converts the bounding box of a Java2D {@link Shape} object to an mkgmap
 	 * {@link uk.me.parabola.imgfmt.app.Area} object.
 	 * 
-	 * @param area a Java2D area
+	 * @param shape a Java2D Shape (Area, Path2D, ...)
 	 * @return the bounding box
 	 */
-	public static uk.me.parabola.imgfmt.app.Area createBbox(Area area) {
-		Rectangle areaBounds = area.getBounds();
+	public static uk.me.parabola.imgfmt.app.Area createBbox(Shape shape) {
+		Rectangle areaBounds = shape.getBounds();
 		return new uk.me.parabola.imgfmt.app.Area(areaBounds.y,areaBounds.x,(int) areaBounds.getMaxY(),(int) areaBounds.getMaxX());
 	}
+	
 
 	/**
 	 * Creates a Java2D {@link Area} object from a polygon given as a list of
@@ -66,9 +68,20 @@ public class Java2DConverter {
 	 * @return the converted Java2D area
 	 */
 	public static Area createArea(List<Coord> polygonPoints) {
-		if (polygonPoints.size()<3)
-			return new Area();
+		return new Area(createPath2D(polygonPoints));
+	}
+	
+	/**
+	 * Creates a Java2D {@link Path2D} object from a polygon given as a list of
+	 * {@link Coord} objects. This list should describe a closed polygon.
+	 * 
+	 * @param polygonPoints a list of points that describe a closed polygon
+	 * @return the converted Java2D path
+	 */
+	public static Path2D createPath2D (List<Coord> polygonPoints) {
 		Path2D path = new Path2D.Double();
+		if (polygonPoints.size()<3)
+			return path;
 		int n = polygonPoints.size();
 		if (polygonPoints.get(0).highPrecEquals(polygonPoints.get(n-1))){
 			// if first and last point are high-prec-equal, ignore last point 
@@ -92,8 +105,7 @@ public class Java2DConverter {
 			lastLat = lat30;
 		}
 		path.closePath();
-		return new Area(path);
-		
+		return path;
 	}
 
 	public static Polygon createHighPrecPolygon(List<Coord> points) {
@@ -120,7 +132,7 @@ public class Java2DConverter {
 		} else if (area.isSingular()) {
 			return Collections.singletonList(area);
 		} else {
-			List<Area> singularAreas = new ArrayList<Area>();
+			List<Area> singularAreas = new ArrayList<>();
 
 			// all ways in the area MUST define outer areas
 			// it is not possible that one of the areas define an inner segment
@@ -193,7 +205,7 @@ public class Java2DConverter {
 			case PathIterator.SEG_MOVETO:
 				if (points != null)
 					log.error("area not singular");
-				points = new ArrayList<Coord>();
+				points = new ArrayList<>();
 				points.add(Coord.makeHighPrecCoord(lat30, lon30));
 				break;
 			case PathIterator.SEG_LINETO:
@@ -244,7 +256,7 @@ public class Java2DConverter {
 	 * @return a list of closed polygons
 	 */
 	public static List<List<Coord>> areaToShapes(java.awt.geom.Area area) {
-		List<List<Coord>> outputs = new ArrayList<List<Coord>>(4);
+		List<List<Coord>> outputs = new ArrayList<>(4);
 
 		double[] res = new double[6];
 		PathIterator pit = area.getPathIterator(null);
@@ -284,7 +296,7 @@ public class Java2DConverter {
 					}
 				}
 				if (type == PathIterator.SEG_MOVETO){
-					coords = new ArrayList<Coord>();
+					coords = new ArrayList<>();
 					coords.add(Coord.makeHighPrecCoord(lat30, lon30));
 					prevLat30 = lat30;
 					prevLong30 = lon30;
