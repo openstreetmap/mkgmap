@@ -685,7 +685,7 @@ public class BoundaryQuadTree {
 			HashMap<String,List<Area>> areas = new HashMap<>();
 			this.getAreas(areas, treePath, admLevel);
 			if (areas.isEmpty() == false){
-				Path2D.Double path = new Path2D.Double(PathIterator.WIND_NON_ZERO, 512000);
+				Path2D.Double path = new Path2D.Double(PathIterator.WIND_NON_ZERO, 1024 * 1024);
 				for (Entry <String, List<Area>> entry : areas.entrySet()){
 					for (Area area: entry.getValue()){
 						path.append(area, false);

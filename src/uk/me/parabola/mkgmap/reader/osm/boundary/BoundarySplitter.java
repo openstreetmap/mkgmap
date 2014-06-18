@@ -56,7 +56,6 @@ public class BoundarySplitter {
 		double minX = Double.POSITIVE_INFINITY,minY = Double.POSITIVE_INFINITY, 
 				maxX = Double.NEGATIVE_INFINITY,maxY = Double.NEGATIVE_INFINITY;
 		PathIterator pit = shapeToSplit.getPathIterator(null);
-//		ArrayList<Double> points = new ArrayList<>(500);
 		double[] points = new double[512];
 		double[] res = new double[6];
 		int num = 0;
@@ -205,7 +204,7 @@ public class BoundarySplitter {
 			num -= 2;
 		if (num < 6)
 			return null;
-		Path2D.Double path = new Path2D.Double(Path2D.WIND_NON_ZERO, num / 2);
+		Path2D.Double path = new Path2D.Double(Path2D.WIND_NON_ZERO, num / 2 + 2);
 		double lastX = points[0], lastY = points[1];
 		path.moveTo(lastX, lastY);
 		int numOut = 1;
