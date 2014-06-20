@@ -12,9 +12,12 @@
  */
 package uk.me.parabola.mkgmap.reader.osm.boundary;
 
+import java.awt.Rectangle;
+import java.awt.Shape;
 import java.awt.geom.Area;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
+import java.awt.geom.Rectangle2D;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -24,6 +27,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
@@ -44,6 +48,7 @@ import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.util.EnhancedProperties;
 import uk.me.parabola.util.Java2DConverter;
 import uk.me.parabola.util.MultiHashMap;
+import uk.me.parabola.util.ShapeSplitter;
 
 public class BoundaryUtil {
 	private static final Logger log = Logger.getLogger(BoundaryUtil.class);
@@ -330,10 +335,10 @@ public class BoundaryUtil {
 	 */
 	public static List<String> getRequiredBoundaryFileNames(uk.me.parabola.imgfmt.app.Area bbox) {
 		List<String> names = new ArrayList<>();
-		for (int latSplit = BoundaryUtil.getSplitBegin(bbox.getMinLat()); latSplit <= BoundaryUtil
-				.getSplitBegin(bbox.getMaxLat()); latSplit += BoundaryUtil.RASTER) {
-			for (int lonSplit = BoundaryUtil.getSplitBegin(bbox.getMinLong()); lonSplit <= BoundaryUtil
-					.getSplitBegin(bbox.getMaxLong()); lonSplit += BoundaryUtil.RASTER) {
+		for (int latSplit = getSplitBegin(bbox.getMinLat()); latSplit <= BoundaryUtil
+				.getSplitBegin(bbox.getMaxLat()); latSplit += RASTER) {
+			for (int lonSplit = getSplitBegin(bbox.getMinLong()); lonSplit <= BoundaryUtil
+					.getSplitBegin(bbox.getMaxLong()); lonSplit += RASTER) {
 				names.add("bounds_"+ getKey(latSplit, lonSplit) + ".bnd");
 			}
 		}
@@ -445,7 +450,7 @@ public class BoundaryUtil {
 			uk.me.parabola.imgfmt.app.Area searchBbox, 
 			EnhancedProperties props)throws IOException{
 		BoundaryQuadTree bqt = null;
-		uk.me.parabola.imgfmt.app.Area qtBbox = BoundaryUtil.getBbox(fname);
+		uk.me.parabola.imgfmt.app.Area qtBbox = getBbox(fname);
 		try (DataInputStream inpStream = new DataInputStream(new BufferedInputStream(stream, 1024 * 1024))){
 			try {
 				// 1st read the mkgmap release the boundary file is created by
@@ -695,5 +700,101 @@ public class BoundaryUtil {
 			res |= 1;
 		}
 		return Double.longBitsToDouble(res);
+	}
+
+	/**
+	 * Raster a given area. This is the non-recursive public method.
+	 * @param areaToSplit the area
+	 * @return a map with the divided shapes 
+	 */
+	public static Map<String, Shape> rasterArea(Area areaToSplit) {
+		return rasterShape(areaToSplit, new HashMap<String, Shape>());
+	}
+
+	/**
+	 * Raster a given shape. This method calls itself recursively.
+	 * @param shapeToSplit the shape
+	 * @param splits a map that will contain the resulting shapes
+	 * @return a reference to the map 
+	 */
+	private static Map<String, Shape> rasterShape(Shape shapeToSplit, Map<String, Shape> splits) {
+		double minX = Double.POSITIVE_INFINITY,minY = Double.POSITIVE_INFINITY, 
+				maxX = Double.NEGATIVE_INFINITY,maxY = Double.NEGATIVE_INFINITY;
+		PathIterator pit = shapeToSplit.getPathIterator(null);
+		double[] points = new double[512];
+		double[] res = new double[6];
+		int num = 0;
+		while (!pit.isDone()) {
+			int type = pit.currentSegment(res);
+			double x = res[0];
+			double y = res[1];
+			if (x < minX) minX = x;
+			if (x > maxX) maxX = x;
+			if (y < minY) minY = y;
+			if (y > maxY) maxY = y;
+			switch (type) {
+			case PathIterator.SEG_LINETO:
+			case PathIterator.SEG_MOVETO:
+				if (num  + 2 >= points.length) {
+					points = Arrays.copyOf(points, points.length * 2);
+				}
+				points[num++] = x;
+				points[num++] = y;
+				break;
+			case PathIterator.SEG_CLOSE:
+				int sMinLong = getSplitBegin((int)Math.round(minX));
+				int sMinLat = getSplitBegin((int)Math.round(minY));
+				int sMaxLong = getSplitEnd((int)Math.round(maxX));
+				int sMaxLat = getSplitEnd((int)Math.round(maxY));
+	
+				int dLon = sMaxLong- sMinLong;
+				int dLat = sMaxLat - sMinLat;
+				Rectangle2D.Double bbox = new Rectangle2D.Double(minX,minY,maxX-minX,maxY-minY);
+				if (dLon > RASTER || dLat > RASTER) {
+					// split into two halves
+					Rectangle clip1,clip2;
+					if (dLon > dLat) {
+						int midLon = getSplitEnd(sMinLong+dLon/2);
+						clip1 = new Rectangle(sMinLong, sMinLat, midLon-sMinLong, dLat);
+						clip2 = new Rectangle(midLon, sMinLat, sMaxLong-midLon, dLat);
+					} else {
+						int midLat = getSplitEnd(sMinLat+dLat/2);
+						clip1 = new Rectangle(sMinLong, sMinLat, dLon, midLat-sMinLat);
+						clip2 = new Rectangle(sMinLong, midLat, dLon, sMaxLat-midLat);
+					}
+	
+					// intersect with the both halves
+					// and split both halves recursively
+					Path2D.Double clippedPath = ShapeSplitter.clipSinglePathWithSutherlandHodgman (points, num, clip1, bbox);
+					if (clippedPath != null)
+						rasterShape(clippedPath, splits);
+					clippedPath = ShapeSplitter.clipSinglePathWithSutherlandHodgman (points, num, clip2, bbox);
+					if (clippedPath != null)
+						rasterShape(clippedPath, splits);
+				} 
+				else {
+					String key = getKey(sMinLat, sMinLong);
+					// no need to split, path fits into one tile
+					Path2D.Double segment = ShapeSplitter.pointsToPath2D(points, num);
+					if (segment != null){
+						Path2D.Double path = (Path2D.Double) splits.get(key);
+						if (path == null)
+							splits.put(key, segment);
+						else 
+							path.append(segment, false);
+					}
+				}
+				num = 0;
+				minX = minY = Double.POSITIVE_INFINITY; 
+				maxX = maxY = Double.NEGATIVE_INFINITY;
+				break;
+			default:
+				log.error("Unsupported path iterator type " + type
+						+ ". This is an mkgmap error.");
+			}
+	
+			pit.next();
+		}
+		return splits;
 	}
 }

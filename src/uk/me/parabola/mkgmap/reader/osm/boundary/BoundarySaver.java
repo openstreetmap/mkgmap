@@ -131,7 +131,7 @@ public class BoundarySaver {
 	}
 
 	public void addBoundary(Boundary boundary) {
-		Map<String, Shape> splitBounds = BoundarySplitter.rasterArea(boundary.getArea());
+		Map<String, Shape> splitBounds = BoundaryUtil.rasterArea(boundary.getArea());
 		for (Entry<String, Shape> split : splitBounds.entrySet()) {
 			saveToFile(split.getKey(), split.getValue(), boundary.getTags(),
 					boundary.getId());

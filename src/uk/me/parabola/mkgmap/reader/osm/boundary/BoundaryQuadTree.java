@@ -42,6 +42,7 @@ import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.util.EnhancedProperties;
 import uk.me.parabola.util.GpxCreator;
 import uk.me.parabola.util.Java2DConverter;
+import uk.me.parabola.util.ShapeSplitter;
 
 /**
  * A quadtree implementation to handle areas formed by boundaries.
@@ -627,7 +628,7 @@ public class BoundaryQuadTree {
 			assert isLeaf;
 			Path2D.Double path;
 			if (clipOption){
-				path = BoundarySplitter.clipShape (shape, bbox);
+				path = ShapeSplitter.clipShape (shape, bbox);
 				// only add areas that intersect with this part of the tree
 				if (path == null)
 					return;

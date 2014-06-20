@@ -1,144 +1,29 @@
-/*
- * Copyright (C) 2014.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 3 or
- * version 2 as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- */
-package uk.me.parabola.mkgmap.reader.osm.boundary;
+package uk.me.parabola.util;
 
 import java.awt.Rectangle;
 import java.awt.Shape;
-import java.awt.geom.Area;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+
 import uk.me.parabola.log.Logger;
 
-/**
- * A class for clipping shapes using a given clipping rectangle or a raster.
- * Clipping is done with the Sutherland Hodgman algorithm
- * @author GerdP
- *
- */
-public class BoundarySplitter {
-	private static final Logger log = Logger.getLogger(BoundarySplitter.class);
-
+public class ShapeSplitter {
+	private static final Logger log = Logger.getLogger(ShapeSplitter.class);
 	private static final int LEFT = 0;
 	private static final int TOP = 1;
 	private static final int RIGHT = 2;
 	private static final int BOTTOM= 3;
+
 	
-	/**
-	 * Raster a given area using the raster values in BoundaryUtil. 
-	 * @param areaToSplit the area
-	 * @return a map with the rasterised shapes, 
-	 */
-	public static Map<String, Shape> rasterArea(Area areaToSplit) {
-		return rasterShape(areaToSplit, new HashMap<String, Shape>());
-	}
-
-	/**
-	 * Raster a given shape using the raster values in BoundaryUtil.
-	 * @param shapeToSplit the shape
-	 * @param splits a map that will contain the resulting shapes
-	 * @return a reference to the map 
-	 */
-	private static Map<String, Shape> rasterShape(Shape shapeToSplit, Map<String, Shape> splits) {
-		double minX = Double.POSITIVE_INFINITY,minY = Double.POSITIVE_INFINITY, 
-				maxX = Double.NEGATIVE_INFINITY,maxY = Double.NEGATIVE_INFINITY;
-		PathIterator pit = shapeToSplit.getPathIterator(null);
-		double[] points = new double[512];
-		double[] res = new double[6];
-		int num = 0;
-		while (!pit.isDone()) {
-			int type = pit.currentSegment(res);
-			double x = res[0];
-			double y = res[1];
-			if (x < minX) minX = x;
-			if (x > maxX) maxX = x;
-			if (y < minY) minY = y;
-			if (y > maxY) maxY = y;
-			switch (type) {
-			case PathIterator.SEG_LINETO:
-			case PathIterator.SEG_MOVETO:
-				if (num  + 2 >= points.length) {
-					points = Arrays.copyOf(points, points.length * 2);
-				}
-				points[num++] = x;
-				points[num++] = y;
-				break;
-			case PathIterator.SEG_CLOSE:
-				int sMinLong = BoundaryUtil.getSplitBegin((int)Math.round(minX));
-				int sMinLat = BoundaryUtil.getSplitBegin((int)Math.round(minY));
-				int sMaxLong = BoundaryUtil.getSplitEnd((int)Math.round(maxX));
-				int sMaxLat = BoundaryUtil.getSplitEnd((int)Math.round(maxY));
-
-				int dLon = sMaxLong- sMinLong;
-				int dLat = sMaxLat - sMinLat;
-				Rectangle2D.Double bbox = new Rectangle2D.Double(minX,minY,maxX-minX,maxY-minY);
-				if (dLon > BoundaryUtil.RASTER || dLat > BoundaryUtil.RASTER) {
-					// split into two halves
-					Rectangle clip1,clip2;
-					if (dLon > dLat) {
-						int midLon = BoundaryUtil.getSplitEnd(sMinLong+dLon/2);
-						clip1 = new Rectangle(sMinLong, sMinLat, midLon-sMinLong, dLat);
-						clip2 = new Rectangle(midLon, sMinLat, sMaxLong-midLon, dLat);
-					} else {
-						int midLat = BoundaryUtil.getSplitEnd(sMinLat+dLat/2);
-						clip1 = new Rectangle(sMinLong, sMinLat, dLon, midLat-sMinLat);
-						clip2 = new Rectangle(sMinLong, midLat, dLon, sMaxLat-midLat);
-					}
-
-					// intersect with the both halves
-					// and split both halves recursively
-					Path2D.Double clippedPath = clipSinglePathWithSutherlandHodgman (points, num, clip1, bbox);
-					if (clippedPath != null)
-						rasterShape(clippedPath, splits);
-					clippedPath = clipSinglePathWithSutherlandHodgman (points, num, clip2, bbox);
-					if (clippedPath != null)
-						rasterShape(clippedPath, splits);
-				} 
-				else {
-					String key = BoundaryUtil.getKey(sMinLat, sMinLong);
-					// no need to split, path fits into one tile
-					Path2D.Double segment = pointsToPath2D(points, num);
-					if (segment != null){
-						Path2D.Double path = (Path2D.Double) splits.get(key);
-						if (path == null)
-							splits.put(key, segment);
-						else 
-							path.append(segment, false);
-					}
-				}
-				num = 0;
-				minX = minY = Double.POSITIVE_INFINITY; 
-				maxX = maxY = Double.NEGATIVE_INFINITY;
-				break;
-			default:
-				log.error("Unsupported path iterator type " + type
-						+ ". This is an mkgmap error.");
-			}
-
-			pit.next();
-		}
-		return splits;
-	}
- 	
 	/**
 	 * Clip a given shape with a given rectangle. 
 	 * @param shape the subject shape to clip
 	 * @param clippingRect the clipping rectangle
-	 * @return the intersection of the shape and the rectangle. 
-	 * This may contain dangling edges.
+	 * @return the intersection of the shape and the rectangle 
+	 * or null if they don't intersect. 
+	 * The intersection may contain dangling edges. 
 	 */
 	public static Path2D.Double clipShape (Shape shape, Rectangle clippingRect) {
 		double minX = Double.POSITIVE_INFINITY,minY = Double.POSITIVE_INFINITY, 
@@ -197,7 +82,7 @@ public class BoundarySplitter {
 	 * @param points the pairs
 	 * @return the path or null if the path describes a point or line. 
 	 */
-	private static Path2D.Double pointsToPath2D(double[] points, int num) {
+	public static Path2D.Double pointsToPath2D(double[] points, int num) {
 		if (num < 2)
 			return null;
 		if (points[0] == points[num-2] && points[1] == points[num-1])
@@ -250,7 +135,7 @@ public class BoundarySplitter {
 	 * @param bbox the bounding box of the path 
 	 * @return the clipped path as a Path2D.Double or null if the result is empty  
 	 */
-	private static Path2D.Double clipSinglePathWithSutherlandHodgman (double[] points, int num, Rectangle clippingRect, Rectangle2D.Double bbox) {
+	public static Path2D.Double clipSinglePathWithSutherlandHodgman (double[] points, int num, Rectangle clippingRect, Rectangle2D.Double bbox) {
 		if (num <= 2 || bbox.intersects(clippingRect) == false){
 			return null;
 		}
@@ -372,4 +257,5 @@ public class BoundarySplitter {
 		}
 		return pointsToPath2D(outputList, countVals);
 	}
+
 }
