@@ -1,6 +1,5 @@
 package uk.me.parabola.util;
 
-import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
@@ -25,7 +24,7 @@ public class ShapeSplitter {
 	 * or null if they don't intersect. 
 	 * The intersection may contain dangling edges. 
 	 */
-	public static Path2D.Double clipShape (Shape shape, Rectangle clippingRect) {
+	public static Path2D.Double clipShape (Shape shape, Rectangle2D clippingRect) {
 		double minX = Double.POSITIVE_INFINITY,minY = Double.POSITIVE_INFINITY, 
 				maxX = Double.NEGATIVE_INFINITY,maxY = Double.NEGATIVE_INFINITY;
 		PathIterator pit = shape.getPathIterator(null);
@@ -135,7 +134,7 @@ public class ShapeSplitter {
 	 * @param bbox the bounding box of the path 
 	 * @return the clipped path as a Path2D.Double or null if the result is empty  
 	 */
-	public static Path2D.Double clipSinglePathWithSutherlandHodgman (double[] points, int num, Rectangle clippingRect, Rectangle2D.Double bbox) {
+	public static Path2D.Double clipSinglePathWithSutherlandHodgman (double[] points, int num, Rectangle2D clippingRect, Rectangle2D.Double bbox) {
 		if (num <= 2 || bbox.intersects(clippingRect) == false){
 			return null;
 		}
