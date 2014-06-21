@@ -521,12 +521,11 @@ public class Sort {
 	 */
 	private void ensurePage(int n) {
 		assert n == 0 || isMulti();
-		if (this.pages[n] == null)
-			if (this.pages[n] == null) {
-				this.pages[n] = new Page();
-				if (n > maxPage)
-					maxPage = n;
-			}
+		if (this.pages[n] == null) {
+			this.pages[n] = new Page();
+			if (n > maxPage)
+				maxPage = n;
+		}
 	}
 
 	/**
