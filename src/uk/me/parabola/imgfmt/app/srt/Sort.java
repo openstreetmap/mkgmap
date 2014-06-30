@@ -303,10 +303,9 @@ public class Sort {
 		int index = start;
 		for (char c : input) {
 
-			if (!hasPage(c >>> 8)) {
-				System.out.printf("missing page %c (%x)\n", c, (int) c); // XXX remove
+			if (!hasPage(c >>> 8))
 				continue;
-			}
+
 			int exp = (getFlags(c) >> 4) & 0x3;
 			if (exp == 0) {
 				index = writePos(type, c, outKey, index);
@@ -752,7 +751,6 @@ public class Sort {
 						// Get the first non-ignorable at this level
 						int c = chars[(pos++ & 0xff)];
 						if (!hasPage(c >>> 8)) {
-							//System.out.printf("no page %c (%x)\n", c, c); // XXX remove
 							next = 0;
 							continue;
 						}
