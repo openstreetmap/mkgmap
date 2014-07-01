@@ -168,15 +168,23 @@ public class CommandArgsReader {
 		if (option.equals("mapname"))
 			mapnameWasSet = true;
 
-		if (option.equals("input-file")) {
+		switch (option) {
+		case "input-file":
 			log.debug("adding filename", value);
 			add(new Filename(value));
-		} else if (option.equals("read-config")) {
+			break;
+		case "read-config":
 			readConfigFile(value);
-		} else if (option.equals("latin1")) {
+			break;
+		case "latin1":
 			add(new CommandOption("code-page", "1252"));
-		} else {
+			break;
+		case "unicode":
+			add(new CommandOption("code-page", "65001"));
+			break;
+		default:
 			add(opt);
+			break;
 		}
 	}
 

@@ -70,6 +70,9 @@ Label options:
 --latin1
 	This is equivalent to --code-page=1252.
 
+--unicode
+	This is equivalent to --code-page=65001. Note that only newer devices support unicode.
+
 --code-page=number
     This option enables the use of international characters. Only 8 bit
     character sets are supported and so you have to specify which code page
