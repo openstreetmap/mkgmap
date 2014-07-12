@@ -225,13 +225,13 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 					if (rr.isToWay(oldWay.getId())) {
 						log.debug("Change to-way",oldWay.getId(),"to",newWay.getId(),"for relation",rr.getId(),"at",lastPointNewWay.toOSMURL());
 						rr.replaceWay(oldWay.getId(), newWay.getId());
-						restrictions.remove(oldWay.getId(), rr);
+						restrictions.removeMapping(oldWay.getId(), rr);
 						restrictions.add(newWay.getId(), rr);
 						
 					} else if (rr.isFromWay(oldWay.getId())){
 						log.debug("Change from-way",oldWay.getId(),"to",newWay.getId(),"for relation",rr.getId(),"at",lastPointNewWay.toOSMURL());
 						rr.replaceWay(oldWay.getId(), newWay.getId());
-						restrictions.remove(oldWay.getId(), rr);
+						restrictions.removeMapping(oldWay.getId(), rr);
 						restrictions.add(newWay.getId(), rr);
 					} 
 				}
