@@ -10086,7 +10086,6 @@ characters
 < ꓵ
 < ꓶ
 < ꓷ
-< �
 expand ⩴ to : : 003d
 expand ‼ to ! !
 expand ⁉ to ! ?

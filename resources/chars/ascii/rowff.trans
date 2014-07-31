@@ -256,6 +256,6 @@ U+fff9 {            # Character ￹
 U+fffa |            # Character ￺
 U+fffb }            # Character ￻
 U+fffc ?            # Character ￼
-U+fffd ?            # Character �
+U+fffd ?            # Character ? (replacement character)
 U+fffe ?            # Character ￾
 U+ffff ?            # Character ￿

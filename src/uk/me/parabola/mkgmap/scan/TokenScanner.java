@@ -235,6 +235,8 @@ public class TokenScanner {
 
 		try {
 			c = reader.read();
+			if (c == 0xfffd)
+				throw new SyntaxException(this, "Bad character in input, file probably not in utf-8");
 		} catch (IOException e) {
 			isEOF = true;
 			c = -1;
