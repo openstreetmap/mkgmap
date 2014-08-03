@@ -65,7 +65,7 @@ public class DouglasPeuckerFilter implements MapFilter {
 		List<Coord> points = line.getPoints();
 
 		// Create a new list to rewrite the points into. Don't alter the original one
-		List<Coord> coords = new ArrayList<Coord>(points.size());
+		List<Coord> coords = new ArrayList<>(points.size());
 		coords.addAll(points);
 		// Loop runs downwards, as the list length gets modified while running
 		int endIndex = coords.size()-1;
@@ -134,11 +134,7 @@ public class DouglasPeuckerFilter implements MapFilter {
 			} else if (frac >= 1) {
 				distance = b.distance(p);
 			} else {
-				// normal case: calculate perpendicular distance with herons formula
-				double ap = p.distance(a);
-				double bp = p.distance(b);
-				double abpa = (ab+ap+bp)/2;
-				distance = 2 * Math.sqrt(abpa * (abpa-ab) * (abpa-ap) * (abpa-bp)) / ab;
+				distance = p.distToLineSegment(a, b);
 			}
 			if (distance > maxDistance) {
 				maxDistance = distance;

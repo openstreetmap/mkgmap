@@ -17,11 +17,13 @@
 package uk.me.parabola.imgfmt.app;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.mkgmap.filters.ShapeMergeFilter;
+import uk.me.parabola.util.GpxCreator;
 
 /**
  * A point coordinate in unshifted map-units.
@@ -49,6 +51,10 @@ public class Coord implements Comparable<Coord> {
 	
 	public final static int HIGH_PREC_BITS = 30;
 	public final static int DELTA_SHIFT = 6;
+	
+	public final static double R = 6378137.0; // Radius of earth as defined by WGS84
+	public final static double U = R * 2 * Math.PI; // circumference of earth (WGS84)
+	
 	private final int latitude;
 	private final int longitude;
 	private byte highwayCount; // number of highways that use this point
@@ -350,10 +356,15 @@ public class Coord implements Comparable<Coord> {
 	} 
 
 	/**
-	 * Distance to other point in meters.
+	 * Distance to other point in meters, using
+	 * "flat earth approximation" or rhumb-line algo
 	 */
 	public double distance(Coord other) {
-		return 40075000 * Math.sqrt(distanceInDegreesSquared(other)) / 360;
+		double d1 = U / 360 * Math.sqrt(distanceInDegreesSquared(other));
+		if (d1 < 10000)
+			return d1; // error is below 0.01 m
+		// for long distances, use more complex algorithm 
+		return distanceOnRhumbLine(other);
 	}
 
 	public double distanceInDegreesSquared(Coord other) {
@@ -386,29 +397,111 @@ public class Coord implements Comparable<Coord> {
 
 		return (latDiff * latDiff) + (longDiff * longDiff);
 	}
+	
+	/**
+	 * Distance to other point in meters following a great circle path, without 
+	 * flat earth approximation, slower but better with large 
+	 * distances and big deltas in lat AND lon. 
+	 * Similar to code in JOSM
+	 */
+	public double distanceHaversine (Coord point){
+		double lat1 = int30ToRadians(getHighPrecLat());
+		double lat2 = int30ToRadians(point.getHighPrecLat());
+		double lon1 = int30ToRadians(getHighPrecLon());
+		double lon2 = int30ToRadians(point.getHighPrecLon());
+		double sinMidLat = Math.sin((lat1-lat2)/2);
+		double sinMidLon = Math.sin((lon1-lon2)/2);
+		double dRad = 2*Math.asin(Math.sqrt(sinMidLat*sinMidLat + Math.cos(lat1)*Math.cos(lat2)*sinMidLon*sinMidLon));
+		double distance= dRad * R;
+		return distance;
+	}
+
+	/**
+	 * Distance to other point in meters following the shortest rhumb line.
+	 */
+	public double distanceOnRhumbLine(Coord point){
+		double lat1 = int30ToRadians(getHighPrecLat());
+		double lat2 = int30ToRadians(point.getHighPrecLat());
+		double lon1 = int30ToRadians(getHighPrecLon());
+		double lon2 = int30ToRadians(point.getHighPrecLon());
+		
+	    // see http://williams.best.vwh.net/avform.htm#Rhumb
+
+	    double dLat = lat2 - lat1;
+	    double dLon = Math.abs(lon2 - lon1);
+	    // if dLon over 180° take shorter rhumb line across the anti-meridian:
+	    if (Math.abs(dLon) > Math.PI) dLon = dLon>0 ? -(2*Math.PI-dLon) : (2*Math.PI+dLon);
+
+	    // on Mercator projection, longitude distances shrink by latitude; q is the 'stretch factor'
+	    // q becomes ill-conditioned along E-W line (0/0); use empirical tolerance to avoid it
+	    double deltaPhi = Math.log(Math.tan(lat2/2+Math.PI/4)/Math.tan(lat1/2+Math.PI/4));
+	    double q = Math.abs(deltaPhi) > 10e-12 ? dLat/deltaPhi : Math.cos(lat1);
+
+	    // distance is pythagoras on 'stretched' Mercator projection
+	    double distRad = Math.sqrt(dLat*dLat + q*q*dLon*dLon); // angular distance in radians
+	    double dist = distRad * R;
+
+	    return dist;
+		
+	}
 
 	public Coord makeBetweenPoint(Coord other, double fraction) {
+		// we assume a flat earth here!
 		int lat30 = (int) (getHighPrecLat() + (other.getHighPrecLat() - getHighPrecLat()) * fraction);
 		int lon30 = (int) (getHighPrecLon() + (other.getHighPrecLon() - getHighPrecLon()) * fraction);
 		return makeHighPrecCoord(lat30, lon30);
 	}
 
 	
-	// returns bearing (in degrees) from current point to another point
+	/**
+	 * returns bearing (in degrees) from current point to another point
+	 * following a rhumb line
+	 */
 	public double bearingTo(Coord point) {
+		return bearingToOnRhumbLine(point, false);
+	}
+
+	/**
+	 * returns bearing (in degrees) from current point to another point
+	 * following a great circle path
+	 */
+	public double bearingToOnGreatCircle(Coord point, boolean needHighPrec) {
 		// use high precision values for this 
 		double lat1 = int30ToRadians(getHighPrecLat());
 		double lat2 = int30ToRadians(point.getHighPrecLat());
 		double lon1 = int30ToRadians(getHighPrecLon());
 		double lon2 = int30ToRadians(point.getHighPrecLon());
-		
+
 		double dlon = lon2 - lon1;
 
 		double y = Math.sin(dlon) * Math.cos(lat2);
 		double x = Math.cos(lat1)*Math.sin(lat2) -
-			Math.sin(lat1)*Math.cos(lat2)*Math.cos(dlon);
-		return Utils.atan2_approximation(y, x) * 180 / Math.PI;
+				Math.sin(lat1)*Math.cos(lat2)*Math.cos(dlon);
+		double brngRad = needHighPrec ? Math.atan2(y, x) * 180 / Math.PI: Utils.atan2_approximation(y, x) * 180 / Math.PI;
+		return brngRad * 180 / Math.PI;
 	}
+
+	/**
+	 * returns bearing (in degrees) from current point to another point
+	 * following shortest rhumb line
+	 * @param needHighPrec 
+	 */
+	public double bearingToOnRhumbLine(Coord point, boolean needHighPrec){
+		double lat1 = int30ToRadians(this.getHighPrecLat());
+		double lat2 = int30ToRadians(point.getHighPrecLat());
+		double lon1 = int30ToRadians(this.getHighPrecLon());
+		double lon2 = int30ToRadians(point.getHighPrecLon());
+
+		double dLon = lon2-lon1;
+	    // if dLon over 180° take shorter rhumb line across the anti-meridian:
+	    if (Math.abs(dLon) > Math.PI) dLon = dLon>0 ? -(2*Math.PI-dLon) : (2*Math.PI+dLon);
+
+	    double deltaPhi = Math.log(Math.tan(lat2/2+Math.PI/4)/Math.tan(lat1/2+Math.PI/4));
+	    
+	    double brngRad = needHighPrec ? Math.atan2(dLon, deltaPhi) : Utils.atan2_approximation(dLon, deltaPhi);
+	    return brngRad * 180 / Math.PI;
+	}
+
 	
 	/**
 	 * Sort lexicographically by longitude, then latitude.
@@ -572,4 +665,67 @@ public class Coord implements Comparable<Coord> {
 		}
 		return approxDistanceToDisplayedCoord;
 	}
+	
+	/**
+	 * Get the coord that is dist metre away traveling with course
+	 * brng on a rhumb line.
+	 * @param dist distance in m
+	 * @param brng bearing in degrees
+	 * @return a new Coord instance
+	 */
+	public Coord destOnRhumLine(double dist, double brng){
+	    double distRad = dist / R; // angular distance in radians
+		double lat1 = int30ToRadians(this.getHighPrecLat());
+		double lon1 = int30ToRadians(this.getHighPrecLon());
+
+	    double brngRad = Math.toRadians(brng);
+
+	    double deltaLat = distRad * Math.cos(brngRad);
+
+	    double lat2 = lat1 + deltaLat;
+	    // check for some daft bugger going past the pole, normalise latitude if so
+	    if (Math.abs(lat2) > Math.PI/2) lat2 = lat2>0 ? Math.PI-lat2 : -Math.PI-lat2;
+
+	    double deltaPhi = Math.log(Math.tan(lat2/2+Math.PI/4)/Math.tan(lat1/2+Math.PI/4));
+	    double q = Math.abs(deltaPhi) > 10e-12 ? deltaLat / deltaPhi : Math.cos(lat1); // E-W course becomes ill-conditioned with 0/0
+
+	    double deltaLon = distRad*Math.sin(brngRad)/q;
+
+	    double lon2 = lon1 + deltaLon;
+
+	    lon2 = (lon2 + 3*Math.PI) % (2*Math.PI) - Math.PI; // normalise to -180..+180º
+
+	    return new Coord(Math.toDegrees(lat2), Math.toDegrees(lon2));
+	}
+	
+	/**
+	 * Calculate the distance in metres to the line
+	 * defined by coords a and b.
+	 * @param a start point
+	 * @param b end point
+	 * @return perpendicular distance in m.  
+	 */
+	public double distToLineSegment(Coord a, Coord b){
+		double ap = a.distance(this);
+		double ab = a.distance(b);
+		double bp = b.distance(this);
+		double abpa = (ab+ap+bp)/2;
+		double dx = abpa-ab;
+		double dist;
+		if (dx < 0){
+			// simple calculation using Herons formula will fail
+			// calculate x, the point on line a-b which is as far away from a as this point
+			double b_ab = a.bearingToOnRhumbLine(b, true);
+			Coord x = a.destOnRhumLine(ap, b_ab);
+//			GpxCreator.createGpx("e:/ld/test", Arrays.asList(this,a,b,this), Arrays.asList(this,a,b,this,x));
+			// this dist between these two points is not exactly 
+			// the perpendicul distance, but close enough
+			dist = x.distance(this);  
+		}
+		else 
+			dist = 2 * Math.sqrt(abpa * (abpa-ab) * (abpa-ap) * (abpa-bp)) / ab;
+		return dist;
+	}
+	
+	
 }
