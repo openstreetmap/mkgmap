@@ -17,13 +17,11 @@
 package uk.me.parabola.imgfmt.app;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.mkgmap.filters.ShapeMergeFilter;
-import uk.me.parabola.util.GpxCreator;
 
 /**
  * A point coordinate in unshifted map-units.
@@ -477,7 +475,7 @@ public class Coord implements Comparable<Coord> {
 		double y = Math.sin(dlon) * Math.cos(lat2);
 		double x = Math.cos(lat1)*Math.sin(lat2) -
 				Math.sin(lat1)*Math.cos(lat2)*Math.cos(dlon);
-		double brngRad = needHighPrec ? Math.atan2(y, x) * 180 / Math.PI: Utils.atan2_approximation(y, x) * 180 / Math.PI;
+		double brngRad = needHighPrec ? Math.atan2(y, x) : Utils.atan2_approximation(y, x);
 		return brngRad * 180 / Math.PI;
 	}
 
@@ -717,15 +715,47 @@ public class Coord implements Comparable<Coord> {
 			// calculate x, the point on line a-b which is as far away from a as this point
 			double b_ab = a.bearingToOnRhumbLine(b, true);
 			Coord x = a.destOnRhumLine(ap, b_ab);
-//			GpxCreator.createGpx("e:/ld/test", Arrays.asList(this,a,b,this), Arrays.asList(this,a,b,this,x));
 			// this dist between these two points is not exactly 
 			// the perpendicul distance, but close enough
-			dist = x.distance(this);  
+			dist = x.distance(this);
 		}
 		else 
 			dist = 2 * Math.sqrt(abpa * (abpa-ab) * (abpa-ap) * (abpa-bp)) / ab;
 		return dist;
 	}
-	
+
+	/**
+	 * Calculate distance to line segment a-b  
+	 * @param a point a
+	 * @param b point b
+	 * @return distance in m
+	 */
+	public double shortestDistToLineSegment(Coord a, Coord b){
+		int aLon = a.getHighPrecLon();
+		int bLon = b.getHighPrecLon();
+		int pLon = this.getHighPrecLon();
+		int aLat = a.getHighPrecLat();
+		int bLat = b.getHighPrecLat();
+		int pLat = this.getHighPrecLat();
+		
+		double deltaLon = bLon - aLon;
+		double deltaLat = bLat - aLat;
+
+		double frac;
+		if (deltaLon == 0 && deltaLat == 0) 
+			frac = 0;
+		else 
+			frac = ((pLon - aLon) * deltaLon + (pLat - aLat) * deltaLat) / (deltaLon * deltaLon + deltaLat * deltaLat);
+
+		double distance;
+		if (frac <= 0) {
+			distance = a.distance(this);
+		} else if (frac >= 1) {
+			distance = b.distance(this);
+		} else {
+			distance = this.distToLineSegment(a, b);
+		}
+		return distance;
+	}
 	
 }
