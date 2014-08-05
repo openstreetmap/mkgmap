@@ -228,6 +228,7 @@ public class Utils {
 	
 	/**
 	 * Calculates the angle between the two segments (c1,c2),(c2,c3).
+	 * It is assumed that the segments are rhumb lines, not great circle paths.
 	 * @param c1 first point
 	 * @param c2 second point
 	 * @param c3 third point
