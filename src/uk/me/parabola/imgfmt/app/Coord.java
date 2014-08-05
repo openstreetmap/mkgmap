@@ -31,6 +31,8 @@ import uk.me.parabola.mkgmap.filters.ShapeMergeFilter;
  *
  * You can create one of these with lat/long by calling the constructor with
  * double args.
+ * 
+ * See also http://www.movable-type.co.uk/scripts/latlong.html
  *
  * @author Steve Ratcliffe
  */
@@ -89,7 +91,6 @@ public class Coord implements Comparable<Coord> {
 		// verify math
 		assert (this.latitude << 6) - latDelta == lat30;
 		assert (this.longitude << 6) - lonDelta == lon30;
-
 	}
 	
 	private Coord (int lat, int lon, byte latDelta, byte lonDelta){
@@ -354,7 +355,7 @@ public class Coord implements Comparable<Coord> {
 	} 
 
 	/**
-	 * Distance to other point in meters, using
+	 * Distance to other point in metres, using
 	 * "flat earth approximation" or rhumb-line algo
 	 */
 	public double distance(Coord other) {
@@ -365,6 +366,10 @@ public class Coord implements Comparable<Coord> {
 		return distanceOnRhumbLine(other);
 	}
 
+	/**
+	 * Square of distance to other point in metres, using
+	 * "flat earth approximation" 
+	 */
 	public double distanceInDegreesSquared(Coord other) {
 		if (this == other || highPrecEquals(other))
 			return 0;
@@ -397,7 +402,7 @@ public class Coord implements Comparable<Coord> {
 	}
 	
 	/**
-	 * Distance to other point in meters following a great circle path, without 
+	 * Distance to other point in metres following a great circle path, without 
 	 * flat earth approximation, slower but better with large 
 	 * distances and big deltas in lat AND lon. 
 	 * Similar to code in JOSM
@@ -415,7 +420,7 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	/**
-	 * Distance to other point in meters following the shortest rhumb line.
+	 * Distance to other point in metres following the shortest rhumb line.
 	 */
 	public double distanceOnRhumbLine(Coord point){
 		double lat1 = int30ToRadians(getHighPrecLat());
@@ -443,11 +448,25 @@ public class Coord implements Comparable<Coord> {
 		
 	}
 
+	/**
+	 * Calculate point on the line this->other. If d is the distance between this and other,
+	 * the point is {@code fraction * d} metres from this.
+	 * For small distances between this and other we use a flat earth approximation,
+	 * for large distances this could result in errors of many metres, so we use 
+	 * the rhumb line calculations. 
+	 */
 	public Coord makeBetweenPoint(Coord other, double fraction) {
-		// we assume a flat earth here!
-		int lat30 = (int) (getHighPrecLat() + (other.getHighPrecLat() - getHighPrecLat()) * fraction);
-		int lon30 = (int) (getHighPrecLon() + (other.getHighPrecLon() - getHighPrecLon()) * fraction);
-		return makeHighPrecCoord(lat30, lon30);
+		int dLat30 = other.getHighPrecLat() - getHighPrecLat();
+		int dLon30 = other.getHighPrecLon() - getHighPrecLon();
+		if ((Math.abs(dLat30) < 1000000 && Math.abs(dLon30) < 1000000 )){
+			// distances are rather small, we can use flat earth approximation
+			int lat30 = (int) (getHighPrecLat() + dLat30 * fraction);
+			int lon30 = (int) (getHighPrecLon() + dLon30 * fraction);
+			return makeHighPrecCoord(lat30, lon30);
+		}
+		double brng = this.bearingToOnRhumbLine(other, true);
+		double dist = this.distance(other) * fraction;
+		return this.destOnRhumLine(dist, brng);
 	}
 
 	
@@ -462,6 +481,8 @@ public class Coord implements Comparable<Coord> {
 	/**
 	 * returns bearing (in degrees) from current point to another point
 	 * following a great circle path
+	 * @param point the other point
+	 * @param needHighPrec set to true if you need a very high precision
 	 */
 	public double bearingToOnGreatCircle(Coord point, boolean needHighPrec) {
 		// use high precision values for this 
@@ -482,7 +503,8 @@ public class Coord implements Comparable<Coord> {
 	/**
 	 * returns bearing (in degrees) from current point to another point
 	 * following shortest rhumb line
-	 * @param needHighPrec 
+	 * @param point the other point
+	 * @param needHighPrec set to true if you need a very high precision
 	 */
 	public double bearingToOnRhumbLine(Coord point, boolean needHighPrec){
 		double lat1 = int30ToRadians(this.getHighPrecLat());
@@ -507,11 +529,12 @@ public class Coord implements Comparable<Coord> {
 	 * This ordering is used for sorting entries in NOD3.
 	 */
 	public int compareTo(Coord other) {
-		if (longitude == other.getLongitude())
-			if (latitude == other.getLatitude()) return 0;
-			else return latitude > other.getLatitude() ? 1 : -1;
-		else
-			return longitude > other.getLongitude()? 1: -1;
+		if (longitude == other.getLongitude()) {
+			if (latitude == other.getLatitude())
+				return 0;
+			return latitude > other.getLatitude() ? 1 : -1;
+		}
+		return longitude > other.getLongitude() ? 1 : -1;
 	}			
 
 	/**
@@ -553,8 +576,7 @@ public class Coord implements Comparable<Coord> {
 		double DELTA = 360.0D / (1 << 30) / 2; //Correct rounding
 		if (l > 0)
 			return (int) ((l + DELTA) * (1 << 30)/360);
-		else
-			return (int) ((l - DELTA) * (1 << 30)/360);
+		return (int) ((l - DELTA) * (1 << 30)/360);
 		
 	}
 
@@ -569,7 +591,7 @@ public class Coord implements Comparable<Coord> {
 	 * @return an angle in radians.
 	 */
 	private static double int30ToRadians(int val30){
-		return (double) val30 * BIT30_RAD_FACTOR;
+		return BIT30_RAD_FACTOR * val30;
 	}
 
 	/**
@@ -590,14 +612,14 @@ public class Coord implements Comparable<Coord> {
 	 * @return latitude in degrees with highest avail. precision
 	 */
 	public double getLatDegrees(){
-		return (double) getHighPrecLat() * (360.0D / (1 << 30));
+		return (360.0D / (1 << 30)) * getHighPrecLat();
 	}
 	
 	/**
 	 * @return longitude in degrees with highest avail. precision
 	 */
 	public double getLonDegrees(){
-		return (double) getHighPrecLon() * (360.0D / (1 << 30));
+		return (360.0D / (1 << 30)) * getHighPrecLon();
 	}
 	
 	public Coord getDisplayedCoord(){
@@ -616,7 +638,7 @@ public class Coord implements Comparable<Coord> {
 	 * @return a list of Coord instances, is empty if alternative positions are too far
 	 */
 	public List<Coord> getAlternativePositions(){
-		ArrayList<Coord> list = new ArrayList<Coord>();
+		ArrayList<Coord> list = new ArrayList<>();
 		if (getOnBoundary())
 			return list; 
 		byte modLatDelta = 0;
@@ -665,8 +687,8 @@ public class Coord implements Comparable<Coord> {
 	}
 	
 	/**
-	 * Get the coord that is dist metre away traveling with course
-	 * brng on a rhumb line.
+	 * Get the coord that is {@code dist} metre away travelling with course
+	 * {@code brng} on a rhumb-line.
 	 * @param dist distance in m
 	 * @param brng bearing in degrees
 	 * @return a new Coord instance
@@ -697,7 +719,7 @@ public class Coord implements Comparable<Coord> {
 	}
 	
 	/**
-	 * Calculate the distance in metres to the line
+	 * Calculate the distance in metres to the rhumb line
 	 * defined by coords a and b.
 	 * @param a start point
 	 * @param b end point
@@ -725,7 +747,7 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	/**
-	 * Calculate distance to line segment a-b  
+	 * Calculate distance to rhumb line segment a-b  
 	 * @param a point a
 	 * @param b point b
 	 * @return distance in m
