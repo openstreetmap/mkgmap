@@ -647,6 +647,8 @@ public class StyledConverter implements OsmConverter {
 					if (p0 instanceof CoordPOI){
 						pNew = new CoordPOI(p0);
 						((CoordPOI) pNew).setNode(((CoordPOI) p0).getNode());
+						((CoordPOI) pNew).setUsed(((CoordPOI) p0).isUsed());
+						((CoordPOI) pNew).setConvertToViaInRouteRestriction(((CoordPOI)p0).getConvertToViaInRouteRestriction());
 					}
 					else
 						pNew = new Coord(p0);

@@ -102,9 +102,14 @@ public class WrongAngleFixer {
 			replacement.setOnBoundary(true);
 		}
 		toRepl.setReplaced(true);
-		if (toRepl instanceof CoordPOI && ((CoordPOI) toRepl).isUsed()) {
-			replacement = new CoordPOI(replacement);
-			((CoordPOI) replacement).setNode(((CoordPOI) toRepl).getNode());
+		if (toRepl instanceof CoordPOI) {
+			CoordPOI cp = (CoordPOI) toRepl;
+			if (cp.isUsed()){
+				replacement = new CoordPOI(replacement);
+				((CoordPOI) replacement).setNode(((CoordPOI) toRepl).getNode());
+				((CoordPOI) replacement).setUsed(true);
+				((CoordPOI) replacement).setConvertToViaInRouteRestriction(cp.getConvertToViaInRouteRestriction());
+			}
 		}
 		if (toRepl.isViaNodeOfRestriction())
 			replacement.setViaNodeOfRestriction(true);
