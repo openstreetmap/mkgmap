@@ -594,7 +594,7 @@ public class WrongAngleFixer {
 					keepThis = false;
 				} else {
 					double displayedAngle = Utils.getDisplayedAngle(c1, cm, c2);
-					if (Math.signum(displayedAngle) != Math.signum(realAngle)){
+					if (displayedAngle < 0 && realAngle > 0 || displayedAngle > 0 && realAngle < 0){
 						// straight line is closer to real angle 
 						keepThis = false;
 					} else if (Math.abs(displayedAngle) < 1){ 
