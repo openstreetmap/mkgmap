@@ -891,8 +891,8 @@ public class WrongAngleFixer {
 				if (err >= bestReplErr)
 					continue;
 				// alt. position is improvement, check all neighbours
-				err = calcMaxError(replacements, currentCenter, altCenter);
-				if (err >= initialMaxError)
+				double errMax = calcMaxError(replacements, currentCenter, altCenter);
+				if (errMax >= initialMaxError)
 					continue;
 				bestReplErr = err;
 				bestCenterReplacement = altCenter;
