@@ -637,24 +637,14 @@ public class StyledConverter implements OsmConverter {
 			Coord p0 = points.get(0);
 			if (p0.getHighwayCount() > 2)
 				continue;
-			// first point connects only last point, remove last
-			for (int i = 1; i < points.size();i++){
+			
+			for (int i = 1; i < points.size() - 1;i++){
 				Coord p = points.get(i);
 				if (p.getHighwayCount() > 1){
 					p.incHighwayCount(); // this will be the new first + last point
+					// first point connects only last point, remove last
 					points.remove(points.size()-1);
-					Coord pNew;
-					if (p0 instanceof CoordPOI){
-						pNew = new CoordPOI(p0);
-						((CoordPOI) pNew).setNode(((CoordPOI) p0).getNode());
-						((CoordPOI) pNew).setUsed(((CoordPOI) p0).isUsed());
-						((CoordPOI) pNew).setConvertToViaInRouteRestriction(((CoordPOI)p0).getConvertToViaInRouteRestriction());
-					}
-					else
-						pNew = new Coord(p0);
-					pNew.incHighwayCount();
-					pNew.setOnBoundary(p0.getOnBoundary());
-					points.set(0, pNew);
+					p0.decHighwayCount();
 					Collections.rotate(points, -i);
 					points.add(points.get(0)); // close again
 					modifiedRoads.put(way.getId(), cw); 
