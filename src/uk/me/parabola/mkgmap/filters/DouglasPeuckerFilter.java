@@ -65,7 +65,7 @@ public class DouglasPeuckerFilter implements MapFilter {
 		List<Coord> points = line.getPoints();
 
 		// Create a new list to rewrite the points into. Don't alter the original one
-		List<Coord> coords = new ArrayList<Coord>(points.size());
+		List<Coord> coords = new ArrayList<>(points.size());
 		coords.addAll(points);
 		// Loop runs downwards, as the list length gets modified while running
 		int endIndex = coords.size()-1;
@@ -113,33 +113,13 @@ public class DouglasPeuckerFilter implements MapFilter {
 
 		Coord a = points.get(startIndex);
 		Coord b = points.get(endIndex);
-		double ab = a.distance(b);
+		
 
-		// Find point with highest distance to line between start- and endpoint by using herons formula.
+		// Find point with highest distance to line between start- and end-point.
+		// handle also closed or nearly closed lines and spikes on straight lines
 		for(int i = endIndex-1; i > startIndex; i--) {
 			Coord p = points.get(i);
-			double distance;
-			// handle also closed or nearly closed lines and spikes on straight lines
-			double frac;
-			double dx = b.getLongitude() - a.getLongitude();
-			double dy = b.getLatitude() - a.getLatitude();
-
-			if ((dx == 0) && (dy == 0)) 
-				frac = 0;
-			else 
-				frac = ((p.getLongitude() - a.getLongitude()) * dx + (p.getLatitude() - a.getLatitude()) * dy) / (dx * dx + dy * dy);
-
-			if (frac <= 0) {
-				distance = a.distance(p);
-			} else if (frac >= 1) {
-				distance = b.distance(p);
-			} else {
-				// normal case: calculate perpendicular distance with herons formula
-				double ap = p.distance(a);
-				double bp = p.distance(b);
-				double abpa = (ab+ap+bp)/2;
-				distance = 2 * Math.sqrt(abpa * (abpa-ab) * (abpa-ap) * (abpa-bp)) / ab;
-			}
+			double distance = p.shortestDistToLineSegment(a, b);
 			if (distance > maxDistance) {
 				maxDistance = distance;
 				maxIndex = i;
@@ -152,9 +132,8 @@ public class DouglasPeuckerFilter implements MapFilter {
 		}
 		else {
 			// All points in tolerance, delete all of them.
-
-			// Remove the endpoint if it is the same as the start point
-			if (ab == 0 && points.get(endIndex).preserved() == false)
+			// Remove the end-point if it is the same as the start point
+			if (a.highPrecEquals(b) && points.get(endIndex).preserved() == false)
 				endIndex++;
 
 			if (endIndex - startIndex > 4){

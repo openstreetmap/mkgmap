@@ -143,13 +143,19 @@ public class RoadNetwork {
 				double forwardDirectBearing = (co == forwardBearingPoint) ? forwardInitialBearing: lastCoord.bearingTo(co); 
 
 				double reverseInitialBearing = co.bearingTo(reverseBearingPoint);
-				double reverseDirectBearing = (lastCoord == reverseBearingPoint) ? reverseInitialBearing: co.bearingTo(lastCoord); 
-
-				// TODO: maybe detect cases where bearing was already calculated above 
-				double forwardFinalBearing = reverseBearingPoint.bearingTo(co); 
-				double reverseFinalBearing = forwardBearingPoint.bearingTo(lastCoord);
-
 				double directLength = (lastIndex + 1 == index) ? arcLength : lastCoord.distance(co);
+				double reverseFinalBearing, forwardFinalBearing, reverseDirectBearing;
+				if (directLength > 0){
+					// bearing on rhumb line is a constant, so we can simply revert
+					reverseDirectBearing = (forwardDirectBearing <= 0) ? 180 + forwardDirectBearing: -(180 - forwardDirectBearing) % 180.0;
+					forwardFinalBearing = (reverseInitialBearing <= 0) ? 180 + reverseInitialBearing : -(180 - reverseInitialBearing) % 180.0;
+					reverseFinalBearing = (forwardInitialBearing <= 0) ? 180 + forwardInitialBearing : -(180 - forwardInitialBearing) % 180.0;
+				}
+				else {
+					reverseDirectBearing = 0;
+					forwardFinalBearing = 0;
+					reverseFinalBearing = 0;
+				}
 				// Create forward arc from node1 to node2
 				RouteArc arc = new RouteArc(roadDef,
 											node1,

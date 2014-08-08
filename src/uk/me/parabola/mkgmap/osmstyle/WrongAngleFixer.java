@@ -594,7 +594,7 @@ public class WrongAngleFixer {
 				boolean keepThis = true;
 				double realAngle = Utils.getAngle(c1, cm, c2);
 				if (Math.abs(realAngle) < MAX_DIFF_ANGLE_STRAIGHT_LINE){ 
-					double distance = distToLineHeron(cm, c1, c2);
+					double distance = cm.distToLineSegment(c1, c2);
 					if (distance >= maxErrorDistance){
 						modifiedPoints.add(cm);
 						continue;
@@ -602,7 +602,7 @@ public class WrongAngleFixer {
 					keepThis = false;
 				} else {
 					double displayedAngle = Utils.getDisplayedAngle(c1, cm, c2);
-					if (Math.signum(displayedAngle) != Math.signum(realAngle)){
+					if (displayedAngle < 0 && realAngle > 0 || displayedAngle > 0 && realAngle < 0){
 						// straight line is closer to real angle 
 						keepThis = false;
 					} else if (Math.abs(displayedAngle) < 1){ 
@@ -1340,22 +1340,6 @@ public class WrongAngleFixer {
 		return Math.abs(err);
 	}
 
-	/**
-	 * calculate distance of point in the middle to line c1,c2 using herons formula
-	 * @param cm point in the middle
-	 * @param c1 
-	 * @param c2
-	 * @return distance in meter
-	 */
-	private static double distToLineHeron(Coord cm, Coord c1, Coord c2){
-		double ab = c1.distance(c2);
-		double ap = cm.distance(c1);
-		double bp = cm.distance(c2);
-		double abpa = (ab+ap+bp)/2;
-		double distance = 2 * Math.sqrt(abpa * (abpa-ab) * (abpa-ap) * (abpa-bp)) / ab;
-		return distance;
-		
-	}
 
 	/**
 	 * Calculate the rounding error tolerance for a given point.
@@ -1406,7 +1390,7 @@ public class WrongAngleFixer {
 			}
 			double realAngle = Utils.getAngle(c1, cm, c2);
 			if (Math.abs(realAngle) < MAX_DIFF_ANGLE_STRAIGHT_LINE){ 
-				double distance = distToLineHeron(cm, c1, c2);
+				double distance = cm.distToLineSegment(c1, c2);
 				if (distance < maxErrorDistance)
 					continue;
 			}
