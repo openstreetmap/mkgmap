@@ -106,9 +106,12 @@ public class WrongAngleFixer {
 			CoordPOI cp = (CoordPOI) toRepl;
 			if (cp.isUsed()){
 				replacement = new CoordPOI(replacement);
-				((CoordPOI) replacement).setNode(((CoordPOI) toRepl).getNode());
+				((CoordPOI) replacement).setNode(cp.getNode());
 				((CoordPOI) replacement).setUsed(true);
 				((CoordPOI) replacement).setConvertToViaInRouteRestriction(cp.getConvertToViaInRouteRestriction());
+				if (replacement.highPrecEquals(cp.getNode().getLocation()) == false){
+					log.error("CoordPOI node is replaced with non-equal coordinates at", toRepl.toOSMURL());
+				}
 			}
 		}
 		if (toRepl.isViaNodeOfRestriction())
@@ -1020,11 +1023,15 @@ public class WrongAngleFixer {
 			}
 			if (c.isViaNodeOfRestriction() && (n.isViaNodeOfRestriction() || n.getOnBoundary()))
 				 return false;
-			 
+			if (c instanceof CoordPOI && (n instanceof CoordPOI || n.getOnBoundary()))
+				return false;
+			if (n instanceof CoordPOI && (c instanceof CoordPOI || c.getOnBoundary()))
+				return false;
+
 			Coord mergePoint;
-			if (c.getOnBoundary())
+			if (c.getOnBoundary() || c instanceof CoordPOI)
 				mergePoint = c;
-			else if (n.getOnBoundary())
+			else if (n.getOnBoundary() || n instanceof CoordPOI)
 				mergePoint = n;
 			else if (c.equals(n))
 				mergePoint = c;
