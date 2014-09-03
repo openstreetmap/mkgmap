@@ -195,9 +195,20 @@ public class HousenumberGenerator {
 	private static void match(String streetname, List<Element> elements, List<MapRoad> roads) {
 		List<HousenumberMatch> numbersList = new ArrayList<HousenumberMatch>(
 				elements.size());
-		for (Element node : elements) {
+		for (Element element : elements) {
 			try {
-				numbersList.add(new HousenumberMatch(node));
+				HousenumberMatch match = new HousenumberMatch(element);
+				if (match.getLocation() == null) {
+					// there has been a report that indicates match.getLocation() == null
+					// could not reproduce so far but catching it here with some additional
+					// information. (WanMil)
+					log.error("OSM element seems to have no point.");
+					log.error("Element: "+element.toBrowseURL()+" " +element);
+					log.error("Please report on the mkgmap mailing list.");
+					log.error("Continue creating the map. This should be possible without a problem.");
+				} else {
+					numbersList.add(match);
+				}
 			} catch (IllegalArgumentException exp) {
 				log.debug(exp);
 			}
