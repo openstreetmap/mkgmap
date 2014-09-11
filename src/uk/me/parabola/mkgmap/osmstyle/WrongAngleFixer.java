@@ -1396,7 +1396,7 @@ public class WrongAngleFixer {
 			}
 			modifiedPoints.add(cm);
 		}
-		if (modifiedPoints.get(0) != modifiedPoints.get(modifiedPoints.size()-1))
+		if (modifiedPoints.size() > 1 && modifiedPoints.get(0) != modifiedPoints.get(modifiedPoints.size()-1))
 			modifiedPoints.add(modifiedPoints.get(0));
 		return modifiedPoints;
 	}
