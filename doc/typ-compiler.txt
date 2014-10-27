@@ -16,6 +16,8 @@ These produce file formats that differ from each other and have variations to th
 : The product code within a family, usually just left as one.
 ;CodePage=#
 : The code page to use for writing the labels.
+
+Example:
  [_id]
  FID=1299
  ProductCode=1
@@ -102,7 +104,11 @@ These options will work in all the element sections [_point], [_line] and [_poly
 : The colour used when the GPS unit is displaying night colours.
 
 == XPM format ==
-The XPM format is used is a somewhat modified form. You can find out more about elsewhere as it is widely used.  This is a brief summary of what it all means based on the following example:
+The XPM format is a fairly widely used format for small image icons, so you
+can read about it [http://en.wikipedia.org/wiki/X_PixMap elsewhere].
+You would normally use some tool to create the image and copy it in,
+but it is possible to create them by hand.
+This is a brief summary of what it all means based on the following example:
  Xpm="10 5 3 1"
  "r  c #ff0000"
  "g  c #00ff00"
@@ -114,7 +120,9 @@ The XPM format is used is a somewhat modified form. You can find out more about 
  "rbbrrrrrrr"
  "rrrrrrrrrr"
 
-Working from the top, the first line means that the pixmap has a width of 10 and a height of 5. There are 3 different colours and each colour is represented by one character in the lines to follow.
+Working from the top, the first line consists of four numbers that mean
+in order: the pixmap has a width of 10 and a height of 5; there are 3
+different colours and each colour is represented by 1 character.
 
 There then follows the three lines giving the colours to use. The first character(s) are a short name for the colour, in this case there is one character (r, g, b) because the last field in the first line was 1. Next is the letter 'c' which can be ignored, and the follows the normal RGB representation of the colour. In this case I have chosen red to be represented by the letter r, g for green and b for blue, but you can use any characters or colours you choose.  A space is allowed, and it is traditional to use a space for the background colour.
 
@@ -152,7 +160,7 @@ It must also contain an Xpm tag. This uses a modified form of the XPM format, se
  "aaaaaaaaaaabbbbbbbbbbbaaaaaaaaaa"
  ; ... 32 rows in total
 
-* If you want to have different colours for the day and night modes, then use 4 colours. As before the second and fourth colours can be 'none' to indicate that the background is transparent for the day and/or night colour respectively. In the example the night colour has a transparent background and the day version does not. When you draw the pixmap you only use the day colours, the device will automatically switch to the alternate colours when in night mode. It is traditional to '3' and '4' for the night colour tags in the XPM, but with mkgmap you can use whatever you like.
+* If you want to have different colours for the day and night modes, then use 4 colours. As before the second and fourth colours can be 'none' to indicate that the background is transparent for the day and/or night colour respectively. In the example the night colour has a transparent background and the day version does not. When you draw the pixmap you only use the day colours, the device will automatically switch to the alternate colours when in night mode. It is traditional to use '3' and '4' for the night colour tags in the XPM, but with mkgmap you can use whatever you like.
  Xpm="32 32 4 1"
  "a   c #778899"
  "b   c #221133"
@@ -178,7 +186,7 @@ A line section can contain any of the common tags. It can also have the followin
 
 As with polygons there is an Xpm tag too and it can specify that solid colours should be used or that there is a bitmap.
 
-If there is a bitmap then it is always has a width of 32, its height will be the width of the line (yes that sound confusing the first time you read it, it just means that the line is written horizontally in the pixmap). The colours work in exactly the same way as they do for polygons, so see the examples there for the different possibilities with day/nitght and transparent colours. An example with a pixmap, which shows a line that will have a thickness of 3. 
+If there is a bitmap then it is always has a width of 32, its height will be the width of the line (yes that sound confusing the first time you read it, it just means that the line is written horizontally in the pixmap). The colours work in exactly the same way as they do for polygons, so see the examples there for the different possibilities with day/night and transparent colours. An example with a pixmap, which shows a line that will have a thickness of 3. 
  Xpm="32 3 4 1"
  "a  c #550088"
  ".  c #889988"
@@ -296,7 +304,7 @@ long as there are the correct number altogether.
  "#990088 #990088 #990067"
  " ... and so on for 100 different values ..."
 
-The spaces can be ommitted for the most compact representation.
+The spaces can be omitted for the most compact representation.
 It is also possible to have a transparent pixel with this format, but there is currently not a way to represent this.
 
 == Icons ==

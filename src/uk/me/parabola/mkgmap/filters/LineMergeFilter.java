@@ -29,9 +29,9 @@ public class LineMergeFilter{
 		// Merges the points in the second one
 		List<Coord> points1 = line1.getPoints();
 		List<Coord> points2 = line2.getPoints();
-		startPoints.remove(points1.get(0), line1);
-		endPoints.remove(points1.get(points1.size()-1), line1);
-		startPoints.remove(points2.get(0), line2);
+		startPoints.removeMapping(points1.get(0), line1);
+		endPoints.removeMapping(points1.get(points1.size() - 1), line1);
+		startPoints.removeMapping(points2.get(0), line2);
 		startPoints.add(points1.get(0), line2);
 		line2.insertPointsAtStart(points1);
 		linesMerged.remove(line1);
@@ -40,7 +40,7 @@ public class LineMergeFilter{
 	private void addPointsAtStart(MapLine line, List<Coord> additionalPoints) {
 		log.info("merged lines before " + line.getName());
 		List<Coord> points = line.getPoints();
-		startPoints.remove(points.get(0), line);
+		startPoints.removeMapping(points.get(0), line);
 		line.insertPointsAtStart(additionalPoints);
 		startPoints.add(points.get(0), line);
 	}
@@ -48,7 +48,7 @@ public class LineMergeFilter{
 	private void addPointsAtEnd(MapLine line, List<Coord> additionalPoints) {
 		log.info("merged lines after " + line.getName());
 		List<Coord> points = line.getPoints();
-		endPoints.remove(points.get(points.size()-1), line);
+		endPoints.removeMapping(points.get(points.size() - 1), line);
 		line.insertPointsAtEnd(additionalPoints);
 		endPoints.add(points.get(points.size()-1), line);
 	}

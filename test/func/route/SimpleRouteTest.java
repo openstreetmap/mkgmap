@@ -38,6 +38,7 @@ public class SimpleRouteTest extends Base {
 	public void testSize() throws FileNotFoundException {
 		Main.mainNoSystemExit(new String[]{
 				Args.TEST_STYLE_ARG,
+				"--preserve-element-order",
 				"--route",
 				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz",
 				Args.TEST_RESOURCE_MP + "test1.mp"
@@ -56,7 +57,7 @@ public class SimpleRouteTest extends Base {
 			case "RGN":
 				count++;
 				System.out.println("RGN size " + size);
-				assertThat("RGN size", size, new RangeMatcher(128710));
+				assertThat("RGN size", size, new RangeMatcher(128717));
 				break;
 			case "TRE":
 				count++;
@@ -70,11 +71,11 @@ public class SimpleRouteTest extends Base {
 				break;
 			case "NET":
 				count++;
-				assertEquals("NET size", 66833, size);
+				assertEquals("NET size", 66851, size);
 				break;
 			case "NOD":
 				count++;
-				assertEquals("NOD size", 169689, size);
+				assertEquals("NOD size", 170201, size);
 				break;
 			}
 		}

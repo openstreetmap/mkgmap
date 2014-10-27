@@ -42,21 +42,21 @@ barrier=kissing_gate | barrier=stile | barrier=block
 internet_access=yes { name 'Internet ${name}' | 'Internet' } [0x2f12 resolution 24 continue]
 internet_access=* & internet_access!=no & internet_access!=yes { name 'Internet(${internet_access}) ${name|def:}' } [0x2f12 resolution 24 continue]
 
-(highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
+(public_transport=platform | highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
 & (ref=* | route_ref=*) {
   set ref='${ref|def:}(${route_ref})';
 }
-(highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
+(public_transport=platform | highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
 & lit=yes & (shelter=yes | covered=yes)
 {
   set ref='${ref|def:}*';
 }
-(highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
+(public_transport=platform | highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
 & lit!=yes & (shelter=yes | covered=yes)
 {
   set ref='${ref|def:}+';
 }
-(highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
+(public_transport=platform | highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
 & (shelter=no | covered=no)
 {
   set ref='${ref|def:}-';
@@ -190,8 +190,6 @@ landuse=village_green & name=* [0x2c06 resolution 24]
 healthcare=hospital | amenity=hospital [0x3002 resolution 22]
 healthcare=* | amenity=dentist | amenity=doctors [0x3002 resolution 24]
 
-highway=bus_stop [0x2f17 resolution 24]
-
 highway=motorway_junction [0x2100 resolution 24]
 
 highway=services & mkgmap:area2poi!=true [0x210f resolution 24 default_name 'Services']
@@ -224,9 +222,9 @@ natural=peak {name '${name|def:}${ele|height:m=>ft|def:}' } [0x6616 resolution 2
 natural=rock [0x6614 resolution 24]
 natural=volcano [0x2c0c resolution 24]
 
-railway=halt [0x2f08 resolution 23]
 railway=station [0x2f08 resolution 22]
-railway=tram_stop [0x2f17 resolution 24]
+( public_transport=platform & rail=yes ) | railway=halt [0x2f08 resolution 23]
+public_transport=platform | highway=bus_stop | railway=tram_stop [0x2f17 resolution 24]
 
 shop=bakers [0x2e02 resolution 24]
 shop=bakery [0x2e02 resolution 24]

@@ -20,7 +20,7 @@
 
 		</chain>
 
-		<ibiblio name="geotools-resolver" m2compatible="true" root="http://repo.opengeo.org/" />
+		<ibiblio name="geotools-resolver" m2compatible="true" root="http://download.osgeo.org/webdav/geotools/" />
 
 		<url name="spring-resolver" >
 			<ivy pattern="http://repository.springsource.com/ivy/bundles/external/[organisation]/[module]/[revision]/[artifact]-[revision].[ext]" />

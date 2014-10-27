@@ -187,18 +187,32 @@ public class StyledConverter implements OsmConverter {
 	private class WayTypeResult implements TypeResult 
 	{
 		private Way way;
+		/** flag if the rule was fired */
+		private boolean matched;
+		
 		public void setWay(Way way) {
 			this.way = way;
+			this.matched = false;
 		}
 		
 		public void add(Element el, GType type) {
+			this.matched = true;
 			if (type.isContinueSearch()) {
 				// If not already copied, do so now
 				if (el == way) 
 					el = way.copy();
 			}
 			postConvertRules(el, type);
+			housenumberGenerator.addWay((Way)el);
 			addConvertedWay((Way) el, type);
+		}
+
+		/**
+		 * Retrieves if a rule of the style matched and the way is converted.
+		 * @return {@code true} way is converted; {@code false} way is not converted
+		 */
+		public boolean isMatched() {
+			return matched;
 		}
 	}
 	
@@ -224,7 +238,6 @@ public class StyledConverter implements OsmConverter {
 		}
 		preConvertRules(way);
 
-		housenumberGenerator.addWay(way);
 		String styleFilterTag = way.getTag(styleFilterTagKey);
 		Rule rules;
 		if ("polyline".equals(styleFilterTag))
@@ -250,9 +263,17 @@ public class StyledConverter implements OsmConverter {
 		}
 		wayTypeResult.setWay(way);
 		lineCacheId = rules.resolveType(lineCacheId, way, wayTypeResult);
+		if (wayTypeResult.isMatched() == false) {
+			// no match found but we have to keep it for house number processing
+			housenumberGenerator.addWay(way);
+		}
 		if (cycleWay != null){
 			wayTypeResult.setWay(cycleWay);
 			lineCacheId = rules.resolveType(lineCacheId, cycleWay, wayTypeResult);
+			if (wayTypeResult.isMatched() == false) {
+				// no match found but we have to keep it for house number processing
+				housenumberGenerator.addWay(cycleWay);
+			}
 		}
 		if (lastRoadId != way.getId()){
 			// this way was not added to the roads list
@@ -323,11 +344,16 @@ public class StyledConverter implements OsmConverter {
 	private NodeTypeResult nodeTypeResult = new NodeTypeResult();
 	private class NodeTypeResult implements TypeResult {
 		private Node node;
+		/** flag if the rule was fired */
+		private boolean matched;
+		
 		public void setNode(Node node) {
 			this.node = node;
+			this.matched = false;
 		}
 		
 		public void add(Element el, GType type) {
+			this.matched = true;
 			if (type.isContinueSearch()) {
 				// If not already copied, do so now
 				if (el == node) 
@@ -335,7 +361,16 @@ public class StyledConverter implements OsmConverter {
 			}
 			
 			postConvertRules(el, type);
+			housenumberGenerator.addNode((Node)el);
 			addPoint((Node) el, type);
+		}
+
+		/**
+		 * Retrieves if a rule of the style matched and the node is converted.
+		 * @return {@code true} node is converted; {@code false} node is not converted
+		 */
+		public boolean isMatched() {
+			return matched;
 		}
 	}
 
@@ -353,10 +388,12 @@ public class StyledConverter implements OsmConverter {
 
 		preConvertRules(node);
 
-		housenumberGenerator.addNode(node);
-		
 		nodeTypeResult.setNode(node);
 		nodeRules.resolveType(node, nodeTypeResult);
+		if (nodeTypeResult.isMatched() == false) {
+			// no match found but we have to keep it for house number processing
+			housenumberGenerator.addNode(node);
+		}
 	}
 	
 
@@ -600,22 +637,14 @@ public class StyledConverter implements OsmConverter {
 			Coord p0 = points.get(0);
 			if (p0.getHighwayCount() > 2)
 				continue;
-			// first point connects only last point, remove last
-			for (int i = 1; i < points.size();i++){
+			
+			for (int i = 1; i < points.size() - 1;i++){
 				Coord p = points.get(i);
 				if (p.getHighwayCount() > 1){
 					p.incHighwayCount(); // this will be the new first + last point
+					// first point connects only last point, remove last
 					points.remove(points.size()-1);
-					Coord pNew;
-					if (p0 instanceof CoordPOI){
-						pNew = new CoordPOI(p0);
-						((CoordPOI) pNew).setNode(((CoordPOI) p0).getNode());
-					}
-					else
-						pNew = new Coord(p0);
-					pNew.incHighwayCount();
-					pNew.setOnBoundary(p0.getOnBoundary());
-					points.set(0, pNew);
+					p0.decHighwayCount();
 					Collections.rotate(points, -i);
 					points.add(points.get(0)); // close again
 					modifiedRoads.put(way.getId(), cw); 

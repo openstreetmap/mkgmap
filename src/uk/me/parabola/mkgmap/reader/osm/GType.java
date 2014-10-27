@@ -45,7 +45,8 @@ public class GType {
 	private int roadClass;
 	private int roadSpeed;
 
-	private boolean road;
+	private boolean hasRoadAttribute;
+	private boolean levelsWereFixed = false;
 
 	/** If this is set, then we look for further types after this one is matched */
 	private boolean continueSearch;
@@ -133,6 +134,7 @@ public class GType {
 			if (info.getBits() <= maxResolution)
 				minLevel = info.getLevel();
 		}
+		levelsWereFixed = true;
 	}
 
 	public String toString() {
@@ -151,7 +153,7 @@ public class GType {
 			else
 				fmt.format(" level %d-%d", minLevel, maxLevel);
 		}
-		if (road)
+		if (hasRoadAttribute)
 			fmt.format(" road_class=%d road_speed=%d", roadClass, roadSpeed);
 		
 		if (continueSearch)
@@ -179,7 +181,7 @@ public class GType {
 	public void setRoadClass(int roadClass) {
 		// road class might also be set for nodes used by the link-pois-to-ways option
 		if (getFeatureKind() == FeatureKind.POLYLINE)
-			road = true;
+			hasRoadAttribute = true;
 		this.roadClass = roadClass;
 	}
 
@@ -190,12 +192,21 @@ public class GType {
 	public void setRoadSpeed(int roadSpeed) {
 		// road speed might also be set for nodes used by the link-pois-to-ways option
 		if (getFeatureKind() == FeatureKind.POLYLINE)
-			road = true;
+			hasRoadAttribute = true;
 		this.roadSpeed = roadSpeed;
 	}
 
+	public boolean hasRoadAttribute() {
+		return hasRoadAttribute;
+	}
+
+	/**
+	 * @return true if the object has valid attributes to be used as a routable way 
+	 */
 	public boolean isRoad() {
-		return road;
+		if (!levelsWereFixed)
+			log.error("internal: isRoad() called before fixLevels()");
+		return hasRoadAttribute && minLevel == 0;
 	}
 
 	public boolean isContinueSearch() {
@@ -217,7 +228,7 @@ public class GType {
 	/**
 	 * 
 	 * @param type the type value
-	 * @return true if the type is can be used for routable lines
+	 * @return true if the type can be used for routable lines
 	 */
 	public static boolean isRoutableLineType(int type){
 		return type >= 0x01 && type <= 0x3f;

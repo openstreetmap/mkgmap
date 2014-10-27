@@ -93,6 +93,7 @@ public class RestrictionRelation extends Relation {
 			toWayIds.clear();
 			viaWayIds.clear();
 		}
+		evalWasCalled = true;
 		if (getTag("type") == null){
 			// style removed the tag
 			log.info(messagePrefix, "type tag was removed, relation is ignored");				
@@ -103,7 +104,6 @@ public class RestrictionRelation extends Relation {
 	    List<Way> fromWays = new ArrayList<>();
 	    List<Way> toWays = new ArrayList<>();
 	    List<Way> viaWays = new ArrayList<>();
-		evalWasCalled = true;
 		final String browseURL = toBrowseURL();
 		valid = true;
 		// find out what kind of restriction we have and to which vehicles it applies

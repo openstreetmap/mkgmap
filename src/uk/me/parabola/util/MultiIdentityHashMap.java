@@ -40,10 +40,8 @@ public class MultiIdentityHashMap<K,V> extends IdentityHashMap<K,List<V>> {
 	}
 
 
-	public V add(K key, V value )
-	{
-	    
-	    List<V> values = super.get(key);
+	public V add(K key, V value ) {
+		List<V> values = super.get(key);
 	    if (values == null ) {
 	        values = new LinkedList<V>();
 	        super.put( key, values );
@@ -54,10 +52,8 @@ public class MultiIdentityHashMap<K,V> extends IdentityHashMap<K,List<V>> {
 	    return ( results ? value : null );
 	}
 
-	public V remove(K key, V value )
-	{
-	    
-	    List<V> values = super.get(key);
+	public V removeMapping(K key, V value) {
+		List<V> values = super.get(key);
 	    if (values == null )
 			return null;
 	

@@ -177,9 +177,9 @@ public class RoadMerger {
 		Coord mergePoint = points2.get(0);
 		Coord endPoint= points2.get(points2.size()-1);
 		
-		startPoints.remove(mergePoint, road2);
-		endPoints.remove(endPoint, road2);
-		endPoints.remove(mergePoint, road1);
+		startPoints.removeMapping(mergePoint, road2);
+		endPoints.removeMapping(endPoint, road2);
+		endPoints.removeMapping(mergePoint, road1);
 
 		points1.addAll(points2.subList(1, points2.size()));
 		endPoints.add(endPoint, road1);
