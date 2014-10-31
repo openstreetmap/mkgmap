@@ -548,7 +548,7 @@ public class GmapsuppBuilder implements Combiner {
 			}
 		}
 
-		throw new IllegalArgumentException("hmm");
+		throw new IllegalArgumentException("Could not select a suitable block size. Try to reduce the number of splits.");
 	}
 
 	public void setCreateIndex(boolean create) {
