@@ -43,7 +43,7 @@ public class BoundaryPreprocessor implements Runnable {
 				// must be last as it is the default
 				"uk.me.parabola.mkgmap.reader.osm.boundary.Osm5BoundaryDataSource", };
 
-		loaders = new ArrayList<Class<? extends LoadableBoundaryDataSource>>();
+		loaders = new ArrayList<>();
 
 		for (String source : sources) {
 			try {
@@ -93,7 +93,7 @@ public class BoundaryPreprocessor implements Runnable {
 	private String boundaryFilename;
 	private String outDir;
 	private ExecutorService threadPool;
-	private final BlockingQueue<Future<Object>> remainingTasks = new LinkedBlockingQueue<Future<Object>>();
+	private final BlockingQueue<Future<Object>> remainingTasks = new LinkedBlockingQueue<>();
 
 	/**
 	 * constructor for stand-alone usage (workout only)
@@ -215,14 +215,13 @@ public class BoundaryPreprocessor implements Runnable {
 		if (threadPool == null) {
 			// only one thread available for the preparer
 			// so execute the task directly
-			FutureTask<V> future = new FutureTask<V>(worker);
+			FutureTask<V> future = new FutureTask<>(worker);
 			future.run();
 			return future;
-		} else {
-			Future<Object> task = threadPool.submit((Callable<Object>) worker);
-			remainingTasks.add(task);
-			return (Future<V>) task;
 		}
+		Future<Object> task = threadPool.submit((Callable<Object>) worker);
+		remainingTasks.add(task);
+		return (Future<V>) task;
 	}
 
 	/**
@@ -275,8 +274,7 @@ public class BoundaryPreprocessor implements Runnable {
 			long dt = System.currentTimeMillis() - t1;
 			log.info("splitting", boundsFilename, "took", dt, "ms");
 			if (bqt != null){
-				File outDir = new File(boundsDir);
-				BoundarySaver saver = new BoundarySaver(outDir, BoundarySaver.QUADTREE_DATA_FORMAT);
+				BoundarySaver saver = new BoundarySaver(new File(boundsDir), BoundarySaver.QUADTREE_DATA_FORMAT);
 				saver.setCreateEmptyFiles(false);
 
 				saver.saveQuadTree(bqt, boundsFilename); 		

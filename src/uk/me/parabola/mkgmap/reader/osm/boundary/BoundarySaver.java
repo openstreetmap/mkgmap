@@ -12,10 +12,11 @@
  */
 package uk.me.parabola.mkgmap.reader.osm.boundary;
 
-import java.awt.Rectangle;
-import java.awt.geom.Area;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntStack;
+
+import java.awt.Shape;
 import java.awt.geom.PathIterator;
-import java.awt.geom.Rectangle2D;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -37,6 +38,7 @@ import java.util.regex.Pattern;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Version;
+import uk.me.parabola.mkgmap.reader.osm.Tags;
 import uk.me.parabola.util.Java2DConverter;
 
 public class BoundarySaver {
@@ -86,7 +88,7 @@ public class BoundarySaver {
 	}
 
 	private int lastAccessNo = 0;
-	private final List<StreamInfo> openStreams = new ArrayList<StreamInfo>();
+	private final List<StreamInfo> openStreams = new ArrayList<>();
 	/** keeps the open streams */
 	private final Map<String, StreamInfo> streams;
 	private boolean createEmptyFiles = false;
@@ -98,8 +100,8 @@ public class BoundarySaver {
 			System.exit(-1);
 		}
 		this.dataFormat = mode;
-		this.streams = new HashMap<String, StreamInfo>();
-		this.writtenFileNames = new HashSet<String>();
+		this.streams = new HashMap<>();
+		this.writtenFileNames = new HashSet<>();
 	}
 
 	/**
@@ -129,13 +131,13 @@ public class BoundarySaver {
 	}
 
 	public void addBoundary(Boundary boundary) {
-		Map<String, Area> splitBounds = splitArea(boundary.getArea());
-		for (Entry<String, Area> split : splitBounds.entrySet()) {
-			saveToFile(split.getKey(),
-					new Boundary(split.getValue(), boundary.getTags(), boundary
-							.getId()));
+		Map<String, Shape> splitBounds = BoundaryUtil.rasterArea(boundary.getArea());
+		for (Entry<String, Shape> split : splitBounds.entrySet()) {
+			saveToFile(split.getKey(), split.getValue(), boundary.getTags(),
+					boundary.getId());
 		}
 	}
+
 
 	public HashSet<String> end() {
 		if (isCreateEmptyFiles() && getBbox() != null) {
@@ -197,69 +199,6 @@ public class BoundarySaver {
 		log.debug("Remaining", openStreams.size(), "open streams.");
 	}
 
-	private Map<String, Area> splitArea(Area areaToSplit) {
-		return splitArea(areaToSplit, new HashMap<String, Area>(), null);
-	}
-	
-	/**
-	 * Split a given area into the raster tiles. 
-	 * @param areaToSplit the area
-	 * @param splits a map the splitted tiles are added to
-	 * @return the map with the splitted tiles
-	 */
-	private Map<String, Area> splitArea(Area areaToSplit, Map<String, Area> splits, Rectangle knownBbox) {
-		if (areaToSplit.isEmpty())
-			return splits;
-		Rectangle2D areaBounds;
-		
-		if (knownBbox != null){
-			// within recursion: use the calculated rectangle, not the area,
-			// as the latter might contain a spike that "looks" out of the bbox
-			// and can cause a stack overflow
-			areaBounds = knownBbox.getBounds2D();
-		}
-		else 
-			areaBounds = areaToSplit.getBounds2D();
-
-		// use high precision bounds with later rounding to avoid some little rounding
-		// errors (49999.99999999 instead of 50000.0)
-		int sMinLong = BoundaryUtil.getSplitBegin((int)Math.round(areaBounds.getMinX()));
-		int sMinLat = BoundaryUtil.getSplitBegin((int)Math.round(areaBounds.getMinY()));
-		int sMaxLong = BoundaryUtil.getSplitEnd((int)Math.round(areaBounds.getMaxX()));
-		int sMaxLat = BoundaryUtil.getSplitEnd((int)Math.round(areaBounds.getMaxY()));
-		
-		int dLon = sMaxLong- sMinLong;
-		int dLat = sMaxLat - sMinLat;
-		if (dLon > BoundaryUtil.RASTER || dLat > BoundaryUtil.RASTER){ 
-			// split into two halves
-			Rectangle r1,r2;
-			int middle; 
-			if (dLon > dLat) {
-				middle = BoundaryUtil.getSplitEnd(sMinLong+dLon/2);
-				r1 = new Rectangle(sMinLong, sMinLat, middle-sMinLong, dLat);
-				r2 = new Rectangle(middle, sMinLat, sMaxLong-middle, dLat);
-			} else {
-				middle = BoundaryUtil.getSplitEnd(sMinLat+dLat/2);
-				r1 = new Rectangle(sMinLong, sMinLat, dLon, middle-sMinLat);
-				r2 = new Rectangle(sMinLong, middle, dLon, sMaxLat-middle);
-			}
-			Area a = new Area(r1);
-			// intersect with the both halves
-			// and split both halves recursively
-			a.intersect(areaToSplit);
-			splitArea(a, splits, r1);
-			
-			a = new Area(r2);
-			a.intersect(areaToSplit);
-			splitArea(a, splits, r2);
-		} else {
-			// the area fully fits into one raster tile
-			splits.put(BoundaryUtil.getKey(sMinLat, sMinLong), areaToSplit);
-		}
-		return splits;
-
-	}
-
 	private void openStream(StreamInfo streamInfo, boolean newFile) {
 		if (streamInfo.file.getParentFile().exists() == false
 				&& streamInfo.file.getParentFile() != null)
@@ -274,8 +213,8 @@ public class BoundarySaver {
 
 				String[] keyParts = streamInfo.boundsKey.split(Pattern
 						.quote("_"));
-				int lat = Integer.valueOf(keyParts[0]);
-				int lon = Integer.valueOf(keyParts[1]);
+				int lat = Integer.parseInt(keyParts[0]);
+				int lon = Integer.parseInt(keyParts[1]);
 				if (lat < minLat) {
 					minLat = lat;
 					log.debug("New min Lat:", minLat);
@@ -339,11 +278,11 @@ public class BoundarySaver {
 		// write the header part 2
 		// write it first to a byte array to be able to calculate the length of the header
 		ByteArrayOutputStream headerStream = new ByteArrayOutputStream();
-		DataOutputStream headerDataStream = new DataOutputStream(headerStream);
-		headerDataStream.writeUTF(dataFormat);
-		headerDataStream.writeInt(CURRENT_RECORD_ID);
-		headerDataStream.writeUTF(Version.VERSION);
-		headerDataStream.close();
+		try(DataOutputStream headerDataStream = new DataOutputStream(headerStream)){
+			headerDataStream.writeUTF(dataFormat);
+			headerDataStream.writeInt(CURRENT_RECORD_ID);
+			headerDataStream.writeUTF(Version.VERSION);
+		}
 		
 		byte[] header2 = headerStream.toByteArray();
 		// write the length of the header part 2 so that it is possible to add
@@ -353,25 +292,38 @@ public class BoundarySaver {
 		dos.flush();
 	}
 
-	private void saveToFile(String filekey, Boundary boundary) {
+	/**
+	 * Save the elements that build a boundary with a given key 
+	 * that identifies the lower left corner of the raster.
+	 * @param filekey the string that identifies the lower left corner
+	 * @param shape the shape that describes the area of the boundary
+	 * @param tags the tags of the boundary
+	 * @param id the boundary id
+	 */
+	private void saveToFile(String filekey, Shape shape, Tags tags, String id) {
 		try {
 			StreamInfo streamInfo = getStream(filekey);
 			if (streamInfo != null && streamInfo.isOpen()) {
-				writeRawFormat(streamInfo.stream, boundary);
+				writeRawFormat(streamInfo.stream, shape, tags, id);
 			}
 		} catch (Exception exp) {
 			log.error("Cannot write boundary: " + exp, exp);
 		}
 
 		tidyStreams();
+		
 	}
+	
 
 	/**
-	 * Write a boundary to a given stream. 
+	 * Save the elements of a boundary to a stream.
 	 * @param stream the already opened OutputStream
-	 * @param boundary the boundary 
+	 * @param shape the shape that describes the area of the boundary
+	 * @param tags the tags of the boundary
+	 * @param id the boundary id
 	 */
-	private void writeRawFormat(OutputStream stream, Boundary boundary) {
+	private void writeRawFormat(OutputStream stream, Shape shape, Tags tags,
+			String id) {
 		ByteArrayOutputStream oneItemStream = new ByteArrayOutputStream();
 		DataOutputStream dos = new DataOutputStream(oneItemStream);
 		if (dataFormat == QUADTREE_DATA_FORMAT) {
@@ -379,14 +331,13 @@ public class BoundarySaver {
 			System.exit(1);
 		}
 		try {
-			dos.writeUTF(boundary.getId());
+			dos.writeUTF(id);
 			
 			// write the tags
-			int noOfTags = boundary.getTags().size();
+			int noOfTags = tags.size();
 			dos.writeInt(noOfTags);
 
-			Iterator<Entry<String, String>> tagIter = boundary.getTags()
-					.entryIterator();
+			Iterator<Entry<String, String>> tagIter = tags.entryIterator();
 			while (tagIter.hasNext()) {
 				Entry<String, String> tag = tagIter.next();
 				dos.writeUTF(tag.getKey());
@@ -394,23 +345,24 @@ public class BoundarySaver {
 				noOfTags--;
 			}
 			assert noOfTags == 0 : "Remaining tags: " + noOfTags + " size: "
-					+ boundary.getTags().size() + " "
-					+ boundary.getTags().toString();
+					+ tags.size() + " "
+					+ tags.toString();
 
-			writeArea(dos,boundary.getArea());
+			//writeArea(dos,boundary.getArea());
+			writeArea(dos, shape);
 			dos.close();
 
 			// now start to write into the real stream 
 
 			// first write the bounding box so that is possible to skip the
 			// complete entry
-			uk.me.parabola.imgfmt.app.Area bbox = Java2DConverter
-					.createBbox(boundary.getArea());
+			uk.me.parabola.imgfmt.app.Area outBBox = Java2DConverter
+					.createBbox(shape);
 			DataOutputStream dOutStream = new DataOutputStream(stream);
-			dOutStream.writeInt(bbox.getMinLat());
-			dOutStream.writeInt(bbox.getMinLong());
-			dOutStream.writeInt(bbox.getMaxLat());
-			dOutStream.writeInt(bbox.getMaxLong());
+			dOutStream.writeInt(outBBox.getMinLat());
+			dOutStream.writeInt(outBBox.getMinLong());
+			dOutStream.writeInt(outBBox.getMaxLat());
+			dOutStream.writeInt(outBBox.getMaxLong());
 
 			// write the size of the boundary block so that it is possible to
 			// skip it
@@ -426,8 +378,9 @@ public class BoundarySaver {
 			log.error(exp.toString());
 		}
 
+		
 	}
-
+	
 	/**
 	 * Write area to stream with Double precision. The coordinates
 	 * are saved as varying length doubles with delta coding. 
@@ -435,10 +388,11 @@ public class BoundarySaver {
 	 * @param area the area (can be non-singular)
 	 * @throws IOException
 	 */
-	public static void writeArea(DataOutputStream dos, Area area) throws IOException{
+	public static void writeArea(DataOutputStream dos, Shape area) throws IOException{
 		double[] res = new double[6];
 		double[] lastRes = new double[2];
-		List<Integer> pairs = new LinkedList<Integer>();
+		
+		IntArrayList pairs = new IntArrayList();
 		// step 1: count parts
 		PathIterator pit = area.getPathIterator(null);
 		int prevType = -1;
@@ -458,7 +412,7 @@ public class BoundarySaver {
 		// 2nd pass: write the data
 		pit = area.getPathIterator(null);
 		prevType = -1;
-		
+		int pairsPos = 0;
 		dos.writeInt(pit.getWindingRule());
 		while (!pit.isDone()) {
 			int type = pit.currentSegment(res);
@@ -467,7 +421,7 @@ public class BoundarySaver {
 			switch (type) {
 			case PathIterator.SEG_LINETO:
 				if (prevType != type){
-					len = pairs.remove(0);
+					len = pairs.getInt(pairsPos++);
 					dos.writeInt(len);
 				}
 				// no break
@@ -570,6 +524,6 @@ public class BoundarySaver {
 		
 		buffer[numBytes-1] &= 0x7f;
 		dos.write(buffer, 0, numBytes);
-	}  
+	}
 
 }
