@@ -53,7 +53,7 @@ import uk.me.parabola.log.Logger;
  * @author Robert Vollmert
  */
 
-public class RoadDef implements Comparable<RoadDef> {
+public class RoadDef {
 	private static final Logger log = Logger.getLogger(RoadDef.class);
 
 	public static final int NET_FLAG_NODINFO  = 0x40;
@@ -687,23 +687,6 @@ public class RoadDef implements Comparable<RoadDef> {
 	public void setZip(Zip zip) {
 		this.zip = zip;
 		netFlags |= NET_FLAG_ADDRINFO;
-	}
-
-	public int compareTo(RoadDef other) {
-		// sort by city name - this is used to group together
-		// roads that have been split into segments
-		if(other == this)
-			return 0;
-
-		// TODO: look at what this is doing...
-		if(city != null && other.city != null)
-			return city.getName().compareTo(other.city.getName());
-		if (hashCode() == other.hashCode())
-			return 0;
-		else if (hashCode() < other.hashCode())
-			return -1;
-		else
-			return 0;
 	}
 
 	public City getCity() {
