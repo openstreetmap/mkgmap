@@ -85,7 +85,7 @@ public class Subdivision {
 	// Set if this is the last one.
 	private boolean last;
 
-	private final List<Subdivision> divisions = new ArrayList<Subdivision>();
+	private final List<Subdivision> divisions = new ArrayList<>();
 
 	private int extTypeAreasOffset;
 	private int extTypeLinesOffset;
@@ -299,9 +299,8 @@ public class Subdivision {
 				} else {
 					maxSetIdx = 2;
 				}
-			} else {
-				maxSetIdx = 3;
 			}
+
 			String[] refs = Arrays.copyOfRange(labels, 1, maxSetIdx+1);
 			if(refs.length == 1) {
 				// don't bother to add a single ref that looks the
@@ -545,7 +544,6 @@ public class Subdivision {
 	}
 	/**
 	 * Set the sizes for the extended type data. See {@link #writeLastExtTypeOffsetsRecord(ImgFileWriter)} 
-	 * @param reader
 	 */
 	public void readLastExtTypeOffsetsRecord(ImgFileReader reader) {
 		extTypeAreasSize = reader.getInt() - extTypeAreasOffset;
@@ -639,5 +637,21 @@ public class Subdivision {
 
 	public Coord getCenter(){
 		return new Coord(getLatitude(),getLongitude());
+	}
+
+	/**
+	 * Get the unshifted width of the subdivision.
+	 * @return The true (unshifted) width.
+	 */
+	public int getWidth() {
+		return width << getShift();
+	}
+
+	/**
+	 * Get the unshifted height of the subdivision.
+	 * @return The true (unshifted) height.
+	 */
+	public int getHeight() {
+		return height << getShift();
 	}
 }

@@ -112,7 +112,7 @@ public class TREFileReader extends ImgReader {
 				int endRgnOffset = reader.getu3();
 
 				SubdivData subdivData = new SubdivData(flags,
-						lat, lon, width, height,
+						lat, lon, 2*width, 2*height,
 						lastRgnOffset, endRgnOffset);
 
 				Subdivision subdiv = Subdivision.readSubdivision(mapLevels[count], subdivData);
@@ -127,7 +127,7 @@ public class TREFileReader extends ImgReader {
 	}
 	
 	/**
-	 * Read the extended type info for the sub divisions. Corresponds to {@link #TREFile.writeExtTypeOffsetsRecords()}.
+	 * Read the extended type info for the sub divisions. Corresponds to {@link TREFile#writeExtTypeOffsetsRecords()}.
 	 */
 	private void readExtTypeOffsetsRecords() {
 		ImgFileReader reader = getReader();

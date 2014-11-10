@@ -118,7 +118,6 @@
           <option name="METHOD_BRACE_STYLE" value="5" />
           <option name="INDENT_CASE_FROM_SWITCH" value="false" />
           <option name="ALIGN_MULTILINE_PARAMETERS" value="false" />
-          <option name="WRAP_COMMENTS" value="true" />
           <option name="PARENT_SETTINGS_INSTALLED" value="true" />
           <indentOptions>
             <option name="USE_TAB_CHARACTER" value="true" />
@@ -177,4 +176,3 @@
     <option name="USE_PER_PROJECT_SETTINGS" value="true" />
   </component>
 </project>
-
