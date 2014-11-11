@@ -251,7 +251,7 @@ public abstract class Element {
 	}
 
 	public String toBrowseURL() {
-		return "http://www.openstreetmap.org/browse/" + kind() + "/" + id;
+		return "http://www.openstreetmap.org/" + kind() + "/" + id;
 	}
 
 	public Element copy() {
