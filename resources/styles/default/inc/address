@@ -66,8 +66,11 @@ mkgmap:country=USA & mkgmap:region!=* & mkgmap:admin_level4=* { set mkgmap:regio
 # New York City has different admin levels than the rest of the US.
 # https://wiki.openstreetmap.org/wiki/United_States_admin_level
 mkgmap:country=USA & mkgmap:city!=* & mkgmap:admin_level5='New York City' & mkgmap:admin_level6='New York County' { set mkgmap:city='New York' }
-mkgmap:country=USA & mkgmap:city!=* & mkgmap:admin_level5='New York City' & mkgmap:admin_level6='Bronx County' { set mkgmap:city='The Bronx' }
+mkgmap:country=USA & mkgmap:city!=* & mkgmap:admin_level5='New York City' & mkgmap:admin_level6='Bronx County' { set mkgmap:city='Bronx' }
 mkgmap:country=USA & mkgmap:city!=* & mkgmap:admin_level5='New York City' & mkgmap:admin_level6='Kings County' { set mkgmap:city='Brooklyn' }
+# Queens uses neighborhoods for city in postal addresses
+# http://en.wikipedia.org/wiki/List_of_Queens_neighborhoods
+mkgmap:country=USA & mkgmap:city!=* & mkgmap:admin_level5='New York City' & mkgmap:admin_level6='Queens County' & mkgmap:admin_level8=* { set mkgmap:city='${mkgmap:admin_level8}' }
 mkgmap:country=USA & mkgmap:city!=* & mkgmap:admin_level5='New York City' & mkgmap:admin_level6='Queens County' { set mkgmap:city='Queens' }
 mkgmap:country=USA & mkgmap:city!=* & mkgmap:admin_level5='New York City' & mkgmap:admin_level6='Richmond County' { set mkgmap:city='Staten Island' }
 mkgmap:country=USA & mkgmap:city!=* & mkgmap:admin_level8=* { set mkgmap:city='${mkgmap:admin_level8|subst:City of }' }
