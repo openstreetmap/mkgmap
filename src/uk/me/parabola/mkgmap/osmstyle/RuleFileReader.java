@@ -243,7 +243,7 @@ public class RuleFileReader {
 	 * from the expression.
 	 */
 	private void saveRule(TokenScanner scanner, Op op, ActionList actions, GType gt) {
-		log.info("EXP", op, ", type=", gt);
+		log.debug("EXP", op, ", type=", gt);
 
 		// check if the type definition is allowed
 		if (inFinalizeSection && gt != null)
