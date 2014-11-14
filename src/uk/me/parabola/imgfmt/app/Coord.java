@@ -458,7 +458,7 @@ public class Coord implements Comparable<Coord> {
 	public Coord makeBetweenPoint(Coord other, double fraction) {
 		int dLat30 = other.getHighPrecLat() - getHighPrecLat();
 		int dLon30 = other.getHighPrecLon() - getHighPrecLon();
-		if ((Math.abs(dLat30) < 1000000 && Math.abs(dLon30) < 1000000 )){
+		if (dLon30 == 0 || Math.abs(dLat30) < 1000000 && Math.abs(dLon30) < 1000000 ){
 			// distances are rather small, we can use flat earth approximation
 			int lat30 = (int) (getHighPrecLat() + dLat30 * fraction);
 			int lon30 = (int) (getHighPrecLon() + dLon30 * fraction);
@@ -705,16 +705,21 @@ public class Coord implements Comparable<Coord> {
 	    double lat2 = lat1 + deltaLat;
 	    // check for some daft bugger going past the pole, normalise latitude if so
 	    if (Math.abs(lat2) > Math.PI/2) lat2 = lat2>0 ? Math.PI-lat2 : -Math.PI-lat2;
+	    double lon2;
+	    // catch special case: normalised value would be -8388608  
+	    if (this.getLongitude() == 8388608 && brng == 0)
+	    	lon2 = lon1;
+	    else { 
+		    double deltaPhi = Math.log(Math.tan(lat2/2+Math.PI/4)/Math.tan(lat1/2+Math.PI/4));
+		    double q = Math.abs(deltaPhi) > 10e-12 ? deltaLat / deltaPhi : Math.cos(lat1); // E-W course becomes ill-conditioned with 0/0
 
-	    double deltaPhi = Math.log(Math.tan(lat2/2+Math.PI/4)/Math.tan(lat1/2+Math.PI/4));
-	    double q = Math.abs(deltaPhi) > 10e-12 ? deltaLat / deltaPhi : Math.cos(lat1); // E-W course becomes ill-conditioned with 0/0
+		    double deltaLon = distRad*Math.sin(brngRad)/q;
 
-	    double deltaLon = distRad*Math.sin(brngRad)/q;
-
-	    double lon2 = lon1 + deltaLon;
-
-	    lon2 = (lon2 + 3*Math.PI) % (2*Math.PI) - Math.PI; // normalise to -180..+180º
-
+		    lon2 = lon1 + deltaLon;
+		    
+		    lon2 = (lon2 + 3*Math.PI) % (2*Math.PI) - Math.PI; // normalise to -180..+180º
+	    }
+	    
 	    return new Coord(Math.toDegrees(lat2), Math.toDegrees(lon2));
 	}
 	

@@ -30,6 +30,8 @@ public class CoordTest {
 	Coord p1_11 = new Coord (1.0, 11.0);
 	Coord p60_10 = new Coord (60.0, 10.0);
 	Coord p61_11 = new Coord (61.0, 11.0);
+	Coord russia1 = new Coord(3069580,8388608);
+	Coord russia2 = new Coord(3105677,8388608);
 	
 	/**
 	 */
@@ -71,4 +73,17 @@ public class CoordTest {
 		assertEquals(124100, p60_10.distanceHaversine(p61_11), 100);
 	}
 
+	@Test 
+	public void testMakeBetweenAt180(){
+		Coord russia3 = russia1.makeBetweenPoint(russia2, 0.5);
+		assertEquals(russia3.getLongitude(), russia1.getLongitude());
+	}
+	
+	@Test 
+	public void destOnRhumLineAt180(){
+		Coord russia3 = russia1.destOnRhumLine(1, 0.0);
+		assertEquals(russia3.getLongitude(), russia1.getLongitude());
+		Coord russia4 = russia1.destOnRhumLine(10000, 0.0);
+		assertEquals(russia4.getLongitude(), russia1.getLongitude());
+	}
 }
