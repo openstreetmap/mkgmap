@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.build;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Area;
@@ -52,7 +53,8 @@ public class MapArea implements MapDataSource {
 
 	private static final int INITIAL_CAPACITY = 100;
 	private static final int MAX_RESOLUTION = 24;
-
+	private static final int LARGE_OBJECT_DIM = 8192;
+	
 	public static final int POINT_KIND    = 0;
 	public static final int LINE_KIND     = 1;
 	public static final int SHAPE_KIND    = 2;
@@ -72,9 +74,9 @@ public class MapArea implements MapDataSource {
 	private int maxLon = Integer.MIN_VALUE;
 
 	// The contents of the area.
-	private final List<MapPoint> points = new ArrayList<MapPoint>(INITIAL_CAPACITY);
-	private final List<MapLine> lines = new ArrayList<MapLine>(INITIAL_CAPACITY);
-	private final List<MapShape> shapes = new ArrayList<MapShape>(INITIAL_CAPACITY);
+	private final List<MapPoint> points = new ArrayList<>(INITIAL_CAPACITY);
+	private final List<MapLine> lines = new ArrayList<>(INITIAL_CAPACITY);
+	private final List<MapShape> shapes = new ArrayList<>(INITIAL_CAPACITY);
 
 	// amount of space required for the contents
 	private final int[] sizes = new int[NUM_KINDS];
@@ -98,8 +100,6 @@ public class MapArea implements MapDataSource {
 	public MapArea(MapDataSource src, int resolution) {
 		this.areaResolution = 0;
 		this.bounds = src.getBounds();
-		addToBounds(bounds);
-
 		for (MapPoint p : src.getPoints()) {
 			if(bounds.contains(p.getLocation()))
 				addPoint(p);
@@ -119,9 +119,7 @@ public class MapArea implements MapDataSource {
 		MapFilterChain chain = new MapFilterChain() {
 			public void doFilter(MapElement element) {
 				MapShape shape = (MapShape) element;
-				shapes.add(shape);
-				addToBounds(shape.getBounds());
-				addSize(element, shape.hasExtendedType()? XT_SHAPE_KIND : SHAPE_KIND);
+				addShape(shape);
 			}
 		};
 
@@ -148,9 +146,7 @@ public class MapArea implements MapDataSource {
 		MapFilterChain chain = new MapFilterChain() {
 			public void doFilter(MapElement element) {
 				MapLine line = (MapLine) element;
-				lines.add(line);
-				addToBounds(line.getBounds());
-				addSize(element, line.hasExtendedType()? XT_LINE_KIND : LINE_KIND);
+				addLine(line);
 			}
 		};
 
@@ -173,7 +169,6 @@ public class MapArea implements MapDataSource {
 	private MapArea(Area area, int res) {
 		bounds = area;
 		areaResolution = res;
-		addToBounds(area);
 	}
 
 	/**
@@ -193,6 +188,7 @@ public class MapArea implements MapDataSource {
 		log.info("Splitting area " + bounds + " into " + nx + "x" + ny + " pieces at resolution " + resolution);
 		boolean useNormalSplit = true;
 		while (true){
+			List<MapArea> largeObjectAreas = new ArrayList<>();
 			for (int i = 0; i < nx * ny; i++) {
 				mapAreas[i] = new MapArea(areas[i], resolution);
 				if (log.isDebugEnabled())
@@ -212,14 +208,28 @@ public class MapArea implements MapDataSource {
 				used[pos] = true;
 			}
 
-			
+			int maxWidth = areas[0].getWidth();
+			int maxHeight = areas[0].getHeight();
+			if (nx*ny == 1 || maxWidth < LARGE_OBJECT_DIM|| maxHeight < LARGE_OBJECT_DIM){
+				// don't separate large objects
+				maxWidth = Integer.MAX_VALUE;  
+				maxHeight = Integer.MAX_VALUE; 
+			}
+
 			int areaIndex = 0;
 			for (MapLine l : this.lines) {
 				// Drop any zero sized lines.
 				if (l instanceof MapRoad == false && l.getRect().height <= 0 && l.getRect().width <= 0)
 					continue;
-				if (useNormalSplit)
+				if (useNormalSplit){
 					areaIndex = pickArea(mapAreas, l, xbase30, ybase30, nx, ny, dx30, dy30);
+					if (l.getBounds().getHeight() > maxHeight || l.getBounds().getWidth() > maxWidth){
+						MapArea largeObjectArea = new MapArea(l.getBounds(), resolution);
+						largeObjectArea.addLine(l);
+						largeObjectAreas.add(largeObjectArea);
+						continue;
+					}
+				}
 				else 
 					areaIndex = ++areaIndex % mapAreas.length;
 				mapAreas[areaIndex].addLine(l);
@@ -227,8 +237,15 @@ public class MapArea implements MapDataSource {
 			}
 
 			for (MapShape e : this.shapes) {
-				if (useNormalSplit)
+				if (useNormalSplit){
 					areaIndex = pickArea(mapAreas, e, xbase30, ybase30, nx, ny, dx30, dy30);
+					if (e.getBounds().getHeight() > maxHeight || e.getBounds().getWidth() > maxWidth){
+						MapArea largeObjectArea = new MapArea(e.getBounds(), resolution);
+						largeObjectArea.addShape(e);
+						largeObjectAreas.add(largeObjectArea);
+						continue;
+					}
+				}
 				else 
 					areaIndex = ++areaIndex % mapAreas.length;
 				mapAreas[areaIndex].addShape(e);
@@ -245,6 +262,14 @@ public class MapArea implements MapDataSource {
 				useNormalSplit = false;
 				continue;
 			} 
+			
+			if (largeObjectAreas.isEmpty() == false){
+				// combine list and array
+				int pos = mapAreas.length;
+				mapAreas = Arrays.copyOf(mapAreas, mapAreas.length + largeObjectAreas.size());
+				for (MapArea ma : largeObjectAreas)
+					mapAreas[pos++] = ma;
+			}
 			return mapAreas;
 		}
 	}
@@ -462,7 +487,7 @@ public class MapArea implements MapDataSource {
 	 */
 	private void addPoint(MapPoint p) {
 		points.add(p);
-		addToBounds(p.getLocation());
+		addToBounds(p.getLocation()); 
 		addSize(p, p.hasExtendedType()? XT_POINT_KIND : POINT_KIND);
 	}
 
@@ -511,18 +536,26 @@ public class MapArea implements MapDataSource {
 			maxLon = l;
 	}
 
+	/**
+	 * Add to bounds considering high precision values. 
+	 * @param co
+	 */
 	private void addToBounds(Coord co) {
-		int l = co.getLatitude();
-		if (l < minLat)
-			minLat = l;
-		if (l > maxLat)
-			maxLat = l;
-
-		l = co.getLongitude();
-		if (l < minLon)
-			minLon = l;
-		if (l > maxLon)
-			maxLon = l;
+		int lat30 = co.getHighPrecLat();
+		int latLower  = lat30 >> Coord.DELTA_SHIFT;
+		int latUpper  = (latLower << Coord.DELTA_SHIFT) < lat30 ? latLower + 1 : latLower;
+		if (latLower < minLat)
+			minLat = latLower;
+		if (latUpper > maxLat)
+			maxLat = latUpper;
+		
+		int lon30 = co.getHighPrecLon();
+		int lonLeft = lon30 >> Coord.DELTA_SHIFT;
+		int lonRight = (lonLeft << Coord.DELTA_SHIFT) < lon30 ? lonLeft + 1 : lonLeft;
+		if (lonLeft < minLon)
+			minLon = lonLeft;
+		if (lonRight > maxLon)
+			maxLon = lonRight;
 	}
 
 	
@@ -574,5 +607,14 @@ public class MapArea implements MapDataSource {
 					areas[xcell * ny + ycell].getBounds());
 		}
 		return xcell * ny + ycell;
+	}
+
+	/**
+	 * @return true if this area contains any data
+	 */
+	public boolean hasData() {
+		if (points.isEmpty() && lines.isEmpty() && shapes.isEmpty())
+			return false;
+		return true;
 	}
 }
