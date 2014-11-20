@@ -12,11 +12,22 @@ matters.
 
 `${oneway\|def:no}`
 
-| conv | `factor` |
-Use for conversions between units. The only supported version is from meters to feet
-number. It is multiplied by the argument.
+| conv | `m=>ft` |
+Use for conversions between units.
+With the argument +m=>ft+ the value is converted into feet, with the
+value being assumed to be in meters, unless the value includes a unit
+already.
+If any of the units are not recognised then the value is unchanged.
 
-`${height\|conv:m=>ft}`
+`${height\|conv:"m=>ft"}`
+
+So if +height+ is 10, then the result is 33, and if +height+ is 10ft,
+then the result is 10, as it is already in feet.
+
+The possible units are:
+
+* Length: m, km, ft (feet), mi (miles).
+* Speed: mph; km/h (or kmh, kmph), knots
 
 | subst | `from=>to` +
 `from~>to`|
@@ -81,9 +92,8 @@ The second is the maximum length of references that do not contain numbers.
 If there is just the one number then it is used in both cases.
 
 | height | `m=>ft` |
-This is the same as the +conv+ filter, except that it prepends a special
+This is exactly the same as the +conv+ filter, except that it prepends a special
 separation character before the value which is intended for elevations.
-As with +conv+ the only supported conversion currently is from meters to feet.
 
 `${ele\|height:"m=>ft"}`
 

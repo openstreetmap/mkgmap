@@ -16,7 +16,7 @@ package uk.me.parabola.mkgmap.osmstyle.actions;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
- * A <code>HeightFilter</code> transforms values into Garmin-tagged elevations.
+ * A {@code HeightFilter} transforms values into Garmin-tagged elevations.
  *
  * @author Toby Speight
  *

@@ -535,18 +535,16 @@ by the filter name, then a colon ":" and an argument. If there is more than
 one argument required then they are usually separated by colons too, but
 that is not a rule.
 
-[source]
- ${tagname|filter:arg1:arg2}
++${tagname|filter:arg1:arg2}+
 
 You can apply as many filter expressions to a substitution as you like.
 
-[source]
- ${tagname|filter1:arg|filter2:arg}
+
++${tagname|filter1:arg|filter2:arg}+
 
 If the argument contains spaces or symbols it should be quoted.
 
-[source]
- ${tagname|filter1:"arg with spaces"}
++${tagname|filter1:"arg with spaces"}+
 
 For backward compatibility, most cases where you have spaces or symbols
 do not actually need to be quoted, however we would recommend that you

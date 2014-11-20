@@ -16,33 +16,55 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import uk.me.parabola.mkgmap.osmstyle.eval.UnitConversions;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
  * Convert a numeric quantity from one set of units to another.
  *
- * TODO: this will change a lot it is just here for backward compatibility
- * at present.
  * @author Steve Ratcliffe
  */
 public class ConvertFilter extends ValueFilter {
-	private final double factor;
+	private static final Pattern UNIT_RE = Pattern.compile("\\s*([\\d.]+)\\s*([\\w/]*)\\s*");
+
+	private final UnitConversions units;
 
 	public ConvertFilter(String arg) {
-		factor = UnitConversions.convertFactor(arg);
+		units = UnitConversions.createConversion(arg);
 	}
 
 	protected String doFilter(String value, Element el) {
-		if (value == null) return null;
-		
-		try {
-			double d = Double.parseDouble(value);
+		if (value == null || !units.isValid())
+			return value;
 
-			double res = d * factor;
-			res = Math.round(res);
-			return String.valueOf((int) res);
+		String number = value;
+		Double factor = units.getDefaultFactor();
+
+		// If this is not a pure number, then extract the number part and the unit part
+		// and convert based on the found values.  There are also various possible error
+		// cases.
+		if (!Character.isDigit(value.charAt(value.length() - 1))) {
+			// Extract number and unit string
+			Matcher matcher = UNIT_RE.matcher(value);
+			if (matcher.matches()) {
+				number = matcher.group(1);
+				String source = matcher.group(2);
+				factor = units.convertFactor(source);
+				if (factor == null)
+					return value;
+			} else {
+				return value;
+			}
+		}
+
+		try {
+			double d = Double.parseDouble(number);
+			return String.valueOf(Math.round(d * factor));
 		} catch (NumberFormatException e) {
+			// Turns out it wasn't a pure number, just return the value unchanged.
 			return value;
 		}
 	}
