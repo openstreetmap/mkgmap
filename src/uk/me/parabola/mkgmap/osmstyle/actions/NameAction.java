@@ -59,7 +59,7 @@ public class NameAction extends ValueBuildedAction {
 			sb.append(vb);
 			sb.append(" | ");
 		}
-		sb.setLength(sb.length() - 1);
+		sb.setLength(sb.length() - 3);
 		return sb.toString();
 	}
 }
