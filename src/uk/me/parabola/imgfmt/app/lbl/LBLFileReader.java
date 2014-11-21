@@ -386,14 +386,13 @@ public class LBLFileReader extends ImgFile {
 
 			if (hasStreetNum) {
 				byte b = reader.get();
-				String num = reader.getBase11str(b, '-');
-				if (num.isEmpty()) {
+				if ((b & 0x80) == 0) {
 					int mpoffset = (b << 16) & 0xff0000;
 					mpoffset |= reader.getChar() & 0xffff;
 
-					poi.setComplexPhoneNumber(fetchLabel(mpoffset));
+					poi.setComplexStreetNumber(fetchLabel(mpoffset));
 				} else {
-					poi.setSimpleStreetNumber(num);
+					poi.setSimpleStreetNumber(reader.getBase11str(b, '-'));
 				}
 			}
 
@@ -425,16 +424,14 @@ public class LBLFileReader extends ImgFile {
 			
 			if (hasPhone) {
 				byte b = reader.get();
-				String num = reader.getBase11str(b, '-');
-				if (num.isEmpty()) {
+				if ((b & 0x80) == 0) {
 					// Yes this is a bit strange it is a byte followed by a char
 					int mpoffset = (b << 16) & 0xff0000;
 					mpoffset |= reader.getChar() & 0xffff;
 
-					Label label = fetchLabel(mpoffset);
-					poi.setComplexPhoneNumber(label);
+					poi.setComplexPhoneNumber(fetchLabel(mpoffset));
 				} else {
-					poi.setSimplePhoneNumber(num);
+					poi.setSimplePhoneNumber(reader.getBase11str(b, '-'));
 				}
 			}
 

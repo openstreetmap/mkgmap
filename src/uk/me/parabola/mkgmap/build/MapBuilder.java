@@ -524,22 +524,16 @@ public class MapBuilder implements Configurable {
 					r.setStreetName(streetName);			  
 				}
 
-				if(p.getHouseNumber() != null)
-				{
-					if(!r.setSimpleStreetNumber(p.getHouseNumber()))
-					{
-						Label streetNumber = lbl.newLabel(p.getHouseNumber());
-						r.setComplexStreetNumber(streetNumber);
-					}
+				String houseNumber = p.getHouseNumber();
+				if (houseNumber != null && !houseNumber.isEmpty()) {
+					if(!r.setSimpleStreetNumber(houseNumber))
+						r.setComplexStreetNumber(lbl.newLabel(houseNumber));
 				}
 
-				if(p.getPhone() != null)
-				{
-					if(!r.setSimplePhoneNumber(p.getPhone()))
-					{
-						Label phoneNumber = lbl.newLabel(p.getPhone());
-						r.setComplexPhoneNumber(phoneNumber);
-					}
+				String phone = p.getPhone();
+				if (phone != null && !phone.isEmpty()) {
+					if(!r.setSimplePhoneNumber(phone))
+						r.setComplexPhoneNumber(lbl.newLabel(phone));
 				}	
 		  	
 				poimap.put(p, r);
