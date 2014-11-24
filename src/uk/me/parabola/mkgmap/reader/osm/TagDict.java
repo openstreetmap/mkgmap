@@ -23,9 +23,9 @@ import uk.me.parabola.imgfmt.MapFailedException;
  *
  */
 public class TagDict{
-	private static TagDict instance = null;
-	private HashMap<String,Short>  map;
-	private ArrayList<String>  list;
+	private final static TagDict INSTANCE = new TagDict();
+	private final HashMap<String,Short>  map = new HashMap<>();
+	private final ArrayList<String>  list = new ArrayList<>();
 
 	public static final short INVALID_TAG_VALUE = 0;
 
@@ -33,8 +33,6 @@ public class TagDict{
 	 * create an empty dictionary
 	 */
 	private TagDict() {
-		map = new HashMap<>();
-		list = new ArrayList<>();
 		map.put("invalid tag", INVALID_TAG_VALUE);
 		list.add("invalid tag");
 	}
@@ -43,11 +41,8 @@ public class TagDict{
 	 * give access to the singleton instance  
 	 * @return
 	 */
-	public static synchronized TagDict getInstance() {
-		if (instance == null) {
-			instance = new TagDict();
-		}
-		return instance;
+	public static TagDict getInstance() {
+		return INSTANCE;
 	}		
 	
 	/**
