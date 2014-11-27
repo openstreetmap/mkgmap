@@ -74,4 +74,9 @@ public interface Style {
 	 * Get the tags that are used by this style.
 	 */
 	public Set<String> getUsedTags();
+	
+	/**
+	 * Report statistics for rule expressions. 
+	 */
+	public void reportStats();
 }

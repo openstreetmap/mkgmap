@@ -150,12 +150,12 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	 */
 	protected void setupHandler(OsmHandler handler) {
 		createElementSaver();
+		createConverter();
+		
 		osmReadingHooks = pluginChain(elementSaver, getConfig());
 
 		handler.setElementSaver(elementSaver);
 		handler.setHooks(osmReadingHooks);
-
-		createConverter();
 
 		handler.setUsedTags(getUsedTags());
 
@@ -180,10 +180,12 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	
 	protected OsmReadingHooks pluginChain(ElementSaver saver, EnhancedProperties props) {
 		List<OsmReadingHooks> plugins = new ArrayList<OsmReadingHooks>();
-
 		for (OsmReadingHooks p : getPossibleHooks()) {
-			if (p.init(saver, props))
+			if (p.init(saver, props)){
 				plugins.add(p);
+				if (p instanceof RelationStyleHook)
+					((RelationStyleHook) p).setStyle(style);
+			}
 		}
 
 		OsmReadingHooks hooks;

@@ -670,6 +670,11 @@ public class StyleTester implements OsmConverter {
 					rule.setFinalizeRule(finalizeRule);
 				}
 			}
+
+			@Override
+			public void printStats(String header) {
+				// TODO Auto-generated method stub
+			}
 		}
 
 		/**

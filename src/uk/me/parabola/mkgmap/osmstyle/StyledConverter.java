@@ -124,6 +124,7 @@ public class StyledConverter implements OsmConverter {
 	private final Rule nodeRules;
 	private final Rule lineRules;
 	private final Rule polygonRules;
+	private Style style;
 
 	private boolean driveOnLeft;
 	private boolean driveOnRight;
@@ -153,7 +154,7 @@ public class StyledConverter implements OsmConverter {
 				nameTagList.add(TagDict.getInstance().xlate(n));
 		} else 
 			nameTagList = null;
-
+		this.style = style;
 		wayRules = style.getWayRules();
 		nodeRules = style.getNodeRules();
 		lineRules = style.getLineRules();
@@ -504,6 +505,7 @@ public class StyledConverter implements OsmConverter {
 	}
 	
 	public void end() {
+		style.reportStats();
 		setHighwayCounts();
 		findUnconnectedRoads();
 		rotateClosedWaysToFirstNode();

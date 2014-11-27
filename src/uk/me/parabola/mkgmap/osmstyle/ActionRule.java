@@ -18,6 +18,7 @@ package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.List;
 
+import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.osmstyle.actions.Action;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.reader.osm.Element;
@@ -36,10 +37,13 @@ import uk.me.parabola.mkgmap.reader.osm.TypeResult;
  * @author Steve Ratcliffe
  */
 public class ActionRule implements Rule {
+	private static final Logger statsLog = Logger.getLogger(ActionRule.class.getPackage().getName()+".stats");
 	private Op expression;
 	private final List<Action> actions;
 	private final GType type;
 	private Rule finalizeRule;
+	private long numEval; // count how often the expression was evaluated 
+	private long numTrue; // count how often the evaluation returned true
 
 	/** Finalize rules must not have an element type definition so the add method must never be called. */
 	private final static TypeResult finalizeTypeResult = new TypeResult() {
@@ -66,9 +70,10 @@ public class ActionRule implements Rule {
 	public int resolveType(int cacheId, Element el, TypeResult result) {
 		Element element = el;
 		if (expression != null) {
+			numEval++;
 			if (!expression.eval(cacheId, element))
 				return cacheId;
-				
+			numTrue++;
 			// If this is a continue and we are not to propagate the effects
 			// of the action on the element to further rules, then make
 			// a copy of the element so that the original is unsullied.
@@ -108,8 +113,10 @@ public class ActionRule implements Rule {
 	public void resolveType(Element el, TypeResult result) {
 		Element element = el;
 		if (expression != null) {
+			numEval++;
 			if (!expression.eval(element))
 				return;
+			numTrue++;
 			// If this is a continue and we are not to propagate the effects
 			// of the action on the element to further rules, then make
 			// a copy of the element so that the original is unsullied.
@@ -168,4 +175,9 @@ public class ActionRule implements Rule {
 		this.expression = expression;
 	}
 	
+	@Override
+	public void printStats(String header) {
+		if (statsLog.isInfoEnabled())
+			statsLog.info(header,"stats (rule/evals/true)", this.toString() + "/" + numEval + "/" + numTrue);
+	}
 }

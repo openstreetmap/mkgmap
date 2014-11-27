@@ -35,10 +35,13 @@ public class RelationStyleHook extends OsmReadingHooksAdaptor {
 	public boolean init(ElementSaver saver, EnhancedProperties props) {
 		this.saver = saver;
 		nameTagList = LocatorUtil.getNameTags(props);
-		style = StyleImpl.readStyle(props);
 		return super.init(saver, props);
 	}
 
+	public void setStyle(Style style){
+		this.style = style;
+	}
+	
 	public void end() {
 		Rule relationRules = style.getRelationRules();
 		for (Relation rel : saver.getRelations().values()) {
@@ -57,8 +60,6 @@ public class RelationStyleHook extends OsmReadingHooksAdaptor {
 			}
 		}
 		super.end();
-		
-		style = null;
 	}
 
 	

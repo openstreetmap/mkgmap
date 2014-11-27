@@ -46,6 +46,7 @@ import uk.me.parabola.mkgmap.reader.osm.WatchableTypeResult;
 public class RuleSet implements Rule, Iterable<Rule> {
 	private static final Logger log = Logger.getLogger(RuleSet.class);
 	private Rule[] rules;
+	private Rule finalizeRule;
 
 	// identifies cached values 
 	int cacheId;
@@ -259,5 +260,18 @@ public class RuleSet implements Rule, Iterable<Rule> {
 			rule.setFinalizeRule(finalizeRule);
 		
 		compiled = false;
+		this.finalizeRule = finalizeRule;  
 	}
+
+	@Override
+	public void printStats(String header) {
+		if (rules == null)
+		  return;
+		for (Rule rule : rules){ 
+			rule.printStats(header);
+		}
+		if (finalizeRule != null)
+			finalizeRule.printStats(header);
+	}
+
 } 

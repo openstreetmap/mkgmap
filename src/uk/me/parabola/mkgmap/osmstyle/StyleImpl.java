@@ -568,6 +568,14 @@ public class StyleImpl implements Style {
 		}
 		return style;
 	}
+
+	@Override
+	public void reportStats() {
+		relations.printStats("relations");
+		nodes.printStats("points");
+		lines.printStats("lines");
+		polygons.printStats("polygons");
+	}
 	
 	public static void main(String[] args) throws FileNotFoundException {
 		String file = args[0];
