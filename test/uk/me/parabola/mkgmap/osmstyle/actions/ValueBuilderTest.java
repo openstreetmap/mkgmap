@@ -130,6 +130,20 @@ public class ValueBuilderTest {
 		assertEquals("substitutions in name", "x|y w|w", s);
 	}
 
+	/**
+	 * Test that you can use a space before the pipe with the old unquoted syntax.
+	 */
+	@Test
+	public void testSpacedArgsOldSyntax() {
+		ValueBuilder vb = new ValueBuilder("{ name '${rcnname | substring:1:14}' }");
+		Element el = new Way(1);
+
+		el.addTag("rcnname", "1234567890123456789");
+
+		String s = vb.build(el, null);
+		assertEquals("value is trimmed", "{ name '2345678901234' }", s);
+	}
+
 	@Test
 	public void testQuotedSplitLines() {
 		String value =

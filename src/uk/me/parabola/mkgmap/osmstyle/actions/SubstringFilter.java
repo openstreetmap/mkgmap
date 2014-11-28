@@ -50,7 +50,7 @@ public class SubstringFilter extends ValueFilter {
 				args = 0;
 			}
 		} catch (NumberFormatException e) {
-			throw new ExitException("Not valid numbers in style substring command: " + arg);
+			throw new ExitException(String.format("Numbers not valid in style substring command: '%s'", arg));
 		}
 	}
 

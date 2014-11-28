@@ -24,6 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.scan.SyntaxException;
 
 /**
  * Build a value that can have tag values substituted in it.
@@ -37,7 +38,7 @@ public class ValueBuilder {
 			Pattern.compile("[ \t]*([^: \\t|]+:'[^']+')[ \t]*"),
 
 			// This must be last
-			Pattern.compile("([ \t]*[^: \\t|]+:[^|]*)"),
+			Pattern.compile("[ \t]*([^: \\t|]+:[^|]*)"),
 	};
 
 	private final List<ValueItem> items = new ArrayList<>();
@@ -224,6 +225,8 @@ public class ValueBuilder {
 		case "part":
 			item.addFilter(new PartFilter(arg));
 			break;
+		default:
+			throw new SyntaxException(String.format("Unknown filter '%s'", cmd));
 		}
 	}
 
