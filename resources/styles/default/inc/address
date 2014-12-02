@@ -5,8 +5,8 @@
 
 # first set the country code
 mkgmap:country!=* & mkgmap:admin_level2=* { set mkgmap:country='${mkgmap:admin_level2}' }
-mkgmap:country!=* & addr:country=* { set mkgmap:country='${addr:country}' }
-mkgmap:country!=* & is_in:country=* { set mkgmap:country='${is_in:country}' }
+mkgmap:country!=* & addr:country=* { set mkgmap:country='${addr:country|country-ISO:}' }
+mkgmap:country!=* & is_in:country=* { set mkgmap:country='${is_in:country|country-ISO:}' }
 
 # country specific rules first
 

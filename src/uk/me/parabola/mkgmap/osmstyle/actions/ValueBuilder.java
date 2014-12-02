@@ -225,6 +225,9 @@ public class ValueBuilder {
 		case "part":
 			item.addFilter(new PartFilter(arg));
 			break;
+		case "country-ISO":
+			item.addFilter(new CountryISOFilter());
+			break;
 		default:
 			throw new SyntaxException(String.format("Unknown filter '%s'", cmd));
 		}
