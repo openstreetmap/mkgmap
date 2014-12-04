@@ -102,7 +102,7 @@ Use to normalize country names to the 3 character ISO 1366 code.
 The filter has no arguments. It uses the list in LocatorConfig.xml.
 Possible arguments are country names, or ISO codes in 2 or 3 characters,
 for example "Deutschland", "Germany", "Bundesrepublik Deutschland", or "DE" 
-will all return "DEU", also different cases like "GERMAYN" or "   germany " 
+will all return "DEU", also different cases like "GERMANY" or "   germany " 
 will work.
  
 If the value is not found in the list, then the value is unchanged.
