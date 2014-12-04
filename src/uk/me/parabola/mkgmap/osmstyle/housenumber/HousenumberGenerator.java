@@ -17,9 +17,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
-
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.net.NumberStyle;
@@ -28,6 +28,7 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LineAdder;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
@@ -86,6 +87,9 @@ public class HousenumberGenerator {
 			String streetname = getStreetname(n);
 			if (streetname != null) {
 				houseNumbers.add(streetname, n);
+			} else {
+				if (log.isDebugEnabled())
+					log.debug(n.toBrowseURL()," ignored, doesn't contain a street name.");
 			}
 		}
 	}
@@ -102,6 +106,13 @@ public class HousenumberGenerator {
 			String streetname = getStreetname(w);
 			if (streetname != null) {
 				houseNumbers.add(streetname, w);
+			} else {
+				if (log.isDebugEnabled()){
+					if (FakeIdGenerator.isFakeId(w.getId()))
+						log.debug("mp-created way ignored, doesn't contain a street name. Tags:",w.toTagString());
+					else 
+						log.debug(w.toBrowseURL()," ignored, doesn't contain a street name.");
+				}
 			}
 		}
 	}
@@ -115,7 +126,6 @@ public class HousenumberGenerator {
 	public void addRoad(Way osmRoad, MapRoad road) {
 		roads.add(road);
 		if (numbersEnabled) {
-			// first try to get the streetname from mkgmap:streetname
 			String name = getStreetname(osmRoad); 
 			if (name != null) {
 				if (log.isDebugEnabled())
@@ -125,9 +135,124 @@ public class HousenumberGenerator {
 		} 
 	}
 	
+	/**
+	 * Evaluate type=associatedStreet relations.
+	 */
 	public void addRelation(Relation r) {
-		// TODO 
+		if (numbersEnabled == false) 
+			return;
+		String relType = r.getTag("type");
+		// the wiki says that we should also evaluate type=street
+		if ("associatedStreet".equals(relType) || "street".equals(relType)){
+			List<Element> houses= new ArrayList<>();
+			List<Element> streets = new ArrayList<>();
+			for (Map.Entry<String, Element> member : r.getElements()) {
+				if (member.getValue() instanceof Node) {
+					Node node = (Node) member.getValue();
+					houses.add(node);
+				} else if (member.getValue() instanceof Way) {
+					Way w = (Way) member.getValue();
+					String role = member.getKey();
+					switch (role) {
+					case "house":
+					case "addr:houselink":
+					case "address":
+						houses.add(w);
+						break;
+					case "street":
+						streets.add(w);
+						break;
+					case "":
+						if (w.getTag("highway") != null){
+							streets.add(w);
+							continue;
+						}
+						String buildingTag = w.getTag("building");
+						if (buildingTag != null)
+							houses.add(w);
+						else 
+							log.warn("Relation",r.toBrowseURL(),": role of member",w.toBrowseURL(),"unclear");
+						break;
+					default:
+						break;
+					}
+				}
+			}
+			if (houses.isEmpty()){
+				if ("associatedStreet".equals(relType))
+					log.warn("Relation",r.toBrowseURL(),": ignored, found no houses");
+				return;
+			}
+			String streetName = r.getTag("name");
+			String streetNameFromRoads = null;
+			boolean nameFromStreetsIsUnclear = false;
+			if (streets.isEmpty() == false) {
+				for (Element street : streets) {
+					String roadName = street.getTag("name");
+					if (roadName == null)
+						continue;
+					if (streetNameFromRoads == null)
+						streetNameFromRoads = roadName;
+					else if (streetNameFromRoads.equals(roadName) == false)
+						nameFromStreetsIsUnclear = true;
+				}
+			}
+			if (streetName == null){
+				if (nameFromStreetsIsUnclear == false)
+					streetName = streetNameFromRoads;
+				else {
+					log.warn("Relation",r.toBrowseURL(),": ignored, street name is not clear.");
+					return;
+				}
+
+			} else {
+				if (streetNameFromRoads != null){
+					if (nameFromStreetsIsUnclear == false && streetName.equals(streetNameFromRoads) == false){
+						log.warn("Relation",r.toBrowseURL(),": street name is not clear, using the name from the way, not that of the relation.");
+						streetName = streetNameFromRoads;
+					} 
+					else if (nameFromStreetsIsUnclear == true){
+						log.warn("Relation",r.toBrowseURL(),": street name is not clear, using the name from the relation.");
+					}
+				} 
+			}
+			int countOK = 0;
+			if (streetName != null && streetName.isEmpty() == false){
+				for (Element house : houses) {
+					if (addStreetTagFromRel(r, house, streetName) )
+						countOK++;
+				}
+			}
+			if (countOK > 0)
+				log.info("Relation",r.toBrowseURL(),": added tag mkgmap:street=",streetName,"to",countOK,"of",houses.size(),"house members");
+			else 
+				log.info("Relation",r.toBrowseURL(),": ignored, the house members all have a addr:street or mkgmap:street tag");
+		}
 	}
+	
+	/**
+	 * Add the tag mkgmap:street=streetName to the element of the 
+	 * relation if it does not already have a street name tag.
+	 */
+	private boolean addStreetTagFromRel(Relation r, Element house, String streetName){
+		String addrStreet = getStreetname(house);
+		if (addrStreet == null){
+			house.addTag("mkgmap:street", streetName);
+			if (log.isDebugEnabled())
+				log.debug("Relation",r.toBrowseURL(),": adding tag mkgmap:street=" + streetName, "to house",house.toBrowseURL());
+			return true;
+		}
+		else if (addrStreet.equals(streetName) == false){
+			if (house.getTag("mkgmap:street") != null){
+				log.warn("Relation",r.toBrowseURL(),": street name from relation doesn't match existing mkgmap:street tag for house",house.toBrowseURL(),"the house seems to be member of another type=associatedStreet relation");
+				house.deleteTag("mkgmap:street");
+			}
+			else 
+				log.warn("Relation",r.toBrowseURL(),": street name from relation doesn't match existing name for house",house.toBrowseURL());
+		}
+		return false;
+	}
+	
 	
 	public void generate(LineAdder adder) {
 		if (numbersEnabled) {
