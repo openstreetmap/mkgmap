@@ -535,7 +535,8 @@ public class StyledConverter implements OsmConverter {
 		}
 		for (Long wayId: deletedRoads){
 			if (wayRelMap.containsKey(wayId)){
-				log.error("internal error: was that is used in valid restriction relation was removed, id:",wayId);
+				// may happen e.g. when very short way is leading to nowhere 
+				log.warn("Way that is used in valid restriction relation was removed, id:",wayId);
 			}
 		}
 		deletedRoads = null;
