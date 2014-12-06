@@ -120,6 +120,7 @@ public class Sort {
 			} catch (ArrayIndexOutOfBoundsException e) {
 				// Ok try again with the max possible key size allocated.
 				key = new byte[bval.length * 3 * maxExpSize + 3];
+				fillCompleteKey(bval, key);
 			}
 
 			if (cache != null)
