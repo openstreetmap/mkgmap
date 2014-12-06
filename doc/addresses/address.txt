@@ -1,0 +1,181 @@
+= Address information =
+
+Each POI (in the range 0x?? to 0x??) and street in mkgmap generated maps can have some additional attributes. They can be assigned in the style file by setting mkgmap special tags.
+
+== POIs ==
+Additional attributes for POIs can be used only for POIs with Garmin code 0x?? to 0x??. POIs in the extended range 0x???? to 0x???? do not support these additional attributes.
+
+POIs can have the following attributes:
+[options="header"]
+|=========================================================
+|Attribute |mkgmap tag |Example |Notes
+|Name |name |Pizza Express |Name of the POI
+|Country |mkgmap:country |GBR |Three letter ISO code, e.g. for GBR United Kingdom
+|Region |mkgmap:region |Nottinghamshire |The regions name. Useful if there are multiple cities with the same name.
+|City |mkgmap:city |Nottingham |
+|Street |mkgmap:street |King Street |
+|Housenumber |mkgmap:housenumber |20 |
+|Zipcode |mkgmap:postal_code |NG1 2AS |
+|Phone |mkgmap:phone |+44 115 999999 |Phone number in any format
+|=========================================================
+
+The additional information is displayed if the POI is selected. Only the name, city, region and country information is used for searching.
+
+== Streets ==
+Each street can have the following attributes:
+[options="header"]
+|=========================================================
+|Attribute |mkgmap tag |Example |Notes
+|Name |name |King Street |Street name
+|Country |mkgmap:country |GBR |Three letter ISO code, e.g. for GBR United Kingdom
+|Region |mkgmap:region |Nottinghamshire |The regions name. Useful if there are multiple cities with the same name.
+|City |mkgmap:city |Nottingham |
+|Zipcode |mkgmap:postal_code |NG1 2AS |
+|=========================================================
+
+== LocatorConfig.xml ==
+The +LocatorConfig.xml+ config file contains information about all countries used by mkgmap. 
+
+----
+<country name="Schweiz" abr="CHE" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
+	<variant>Switzerland</variant>
+	<variant>Suisse</variant>
+	<variant>CH</variant>
+	<variant>CHE</variant>
+</country>
+----
+
+This includes the +name+ of the country and several of its +variants+. The ISO 3166-1 alpha 3 
+(+abr+) code is used by mkgmap internally and in the style file to have a unique naming
+of countries.
+
+TIP: http://en.wikipedia.org/wiki/ISO_3166-1_alpha-3[Wikipedia] has a list of all ISO 3166-1 alpha 3 codes
+
+The two flags +streetBeforeHousenumber+ and +postalcodeBeforeCity+ determines the address order used on the GPS device.
+
+== Assigning the mkgmap tags ==
+The style file can be used to assign the special mkgmap tags listed above.
+
+NOTE: All tags can be assigned without any restrictions but mkgmap performs some special processing for the +mkgmap:country+ tag. See chapter +Country names+ below.
+
+A common set of address rules is located in the +inc/address+ file in the default style of mkgmap.
+
+A common rule set to assign the +mkgmap:city+ tag looks like:
+----
+mkgmap:city!=* & mkgmap:admin_level8=* { set mkgmap:city='${mkgmap:admin_level8}' } 
+mkgmap:city!=* & mkgmap:admin_level7=* { set mkgmap:city='${mkgmap:admin_level7}' } 
+mkgmap:city!=* & is_in:city=* { set mkgmap:city='${is_in:city}' }
+mkgmap:city!=* & addr:city=* { set mkgmap:city='${addr:city}' }
+----
+
+The first non empty tag of +mkgmap:admin_level8+, +mkgmap:admin_level7+, +is_in:city+ and +addr:city+ is used to assign the +mkgmap:city+ tag and
+therefore the city name of the OSM element. 
+
+Usually the +mkgmap:country+ tag should be assigned first. After that it is possible to have country specific rules.
+----
+mkgmap:country=CAN & mkgmap:region!=* & mkgmap:admin_level4=* { set mkgmap:region='${mkgmap:admin_level4}' }
+----
+
+=== Country names ===
+Each country has a long name (United Kingdom) and the ISO 3166-1 alpha 3 code (GBR). 
+To avoid a big diversity of combinations for one country (e.g. United Kingdom/GBR, Great Britain/GBR, England/GBR, etc.) 
+mkgmap first converts the value of +mkgmap:country+ internally to the ISO code. The country name and all variants
+from the +LocatorConfig.xml+ and country names in all languages from the preprocessed bounds are
+used for this. 
+
+.Evaluation of the long name
++mkgmap:country+ is empty::
+    The value of the +country-name+ parameter is used as country name and the value of the +country-abbr+ parameter as three letter ISO code.   
+Value of +mkgmap:country+ is unknown:: 
+    In case the country name cannot be assigned to a known country the given country name is used and the +country-abbr+ parameter is used as three letter ISO code.
+Preprocessed bounds are used::
+    The long name of the country is retrieved by evaluating the +name-tag-list+ option on the country relation that is stored in the preprocessed bounds.
+Preprocessed bounds are not used:: 
+    The long name is taken from the +name+ attribute of the +LocatorConfig.xml+ entry.
+
+== Preprocessed bounds ==
+In OSM a reasonable number of POIs and streets are not tagged directly with all information required to fill the additional attributes. 
+For example it is very uncommon to tag a street with the city and country name the street is located in. 
+
+mkgmap uses so called preprocessed bounds files to provide a quick method assign the lies-in relationship for some hard wired tags:
+* admin_level=2..11
+* postal_code
+
+TODO: Parameter, mkgmap tags
+ 
+=== Creating preprocessed bounds ===
+Preprocessing bounds is a procedure to extract and prepare all boundary and zip code data with from a large
+OSM extract (like europe extract or asia extract). The data is prepared in such a format that mkgmap 
+can read and process in a fast way while compiling maps.
+
+Preprocessing consists of two (or three) steps:
+
+. Extracting the required data from the large OSM extract
+. Preprocessing the extract
+. Eventually merge multiple preprocessed extracts 
+
+==== Extracting data ====
+The boundary and zip code data must be extracted from a large OSM extract to avoid excessive memory
+requirements in the preprocessing step.
+
+NOTE: This manual describes the usage of the two tools +osmconvert+ and +osmfilter+. The same can be achieved
+with other tools like +osmosis+. 
+
+[TIP] 
+==========
++osmconvert+ http://wiki.openstreetmap.org/wiki/Osmconvert
+
++osmfilter+ http://wiki.openstreetmap.org/wiki/Osmfilter
+==========
+
+
+.Extract data from europe.osm.pbf
+=================================
+After download the OSM extract (europe.osm.pbf in this example) the extract must be converted
+to o5m format. This o5m file is then filtered. 
+
+ osmconvert europe.osm.pbf --out-o5m >europe.o5m
+ osmfilter europe.o5m --keep-nodes= --keep-ways-relations="boundary=administrative =postal_code postal_code=" --out-o5m > europe-boundaries.o5m
+
+=================================
+
+==== Preprocessing data ====
+The tool for preprocessing the boundary and zip code data is contained in the common mkgmap download.
+
+.Preprocessing bounds data
+=================================
+ # The following should be all one line
+ java -cp mkgmap.jar
+      uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryPreprocessor
+      europe-boundaries.o5m
+      europe_bounds
+=================================
+
+This will create a directory called europe_bounds containing multiple files with preprocessed bounds.
+This directory can be used with the bounds option on the mkgmap command line.
+
+
+==== Merging preprocessed data ====
+Preprocessing requires a quite high amount of memory, e.g. north- and south-america requires around 3 GB. So on many systems
+it is not possible to preprocess the whole planet at once. It is possible to divide the planet into several parts where each country
+must be contained completely in one of the parts. Parts should overlap.
+
+Each part is preprocessed in its own directory which are merged as a third step.
+
+.Merging preprocessed data
+=================================
+ # The following should be all one line
+ java -cp mkgmap.jar 
+     uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryMerger 
+     part1
+     part2 
+     merged
+=================================
+
+This command merges the preprocessed bounds from directory +part1+ and +part2+ into the new directory +merged+.
+
+=== index parameter === 
+TODO
+
+=== location-autofill parameter ===
+TODO

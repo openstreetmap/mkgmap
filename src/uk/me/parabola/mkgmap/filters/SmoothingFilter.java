@@ -155,7 +155,7 @@ public class SmoothingFilter implements MapFilter {
 
 		public Coord getAverageCoord() {
 			assert count > 0;
-			return new Coord(avlat / count, avlon / count);
+			return new Coord(avlat / count, avlon / count); // TODO high prec?
 		}
 
 		public void add(Coord co) {

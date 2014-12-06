@@ -22,9 +22,8 @@ import java.util.Map;
 /**
  * Superclass of the node, segment and way OSM elements.
  */
-public abstract class Element implements Iterable<String> {
+public abstract class Element {
 	private Tags tags;
-	private String name;
 	private long id;
 
 	public int getTagCount() {
@@ -44,26 +43,53 @@ public abstract class Element implements Iterable<String> {
 		tags.put(key, val);
 	}
 
+	/**
+	 * Add a tag to the way.  Some tags are recognised separately and saved in
+	 * separate fields.
+	 *
+	 * @param tagKey The tag id created by TagDict
+	 * @param val Its value.
+	 */
+	public void addTag(short tagKey, String val) {
+		if (tags == null)
+			tags = new Tags();
+		tags.put(tagKey, val);
+	}
+
 	public String getTag(String key) {
 		if (tags == null)
 			return null;
 		return tags.get(key);
 	}
+	public String getTag(short tagKey) {
+		if (tags == null)
+			return null;
+		return tags.get(tagKey);
+	}
 
-	public void deleteTag(String tagname) {
+
+	public String deleteTag(String tagname) {
+		String old = null;
 		if(tags != null) {
-			tags.remove(tagname);
+			old = tags.remove(tagname);
 			if (tags.size() == 0) {
 				tags = null;
 			}
+			
 		}
+		return old;
 	}
 
-	public Iterator<String> iterator() {
-		if (tags == null) 
-			return Collections.<String>emptyList().iterator();
-
-		return tags.iterator();
+	public String deleteTag(short tagKey) {
+		String old = null;
+		if(tags != null) {
+			old = tags.remove(tagKey);
+			if (tags.size() == 0) {
+				tags = null;
+			}
+			
+		}
+		return old;
 	}
 
 	/**
@@ -77,12 +103,27 @@ public abstract class Element implements Iterable<String> {
 	 * @param s tag name
 	 * @return <code>true</code> if the tag value is a boolean tag with a "positive" value
 	 */
-	public boolean isBoolTag(String s) {
-		String val = getTag(s);
+	public boolean tagIsLikeYes(String s) {
+		return tagIsLikeYes(TagDict.getInstance().xlate(s));
+	}
+
+	/**
+	 * Retrieves if the given tag has a "positive" boolean value which means its value is
+	 * one of
+	 * <ul>
+	 * <li><code>true</code></li>
+	 * <li><code>yes</code></li>
+	 * <li><code>1</code></li>
+	 * </ul>
+	 * @param tagKey tag id returned by TagDict
+	 * @return <code>true</code> if the tag value is a boolean tag with a "positive" value
+	 */
+	public boolean tagIsLikeYes(short tagKey) {
+		String val = getTag(tagKey);
 		if (val == null)
 			return false;
 
-		if (val.equalsIgnoreCase("true") || val.equalsIgnoreCase("yes") || val.equals("1"))
+		if (val.equals("yes") || val.equals("true") ||  val.equals("1"))
 			return true;
 
 		return false;
@@ -99,12 +140,27 @@ public abstract class Element implements Iterable<String> {
 	 * @param s tag name
 	 * @return <code>true</code> if the tag value is a boolean tag with a "negative" value
 	 */
-	public boolean isNotBoolTag(String s) {
-		String val = getTag(s);
+	public boolean tagIsLikeNo(String s) {
+		return tagIsLikeNo(TagDict.getInstance().xlate(s));
+	}
+	
+	/**
+	 * Retrieves if the given tag has a "negative" boolean value which means its value is
+	 * one of
+	 * <ul>
+	 * <li><code>false</code></li>
+	 * <li><code>no</code></li>
+	 * <li><code>0</code></li>
+	 * </ul>
+	 * @param tagKey tag id returned by TagDict
+	 * @return <code>true</code> if the tag value is a boolean tag with a "negative" value
+	 */
+	public boolean tagIsLikeNo(short tagKey) {
+		String val = getTag(tagKey);
 		if (val == null)
 			return false;
 
-		if (val.equalsIgnoreCase("false") || val.equalsIgnoreCase("no") || val.equals("0"))
+		if (val.equals("no") || val.equals("false") || val.equals("0"))
 			return true;
 
 		return false;
@@ -149,12 +205,7 @@ public abstract class Element implements Iterable<String> {
 	}
 
 	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		if (this.name == null)
-			this.name = name;
+		return getTag("mkgmap:label:1");
 	}
 
 	public Map<String, String> getTagsWithPrefix(String prefix, boolean removePrefix) {
@@ -168,13 +219,29 @@ public abstract class Element implements Iterable<String> {
 		tags = null;
 	}
 
-	public Iterable<Map.Entry<String, String>> getEntryIteratable() {
+	/**
+	 * @return a Map iterator for the key + value pairs  
+	 */
+	
+	public Iterable<Map.Entry<String, String>> getTagEntryIterator() {
 		return new Iterable<Map.Entry<String, String>>() {
 			public Iterator<Map.Entry<String, String>> iterator() {
 				if (tags == null)
-					return Collections.<String, String>emptyMap().entrySet().iterator();
-				else
-					return tags.entryIterator();
+					return Collections.emptyIterator();
+				return tags.entryIterator();
+			}
+		};
+	}
+
+	/**
+	 * @return a Map iterator for the key + value pairs  
+	 */
+	public Iterable<Map.Entry<Short, String>> getFastTagEntryIterator() {
+		return new Iterable<Map.Entry<Short, String>>() {
+			public Iterator<Map.Entry<Short, String>> iterator() {
+				if (tags == null)
+					return Collections.emptyIterator();
+				return tags.entryShortIterator();
 			}
 		};
 	}
@@ -184,11 +251,22 @@ public abstract class Element implements Iterable<String> {
 	}
 
 	public String toBrowseURL() {
-		return "http://www.openstreetmap.org/browse/" + kind() + "/" + id;
+		return "http://www.openstreetmap.org/" + kind() + "/" + id;
 	}
 
 	public Element copy() {
 		// Can be implemented in subclasses
 		throw new UnsupportedOperationException("unsupported element copy");
+	}
+	
+	public String getDebugName() {
+		String name = getName();
+		if(name == null)
+			name = getTag("ref");
+		if(name == null)
+			name = "";
+		else
+			name += " ";
+		return name + "(OSM id " + getId() + ")";
 	}
 }

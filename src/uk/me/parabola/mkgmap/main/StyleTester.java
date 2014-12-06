@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Locale;
-import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -41,7 +40,7 @@ import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.CoordNode;
+import uk.me.parabola.imgfmt.app.net.GeneralRouteRestriction;
 import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.MapCollector;
@@ -75,6 +74,7 @@ import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.mkgmap.reader.osm.xml.Osm5XmlHandler;
 import uk.me.parabola.mkgmap.reader.osm.xml.Osm5XmlHandler.SaxHandler;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
+import uk.me.parabola.mkgmap.scan.Token;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 import uk.me.parabola.util.EnhancedProperties;
 
@@ -228,13 +228,17 @@ public class StyleTester implements OsmConverter {
 			List<Way> ways = readSimpleTestFile(br);
 
 			List<MapElement> results = new ArrayList<MapElement>();
-			OsmConverter normal = new StyleTester("styletester.style", new LocalMapCollector(results), false);
 
 			List<MapElement> strictResults = new ArrayList<MapElement>();
+
 			OsmConverter strict = new StyleTester("styletester.style", new LocalMapCollector(strictResults), true);
+			List<String> givenList = ((StyleTester) strict).givenResults;
 
 			List<String> all = new ArrayList<String>();
 			for (Way w : ways) {
+				OsmConverter normal = new StyleTester("styletester.style", new LocalMapCollector(results), false);
+				strict = new StyleTester("styletester.style", new LocalMapCollector(strictResults), true);
+
 				String prefix = "WAY " + w.getId() + ": ";
 				normal.convertWay(w.copy());
 				normal.end();
@@ -257,7 +261,6 @@ public class StyleTester implements OsmConverter {
 				out.println();
 			}
 
-			List<String> givenList = ((StyleTester) strict).givenResults;
 			String[] given = givenList.toArray(new String[givenList.size()]);
 			if ((given.length > 0 || forceUseOfGiven) && !Arrays.deepEquals(all.toArray(), givenList.toArray())) {
 				out.println("ERROR given results were:");
@@ -344,7 +347,7 @@ public class StyleTester implements OsmConverter {
 
 		Way w = new Way(id);
 		w.addPoint(new Coord(1, 1));
-		w.addPoint(new Coord(20, 20));
+		w.addPoint(new Coord(2, 2));
 
 		String line;
 		while ((line = br.readLine()) != null) {
@@ -384,8 +387,8 @@ public class StyleTester implements OsmConverter {
 	 */
 	private static String lineToString(MapLine el) {
 		Formatter fmt = new Formatter();
-		fmt.format("Line 0x%x, name=<%s>, ref=<%s>, res=%d-%d",
-				el.getType(), el.getName(), el.getRef(),
+		fmt.format("Line 0x%x, labels=%s, res=%d-%d",
+				el.getType(), Arrays.toString(el.getLabels()),
 				el.getMinResolution(), el.getMaxResolution());
 		if (el.isDirection())
 			fmt.format(" oneway");
@@ -462,7 +465,7 @@ public class StyleTester implements OsmConverter {
 	 */
 	private StyledConverter makeStyleConverter(String styleFile, MapCollector coll) throws FileNotFoundException {
 		Style style = new StyleImpl(styleFile, null);
-		return new StyledConverter(style, coll, new Properties());
+		return new StyledConverter(style, coll, new EnhancedProperties());
 	}
 
 	/**
@@ -475,7 +478,7 @@ public class StyleTester implements OsmConverter {
 	 */
 	private StyledConverter makeStrictStyleConverter(String styleFile, MapCollector coll) throws FileNotFoundException {
 		Style style = new ReferenceStyle(styleFile, null);
-		return new StyledConverter(style, coll, new Properties());
+		return new StyledConverter(style, coll, new EnhancedProperties());
 	}
 
 	public static void forceUseOfGiven(boolean force) {
@@ -618,7 +621,8 @@ public class StyleTester implements OsmConverter {
 		 */
 		private class ReferenceRuleSet implements Rule {
 			private final List<Rule> rules = new ArrayList<Rule>();
-
+			int cacheId = 0;
+			
 			public void add(Rule rule) {
 				rules.add(rule);
 			}
@@ -630,7 +634,7 @@ public class StyleTester implements OsmConverter {
 			}
 
 			public void resolveType(Element el, TypeResult result) {
-				String tagsBefore = wayTags(el);
+				String tagsBefore = el.toTagString();
 				if (showMatches) {
 					out.println("# Tags before: " + tagsBefore);
 				}
@@ -638,8 +642,8 @@ public class StyleTester implements OsmConverter {
 				// Start by literally running through the rules in order.
 				for (Rule rule : rules) {
 					a.reset();
-					rule.resolveType(el, a);
-
+					cacheId = rule.resolveType(cacheId, el, a);
+					
 					if (showMatches) {
 						if (a.isFound()) {
 							out.println("# Matched: " + rule);
@@ -650,17 +654,26 @@ public class StyleTester implements OsmConverter {
 					if (a.isResolved())
 						break;
 				}
-				if (showMatches && !tagsBefore.equals(wayTags(el)))
-					out.println("# Way tags after: " + wayTags(el));
+				if (showMatches && !tagsBefore.equals(el.toTagString()))
+					out.println("# Way tags after: " + el.toTagString());
 			}
 
-			private String wayTags(Element el) {
-				StringBuilder sb = new StringBuilder();
-				for (String t : el) {
-					sb.append(t);
-					sb.append(",");
+			@Override
+			public int resolveType(int cacheId, Element el, TypeResult result) {
+				resolveType(el, result);
+				return cacheId;
+			}
+
+
+			public void setFinalizeRule(Rule finalizeRule) {
+				for (Rule rule : rules) {
+					rule.setFinalizeRule(finalizeRule);
 				}
-				return sb.toString();
+			}
+
+			@Override
+			public void printStats(String header) {
+				// TODO Auto-generated method stub
 			}
 		}
 
@@ -675,7 +688,9 @@ public class StyleTester implements OsmConverter {
 			private final TypeReader typeReader;
 
 			private final ReferenceRuleSet rules;
+			private ReferenceRuleSet finalizeRules;
 			private TokenScanner scanner;
+			private boolean inFinalizeSection = false;
 
 			public SimpleRuleFileReader(FeatureKind kind, LevelInfo[] levels, ReferenceRuleSet rules) {
 				this.rules = rules;
@@ -703,6 +718,9 @@ public class StyleTester implements OsmConverter {
 				// Read all the rules in the file.
 				scanner.skipSpace();
 				while (!scanner.isEndOfFile()) {
+					if (checkCommand(scanner))
+						continue;
+					
 					Op expr = expressionReader.readConditions();
 
 					ActionList actions = actionReader.readActions();
@@ -717,8 +735,39 @@ public class StyleTester implements OsmConverter {
 					saveRule(expr, actions, type);
 					scanner.skipSpace();
 				}
+				if (finalizeRules != null) {
+					rules.setFinalizeRule(finalizeRules);
+				}
 			}
 
+			private boolean checkCommand(TokenScanner scanner) {
+				scanner.skipSpace();
+				if (scanner.isEndOfFile())
+					return false;
+
+				if (inFinalizeSection == false && scanner.checkToken("<")) {
+					Token token = scanner.nextToken();
+					if (scanner.checkToken("finalize")) {
+						Token finalizeToken = scanner.nextToken();
+						if (scanner.checkToken(">")) {
+							// consume the > token
+							scanner.nextToken();
+							// mark start of the finalize block
+							inFinalizeSection = true;
+							finalizeRules = new ReferenceRuleSet();
+							return true;
+						} else {
+							scanner.pushToken(finalizeToken);
+							scanner.pushToken(token);
+						}
+					} else {
+						scanner.pushToken(token);
+					}
+				}
+				scanner.skipSpace();
+				return false;
+			}
+			
 			/**
 			 * Save the expression as a rule.
 			 */
@@ -729,7 +778,10 @@ public class StyleTester implements OsmConverter {
 				else
 					rule = new ActionRule(op, actions.getList(), gt);
 
-				rules.add(rule);
+				if (inFinalizeSection) 
+					finalizeRules.add(rule);
+				else
+					rules.add(rule);
 			}
 		}
 	}
@@ -760,10 +812,11 @@ public class StyleTester implements OsmConverter {
 			lines.add(road);
 		}
 
-		public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode, byte exceptMask) {
+		public int addRestriction(GeneralRouteRestriction grr) {
+			return 0;
 		}
 
-		public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {
+		public void addThroughRoute(int junctionNodeId, long roadIdA, long roadIdB) {
 		}
 	}
 
@@ -802,10 +855,11 @@ public class StyleTester implements OsmConverter {
 			}
 		}
 
-		public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode, byte exceptMask) {
+		public int addRestriction(GeneralRouteRestriction grr) {
+			return 0;
 		}
 
-		public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {
+		public void addThroughRoute(int junctionNodeId, long roadIdA, long roadIdB) {
 		}
 
 		public long getStart() {

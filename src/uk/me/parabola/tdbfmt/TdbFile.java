@@ -104,6 +104,10 @@ public class TdbFile {
 		this.overviewDescription = overviewDescription;
 	}
 
+	public void setCodePage(int codePage) {
+		headerBlock.setCodePage(codePage);
+	}
+
 	/**
 	 * Add a copyright segment to the file.
 	 * @param msg The message to add.

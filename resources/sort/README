@@ -1,0 +1,56 @@
+There are generic sort descriptions for various code pages.
+
+You could write one for a particular language.
+
+
+An ordering of characters for a given code page.
+Characters are represented either as themselves (in unicode) or
+as two or more hex digits of the unicode representation.
+
+There are three ordering strengths represented in this file.
+
+These are Primary (different letters), secondary (different
+accents), tertiary (different case).
+See the java documentation for the Collator class for some more
+discussion of the strength concept and examples.
+
+Note that primary differences always determine the order even if
+they are later in the word than secondary differences.
+ie A B comes after A-acute A, even though A-acute sorts after A.
+
+The word 'code' starts the ordering section.
+
+Primary differences are represented by the '<' separator.
+Characters with secondary differences are separated by semicolons
+and characters with tertiary differences are separated by commas.
+
+The code section ends if the word 'expansion' is seen.
+This introduces a character that should sort as though it is
+two (or more) separate characters.
+
+
+ID values
+---------
+
+I believe that these are arbitary identifiers.  Here is a registry of
+values we are using.  If you make a variation on a code-page
+sort-order then give it a different id2 value.
+
+code-page  id1  id2
+
+1250       12   1
+1251        8   1
+1252        7   2
+1253       13   1
+1254       14   1
+1255       15   1
+1256       16   1
+1257       17   1
+1258       18   1
+874        11   1
+932         9   1
+936         5   1
+949        10   1
+
+65001      19   4
+0          0    0

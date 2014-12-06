@@ -23,6 +23,7 @@ import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
+import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
 
 /**
@@ -39,9 +40,14 @@ public class LineSplitterFilter implements MapFilter {
 	public static final int MAX_POINTS_IN_LINE = 250;
 	public static final int MIN_POINTS_IN_LINE = 50;
 
+	private int level;
+	private boolean isRoutable;
 	public void init(FilterConfig config) {
+		this.level = config.getLevel();
+		this.isRoutable = config.isRoutable();
 	}
 
+	
 	/**
 	 * If the line is short enough then we just pass it on straight away.
 	 * Otherwise we cut it into pieces that are short enough and hand them
@@ -63,7 +69,12 @@ public class LineSplitterFilter implements MapFilter {
 			return;
 		}
 
-		log.debug("line too long, splitting");
+		log.debug("line has too many points, splitting");
+		if(line.isRoad() && level == 0 && isRoutable) {
+			MapRoad road = ((MapRoad)line);
+			if (log.isDebugEnabled())
+				log.debug("Way " + road.getRoadDef() + " has more than "+ MAX_POINTS_IN_LINE + " points and is about to be split");
+		} 
 
 		MapLine l = line.copy();
 
@@ -83,9 +94,12 @@ public class LineSplitterFilter implements MapFilter {
 				else
 					log.debug("saving next part");
 				l.setPoints(coords);
+				if (l instanceof MapRoad){
+					((MapRoad)l).setSegmentsFollowing(true);
+				}
 				next.doFilter(l);
-				l = new MapLine(line);
 
+				l = line.copy();
 				count = 0;
 				first = false;
 				coords = new ArrayList<Coord>();

@@ -18,12 +18,11 @@ package uk.me.parabola.mkgmap.osmstyle;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.InputStreamReader;
 import java.io.FileInputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.FileNotFoundException;
+import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,6 +61,7 @@ public class DirectoryFileLoader extends StyleFileLoader {
 			r = new InputStreamReader(new FileInputStream(file), "UTF-8");
         } catch (UnsupportedEncodingException uee) {
             System.out.println("DirectoryFileLoader: Encoding UTF-8 not supported");
+            r = new InputStreamReader(new FileInputStream(file));
         }
 
 		return new BufferedReader(r);
@@ -78,10 +78,14 @@ public class DirectoryFileLoader extends StyleFileLoader {
 		List<String> res = new ArrayList<String>();
 
 		File[] allFiles = dir.listFiles();
-		for (File file : allFiles) {
-			log.debug("dir loader", file);
-			if (file.isDirectory()) {
-				res.add(file.getName());
+		if (allFiles != null) {
+			for (File file : allFiles) {
+				log.debug("dir loader", file);
+				if (file.isDirectory()) {
+					File style = new File(file, "version");
+					if (style.exists())
+						res.add(file.getName());
+				}
 			}
 		}
 

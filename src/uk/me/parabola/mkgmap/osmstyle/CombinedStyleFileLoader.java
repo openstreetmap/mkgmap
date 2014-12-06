@@ -46,11 +46,6 @@ import uk.me.parabola.log.Logger;
  * <p>All lines after the header and before the next header or end of file
  * are part of the named file.
  *
- * <p>If there are no headers in the file, then we create a fake version 0
- * file and place the complete file in the name 'map-features.csv'.  This
- * allows us to wrap an existing map-features.csv file in the new style
- * system.
- * 
  * @author Steve Ratcliffe
  */
 public class CombinedStyleFileLoader extends StyleFileLoader {
@@ -99,12 +94,7 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 				}
 			}
 			if (currentName == null) {
-				// Special case, we have just got an old style map-features.csv
-				// file to work with (or some other error).
-				files.put("version", "0\n");
-				files.put("map-features.csv", currentFile.toString());
-				files.put("info",
-						"description Style converted from map-features.csv file\n");
+				log.error("failed to read style file");
 			} else {
 				files.put(currentName, currentFile.toString());
 			}
@@ -200,6 +190,7 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 				writer.close();
 			}
 		}
+		loader.close();
 	}
 
 	private static void convertToFile(File file, PrintStream out) throws IOException {
@@ -222,6 +213,7 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 				String line;
 				while ((line = r.readLine()) != null)
 					out.println(line);
+				r.close();
 			} else {
 				convertToFile(out, entry.listFiles(new NoHiddenFilter()), entry.getName());
 			}

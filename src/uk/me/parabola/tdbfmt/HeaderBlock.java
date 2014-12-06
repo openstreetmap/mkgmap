@@ -51,6 +51,8 @@ class HeaderBlock {
 
 	private byte enableProfile;
 
+	private int codePage;
+
 	HeaderBlock(int tdbVersion) {
 		this.tdbVersion = tdbVersion;
 	}
@@ -92,7 +94,7 @@ class HeaderBlock {
 			os.write4(0);
 			os.write4(0);
 			os.write3(0);
-			os.write4(1252);
+			os.write4(codePage);
 			os.write4(10000);
 			os.write(1);	// map is routable
 			if (enableProfile == 1)
@@ -156,6 +158,9 @@ class HeaderBlock {
 		this.familyId = familyId;
 	}
 
+	void setCodePage(int codePage) {
+		this.codePage = codePage;
+	}
 
 	public int getTdbVersion() {
 		return tdbVersion;

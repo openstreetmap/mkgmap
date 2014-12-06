@@ -36,7 +36,7 @@ public class TdbTest extends Base {
 	 */
 	@Test
 	public void testBasic() throws IOException {
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				Args.TEST_STYLE_ARG,
 				"--tdbfile",
 				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz",
@@ -58,7 +58,7 @@ public class TdbTest extends Base {
 	public void testOptions() {
 		int thisMapname = 11112222;
 		TestUtils.registerFile(thisMapname + ".img", thisMapname + ".tdb");
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				Args.TEST_STYLE_ARG,
 				"--tdbfile",
 				"--overview-mapname=" + thisMapname,

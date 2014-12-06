@@ -12,6 +12,7 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.awt.Rectangle;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -21,18 +22,23 @@ import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
+import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
@@ -43,6 +49,7 @@ import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
 import uk.me.parabola.mkgmap.reader.osm.xml.Osm5PrecompSeaDataSource;
 import uk.me.parabola.util.EnhancedProperties;
+import uk.me.parabola.util.Java2DConverter;
 
 /**
  * Code to generate sea polygons from the coastline ways.
@@ -82,18 +89,13 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	 * precompiled sea should not be used.
 	 */
 	private File precompSeaDir;
-
+	
 	private static final byte SEA_TILE = 's';
 	private static final byte LAND_TILE = 'l';
 	private static final byte MIXED_TILE = 'm';
 	
-	/**
-	 * The index is a grid [lon][lat]. Each element defines the content of one precompiled 
-	 * sea tile which are {@link #SEA_TYPE}, {@link #LAND_TYPE}, or {@link #MIXED_TYPE}, or 0 for unknown
-	 */
-	private static ThreadLocal<byte[][]> precompIndex = new ThreadLocal<byte[][]>();
-	private static ThreadLocal<String> precompSeaExt = new ThreadLocal<String>();
-	private static ThreadLocal<String> precompSeaPrefix = new ThreadLocal<String>();
+	private static ThreadLocal<PrecompData> precompIndex = new ThreadLocal<PrecompData>();
+	
 	// useful constants defining the min/max map units of the precompiled sea tiles
 	private static final int MIN_LAT = Utils.toMapUnit(-90.0);
 	private static final int MAX_LAT = Utils.toMapUnit(90.0);
@@ -126,7 +128,6 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		}
 	}
 	
-	
 	/**
 	 * Sort out options from the command line.
 	 * Returns true only if the option to generate the sea is active, so that
@@ -134,107 +135,83 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	 */
 	public boolean init(ElementSaver saver, EnhancedProperties props) {
 		this.saver = saver;
-
-		// check if the precomp-sea option is set
+		
 		String precompSea = props.getProperty("precomp-sea", null);
 		if (precompSea != null) {
 			precompSeaDir = new File(precompSea);
-			if (precompSeaDir.exists()) {
+			if (precompSeaDir.exists()){
 				if (precompIndex.get() == null) {
-					File indexFile = new File(precompSeaDir, "index.txt.gz");
-					if (indexFile.exists() == false) {
-						// check if the unzipped index file exists
-						indexFile = new File(precompSeaDir, "index.txt");
-					}
-					
-					if (indexFile.exists()) {
-						int indexWidth = (getPrecompTileStart(MAX_LON) - getPrecompTileStart(MIN_LON)) / PRECOMP_RASTER;
-						int indexHeight = (getPrecompTileStart(MAX_LAT) - getPrecompTileStart(MIN_LAT)) / PRECOMP_RASTER;
-						
-						try {
-							InputStream fileStream = new FileInputStream(indexFile);
-							if (indexFile.getName().endsWith(".gz")) {
-								fileStream = new GZIPInputStream(fileStream);
+					PrecompData precompData = null;
+					String internalPath = null;    	
+					InputStream indexStream = null;
+					String indexFileName = "index.txt.gz";
+					ZipFile zipFile = null;
+					try{
+						if (precompSeaDir.isDirectory()){
+							File indexFile = new File(precompSeaDir, indexFileName);
+							if (indexFile.exists() == false) {
+								// check if the unzipped index file exists
+								indexFileName = "index.txt";
+								indexFile = new File(precompSeaDir, indexFileName);
 							}
-							LineNumberReader indexReader = new LineNumberReader(
-									new InputStreamReader(fileStream));
-							Pattern csvSplitter = Pattern.compile(Pattern
-									.quote(";"));
-							String indexLine = null;
-							
-							byte[][] indexGrid = new byte[indexWidth+1][indexHeight+1];
-							boolean detectExt = true; 
-							String prefix = null;
-							String ext = null;
-							
-							while ((indexLine = indexReader.readLine()) != null) {
-								if (indexLine.startsWith("#")) {
-									// comment
-									continue;
-								}
-								String[] items = csvSplitter.split(indexLine);
-								if (items.length != 2) {
-									log.warn("Invalid format in index file name:",
-											indexLine);
-									continue;
-								}
-								String precompKey = items[0];
-								byte type = updatePrecompSeaTileIndex(precompKey, items[1], indexGrid);
-								if (type == '?'){
-									log.warn("Invalid format in index file name:",
-											indexLine);
-									continue;
-								}
-								if (type == MIXED_TILE){
-									// make sure that all file names are using the same name scheme
-									int prePos = items[1].indexOf(items[0]);
-									if (prePos >= 0){
-										if (detectExt){
-											prefix = items[1].substring(0, prePos);
-											ext = items[1].substring(prePos+items[0].length());
-											detectExt = false;
-										} else {
-											StringBuilder sb = new StringBuilder(prefix);
-											sb.append(precompKey);
-											sb.append(ext);												
-											if (items[1].equals(sb.toString()) == false){
-												log.warn("Unexpected file name in index file:",
-													 indexLine);
-											}
-										}
-									}
-								}
-
+							if (indexFile.exists()) {
+								indexStream = new FileInputStream(indexFile);
 							}
-							indexReader.close();
-							precompIndex.set(indexGrid);
-							precompSeaPrefix.set(prefix);
-							precompSeaExt.set(ext);
-							
-						} catch (IOException exp) {
-							log.error("Cannot read index file " + indexFile,
-									exp);
-							precompIndex.set(null);
-							precompSea = null;
+						} else if (precompSea.endsWith(".zip")){
+							zipFile = new ZipFile(precompSeaDir);
+							internalPath = "sea/";
+							ZipEntry entry = zipFile.getEntry(internalPath + indexFileName);
+							if (entry == null){
+								indexFileName = "index.txt";
+								entry = zipFile.getEntry(internalPath + indexFileName);
+							}
+							if (entry == null){
+								internalPath = "";
+								indexFileName = "index.txt.gz";
+								entry = zipFile.getEntry(internalPath + indexFileName);
+							}
+							if (entry != null){
+								indexStream = zipFile.getInputStream(entry);
+							} else 
+								log.error("Don't know how to read " + precompSeaDir);
+						} else {
+							log.error("Don't know how to read " + precompSeaDir);
 						}
-					} else {
-						log.error("Disable precompiled sea due to missing index.txt file in precompiled sea directory "
-							+ precompSeaDir);
-						System.err.println("Disable precompiled sea due to missing index.txt file in precompiled sea directory "
-							+ precompSeaDir);
-						precompIndex.set(null);
-						precompSeaDir = null;
+						if (indexStream != null){
+							if (indexFileName.endsWith(".gz")) {
+								indexStream = new GZIPInputStream(indexStream);
+							}
+							try{
+								precompData = loadIndex(indexStream);
+							} catch (IOException exp) {
+								log.error("Cannot read index file " + indexFileName,
+										exp);
+							}
+							
+							if (precompData != null){
+								if (zipFile != null){
+									precompData.precompZipFileInternalPath = internalPath;
+									precompData.zipFile = zipFile;
+								}
+								precompIndex.set(precompData);
+							}
+							indexStream.close();
+						}
+					} catch (IOException exp) {
+						log.error("Cannot read index file " + indexFileName,
+								exp);
+
 					}
+					precompIndex.set(precompData);
 				}
 			} else {
-				log.error("Directory with precompiled sea does not exist: "
-						+ precompSeaDir);
-				System.err.println("Directory with precompiled sea does not exist: "
-						+ precompSeaDir);
+				log.error("Directory or zip file with precompiled sea does not exist: "
+						+ precompSea);
+				System.err.println("Directory or zip file with precompiled sea does not exist: "
+						+ precompSea);
 				precompSeaDir = null;
 			}
 		}
-		
 		String gs = props.getProperty("generate-sea", null);
 		boolean generateSea = gs != null || precompSea != null;
 		if (gs != null) {
@@ -315,21 +292,87 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		return generateSea;
 	}
 	
-	/**
-	 * Retrieves the start value of the precompiled tile.
-	 * @param value the value for which the start value is calculated
-	 * @return the tile start value
-	 */
-	public static int getPrecompTileStart(int value) {
-		int rem = value % PRECOMP_RASTER;
-		if (rem == 0) {
-			return value;
-		} else if (value >= 0) {
-			return value - rem;
-		} else {
-			return value - PRECOMP_RASTER - rem;
+    /**
+     * Read the index from stream and populate the index grid. 
+     * @param fileStream already opened stream
+     */
+    private PrecompData loadIndex(InputStream fileStream) throws IOException{
+		int indexWidth = (SeaGenerator.getPrecompTileStart(MAX_LON) - SeaGenerator.getPrecompTileStart(MIN_LON)) / SeaGenerator.PRECOMP_RASTER;
+		int indexHeight = (SeaGenerator.getPrecompTileStart(MAX_LAT) - SeaGenerator.getPrecompTileStart(MIN_LAT)) / SeaGenerator.PRECOMP_RASTER;
+		PrecompData pi = null;
+		LineNumberReader indexReader = new LineNumberReader(
+				new InputStreamReader(fileStream));
+		Pattern csvSplitter = Pattern.compile(Pattern
+				.quote(";"));
+		String indexLine = null;
+
+		byte[][] indexGrid = new byte[indexWidth+1][indexHeight+1];
+		boolean detectExt = true; 
+		String prefix = null;
+		String ext = null;
+
+		while ((indexLine = indexReader.readLine()) != null) {
+			if (indexLine.startsWith("#")) {
+				// comment
+				continue;
+			}
+			String[] items = csvSplitter.split(indexLine);
+			if (items.length != 2) {
+				log.warn("Invalid format in index file name:",
+						indexLine);
+				continue;
+			}
+			String precompKey = items[0];
+			byte type = updatePrecompSeaTileIndex(precompKey, items[1], indexGrid);
+			if (type == '?'){
+				log.warn("Invalid format in index file name:",
+						indexLine);
+				continue;
+			}
+			if (type == MIXED_TILE){
+				// make sure that all file names are using the same name scheme
+				int prePos = items[1].indexOf(items[0]);
+				if (prePos >= 0){
+					if (detectExt){
+						prefix = items[1].substring(0, prePos);
+						ext = items[1].substring(prePos+items[0].length());
+						detectExt = false;
+					} else {
+						StringBuilder sb = new StringBuilder(prefix);
+						sb.append(precompKey);
+						sb.append(ext);												
+						if (items[1].equals(sb.toString()) == false){
+							log.warn("Unexpected file name in index file:",
+									indexLine);
+						}
+					}
+				}
+			}
+
 		}
-	}
+		// 
+		pi = new PrecompData();
+		pi.precompIndex = indexGrid;
+		pi.precompSeaPrefix = prefix;
+		pi.precompSeaExt = ext;
+		return pi;
+    }
+
+    /**
+     * Retrieves the start value of the precompiled tile.
+     * @param value the value for which the start value is calculated
+     * @return the tile start value
+     */
+    public static int getPrecompTileStart(int value) {
+    	int rem = value % PRECOMP_RASTER;
+    	if (rem == 0) {
+    		return value;
+    	} else if (value >= 0) {
+    		return value - rem;
+    	} else {
+    		return value - PRECOMP_RASTER - rem;
+    	}
+    }
 
 	/**
 	 * Retrieves the end value of the precompiled tile.
@@ -371,17 +414,13 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		String natural = way.getTag("natural");
 		if(natural != null) {
 			if("coastline".equals(natural)) {
-				way.deleteTag("natural");
-				if (coastlineFilenames == null && precompSeaDir == null)
-					shoreline.add(way);
-				
-				if (precompSeaDir != null) {
-					// add a copy of this way to be able to draw the coastline which is not possible with precompiled sea
-					Way coastlineWay = new Way(FakeIdGenerator.makeFakeId(), way.getPoints());
-					coastlineWay.addTag("natural", "coastline");
-					// tag that this way is used as line only
-					coastlineWay.addTag(MultiPolygonRelation.STYLE_FILTER_TAG, MultiPolygonRelation.STYLE_FILTER_LINE);
-					saver.addWay(coastlineWay);
+				if (precompSeaDir != null)
+					splitCoastLineToLineAndShape(way, natural);
+				else {
+					if (coastlineFilenames == null){
+						way.deleteTag("natural");
+						shoreline.add(way);
+					}
 				}
 			} else if (natural.contains(";")) {
 				// cope with compound tag value
@@ -397,25 +436,46 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				}
 
 				if(foundCoastline) {
-					way.deleteTag("natural");
-					if(others != null)
-						way.addTag("natural", others);
-					if (coastlineFilenames == null && precompSeaDir == null)
-						shoreline.add(way);
-					
-					if (precompSeaDir != null) {
-						// add a copy of this way to be able to draw the coastline which is not possible with precompiled sea
-						Way coastlineWay = new Way(FakeIdGenerator.makeFakeId(), way.getPoints());
-						coastlineWay.addTag("natural", "coastline");
-						// tag that this way is used as line only
-						coastlineWay.addTag(MultiPolygonRelation.STYLE_FILTER_TAG, MultiPolygonRelation.STYLE_FILTER_LINE);
-						saver.addWay(coastlineWay);
+					if (precompSeaDir != null)
+						splitCoastLineToLineAndShape(way, natural);
+					else { 
+						if (coastlineFilenames == null){
+							way.deleteTag("natural");
+							if(others != null)
+								way.addTag("natural", others);
+							shoreline.add(way);
+						}
 					}
 				}
 			}
 		}
 	}
 
+	/**
+	 * With precompiled sea, we don't want to process all natural=coastline
+	 * ways as shapes without additional processing.   
+	 * This should avoid duplicate shapes for islands that are also in the 
+	 * precompiled data. 
+	 * @param way the OSM way with tag key natural 
+	 * @param naturalVal the tag value
+	 */
+	private void splitCoastLineToLineAndShape(Way way, String naturalVal){
+		if (precompSeaDir == null)
+			return;
+		if (way.hasIdenticalEndPoints()){
+			// add a copy of this way to be able to draw it as a shape
+			Way shapeWay = new Way(FakeIdGenerator.makeFakeId(), way.getPoints());
+			// change the tag so that only special rules looking for it are firing
+			shapeWay.deleteTag("natural"); 
+			shapeWay.addTag("mkgmap:removed_natural",naturalVal); 
+			// tag that this way so that it is used as shape only
+			shapeWay.addTag(MultiPolygonRelation.STYLE_FILTER_TAG, MultiPolygonRelation.STYLE_FILTER_POLYGON);
+			saver.addWay(shapeWay);		
+		}
+		// make sure that the original (unchanged) way is not processed as a shape
+		way.addTag(MultiPolygonRelation.STYLE_FILTER_TAG, MultiPolygonRelation.STYLE_FILTER_LINE);
+	}
+	
 	/**
 	 * Creates a reader for the given filename of the precomiled sea tile.
 	 * @param filename precompiled sea tile 
@@ -448,12 +508,20 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	 * @return all ways of the tile
 	 * @throws FileNotFoundException if the tile could not be found
 	 */
-	private Collection<Way> loadPrecompTile(String filename)
-			throws FileNotFoundException {
+	private Collection<Way> loadPrecompTile(InputStream is, String filename) {
 		OsmMapDataSource src = createTileReader(filename);
-		src.config(new EnhancedProperties());
+		EnhancedProperties props = new EnhancedProperties();
+		// set a flag that the StyledConverter which is created by the 
+		// OsmMapDataSource does not set the drive-on-left flag
+		props.setProperty("ignore-drive-on-left", "true");
+		src.config(props);
 		log.info("Started loading coastlines from", filename);
-		src.load(filename);
+		try{
+			src.load(is);
+		} catch (FormatException e) {
+			log.error("Failed to read " + filename);
+			log.error(e);
+		}
 		log.info("Finished loading coastlines from", filename);
 		return src.getElementSaver().getWays().values();
 	}
@@ -482,17 +550,17 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	 * @return either "land" or "sea" or a file name or null
 	 */
 	private String getTileName(String precompKey){
-		byte[][] index = precompIndex.get();
+		PrecompData pi = precompIndex.get();
 		String[] tileCoords = keySplitter.split(precompKey);
 		int lat = Integer.valueOf(tileCoords[0]); 
 		int lon = Integer.valueOf(tileCoords[1]); 
 		int latIndex = (MAX_LAT-lat) / PRECOMP_RASTER;
 		int lonIndex = (MAX_LON-lon) / PRECOMP_RASTER;
-		byte type = index[lonIndex][latIndex]; 
+		byte type = pi.precompIndex[lonIndex][latIndex]; 
 		switch (type){
 		case SEA_TILE: return "sea"; 
 		case LAND_TILE: return "land"; 
-		case MIXED_TILE: return precompSeaPrefix.get() + precompKey + precompSeaExt.get(); 
+		case MIXED_TILE: return pi.precompSeaPrefix + precompKey + pi.precompSeaExt; 
 		default:  return null;
 		}
 	}
@@ -539,69 +607,84 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		
 		List<Way> landWays = new ArrayList<Way>();
 		List<Way> seaWays = new ArrayList<Way>();
+		List<java.awt.geom.Area> seaOnlyAreas = new ArrayList<java.awt.geom.Area>();
+		List<java.awt.geom.Area> landOnlyAreas = new ArrayList<java.awt.geom.Area>();
+		
 		// get the index with assignment key => sea/land/tilename
 		
-		
+		ZipFile zipFile = null;
+		PrecompData pd = precompIndex.get();
+		if (precompSeaDir.getName().endsWith(".zip")){
+			zipFile = pd.zipFile;
+		}
+
 		for (String precompKey : getPrecompKeyNames()) {
 			String tileName = getTileName(precompKey);
-			
+
 			if (tileName == null ) {
 				log.error("Precompile sea tile "+precompKey+" is missing in the index. Skipping.");
 				continue;
 			}
-			
+
 			if ("sea".equals(tileName) || "land".equals(tileName)) {
 				// the whole precompiled tile is filled with either land or sea
 				// => create a rectangle that covers the whole precompiled tile 
-				Way w = new Way(FakeIdGenerator.makeFakeId());
-				w.addTag("natural", tileName);
 				String[] tileCoords = keySplitter.split(precompKey);
 				int minLat = Integer.valueOf(tileCoords[0]);
 				int minLon = Integer.valueOf(tileCoords[1]);
-				int maxLat = minLat + PRECOMP_RASTER;
-				int maxLon = minLon + PRECOMP_RASTER;
-				w.addPoint(new Coord(minLat,minLon));
-				w.addPoint(new Coord(minLat,maxLon));
-				w.addPoint(new Coord(maxLat,maxLon));
-				w.addPoint(new Coord(maxLat,minLon));
-				w.addPoint(new Coord(minLat,minLon));
+				Rectangle r = new Rectangle(minLon,minLat,PRECOMP_RASTER,PRECOMP_RASTER);
 				
 				if ("sea".equals(tileName)) {
-					seaWays.add(w);
+					seaOnlyAreas = addWithoutCreatingHoles(seaOnlyAreas, new java.awt.geom.Area(r));
 				} else {
-					landWays.add(w);
+					landOnlyAreas = addWithoutCreatingHoles(landOnlyAreas, new java.awt.geom.Area(r));
 				}
-				
 			} else {
 				distinctTilesOnly = false;
-				String precompTile = new File(precompSeaDir,tileName).getAbsolutePath();
 				try {
-					Collection<Way> seaPrecompWays = loadPrecompTile(precompTile);
-					
-					if (log.isDebugEnabled())
-						log.debug(seaPrecompWays.size(), "precomp sea ways from",
-							precompTile, "loaded.");
-
-					for (Way w : seaPrecompWays) {
-						// set a new id to be sure that the precompiled ids do not
-						// interfere with the ids of this run
-						w.setId(FakeIdGenerator.makeFakeId());
-					
-						if ("land".equals(w.getTag("natural"))) {
-							landWays.add(w);
+					InputStream is = null;
+					if (zipFile != null){
+						ZipEntry entry = zipFile.getEntry(pd.precompZipFileInternalPath + tileName);
+						if (entry != null){
+							is = zipFile.getInputStream(entry);
 						} else {
-							seaWays.add(w);
+							log.error("Preompiled sea tile " + tileName + " not found."); 								
+						}
+					} else {
+						File precompTile = new File(precompSeaDir,tileName);
+						is = new FileInputStream(precompTile);
+					}
+					if (is != null){
+						Collection<Way> seaPrecompWays = loadPrecompTile(is, tileName);
+						if (log.isDebugEnabled())
+							log.debug(seaPrecompWays.size(), "precomp sea ways from",
+									tileName, "loaded.");
+
+						for (Way w : seaPrecompWays) {
+							// set a new id to be sure that the precompiled ids do not
+							// interfere with the ids of this run
+							w.setId(FakeIdGenerator.makeFakeId());
+
+							if ("land".equals(w.getTag("natural"))) {
+								landWays.add(w);
+							} else {
+								seaWays.add(w);
+							}
 						}
 					}
 				} catch (FileNotFoundException exp) {
-					log.error("Preompiled sea tile " + precompTile + " not found.");
+					log.error("Preompiled sea tile " + tileName + " not found."); 
 				} catch (Exception exp) {
 					log.error(exp);
 					exp.printStackTrace();
 				}
 			}
 		}
-		
+ 		landWays.addAll(areaToWays(landOnlyAreas,"land"));
+ 		seaWays.addAll(areaToWays(seaOnlyAreas,"sea"));
+ 		landOnlyAreas = null;
+ 		seaOnlyAreas = null;
+ 		
 		// check if the land tags need to be changed
 		if (landTag != null && ("natural".equals(landTag[0]) && "land".equals(landTag[1])) == false) {
 			for (Way w : landWays) {
@@ -624,12 +707,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			
 			Area bounds = saver.getBoundingBox();
 			// first add the complete bounding box as sea
-			Way sea = new Way(FakeIdGenerator.makeFakeId());
-			sea.addPoint(new Coord(bounds.getMinLat(), bounds.getMinLong()));
-			sea.addPoint(new Coord(bounds.getMinLat(), bounds.getMaxLong()));
-			sea.addPoint(new Coord(bounds.getMaxLat(), bounds.getMaxLong()));
-			sea.addPoint(new Coord(bounds.getMaxLat(), bounds.getMinLong()));
-			sea.addPoint(new Coord(bounds.getMinLat(), bounds.getMinLong()));
+			Way sea = new Way(FakeIdGenerator.makeFakeId(),bounds.toCoords());
 			sea.addTag("natural", "sea");
 			
 			for (Way w : landWays) {
@@ -638,8 +716,64 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		}
 	}
 
-	
-	
+	 
+	/**
+	 * Try to merge an area with one or more other areas without creating holes.
+	 * If it cannot be merged, it is added to the list.
+	 * @param areas known areas 
+	 * @param toAdd area to add
+	 * @return new list of areas
+	 */
+	private List<java.awt.geom.Area> addWithoutCreatingHoles(List<java.awt.geom.Area> areas,
+			final java.awt.geom.Area toAdd) {
+		List<java.awt.geom.Area> result = new LinkedList<java.awt.geom.Area>();
+		java.awt.geom.Area toMerge = new java.awt.geom.Area(toAdd);
+		
+		for (java.awt.geom.Area area:areas ){
+			java.awt.geom.Area mergedArea = new java.awt.geom.Area(area);
+			mergedArea.add(toMerge);
+			if (mergedArea.isSingular() == false){
+				result.add(area);
+				continue;
+			}
+			toMerge = mergedArea;
+		}
+		// create a sorted list with "smallest" area at the beginning
+		int dimNew = Math.max(toMerge.getBounds().width,toMerge.getBounds().height);
+		boolean added = false;
+		for (int i = 0; i < result.size(); i++){
+			java.awt.geom.Area area = result.get(i);
+			if (dimNew < Math.max(area.getBounds().width,area.getBounds().height)){
+				result.add(i,toMerge);
+				added = true;
+				break;
+			}
+		}
+		if (!added)
+			result.add(toMerge);
+		return result;
+	}
+
+	/**
+	 * @param area
+	 * @param type
+	 * @return
+	 */
+	private List<Way> areaToWays(List<java.awt.geom.Area> areas, String type) {
+		List<Way> ways = new ArrayList<Way>();
+//		int count = 0;
+		for (java.awt.geom.Area area : areas) {
+			List<List<Coord>> shapes = Java2DConverter.areaToShapes(area);
+			for (List<Coord> points : shapes) {
+//				uk.me.parabola.util.GpxCreator.createGpx(type + "_" + count++, points);
+				Way w = new Way(FakeIdGenerator.makeFakeId(), points);
+				w.addTag("natural", type);
+				ways.add(w);
+			}
+		}
+		return ways;
+	}
+
 	/**
 	 * Joins the given segments to closed ways as good as possible.
 	 * @param segments a list of closed and unclosed ways
@@ -647,10 +781,10 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	 */
 	public static ArrayList<Way> joinWays(Collection<Way> segments) {
 		ArrayList<Way> joined = new ArrayList<Way>((int)Math.ceil(segments.size()*0.5));
-		Map<Coord, Way> beginMap = new HashMap<Coord, Way>();
+		Map<Coord, Way> beginMap = new IdentityHashMap<Coord, Way>();
 
 		for (Way w : segments) {
-			if (w.isClosed()) {
+			if (w.hasIdenticalEndPoints()) {
 				joined.add(w);
 			} else if (w.getPoints() != null && w.getPoints().size() > 1){
 				List<Coord> points = w.getPoints();
@@ -665,7 +799,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		while (merged > 0) {
 			merged = 0;
 			for (Way w1 : beginMap.values()) {
-				if (w1.isClosed()) {
+				if (w1.hasIdenticalEndPoints()) {
 					// this should not happen
 					log.error("joinWays2: Way "+w1+" is closed but contained in the begin map");
 					joined.add(w1);
@@ -692,7 +826,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 					beginMap.remove(points2.get(0));
 					merged++;
 					
-					if (wm.isClosed()) {
+					if (wm.hasIdenticalEndPoints()) {
 						joined.add(wm);
 						beginMap.remove(wm.getPoints().get(0));
 					}
@@ -716,7 +850,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			return;
 		}
 
-		Area seaBounds = saver.getBoundingBox();
+		final Area seaBounds = saver.getBoundingBox();
 		if (coastlineFilenames == null) {
 			log.info("Shorelines before join", shoreline.size());
 			shoreline = joinWays(shoreline);
@@ -729,7 +863,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		int closedS = 0;
 		int unclosedS = 0;
 		for (Way w : shoreline) {
-			if (w.isClosed()) {
+			if (w.hasIdenticalEndPoints()) {
 				closedS++;
 			} else {
 				unclosedS++;
@@ -758,12 +892,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			// match the land colour on the tiles that do contain
 			// some sea
 			long landId = FakeIdGenerator.makeFakeId();
-			Way land = new Way(landId);
-			land.addPoint(nw);
-			land.addPoint(sw);
-			land.addPoint(se);
-			land.addPoint(ne);
-			land.addPoint(nw);
+			Way land = new Way(landId, seaBounds.toCoords());
 			land.addTag(landTag[0], landTag[1]);
 			// no matter if the multipolygon option is used it is
 			// only necessary to create a land polygon
@@ -850,8 +979,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 					se.getLongitude() + 1));
 			sea.addPoint(new Coord(ne.getLatitude() - 1,
 					ne.getLongitude() + 1));
-			sea.addPoint(new Coord(nw.getLatitude() - 1,
-					nw.getLongitude() - 1));
+			sea.addPoint(sea.getPoints().get(0)); // close shape
 			sea.addTag("natural", "sea");
 
 			log.info("sea: ", sea);
@@ -867,12 +995,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			// background colour will match the land colour on the
 			// tiles that do contain some sea
 			long landId = FakeIdGenerator.makeFakeId();
-			Way land = new Way(landId);
-			land.addPoint(nw);
-			land.addPoint(sw);
-			land.addPoint(se);
-			land.addPoint(ne);
-			land.addPoint(nw);
+			Way land = new Way(landId, seaBounds.toCoords());
 			land.addTag(landTag[0], landTag[1]);
 			saver.addWay(land);
 			if (generateSeaUsingMP) {
@@ -936,7 +1059,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		Iterator<Way> it = shoreline.iterator();
 		while (it.hasNext()) {
 			Way w = it.next();
-			if (w.isClosed()) {
+			if (w.hasIdenticalEndPoints()) {
 				log.info("adding island", w);
 				islands.add(w);
 				it.remove();
@@ -948,7 +1071,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		it = shoreline.iterator();
 		while (it.hasNext()) {
 			Way w = it.next();
-			if (w.isClosed()) {
+			if (w.hasIdenticalEndPoints()) {
 				log.debug("island after concatenating");
 				islands.add(w);
 				it.remove();
@@ -1012,8 +1135,8 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				hit = hNext;
 			} while (!hits.isEmpty() && !hit.equals(hFirst));
 
-			if (!w.isClosed())
-				w.getPoints().add(w.getPoints().get(0));
+			if (!w.hasIdenticalEndPoints())
+				w.addPoint(w.getPoints().get(0)); // close shape
 			log.info("adding non-island landmass, hits.size()=" + hits.size());
 			islands.add(w);
 			shorelineReachesBoundary = true;
@@ -1037,9 +1160,10 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				Way w1 = new Way(FakeIdGenerator.makeFakeId());
 				w1.getPoints().addAll(w.getPoints());
 				// only copy the name tags
-				for(String tag : w)
-					if(tag.equals("name") || tag.endsWith(":name"))
-						w1.addTag(tag, w.getTag(tag));
+				for (Entry<String, String> tagEntry : w.getTagEntryIterator()){
+					if(tagEntry.getKey().equals("name") || tagEntry.getKey().contains("name"))
+						w1.addTag(tagEntry.getKey(), tagEntry.getValue());
+				}
 				w = w1;
 			}
 
@@ -1115,9 +1239,10 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 						Way w1 = new Way(FakeIdGenerator.makeFakeId());
 						w1.getPoints().addAll(w.getPoints());
 						// only copy the name tags
-						for(String tag : w)
-							if(tag.equals("name") || tag.endsWith(":name"))
-								w1.addTag(tag, w.getTag(tag));
+						for (Entry<String, String> tagEntry : w.getTagEntryIterator()){
+							if(tagEntry.getKey().equals("name") || tagEntry.getKey().contains("name"))
+								w1.addTag(tagEntry.getKey(), tagEntry.getValue());
+						}
 						w = w1;
 					}
 					w.addTag(landTag[0], landTag[1]);
@@ -1155,6 +1280,9 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 					// show the coastline even though we can't produce
 					// a polygon for the land
 					w.addTag("natural", "coastline");
+					if (w.hasIdenticalEndPoints() == false){
+						log.error("adding sea shape that is not really closed");
+					}
 					saver.addWay(w);
 				}
 			} else {
@@ -1304,7 +1432,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			while (changed) {
 				changed = false;
 				for (Way w1 : ways) {
-					if(w1.isClosed())
+					if(w1.hasIdenticalEndPoints())
 						continue;
 					List<Coord> points1 = w1.getPoints();
 					Coord w1e = points1.get(points1.size() - 1);
@@ -1313,7 +1441,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 					Way nearest = null;
 					double smallestGap = Double.MAX_VALUE;
 					for (Way w2 : ways) {
-						if(w1 == w2 || w2.isClosed())
+						if(w1 == w2 || w2.hasIdenticalEndPoints())
 							continue;
 						List<Coord> points2 = w2.getPoints();
 						Coord w2s = points2.get(0);
@@ -1352,5 +1480,23 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Helper class for threadlocal vars
+	 * 
+	 *
+	 */
+	class PrecompData {
+		/**
+		 * The index is a grid [lon][lat]. Each element defines the content of one precompiled 
+		 * sea tile which are {@link #SEA_TYPE}, {@link #LAND_TYPE}, or {@link #MIXED_TYPE}, or 0 for unknown
+		 */
+		private byte[][] precompIndex;
+		private String precompSeaExt;
+		private String precompSeaPrefix;
+		private String precompZipFileInternalPath;
+		private ZipFile zipFile;
+		
 	}
 }

@@ -55,6 +55,30 @@ public class RGNHeader extends CommonHeader {
 	 */
 	protected void readFileHeader(ImgFileReader reader) throws ReadFailedException {
 		data.readSectionInfo(reader, false);
+
+		if (getHeaderLength() > 29){
+			extTypeAreasOffset = reader.getInt();
+			extTypeAreasSize = reader.getInt();
+			reader.getInt();
+			reader.getInt();
+			reader.getInt();
+			reader.getInt();
+			reader.getInt();
+			extTypeLinesOffset = reader.getInt();
+			extTypeLinesSize = reader.getInt();
+			reader.getInt();
+			reader.getInt();
+			reader.getInt();
+			reader.getInt();
+			reader.getInt();
+			extTypePointsOffset = reader.getInt();
+			extTypePointsSize = reader.getInt();
+			reader.getInt();
+			reader.getInt();
+			reader.getInt();
+			reader.getInt();
+			reader.getInt();
+		}
 	}
 
 	/**
@@ -117,5 +141,28 @@ public class RGNHeader extends CommonHeader {
 	public void setExtTypePointsInfo(int offset, int size) {
 		extTypePointsOffset = offset;
 		extTypePointsSize = size;
+	}
+	public int getExtTypeAreasOffset() {
+		return extTypeAreasOffset;
+	}
+
+	public int getExtTypeAreasSize() {
+		return extTypeAreasSize;
+	}
+
+	public int getExtTypeLinesOffset() {
+		return extTypeLinesOffset;
+	}
+
+	public int getExtTypeLinesSize() {
+		return extTypeLinesSize;
+	}
+
+	public int getExtTypePointsOffset() {
+		return extTypePointsOffset;
+	}
+
+	public int getExtTypePointsSize() {
+		return extTypePointsSize;
 	}
 }

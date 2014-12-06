@@ -12,30 +12,77 @@ matters.
 
 `${oneway\|def:no}`
 
-| conv | `factor` |
-Use for conversions between units. The only supported version is from meters to feet
-number. It is multiplied by the argument.
+| conv | `m=>ft` |
+Use for conversions between units.
+With the argument +m=>ft+ the value is converted into feet, with the
+value being assumed to be in meters, unless the value includes a unit
+already.
+If any of the units are not recognised then the value is unchanged.
 
-`${height\|conv:m=>ft}`
+`${height\|conv:"m=>ft"}`
 
-| subst | `from=>to` |
+So if +height+ is 10, then the result is 33, and if +height+ is 10ft,
+then the result is 10, as it is already in feet.
+
+The possible units are:
+
+* Length: m, km, ft (feet), mi (miles).
+* Speed: mph; km/h (or kmh, kmph), knots
+
+| subst | `from=>to` +
+`from~>to`|
 Substitutes all occurrences of the string +from+ with the string +to+ in
-the value of the tag.
-There isn't a large number of uses for this, perhaps you can use it to
-correct mistakes.
-The +to+ can be empty to remove the +from+ string altogether and this is
-probably the most popular use.
+the tag value. The +`=>`+ operator can be used for an exact matches while +`~>`+ accepts
+regular expressions in the +from+ attribute.
 
-`${name\|ref:A=>}`
++to+ can be empty to remove the +from+ string altogether.
 
-| highway-symbol | `symbol max-num max-alpha` |
+Example, if name ="Queen Street" 
+
+`${name\|subst:"Queen=>"}` returns " Street"
+
+`${name\|subst:"Queen=>King"}` returns "King Street"
+
+`${name\|subst:".*\s~>"}` returns "Street"
+
+| part | `separator operator partnumber` |
+Split a value in parts and returns one or more part(s) of it. If +partnumber+ is negative, the part returned is counted from the end of the split
+
+If not specified, the default separator is ';' and the first part is returned (i.e. `${name\|part:}`=`${name\|part:;:1}`).
+
+If the operator is `:` the part specified by +partnumber+ is returned.
+
+If the operator is `<` or `>` the correspondent number of parts before or after the +partnumber+ are returned
+
+Example: if the value is "Aa#Bb#Cc#Dd#Ee"
+
+`${name\|part:"#:1"}`  returns Aa
+
+`${name\|part:"#:-1"}` returns Ee
+
+`${name\|part:"#:2"}`  returns Bb
+
+`${name\|part:"#:-2"}` returns Dd
+
+`${name\|part:"#>1"}`  returns Bb#Cc#Dd#Ee#
+
+`${name\|part:"#<5"}`  returns Aa#Bb#Cc#Dd#
+
+`${name\|part:"#<-1"}` returns Aa#Bb#Cc#Dd#
+
+This can be especially useful for tags like ref, exit_to and destination or to switch words, 
+example if value is "word1 word2 ... wordN-1 wordN"
+
+`${name\|part:" :-1"}, ${name\|part:" <-1"}` returns "wordN, word1 word2 ... wordN-1 "
+
+| highway-symbol | `symbol:max-num:max-alpha` |
 Prepares the value as a highway reference such as "A21" "I-80" and so
 on.
 A code is added to the front of the string so that a highway shield is
 displayed, spaces are removed and the text is truncated so as not to overflow the
 symbol.
 
-`${ref\|highway-symbol:box:4:8}`
+`${ref\|highway-symbol:"box:4:8"}`
 
 See below for a list of the +highway-symbol+ values.
 
@@ -45,24 +92,33 @@ The second is the maximum length of references that do not contain numbers.
 If there is just the one number then it is used in both cases.
 
 | height | `m=>ft` |
-This is the same as the +conv+ filter, except that it prepends a special
+This is exactly the same as the +conv+ filter, except that it prepends a special
 separation character before the value which is intended for elevations.
-As with +conv+ the only supported conversion currently is from meters to feet.
 
-`${ele\|m=>ft}`
+`${ele\|height:"m=>ft"}`
+
+| country-ISO |  |
+Use to normalize country names to the 3 character ISO 1366 code.
+The filter has no arguments. It uses the list in LocatorConfig.xml.
+Possible arguments are country names, or ISO codes in 2 or 3 characters,
+for example "Deutschland", "Germany", "Bundesrepublik Deutschland", or "DE" 
+will all return "DEU", also different cases like "GERMANY" or "   germany " 
+will work.
+ 
+If the value is not found in the list, then the value is unchanged.
 
 | not-equal | `tag` |
 Used to check for duplicate tags. If the value of this tag is equal to
 the value of the tag named as the argument to +not-equal+, then value
 of this tag is set to undefined.
 
-[literal]
---
+....
 place=* {
    name '${name} (${int_name\|not-equal:name})'
        \| '${name}'
    }
---
+....
+
 In that example, if the international name is different to the name then it will be placed
 in parenthesis after the name. Otherwise there will just be the name as given in the "name" tag.
 
@@ -70,7 +126,7 @@ in parenthesis after the name. Otherwise there will just be the name as given in
 Extract part of the string. The start and end positions
 are counted starting from zero and the end position is not included.
 
-`${name\|2:5}`
+`${name\|substring:2:5}`
 If the "name" was "Dorset Lane", then the result is "rse".  If there is just the one number,
 then the substring starts from that character until the end of the string.
 |=====
@@ -91,12 +147,4 @@ The actual symbol will depend on the device that it is displayed on.
 | box     | image:img/sym-box.png[]           | Box for medium roads
 | oval    | image:img/sym-oval.png[]          | Box for smaller roads
 |====
-
-
-////
-| prefix | symbol code |
-hello
-| `${ref\|prefix:box}`
-////
-
 

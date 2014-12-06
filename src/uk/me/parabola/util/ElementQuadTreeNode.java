@@ -67,14 +67,13 @@ public final class ElementQuadTreeNode {
 		}
 
 		public ElementQuadTreePolygon(List<Coord> points) {
-			this(new java.awt.geom.Area(Java2DConverter.createPolygon(points)));
+			this(Java2DConverter.createArea(points));
 		}
 
 		public ElementQuadTreePolygon(Collection<List<Coord>> polygonList) {
 			this.javaArea = new java.awt.geom.Area();
 			for (List<Coord> polygon : polygonList) {
-				javaArea.add(new java.awt.geom.Area(Java2DConverter
-						.createPolygon(polygon)));
+				javaArea.add(Java2DConverter.createArea(polygon));
 			}
 			Rectangle bboxRect = javaArea.getBounds();
 			bbox = new Area(bboxRect.y, bboxRect.x, bboxRect.y

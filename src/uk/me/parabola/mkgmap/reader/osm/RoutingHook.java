@@ -32,26 +32,38 @@ public class RoutingHook extends OsmReadingHooksAdaptor {
 	
 	public RoutingHook() {
 		usedTags = new HashSet<String>();
-		usedTags.add("access");
-		usedTags.add("bicycle");
-		usedTags.add("carpool");
-		usedTags.add("delivery");
-		usedTags.add("emergency");
 		usedTags.add("except");
-		usedTags.add("exception");
-		usedTags.add("foot");
-		usedTags.add("goods");
-		usedTags.add("hgv");
-		usedTags.add("motorcar");
-		usedTags.add("motorcycle");
-		usedTags.add("psv");
 		usedTags.add("restriction");
-		usedTags.add("route");
-		usedTags.add("taxi");
-		usedTags.add("toll");
+		usedTags.add("restriction:foot");
+		usedTags.add("restriction:hgv");
+		usedTags.add("restriction:motorcar");
+		usedTags.add("restriction:vehicle");
+		usedTags.add("restriction:motor_vehicle");
+		usedTags.add("restriction:bicycle");
+		usedTags.add("restriction:bus");
 	}
 
 	public boolean init(ElementSaver saver, EnhancedProperties props) {
+		
+		if (props.getProperty("old-style", false)) {
+			// the access tags need to be loaded if the old style handling
+			// is active and access restrictions are handled by the java
+			// source code and not by the style
+			usedTags.add("access");
+			usedTags.add("bicycle");
+			usedTags.add("carpool");
+			usedTags.add("delivery");
+			usedTags.add("emergency");
+			usedTags.add("foot");
+			usedTags.add("goods");
+			usedTags.add("hgv");
+			usedTags.add("motorcar");
+			usedTags.add("motorcycle");
+			usedTags.add("psv");
+			usedTags.add("route");
+			usedTags.add("taxi");
+		}
+		
 		// only enabled if the route option is set
 		return props.containsKey("route");
 	}

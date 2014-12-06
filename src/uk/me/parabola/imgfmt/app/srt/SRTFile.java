@@ -13,6 +13,8 @@
 package uk.me.parabola.imgfmt.app.srt;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
@@ -31,8 +33,11 @@ public class SRTFile extends ImgFile {
 	private final SRTHeader header;
 
 	private Sort sort;
+	private boolean isMulti;
 	
 	private String description;
+
+	private final List<Integer> srt8Starts = new ArrayList<>();
 
 	public SRTFile(ImgChannel chan) {
 		header = new SRTHeader();
@@ -56,9 +61,15 @@ public class SRTFile extends ImgFile {
 		writeDescription(writer);
 
 		SectionWriter subWriter = header.makeSectionWriter(writer);
-		subWriter.position(SRTHeader.HEADER3_LEN);
-		writeCharacterTable(subWriter);
-		writeExpansions(subWriter);
+		subWriter.position(sort.isMulti()? SRTHeader.HEADER3_MULTI_LEN: SRTHeader.HEADER3_LEN);
+		writeSrt4Chars(subWriter);
+		writeSrt5Expansions(subWriter);
+		if (sort.isMulti()) {
+			for (int i = 0; i <= sort.getMaxPage(); i++)
+				srt8Starts.add(-1);
+			writeSrt8(subWriter);
+			writeSrt7(subWriter);
+		}
 		subWriter.close();
 
 		// Header 2 is just after the real header
@@ -79,7 +90,12 @@ public class SRTFile extends ImgFile {
 		header.endDescription(writer.position());
 	}
 
-	private void writeCharacterTable(ImgFileWriter writer) {
+	/**
+	 * Write SRT4 the character table.
+	 *
+	 * @param writer The img file writer.
+	 */
+	private void writeSrt4Chars(ImgFileWriter writer) {
 		for (int i = 1; i < 256; i++) {
 			writer.put(sort.getFlags(i));
 			writeWeights(writer, i);
@@ -88,33 +104,70 @@ public class SRTFile extends ImgFile {
 	}
 
 	private void writeWeights(ImgFileWriter writer, int i) {
-		writer.put(sort.getPrimary(i));
-		writer.put((byte) ((sort.getTertiary(i) << 4) | (sort.getSecondary(i) & 0xf)));
+		if (isMulti) {
+			writer.putChar((char) sort.getPrimary(i));
+			writer.put((byte) sort.getSecondary(i));
+			writer.put((byte) sort.getTertiary(i));
+		} else {
+			writer.put((byte) sort.getPrimary(i));
+			writer.put((byte) ((sort.getTertiary(i) << 4) | (sort.getSecondary(i) & 0xf)));
+		}
 	}
 
 	/**
+	 * Write SRT5, the expansion table.
+	 *
 	 * Write out the expansion table. This is referenced from the character table, when
 	 * the top nibble of the type is set via the primary position value.
 	 */
-	private void writeExpansions(ImgFileWriter writer) {
+	private void writeSrt5Expansions(ImgFileWriter writer) {
 
 		int size = sort.getExpansionSize();
 		for (int j = 1; j <= size; j++) {
 			CodePosition b = sort.getExpansion(j);
-			writer.put(b.getPrimary());
-			writer.put((byte) ((b.getTertiary() << 4) | (b.getSecondary() & 0xf)));
+			if (isMulti) {
+				writer.putChar(b.getPrimary());
+				writer.put(b.getSecondary());
+				writer.put(b.getTertiary());
+			} else {
+				writer.put((byte) b.getPrimary());
+				writer.put((byte) ((b.getTertiary() << 4) | (b.getSecondary() & 0xf)));
+			}
 		}
 
 		header.endTab2(writer.position());
 	}
 
-	public void setDescription(String description) {
-		this.description = description;
+	private void writeSrt7(SectionWriter writer) {
+		assert sort.isMulti();
+		for (int i = 1; i <= sort.getMaxPage(); i++) {
+			writer.putInt(srt8Starts.get(i));
+		}
+		header.endSrt7(writer.position());
+	}
+
+	private void writeSrt8(SectionWriter writer) {
+		assert sort.isMulti();
+
+		int offset = 0;
+		for (int p = 1; p <= sort.getMaxPage(); p++) {
+			if (sort.hasPage(p)) {
+				srt8Starts.set(p, offset);
+				for (int j = 0; j < 256; j++) {
+					int ch = p * 256 + j;
+					writer.put(sort.getFlags(ch));
+					writeWeights(writer, ch);
+					offset += 5;
+				}
+			}
+		}
+		header.endSrt8(writer.position());
 	}
 
 	public void setSort(Sort sort) {
 		this.sort = sort;
 		header.setSort(sort);
 		description = sort.getDescription();
+		isMulti = sort.isMulti();
 	}
 }

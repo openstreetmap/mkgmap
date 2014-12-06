@@ -14,14 +14,20 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
+import java.util.ArrayList;
+
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import static uk.me.parabola.imgfmt.app.net.AccessTagsAndBits.*;
+
 
 /**
  * A restriction in the routing graph.
  *
- * There may eventually be several types of these at which point
- * we might consider splitting them into several classes. For the
- * moment, just simple from-to-via restrictions.
+ * A routing restriction has two or more arcs.
+ * The first arc is the "from" arc, the last is the "to" arc,
+ *  and other arc is a "via" arc.
  *
  * A from-to-via restriction says you can't go along arc "to"
  * if you came to node to.getSource() == from.getSource()
@@ -34,21 +40,18 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
 public class RouteRestriction {
 	//private static final Logger log = Logger.getLogger(RouteRestriction.class);
 
-	// size in bytes
-	private static final int SIZE = 11;
-
 	// first three bytes of the header -- might specify the type of restriction
 	// and when it is active
-	private static final int HEADER = 0x004005;
+	private static final byte RESTRICTION_TYPE = 0x05; // 0x07 spotted, meaning?
 
 	// To specify that a node is given by a relative offset instead
 	// of an entry to Table B.
 	private static final int F_INTERNAL = 0x8000;
 
 	// the arcs
-	private final RouteArc from;
-	private final RouteArc to;
+	private final List<RouteArc> arcs;
 
+	private final RouteNode viaNode; 
 	// offset in Table C
 	private byte offsetSize;
 	private int offsetC;
@@ -58,26 +61,72 @@ public class RouteRestriction {
 
 	// mask that specifies which vehicle types the restriction doesn't apply to
 	private final byte exceptMask;
+	private final byte flags; // meaning of bits 0x01 and 0x10 are not clear 
 
-	public final static byte EXCEPT_CAR      = 0x01;
-	public final static byte EXCEPT_BUS      = 0x02;
-	public final static byte EXCEPT_TAXI     = 0x04;
-	public final static byte EXCEPT_DELIVERY = 0x10;
-	public final static byte EXCEPT_BICYCLE  = 0x20;
-	public final static byte EXCEPT_TRUCK    = 0x40;
-
+	private final static byte F_EXCEPT_FOOT      = 0x02;
+	private final static byte F_EXCEPT_EMERGENCY = 0x04;
+	private final static byte F_MORE_EXCEPTIONS  = 0x08;
+	
+	private final static byte EXCEPT_CAR      = 0x01;
+	private final static byte EXCEPT_BUS      = 0x02;
+	private final static byte EXCEPT_TAXI     = 0x04;
+	private final static byte EXCEPT_DELIVERY = 0x10;
+	private final static byte EXCEPT_BICYCLE  = 0x20;
+	private final static byte EXCEPT_TRUCK    = 0x40;
+	
 	/**
-	 * Create a route restriction.
-	 *
-	 * @param from The inverse arc of "from" arc.
-	 * @param to The "to" arc.
+	 * 
+	 * @param viaNode the node to which this restriction is related
+	 * @param traffArcs the arcs that describe the "forbidden" path
+	 * @param mkgmapExceptMask the exception mask in the mkgmap format
 	 */
-	public RouteRestriction(RouteArc from, RouteArc to, byte exceptMask) {
-		assert from.getSource().equals(to.getSource()) : "arcs in restriction don't meet";
-		this.from = from;
-		this.to = to;
-		this.exceptMask = exceptMask;
+	public RouteRestriction(RouteNode viaNode, List<RouteArc> traffArcs, byte mkgmapExceptMask) {
+		this.viaNode = viaNode;
+		this.arcs = new ArrayList<>(traffArcs);
+		for (int i = 0; i < arcs.size(); i++){
+			RouteArc arc = arcs.get(i);
+			assert arc.getDest() != viaNode;
+		}
+		byte flags = 0;
+		
+		if ((mkgmapExceptMask & FOOT) != 0)
+			flags |= F_EXCEPT_FOOT;
+		if ((mkgmapExceptMask & EMERGENCY) != 0)
+			flags |= F_EXCEPT_EMERGENCY;
+		
+		exceptMask = translateExceptMask(mkgmapExceptMask); 
+		if(exceptMask != 0)
+			flags |= F_MORE_EXCEPTIONS;
+
+		int numArcs = arcs.size();
+		assert numArcs < 8;
+		flags |= ((numArcs) << 5);
+		this.flags = flags;
 	}
+
+	
+	/**
+	 * Translate the mkgmap internal representation of vehicles to the one used in the img format
+	 * @param mkgmapExceptMask
+	 * @return
+	 */
+	private byte translateExceptMask(byte mkgmapExceptMask) {
+		byte mask = 0;
+		if ((mkgmapExceptMask & CAR) != 0)
+			mask |= EXCEPT_CAR;
+		if ((mkgmapExceptMask & BUS) != 0)
+			mask |= EXCEPT_BUS;
+		if ((mkgmapExceptMask & TAXI) != 0)
+			mask |= EXCEPT_TAXI;
+		if ((mkgmapExceptMask & DELIVERY) != 0)
+			mask |= EXCEPT_DELIVERY;
+		if ((mkgmapExceptMask & BIKE) != 0)
+			mask |= EXCEPT_BICYCLE;
+		if ((mkgmapExceptMask & TRUCK) != 0)
+			mask |= EXCEPT_TRUCK;
+		return mask;
+	}
+
 
 	private int calcOffset(RouteNode node, int tableOffset) {
 		int offset = tableOffset - node.getOffsetNod1();
@@ -86,40 +135,55 @@ public class RouteRestriction {
 		return offset | F_INTERNAL;
 	}
 
+	public List<RouteArc> getArcs(){
+		return arcs;
+	}
+	
 	/**
-	 * Writes a Table C entry.
+	 * Writes a Table C entry with 3 or more nodes.
 	 *
 	 * @param writer The writer.
 	 * @param tableOffset The offset in NOD 1 of the tables area.
+	 * 
 	 */
 	public void write(ImgFileWriter writer, int tableOffset) {
-		int header = HEADER;
+		writer.put(RESTRICTION_TYPE); 
 
-		if(exceptMask != 0)
-			header |= 0x0800;
-
-		writer.put3(header);
+		writer.put(flags);
+		writer.put((byte)0); // meaning ?
 
 		if(exceptMask != 0)
 			writer.put(exceptMask);
 
-		int[] offsets = new int[3];
-
-		if (from.isInternal())
-			offsets[0] = calcOffset(from.getDest(), tableOffset);
-		else
-			offsets[0] = from.getIndexB();
-		offsets[1] = calcOffset(to.getSource(), tableOffset);
-		if (to.isInternal())
-			offsets[2] = calcOffset(to.getDest(), tableOffset);
-		else
-			offsets[2] = to.getIndexB();
+		int numArcs = arcs.size();
+		int[] offsets = new int[numArcs+1];
+		int pos = 0;
+		boolean viaWritten = false;
+		for (int i = 0; i < numArcs; i++){
+			RouteArc arc = arcs.get(i);
+			// the arcs must have a specific order and direction
+			// first arc: dest is from node , last arc: dest is to node
+			// if there only two arcs, both will have the via node as source node.
+			// For more n via nodes, the order is like this: 
+			// from <- via(1) <- via(2) <- ... <- this via node -> via( n-1) -> via(n) -> to
+			if (arc.isInternal())
+				offsets[pos++] = calcOffset(arc.getDest(), tableOffset);
+			else 
+				offsets[pos++] = arc.getIndexB();
+			if (arc.getSource() == viaNode){
+				// there will be two nodes with source node = viaNode, but we write the source only once
+				if (!viaWritten){
+					offsets[pos++] = calcOffset(viaNode, tableOffset);
+					viaWritten = true;
+				}
+			}
+		}
 
 		for (int offset : offsets)
 			writer.putChar((char) offset);
 
-		writer.put(from.getIndexA());
-		writer.put(to.getIndexA());
+		for (RouteArc arc: arcs)
+			writer.put(arc.getIndexA());
 	}
 
 	/**
@@ -145,9 +209,10 @@ public class RouteRestriction {
 	 * Size in bytes of the Table C entry.
 	 */
 	public int getSize() {
-		int size = SIZE;
+		int size = 3; // header length
 		if(exceptMask != 0)
 			++size;
+		size += arcs.size() + (arcs.size()+1) * 2; 
 		return size;
 	}
 

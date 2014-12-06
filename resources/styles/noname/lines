@@ -27,3 +27,4 @@ highway=*
 	{name '${name} (${ref})' | '${ref}' }
 	[0x7 resolution 22]
 
+include lines from default;

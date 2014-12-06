@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -53,7 +54,7 @@ public class BoundaryRelation extends MultiPolygonRelation {
 			if (outerResultArea == null) {
 				return null;
 			}
-			boundary = new Boundary(outerResultArea, this.getEntryIteratable(),"r"+this.getId());
+			boundary = new Boundary(outerResultArea, this.getTagEntryIterator(),"r"+this.getId());
 			outerResultArea = null;
 		}
 		return boundary;
@@ -279,7 +280,7 @@ public class BoundaryRelation extends MultiPolygonRelation {
 
 				for (Way outerWay : currentPolygon.polygon.getOriginalWays()) {
 					if (outmostPolygonProcessing) {
-						for (Entry<String, String> tag : outerWay.getEntryIteratable()) {
+						for (Entry<String, String> tag : outerWay.getTagEntryIterator()) {
 							outerTags.put(tag.getKey(), tag.getValue());
 						}
 						outmostPolygonProcessing = false;
@@ -337,7 +338,7 @@ public class BoundaryRelation extends MultiPolygonRelation {
 		
 		if (hasStyleRelevantTags(this)) {
 			outerTags.clear();
-			for (Entry<String,String> mpTags : getEntryIteratable()) {
+			for (Entry<String,String> mpTags : getTagEntryIterator()) {
 				if ("type".equals(mpTags.getKey())==false) {
 					outerTags.put(mpTags.getKey(), mpTags.getValue());
 				}
@@ -377,14 +378,14 @@ public class BoundaryRelation extends MultiPolygonRelation {
 		List<JoinedWay> unclosed = new ArrayList<JoinedWay>();
 
 		for (JoinedWay w : allWays) {
-			if (w.isClosed() == false) {
+			if (w.hasIdenticalEndPoints() == false) {
 				unclosed.add(w);
 			}
 		}
 		// try to connect ways lying outside or on the bbox
 		if (unclosed.size() >= 2) {
 			log.debug("Checking",unclosed.size(),"unclosed ways for connections outside the bbox");
-			Map<Coord, JoinedWay> outOfBboxPoints = new HashMap<Coord, JoinedWay>();
+			Map<Coord, JoinedWay> outOfBboxPoints = new IdentityHashMap<Coord, JoinedWay>();
 			
 			// check all ways for endpoints outside or on the bbox
 			for (JoinedWay w : unclosed) {
@@ -470,11 +471,10 @@ public class BoundaryRelation extends MultiPolygonRelation {
 						minCon.w1.closeWayArtificially();
 					} else {
 						log.debug("Connect", minCon.w1, "with", minCon.w2);
-
-						if (minCon.w1.getPoints().get(0).equals(minCon.c1)) {
+						if (minCon.w1.getPoints().get(0) == minCon.c1) {
 							Collections.reverse(minCon.w1.getPoints());
 						}
-						if (minCon.w2.getPoints().get(0).equals(minCon.c2) == false) {
+						if (minCon.w2.getPoints().get(0) != minCon.c2) {
 							Collections.reverse(minCon.w2.getPoints());
 						}
 
@@ -505,7 +505,7 @@ public class BoundaryRelation extends MultiPolygonRelation {
 	
 	protected void closeWays(ArrayList<JoinedWay> wayList) {
 		for (JoinedWay way : wayList) {
-			if (way.isClosed() || way.getPoints().size() < 3) {
+			if (way.hasIdenticalEndPoints() || way.getPoints().size() < 3) {
 				continue;
 			}
 			Coord p1 = way.getPoints().get(0);
@@ -580,13 +580,13 @@ public class BoundaryRelation extends MultiPolygonRelation {
 		ListIterator<JoinedWay> pIter = polygons.listIterator();
 		while (pIter.hasNext()) {
 			JoinedWay w = pIter.next();
-			if (w.isClosed() == false) {
+			Coord first = w.getPoints().get(0);
+			Coord last =  w.getPoints().get(w.getPoints().size() - 1);
+			if (first != last) {
 				// the way is not closed
 				// check if one of start/endpoint is out of the bounding box
 				// in this case it is too risky to close it
-				if (getBbox().contains(w.getPoints().get(0)) == false
-						|| getBbox().contains(
-								w.getPoints().get(w.getPoints().size() - 1)) == false) {
+				if (getBbox().contains(first) == false || getBbox().contains(last) == false) {
 					pIter.remove();
 				}
 			}

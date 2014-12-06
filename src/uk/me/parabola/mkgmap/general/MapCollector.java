@@ -17,7 +17,7 @@
 package uk.me.parabola.mkgmap.general;
 
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.CoordNode;
+import uk.me.parabola.imgfmt.app.net.GeneralRouteRestriction;
 
 
 /**
@@ -75,11 +75,11 @@ public interface MapCollector {
 	 * no left turn.
 	 * @param exceptMask For exceptions eg. no-left-turn except for buses.
 	 */
-	public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode, byte exceptMask);
+	public int addRestriction(GeneralRouteRestriction grr);
 
 	/**
 	 * Add a through route to the map. 
 	 *
 	 */
-	public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB);
+	public void addThroughRoute(int junctionNodeId, long roadIdA, long roadIdB);
 }

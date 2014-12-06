@@ -26,7 +26,7 @@ import uk.me.parabola.imgfmt.app.srt.SortKey;
  * @author Steve Ratcliffe
  */
 public class Mdr29 extends MdrSection implements HasHeaderFlags {
-	private final List<Mdr29Record> index = new ArrayList<Mdr29Record>();
+	private final List<Mdr29Record> index = new ArrayList<>();
 	private int max17;
 
 	public Mdr29(MdrConfig config) {
@@ -80,7 +80,7 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 		PointerSizes sizes = getSizes();
 		int size24 = sizes.getSize(24);
 		int size22 = sizes.getSize(22);
-		int size25 = sizes.getSize(25);
+		int size25 = sizes.getSize(5);  // NB appears to be size of 5 (cities), not 25 (cities with country).
 		int size26 = has26? sizes.getSize(26): 0;
 		int size17 = numberToPointerSize(max17);
 		for (Mdr29Record record : index) {
@@ -107,7 +107,7 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 		PointerSizes sizes = getSizes();
 		int size = sizes.getSize(24)
 				+ sizes.getSize(22)
-				+ sizes.getSize(25)
+				+ sizes.getSize(5)  // NB: not 25
 				;
 		if (isForDevice()) {
 			size += numberToPointerSize(max17);

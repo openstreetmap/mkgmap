@@ -536,19 +536,18 @@ public class GmapsuppBuilder implements Combiner {
 				totHeaderEntries += mdrSlots;
 			}
 
-			// There are 2 entries for the header itself.
-			totHeaderEntries += 2;
+			// Add for header itself, plus the first directory block.
+			totHeaderEntries += DIRECTORY_OFFSET_ENTRY + 1;
 			int totHeaderBlocks = totHeaderEntries * 512 / bs;
 
 			log.info("total blocks for", bs, "is", totHeaderBlocks, "based on slots=", totHeaderEntries);
 
-			int reserveEntries = (int) Math.ceil(DIRECTORY_OFFSET_ENTRY + 1 + totHeaderEntries);
-			if (totBlocks + reserveEntries < 0xfffe && totHeaderBlocks <= ENTRY_SIZE) {
-				return new BlockInfo(bs, reserveEntries);
+			if (totBlocks + totHeaderEntries < 0xfffe && totHeaderBlocks <= ENTRY_SIZE) {
+				return new BlockInfo(bs, totHeaderEntries);
 			}
 		}
 
-		throw new IllegalArgumentException("hmm");
+		throw new IllegalArgumentException("Could not select a suitable block size. Try to reduce the number of splits.");
 	}
 
 	public void setCreateIndex(boolean create) {

@@ -24,7 +24,7 @@ package uk.me.parabola.imgfmt.app.mdr;
  *
  * @author Steve Ratcliffe
  */
-public class Mdr10Record extends RecordBase implements Comparable<Mdr10Record> {
+public class Mdr10Record implements Comparable<Mdr10Record> {
 	private int subtype;
 	private Mdr11Record mdr11ref;
 

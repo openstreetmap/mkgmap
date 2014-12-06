@@ -16,6 +16,7 @@ package uk.me.parabola.mkgmap.osmstyle.function;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
+import uk.me.parabola.mkgmap.reader.osm.TagDict;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 
 /**
@@ -24,7 +25,7 @@ import uk.me.parabola.mkgmap.reader.osm.Way;
  * @author WanMil
  */
 public abstract class CachedFunction extends StyleFunction {
-
+	short cacheKey = TagDict.INVALID_TAG_VALUE; 
 	public CachedFunction(String value) {
 		super(value);
 	}
@@ -45,18 +46,24 @@ public abstract class CachedFunction extends StyleFunction {
 			}
 		}
 		
-		// if caching is supported check if the value has already
-		// been calculated
-		String cachedValue = el.getTag(getCacheTag());
-		if (cachedValue != null) {
-			return cachedValue;
+		if (isCached()) {
+			if (cacheKey == TagDict.INVALID_TAG_VALUE)
+				cacheKey = TagDict.getInstance().xlate(getCacheTag());
+			// if caching is supported check if the value has already
+			// been calculated
+			String cachedValue = el.getTag(cacheKey);
+			if (cachedValue != null) {
+				return cachedValue;
+			}
 		}
 
 		// calculate the function value
 		String functionResult = calcImpl(el);
 		
-		// if caching is supported save the value for later usage
-		el.addTag(getCacheTag(), functionResult);
+		if (functionResult != null && isCached()) {
+			// if caching is supported save the value for later usage
+			el.addTag(cacheKey, functionResult);
+		}
 
 		return functionResult;
 	}
@@ -76,6 +83,10 @@ public abstract class CachedFunction extends StyleFunction {
 	 */
 	protected String getCacheTag() {
 		return "mkgmap:cache_"+getName();
+	}
+	
+	public boolean isCached() {
+		return true;
 	}
 	
 }

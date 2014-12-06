@@ -58,6 +58,7 @@ public class TREHeader extends CommonHeader {
 	public static final int POI_FLAG_TRANSPARENT = 0x2;
 	public static final int POI_FLAG_STREET_BEFORE_HOUSENUMBER = 0x4;
 	public static final int POI_FLAG_POSTALCODE_BEFORE_CITY = 0x8;
+	public static final int POI_FLAG_DRIVE_ON_LEFT = 0x20;
 
 	// Bounding box.  All units are in map units.
 	private Area area = new Area(0,0,0,0);
@@ -104,6 +105,10 @@ public class TREHeader extends CommonHeader {
 		int maxLon = reader.get3();
 		int minLat = reader.get3();
 		int minLon = reader.get3();
+		// fix problem with value 0x800000 that is interpreted as a negative value
+		if (maxLon <  minLon && maxLon == -8388608 )
+			maxLon = 8388608; // its 180 degrees, not -180
+		
 		setBounds(new Area(minLat, minLon, maxLat, maxLon));
 		log.info("read area is", getBounds());
 
@@ -136,17 +141,13 @@ public class TREHeader extends CommonHeader {
 			mapInfoOff = copyright.getPosition();
 
 		mapInfoSize = mapInfoOff - getHeaderLength();
-		
-		reader.getInt();
-		reader.getInt();
-		reader.getInt();
-
-		copyright.readSectionInfo(reader, true);
-		reader.getInt();
-
 		if (getHeaderLength() > 116) {
 			reader.position(116);
 			mapId = reader.getInt();
+		}
+		if (getHeaderLength() > 120) {
+			reader.getInt();
+			extTypeOffsets.readSectionInfo(reader, true);
 		}
 	}
 
@@ -239,6 +240,9 @@ public class TREHeader extends CommonHeader {
 
 		if (props.containsKey("transparent"))
 			poiDisplayFlags |= POI_FLAG_TRANSPARENT;
+
+		if (props.containsKey("drive-on-left"))
+			poiDisplayFlags |= POI_FLAG_DRIVE_ON_LEFT;
 	}
 	
 	/**
@@ -375,5 +379,19 @@ public class TREHeader extends CommonHeader {
 
 	public int getDisplayPriority() {
 		return displayPriority;
+	}
+
+	public int getExtTypeOffsetsPos() {
+		return extTypeOffsets.getPosition();
+	}
+	public int getExtTypeOffsetsSize() {
+		return extTypeOffsets.getSize();
+	}
+	public int getExtTypeSectionSize() {
+		return extTypeOffsets.getItemSize();
+	}
+
+	public Section getCopyrightSection() {
+		return copyright;
 	}
 }

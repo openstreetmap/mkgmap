@@ -195,8 +195,8 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 				// Previous message was confusing people, although it is difficult to come
 				// up with something that is strictly true in all situations.
 				throw new MapFailedException(
-						"There is not enough room in a single garmin map for all the input data\n" +
-								"   The .osm file should be split into smaller pieces first.");
+						"There is not enough room in a single garmin map for all the input data." +
+								" The .osm file should be split into smaller pieces first.");
 			}
 			ByteBuffer newb = ByteBuffer.allocate(bufferSize);
 			newb.order(ByteOrder.LITTLE_ENDIAN);

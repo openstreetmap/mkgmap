@@ -34,31 +34,26 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Option;
 import uk.me.parabola.mkgmap.OptionProcessor;
 import uk.me.parabola.mkgmap.Options;
+import uk.me.parabola.mkgmap.build.LocatorUtil;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LineAdder;
 import uk.me.parabola.mkgmap.general.MapLine;
-import uk.me.parabola.mkgmap.osmstyle.actions.Action;
-import uk.me.parabola.mkgmap.osmstyle.actions.NameAction;
-import uk.me.parabola.mkgmap.osmstyle.eval.EqualsOp;
-import uk.me.parabola.mkgmap.osmstyle.eval.ExistsOp;
-import uk.me.parabola.mkgmap.osmstyle.eval.Op;
-import uk.me.parabola.mkgmap.osmstyle.eval.ValueOp;
 import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
-import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
+import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * A style is a collection of files that describe the mapping between the OSM
@@ -73,28 +68,24 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
 public class StyleImpl implements Style {
 	private static final Logger log = Logger.getLogger(StyleImpl.class);
 
+	public static final boolean WITH_CHECKS = true; 
+	public static final boolean WITHOUT_CHECKS = false;
+	
 	// This is max the version that we understand
 	private static final int VERSION = 1;
 
 	// General options just have a value and don't need any special processing.
 	private static final Collection<String> OPTION_LIST = new ArrayList<String>(
-			Arrays.asList("levels", "extra-used-tags"));
-
-	// Options that should not be overridden from the command line if the
-	// value is empty.
-	private static final Collection<String> DONT_OVERRIDE = new ArrayList<String>(
-			Arrays.asList("levels"));
+			Arrays.asList("levels", "overview-levels", "extra-used-tags"));
 
 	// File names
 	private static final String FILE_VERSION = "version";
 	private static final String FILE_INFO = "info";
-	private static final String FILE_FEATURES = "map-features.csv";
 	private static final String FILE_OPTIONS = "options";
 	private static final String FILE_OVERLAYS = "overlays";
 
 	// Patterns
 	private static final Pattern COMMA_OR_SPACE_PATTERN = Pattern.compile("[,\\s]+");
-	private static final Pattern EQUAL_PATTERN = Pattern.compile("=");
 
 	// A handle on the style directory or file.
 	private final StyleFileLoader fileLoader;
@@ -107,7 +98,7 @@ public class StyleImpl implements Style {
 	private final List<StyleImpl> baseStyles = new ArrayList<StyleImpl>();
 
 	// A list of tag names to be used as the element name
-	private String[] nameTagList;
+	private List<String> nameTagList;
 
 	// Options from the option file that are used outside this file.
 	private final Map<String, String> generalOptions = new HashMap<String, String>();
@@ -118,7 +109,9 @@ public class StyleImpl implements Style {
 	private final RuleSet relations = new RuleSet();
 
 	private OverlayReader overlays;
-
+	private final boolean performChecks;
+	
+	
 	/**
 	 * Create a style from the given location and name.
 	 * @param loc The location of the style. Can be null to mean just check
@@ -129,26 +122,42 @@ public class StyleImpl implements Style {
 	 * include the version file being missing.
 	 */
 	public StyleImpl(String loc, String name) throws FileNotFoundException {
+		this(loc, name, new EnhancedProperties(), WITHOUT_CHECKS);
+	}
+	
+	/**
+	 * Create a style from the given location and name.
+	 * @param loc The location of the style. Can be null to mean just check
+	 * the classpath.
+	 * @param name The name.  Can be null if the location isn't.  If it is
+	 * null then we just check for the first version file that can be found.
+	 * @param props optional program properties (may be null) 
+	 * @throws FileNotFoundException If the file doesn't exist.  This can
+	 * include the version file being missing.
+	 */
+	public StyleImpl(String loc, String name, EnhancedProperties props, boolean performChecks) throws FileNotFoundException {
 		location = loc;
 		fileLoader = StyleFileLoader.createStyleLoader(loc, name);
-
+		this.performChecks = performChecks;
+		nameTagList = LocatorUtil.getNameTags(props);
+		
 		// There must be a version file, if not then we don't create the style.
 		checkVersion();
 
 		readInfo();
 
 		for (String baseName : info.baseStyles())
-			readBaseStyle(baseName);
+			readBaseStyle(baseName, props);
 
 		for (StyleImpl baseStyle : baseStyles)
 			mergeOptions(baseStyle);
 
 		readOptions();
+		
+		// read overlays before the style rules to be able to ignore overlaid "wrong" types. 
+		readOverlays(); 
+		
 		readRules();
-
-		readOverlays();
-
-		readMapFeatures();
 
 		ListIterator<StyleImpl> listIterator = baseStyles.listIterator(baseStyles.size());
 		while (listIterator.hasPrevious())
@@ -159,47 +168,12 @@ public class StyleImpl implements Style {
 		//	mergeRules(s);
 	}
 
-	public String[] getNameTagList() {
-		return nameTagList;
-	}
-
 	public String getOption(String name) {
 		return generalOptions.get(name);
 	}
 
 	public StyleInfo getInfo() {
 		return info;
-	}
-
-	/**
-	 * After the style is loaded we override any options that might
-	 * have been set in the style itself with the command line options.
-	 *
-	 * We may have to filter some options that we don't ever want to
-	 * set on the command line.
-	 *
-	 * @param config The command line options.
-	 */
-	public void applyOptionOverride(Properties config) {
-		Set<Entry<Object,Object>> entries = config.entrySet();
-		for (Entry<Object,Object> ent : entries) {
-			String key = (String) ent.getKey();
-			String val = (String) ent.getValue();
-
-			if (!DONT_OVERRIDE.contains(key))
-				if (key.equals("name-tag-list")) {
-					// The name-tag-list allows you to redefine what you want to use
-					// as the name of a feature.  By default this is just 'name', but
-					// you can supply a list of tags to use
-					// instead eg. "name:en,int_name,name" or you could use some
-					// completely different tag...
-					nameTagList = COMMA_OR_SPACE_PATTERN.split(val);
-				} else if (OPTION_LIST.contains(key)) {
-					// Simple options that have string value.  Perhaps we should allow
-					// anything here?
-					generalOptions.put(key, val);
-				}
-		}
 	}
 
 	public Rule getNodeRules() {
@@ -255,15 +229,15 @@ public class StyleImpl implements Style {
 		// around situations that we haven't thought of - the style is expected
 		// to get it right for itself.
 		String s = getOption("extra-used-tags");
-		if (s != null)
+		if (s != null && s.trim().isEmpty() == false)
 			set.addAll(Arrays.asList(COMMA_OR_SPACE_PATTERN.split(s)));
 
 		// These tags are passed on the command line and so must be added
 		if (nameTagList != null)
-			set.addAll(Arrays.asList(nameTagList));
+			set.addAll(nameTagList);
 
 		// There are a lot of tags that are used within mkgmap that 
-		InputStream is = getClass().getResourceAsStream("/styles/builtin-tag-list");
+		InputStream is = this.getClass().getResourceAsStream("/styles/builtin-tag-list");
 		try {
 			if (is != null) {
 				BufferedReader br = new BufferedReader(new InputStreamReader(is));
@@ -291,9 +265,32 @@ public class StyleImpl implements Style {
 		if (l == null)
 			l = LevelInfo.DEFAULT_LEVELS;
 		LevelInfo[] levels = LevelInfo.createFromString(l);
+		if (performChecks){
+			if (levels[0].getBits() <= 10){
+				System.err.println("Warning: Resolution values <= 10 may confuse MapSource: " + l);
+			}
+		}
+		l = generalOptions.get("overview-levels");
+		if (l != null){
+			LevelInfo[] ovLevels = LevelInfo.createFromString(l);
+			// TODO: make sure that the combination of the two level strings makes sense
+			if (performChecks){
+				if (ovLevels[0].getBits() <= 10){
+					System.err.println("Warning: Resolution values <= 10 may confuse MapSource: " + l);
+				}
+				if (levels[0].getLevel() >= ovLevels[ovLevels.length-1].getLevel()){
+					System.err.println("Warning: Overview level not higher than highest normal level. " + l);
+				}
+			}
+			List<LevelInfo> tmp = new ArrayList<LevelInfo>();
+			tmp.addAll(Arrays.asList(levels));
+			tmp.addAll(Arrays.asList(ovLevels));
+			levels = tmp.toArray(new LevelInfo[tmp.size()]);
+			Arrays.sort(levels);
+		}
 
 		try {
-			RuleFileReader reader = new RuleFileReader(FeatureKind.RELATION, levels, relations);
+			RuleFileReader reader = new RuleFileReader(FeatureKind.RELATION, levels, relations, performChecks, getOverlaidTypeMap());
 			reader.load(fileLoader, "relations");
 		} catch (FileNotFoundException e) {
 			// it is ok for this file to not exist.
@@ -301,7 +298,7 @@ public class StyleImpl implements Style {
 		}
 
 		try {
-			RuleFileReader reader = new RuleFileReader(FeatureKind.POINT, levels, nodes);
+			RuleFileReader reader = new RuleFileReader(FeatureKind.POINT, levels, nodes, performChecks, getOverlaidTypeMap());
 			reader.load(fileLoader, "points");
 		} catch (FileNotFoundException e) {
 			// it is ok for this file to not exist.
@@ -309,115 +306,18 @@ public class StyleImpl implements Style {
 		}
 
 		try {
-			RuleFileReader reader = new RuleFileReader(FeatureKind.POLYLINE, levels, lines);
+			RuleFileReader reader = new RuleFileReader(FeatureKind.POLYLINE, levels, lines, performChecks, getOverlaidTypeMap());
 			reader.load(fileLoader, "lines");
 		} catch (FileNotFoundException e) {
 			log.debug("no lines file");
 		}
 
 		try {
-			RuleFileReader reader = new RuleFileReader(FeatureKind.POLYGON, levels, polygons);
+			RuleFileReader reader = new RuleFileReader(FeatureKind.POLYGON, levels, polygons, performChecks, getOverlaidTypeMap());
 			reader.load(fileLoader, "polygons");
 		} catch (FileNotFoundException e) {
 			log.debug("no polygons file");
 		}
-	}
-
-	/**
-	 * Read the map-features file.  This is the old format of the mapping
-	 * between osm and garmin types.
-	 */
-	private void readMapFeatures() {
-		try {
-			Reader r = fileLoader.open(FILE_FEATURES);
-			MapFeatureReader mfr = new MapFeatureReader();
-			String l = generalOptions.get("levels");
-			if (l == null)
-				l = LevelInfo.DEFAULT_LEVELS;
-			mfr.setLevels(LevelInfo.createFromString(l));
-			mfr.readFeatures(new BufferedReader(r));
-			initFromMapFeatures(mfr);
-		} catch (FileNotFoundException e) {
-			// optional file
-			log.debug("no map-features file");
-		} catch (IOException e) {
-			log.error("could not read map features file");
-		}
-	}
-
-	/**
-	 * Take the output of the map-features file and create rules for
-	 * each line and add to this style.  All rules in map-features are
-	 * unconditional, in other words the osm 'amenity=cinema' always
-	 * maps to the same garmin type.
-	 *
-	 * @param mfr The map feature file reader.
-	 */
-	private void initFromMapFeatures(MapFeatureReader mfr) {
-		addBackwardCompatibleRules();
-
-		for (Entry<String, GType> me : mfr.getLineFeatures().entrySet())
-			lines.add(me.getKey(), createRule(me.getKey(), me.getValue()), Collections.<String>emptySet());
-
-		for (Entry<String, GType> me : mfr.getShapeFeatures().entrySet())
-			polygons.add(me.getKey(), createRule(me.getKey(), me.getValue()), Collections.<String>emptySet());
-
-		for (Entry<String, GType> me : mfr.getPointFeatures().entrySet())
-			nodes.add(me.getKey(), createRule(me.getKey(), me.getValue()), Collections.<String>emptySet());
-	}
-
-	/**
-	 * For backward compatibility, when we find a map-features file we add
-	 * rules for actions that were previously hard coded in the conversion.
-	 * These are added even if there was also a lines, points, etc file.
-	 */
-	private void addBackwardCompatibleRules() {
-		// Name rule for highways
-		List<Action> l = new ArrayList<Action>();
-		NameAction action = new NameAction();
-		action.add("${name} (${ref})");
-		action.add("${ref}");
-		action.add("${name}");
-		l.add(action);
-
-		Op expr = new ExistsOp();
-		expr.setFirst(new ValueOp("highway"));
-		Rule rule = new ActionRule(expr, l);
-		lines.add("highway=*", rule, Collections.<String>emptySet());
-
-		// Name rule for contour lines
-		l = new ArrayList<Action>();
-		action = new NameAction();
-		action.add("${ele|conv:m=>ft}");
-		l.add(action);
-
-		EqualsOp expr2 = new EqualsOp();
-		expr2.setFirst(new ValueOp("contour"));
-		expr2.setSecond(new ValueOp("elevation"));
-		rule = new ActionRule(expr2, l);
-		lines.add("contour=elevation", rule, Collections.<String>emptySet()); // "contour=elevation"
-
-		expr2 = new EqualsOp();
-		expr2.setFirst(new ValueOp("contour_ext"));
-		expr2.setSecond(new ValueOp("elevation"));
-		rule = new ActionRule(expr2, l);
-		lines.add("contour_ext=elevation", rule, Collections.<String>emptySet()); // "contour_ext=elevation"
-	}
-
-	/**
-	 * Create a rule from a raw gtype. You get raw gtypes when you
-	 * have read the types from a map-features file.
-	 *
-	 * @return A rule that is conditional on the key string given.
-	 */
-	private Rule createRule(String key, GType gt) {
-		if (gt.getDefaultName() != null)
-			log.debug("set default name of", gt.getDefaultName(), "for", key);
-		String[] tagval = EQUAL_PATTERN.split(key);
-		EqualsOp op = new EqualsOp();
-		op.setFirst(new ValueOp(tagval[0]));
-		op.setSecond(new ValueOp(tagval[1]));
-		return new ExpressionRule(op, gt);
 	}
 
 	/**
@@ -434,12 +334,10 @@ public class StyleImpl implements Style {
 					String key = opt.getOption();
 					String val = opt.getValue();
 					if (key.equals("name-tag-list")) {
-						// The name-tag-list allows you to redefine what you want to use
-						// as the name of a feature.  By default this is just 'name', but
-						// you can supply a list of tags to use
-						// instead eg. "name:en,int_name,name" or you could use some
-						// completely different tag...
-						nameTagList = COMMA_OR_SPACE_PATTERN.split(val);
+						if ("name".equals(val) == false){
+							System.err.println("Warning: option name-tag-list used in the style options is ignored. "  
+									+ "Please use only the command line option to specify this value." );
+						}
 					} else if (OPTION_LIST.contains(key)) {
 						// Simple options that have string value.  Perhaps we should allow
 						// anything here?
@@ -506,13 +404,14 @@ public class StyleImpl implements Style {
 	 * in the current style will override any corresponding item in the
 	 * base style.
 	 * @param name The name of the base style
+	 * @param props program properties 
 	 */
-	private void readBaseStyle(String name) {
+	private void readBaseStyle(String name, EnhancedProperties props) {
 		if (name == null)
 			return;
 
 		try {
-			baseStyles.add(new StyleImpl(location, name));
+			baseStyles.add(new StyleImpl(location, name, props, performChecks));
 		} catch (SyntaxException e) {
 			System.err.println("Error in style: " + e.getMessage());
 		} catch (FileNotFoundException e) {
@@ -522,7 +421,7 @@ public class StyleImpl implements Style {
 			log.debug("could not open base style file", e);
 
 			try {
-				baseStyles.add(new StyleImpl(null, name));
+				baseStyles.add(new StyleImpl(null, name, props, performChecks));
 			} catch (SyntaxException se) {
 				System.err.println("Error in style: " + se.getMessage());
 			} catch (FileNotFoundException e1) {
@@ -542,18 +441,10 @@ public class StyleImpl implements Style {
 	 * @see #mergeRules(StyleImpl)
 	 */
 	private void mergeOptions(StyleImpl other) {
-		this.nameTagList = other.nameTagList;
-		for (Entry<String, String> ent : other.generalOptions.entrySet()) {
+	for (Entry<String, String> ent : other.generalOptions.entrySet()) {
 			String opt = ent.getKey();
 			String val = ent.getValue();
-			if (opt.equals("name-tag-list")) {
-				// The name-tag-list allows you to redefine what you want to use
-				// as the name of a feature.  By default this is just 'name', but
-				// you can supply a list of tags to use
-				// instead eg. "name:en,int_name,name" or you could use some
-				// completely different tag...
-				nameTagList = COMMA_OR_SPACE_PATTERN.split(val);
-			} else if (OPTION_LIST.contains(opt)) {
+			if (OPTION_LIST.contains(opt)) {
 				// Simple options that have string value.  Perhaps we should allow
 				// anything here?
 				generalOptions.put(opt, val);
@@ -610,12 +501,88 @@ public class StyleImpl implements Style {
 		stylePrinter.dumpToFile(out);
 	}
 
+	/**
+	 * 
+	 * @return null or the map that was read from the overlays file
+	 */
+	private Map<Integer, List<Integer>> getOverlaidTypeMap() {
+		if (overlays != null)
+			return overlays.getOverlays();
+		return Collections.emptyMap();
+	}
+
+	/**
+	 * Evaluate the style options and try to read the style.
+	 * 
+	 * The option --style-file give the location of an alternate file or
+	 * directory containing styles rather than the default built in ones.
+	 *
+	 * The option --style gives the name of a style, either one of the
+	 * built in ones or selects one from the given style-file.
+	 *
+	 * If there is no name given, but there is a file then the file should
+	 * just contain one style.
+	 *
+	 * @param props the program properties
+	 * @return A style instance or null in case of error. 
+	 */
+	public static Style readStyle(EnhancedProperties props) {
+		String loc = props.getProperty("style-file");
+		if (loc == null)
+			loc = props.getProperty("map-features");
+		String name = props.getProperty("style");
+
+		if (loc == null && name == null)
+			name = "default";
+
+		if (name == null){
+			StyleFileLoader loader = null;
+			try {
+				loader = StyleFileLoader.createStyleLoader(loc, null);
+				int numEntries = loader.list().length;
+				if (numEntries > 1)
+					throw new ExitException("Style file " + loc + " contains multiple styles, use option --style to select one.");
+			} catch (FileNotFoundException e) {
+				throw new ExitException("Could not open style file " + loc);
+			} finally {
+				Utils.closeFile(loader);
+			}
+		}
+
+		Style style;
+		try {
+			style = new StyleImpl(loc, name, props, WITHOUT_CHECKS);
+		} catch (SyntaxException e) {
+			System.err.println("Error in style: " + e.getMessage());
+			throw new ExitException("Could not open style " + (name == null? "":name));
+		} catch (FileNotFoundException e) {
+			String msg = "Could not open style ";
+			if (name != null){
+				msg += name;
+				if (loc != null)
+					msg += " in " + loc;
+			}
+			else 
+				msg += loc + " . Make sure that it points to a style or add the --style option.";
+			throw new ExitException(msg);
+		}
+		return style;
+	}
+
+	@Override
+	public void reportStats() {
+		relations.printStats("relations");
+		nodes.printStats("points");
+		lines.printStats("lines");
+		polygons.printStats("polygons");
+	}
+	
 	public static void main(String[] args) throws FileNotFoundException {
 		String file = args[0];
 		String name = null;
 		if (args.length > 1)
 			name = args[1];
-		StyleImpl style = new StyleImpl(file, name);
+		StyleImpl style = new StyleImpl(file, name, new EnhancedProperties(), WITH_CHECKS);
 
 		style.dumpToFile(new OutputStreamWriter(System.out));
 	}

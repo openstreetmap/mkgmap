@@ -201,11 +201,7 @@ public class BufferedImgFileReader implements ImgFileReader {
 
 		int ch = firstChar & 0xff;
 		do {
-			if (str11.length() == 0) {
-				// Not found
-				if (ch < 0x80)
-					return "";
-			}
+			assert !(str11.length() == 0 && (ch & 0x80) == 0);
 
 			if ((ch & 0x80) != 0)
 				--term;
@@ -215,9 +211,8 @@ public class BufferedImgFileReader implements ImgFileReader {
 		} while (term != 0);
 
 		// Remove any trailing delimiters
-		int idx;
-		if ((idx = str11.lastIndexOf("A")) >= 0)
-			str11.setLength(idx);
+		while (str11.length() > 0 && str11.charAt(str11.length()-1) == 'A')
+			str11.setLength(str11.length()-1);
 
 		// Convert in-line delimiters to the char delimiter
 		int len = str11.length();

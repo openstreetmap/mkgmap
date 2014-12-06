@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 Steve Ratcliffe
+ * Copyright (C) 2007,2014 Steve Ratcliffe
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -26,12 +26,20 @@ package uk.me.parabola.imgfmt.app.labelenc;
  * @author Steve Ratcliffe
  */
 public class EncodedText {
+	private final int hashCode;
 	private final byte[] ctext;
 	private final int length;
+	private final char[] chars;
 
-	public EncodedText(byte[] buf, int len) {
+	public EncodedText(byte[] buf, int len, char[] chars) {
 		this.ctext = buf;
 		this.length = len;
+		this.chars = chars;
+
+		int hc = 0;
+		for (int i = 0; i < length; i++)
+			hc = 31*hc + ctext[i];
+		hashCode = hc;
 	}
 
 	public byte[] getCtext() {
@@ -40,5 +48,27 @@ public class EncodedText {
 
 	public int getLength() {
 		return length;
+	}
+
+	public char[] getChars() {
+		return chars;
+	}
+
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		EncodedText that = (EncodedText) o;
+
+		if (length != that.length) return false;
+		for (int i = 0; i < length; i++)
+			if (ctext[i] != that.ctext[i])
+				return false;
+
+		return true;
+	}
+
+	public int hashCode() {
+		return hashCode;
 	}
 }

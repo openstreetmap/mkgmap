@@ -8,32 +8,87 @@
 # and http://wiki.openstreetmap.org/wiki/Mkgmap/help/Custom_styles
 # for more information.
 
-include 'inc/address';
+barrier=* & bicycle=*    { set mkgmap:bicycle='${bicycle|subst:private=>no}' }
+barrier=* & foot=*       { set mkgmap:foot='${foot|subst:private=>no}' }                  
+barrier=* & hgv=*        { set mkgmap:truck='${hgv|subst:private=>no}' }                  
+barrier=* & motorcar=*   { set mkgmap:car='${motorcar|subst:private=>no}' }
+barrier=* & psv=*        { set mkgmap:bus='${psv|subst:private=>no}' }                  
+barrier=* & taxi=*       { set mkgmap:taxi='${taxi|subst:private=>no}' }                  
+barrier=* & emergency=*  { set mkgmap:emergency='${emergency|subst:private=>no}' }                  
+barrier=* & delivery=*   { set mkgmap:delivery='${delivery|subst:private=>no}' }                  
+barrier=* & access=*     { addaccess '${access|subst:private=>no}' }
+
+barrier=bollard | barrier=cycle_barrier 
+    { add mkgmap:bicycle=yes; 
+      add mkgmap:foot=yes; 
+      addaccess no;
+      set mkgmap:road-speed=1; }
+barrier=bus_trap  
+    { add mkgmap:bus=yes; 
+      add mkgmap:foot=yes; 
+      add mkgmap:bicycle=yes; 
+      addaccess no;
+      set mkgmap:road-speed=1; }
+barrier=gate
+    { add mkgmap:bicycle=yes; 
+      add mkgmap:foot=yes; 
+      addaccess no;
+      set mkgmap:road-speed=0; }
+barrier=kissing_gate | barrier=stile | barrier=block
+    { add mkgmap:foot=yes; 
+      addaccess no;
+      set mkgmap:road-speed=0; }
 
 internet_access=yes { name 'Internet ${name}' | 'Internet' } [0x2f12 resolution 24 continue]
 internet_access=* & internet_access!=no & internet_access!=yes { name 'Internet(${internet_access}) ${name|def:}' } [0x2f12 resolution 24 continue]
 
-(highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
+(public_transport=platform | highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
 & (ref=* | route_ref=*) {
   set ref='${ref|def:}(${route_ref})';
 }
-(highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
+(public_transport=platform | highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
 & lit=yes & (shelter=yes | covered=yes)
 {
   set ref='${ref|def:}*';
 }
-(highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
+(public_transport=platform | highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
 & lit!=yes & (shelter=yes | covered=yes)
 {
   set ref='${ref|def:}+';
 }
-(highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
+(public_transport=platform | highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
 & (shelter=no | covered=no)
 {
   set ref='${ref|def:}-';
 }
 
 include 'inc/name';
+
+place=city & population > 999999 & name=*  {set cityxx=yes} [0x0100 resolution 12 continue with_actions]
+place=city & population > 799999 & cityxx!=yes & name=*  {set cityxx=yes} [0x0200 resolution 14 continue with_actions]
+place=city & population > 399999 & cityxx!=yes & name=*  {set cityxx=yes} [0x0300 resolution 15 continue with_actions]
+place=city & population > 299999 & cityxx!=yes & name=*  {set cityxx=yes} [0x0400 resolution 16 continue with_actions]
+place=city & population > 199999 & cityxx!=yes & name=*  {set cityxx=yes} [0x0500 resolution 16 continue with_actions]
+place=city & population >  99999 & cityxx!=yes & name=*  {set cityxx=yes} [0x0600 resolution 17 continue with_actions]
+place=city & population >  49999 & cityxx!=yes & name=*  {set cityxx=yes} [0x0700 resolution 17 continue with_actions]
+place=city & population >   9999 & cityxx!=yes & name=*  {set cityxx=yes} [0x0800 resolution 18 continue with_actions]
+
+place=city & population >       0 & cityxx!=yes & name=*  {set cityxx=yes} [0x0800 resolution 18 continue with_actions]
+place=city                          & cityxx!=yes & name=*  {set cityxx=yes} [0x0700 resolution 18 continue with_actions]
+
+place=town   & population >  69999 & cityxx!=yes  & name=* {set cityxx=yes} [0x0600 resolution 17 continue with_actions]
+place=town   & population >  19999 & cityxx!=yes  & name=* {set cityxx=yes} [0x0700 resolution 18 continue with_actions]
+place=town   & population >   9999 & cityxx!=yes  & name=* {set cityxx=yes} [0x0800 resolution 19 continue with_actions]
+place=town   & population >   4999 & cityxx!=yes  & name=* {set cityxx=yes} [0x0900 resolution 19 continue with_actions]
+place=town   & population >    999 & cityxx!=yes  & name=* {set cityxx=yes} [0x0a00 resolution 19 continue with_actions]
+place=town   & population >         0 & cityxx!=yes  & name=* {set cityxx=yes} [0x0b00 resolution 20 continue with_actions]
+place=town                            & cityxx!=yes  & name=* {set cityxx=yes} [0x0800 resolution 19 continue with_actions]
+
+place=island & cityxx!=yes  {set cityxx=yes}	[0x650c resolution 20 continue with_actions]
+place=islet & cityxx!=yes   {set cityxx=yes}	[0x650c resolution 22 continue with_actions]
+place=village & cityxx!=yes {set cityxx=yes} 	[0x0900 resolution 22 continue with_actions]
+place=suburb & cityxx!=yes  {set cityxx=yes}	[0x0a00 resolution 22 continue with_actions]
+place=hamlet & cityxx!=yes  {set cityxx=yes}	[0x0b00 resolution 24 continue with_actions]
 
 #aeroway=airport [0x5900 resolution 22]
 aeroway=airport [0x2f04 resolution 22]
@@ -78,7 +133,7 @@ amenity=fuel [0x2f01 resolution 24]
 amenity=kindergarten [0x2c05 resolution 24]
 amenity=library [0x2c03 resolution 24]
 amenity=nightclub [0x2d02 resolution 24]
-amenity=nursing_home [0x2b04 resolution 24]
+amenity=nursing_home [0x2f14 resolution 24]
 amenity=parking [0x2f0b resolution 24 default_name 'Parking']
 amenity=pharmacy [0x2e05 resolution 24]
 amenity=place_of_worship [0x2c0b resolution 24]
@@ -135,9 +190,7 @@ landuse=village_green & name=* [0x2c06 resolution 24]
 healthcare=hospital | amenity=hospital [0x3002 resolution 22]
 healthcare=* | amenity=dentist | amenity=doctors [0x3002 resolution 24]
 
-highway=bus_stop [0x2f17 resolution 24]
-
-highway=motorway_junction [0x2000 resolution 24]
+highway=motorway_junction [0x2100 resolution 24]
 
 highway=services & mkgmap:area2poi!=true [0x210f resolution 24 default_name 'Services']
 
@@ -158,7 +211,7 @@ leisure=recreation_ground [0x2c08 resolution 24]
 leisure=sports_center | leisure=sports_centre { name '${name} (${sport})' | '${name}' } [0x2d0a resolution 24]
 leisure=stadium { name '${name} (${sport})' | '${name}' } [0x2c08 resolution 24]
 leisure=track { name '${name} (${sport})' | '${name}' } [0x2c08 resolution 24]
-leisure=water_park [0x2b04 resolution 24]
+leisure=water_park [0x2d09 resolution 24]
 
 man_made=tower|landmark=chimney [0x6411 resolution 24]
 
@@ -169,16 +222,9 @@ natural=peak {name '${name|def:}${ele|height:m=>ft|def:}' } [0x6616 resolution 2
 natural=rock [0x6614 resolution 24]
 natural=volcano [0x2c0c resolution 24]
 
-place=city [0x0400 resolution 16]
-place=hamlet [0x0b00 resolution 24]
-place=suburb [0x0a00 resolution 22]
-place=town [0x0800 resolution 18]
-place=village [0x0900 resolution 22]
-place=island [0x650c resolution 20]
-
-railway=halt [0x2f08 resolution 23]
 railway=station [0x2f08 resolution 22]
-railway=tram_stop [0x2f17 resolution 24]
+( public_transport=platform & rail=yes ) | railway=halt [0x2f08 resolution 23]
+public_transport=platform | highway=bus_stop | railway=tram_stop [0x2f17 resolution 24]
 
 shop=bakers [0x2e02 resolution 24]
 shop=bakery [0x2e02 resolution 24]
@@ -243,7 +289,13 @@ tourism=viewpoint {name '${name} - ${description}' | '${name}'} [0x2c04 resoluti
 tourism=wine_cellar [0x2c0a resolution 24]
 tourism=zoo [0x2c07 resolution 24]
 
-barrier=bollard | barrier=bus_trap
-    {add access = no; add bicycle = yes; add foot = yes} [0x660f resolution 24]
-barrier=block | barrier=cycle_barrier | barrier=stile | barrier=kissing_gate
-    {add access = no; add foot = yes} [0x660f resolution 24]
+barrier=bollard | barrier=bus_trap | barrier=gate [0x660f resolution 24]
+barrier=block | barrier=cycle_barrier | barrier=stile | barrier=kissing_gate [0x660f resolution 24]
+
+include 'inc/water_points';
+include 'inc/landuse_points';
+
+<finalize>
+# The finalizer section is executed for each element when a rule with an element type matches
+name=* { name '${name}' }
+include 'inc/address';

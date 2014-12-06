@@ -1,16 +1,32 @@
+// Set default source language
+:language: mkgmap
 
 = Creating a style =
 
 == Testing a style ==
 You can test your style by calling mkgmap with the
-++--style-file=++__path-to-style__ and the `--list-styles` option. If you see your style listed, then your style is recognized by mkgmap. Then you can test if your style is valid by using it when creating a map.
-
+++--style-file=++__path-to-style__ and the `--list-styles` option. If you see your style listed, then your style is recognized by mkgmap.
+Additional tests are performed if you use the `--check-styles` option. The type values are verified to make sure that they are valid. Further checks try to find rules which assign a routable type to a line without making it a road by assigning road_class or road_speed. This is known to cause problems with routing in routable maps. 
+Then you can test if your style is valid by using it when creating a map.
 A style can be used just as it was created, but if you want to make it available to others it will be easier if you make a zip file out of it and then you just have the one file to distribute. You just can zip all files of the style. Several different styles can be placed into the same zip archive file.
 
 To use a zipped style, you can use ++--style-file=++__stylename__++.zip++. If
 there is more than one style in the zip file, then you can
 use ++--style-file=++__zipname__`.zip` `--style=`__stylename__.
 
+=== Tests performed by check-styles ===
+The `--check-styles` option verfies that your style uses type values which can processed by mkgmap.
+
+The following rules are verified:
+
+. If a type is >= 0x0100 (means it has more than one byte), the rightmost byte
+must be between 0x00 and 0x1f, so e.g. 0x011f is ok, 0x0120 is not.
+. If a type is >= 0x010000, it is an extended type, which can be used for points, lines, and polygons.
+. If the type is not extended, it must be >= 0x0100 for a point, < 0x3f for a line, and < 0x7f for a polygon. 
+. The polygon type 0x4a is reserved for the overview map.
+. It is known that the usage of routable types for non-routable lines in resolution 24 can cause
+routing problems (e.g. address search doesn't work). The check will flag rules that assign a routable type for a line in resolution 24 without giving road_class or road_speed. A routable type is between 0x01 and 0x13 or one of: 0x1a, 0x1b, 0x16.
+. If road_class or road_speed is given in combination with a non-routable type, the rule is flagged.  
 
 [[style-packaging]]
 == Making a style package ==
@@ -65,6 +81,7 @@ file separated by lines that contain the file name in triple angled
 brackets.
 
 .Single file archive
+[source]
 -------
 <<<version>>>
 0
@@ -83,48 +100,16 @@ This file can be easily created in its entirity in a text editor, but you
 can also convert between the files-in-a-directory format and the
 single-file format using the following command:
 
+[source,sh]
 -----
- # (to be typed all on one line)
- java -cp mkgmap.jar uk.me.parabola.mkgmap.osmstyle.CombinedStyleFile
-      mystyle > mystyle.style
+# (to be typed all on one line)
+java -cp mkgmap.jar uk.me.parabola.mkgmap.osmstyle.StyleImpl
+     mystyle > mystyle.style
 -----
 
 To convert back then supply the file as the argument, rather than the
 directory.
 
-////
-== Examples ==
-
-Examples of mkgmap conversion style rules.
-
-=== Alternatives ===
-Two or more osm tags resolve to the same element in the garmin map.
-----
-highway=footway | highway=path [0x16 level 1]
-----
-
-This is exactly the same as writing the two lines:
-----
-highway=footway [0x16 level 1]
-highway=path [0x16 level 1]
-----
-
-=== White space ===
-Space and new lines don't matter except to separate words that have to be
-separate.
-You can add as much space and as many newlines to the rule to make
-it look good.  Or remove them depending on taste.  For example the following two rules
-are exactly the same:
-----
-highway = primary 
-   | highway=primary_link
-      [
- 	0x2
-        level 3
-      ]
-
-highway=primary|highway=primary_link[0x2 level 3]
-----
 
 === The Garmin Map ===
 Each Garmin map may contain several separate maps which are prepared at different 'levels' of detail, the most appropriate of these is displayed depending on the zoom selected by the user. 
@@ -167,9 +152,11 @@ This means that the map will have three levels.  Level 0 in the map will corresp
 resolution 22 (between scales of 500m and 200m) and so on. The lowest level needs to include at least an object, therefore the default lowest level of 16 will create a broken map, if your osm input file has no information at zoom level 16 or lower included.
 
 ==== Watch out with levels when building topographical maps ====
+
 According to the principle that a map is never allowed to have an empty layer, if you have two input files for mkgmap, you have to specify --levels for each input file. This is especially important when one of the input files consists exclusively of contour lines. Take the following command as example on how to create such a map. (Attention the line wrap is only here for the wiki, this has to be one command in cmd.exe or terminal)
+[source,bat]
 -----
- java -jar mkgmap.jar --style-file=D:\path\to\mkgmap\resources\styles\style_name\ 
+java -jar mkgmap.jar --style-file=D:\path\to\mkgmap\resources\styles\style_name \
  --levels=0:24,1:22,2:20,3:18,4:16,5:14,6:12,7:10 data.osm 
  --levels=0:24,1:22,2:20 srtm.osm
 -----
@@ -180,4 +167,3 @@ There are 2 alternatives to circumvent having to assign different levels on comp
  b) Merge your osm files (either by script or in text editor (text editor may crash though on opening huge .osm files), and then use the lowest resulting level.
 Concluding the easiest is to include dummy objects at lowest level. (it should be thought about mkgmap doing this by default). The lower your lowest level the later the basemap will exchange your osm map.
 Your lowest level object is the defined by the object with the lowest level (as defined in your style) actually present in your osm input file.
-////

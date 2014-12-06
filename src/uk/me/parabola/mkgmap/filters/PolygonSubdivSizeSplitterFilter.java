@@ -30,7 +30,7 @@ import uk.me.parabola.mkgmap.general.MapShape;
 public class PolygonSubdivSizeSplitterFilter extends PolygonSplitterBase implements MapFilter {
 	private static final Logger log = Logger.getLogger(PolygonSubdivSizeSplitterFilter.class);
 
-	private int shift;
+	private int maxSize;
 
 	/**
 	 * Get the scale factor so that we don't over split.
@@ -39,9 +39,11 @@ public class PolygonSubdivSizeSplitterFilter extends PolygonSplitterBase impleme
 	 * that is being produced through this filter.
 	 */
 	public void init(FilterConfig config) {
-		shift = config.getShift();
+		int shift = config.getShift();
 		if (shift > 15)
 			shift = 16;
+		// allow a size of 0x8000 to avoid splitting of generated precomp-sea polygons
+		maxSize = Math.min((1<<24)-1, Math.max(MAX_SIZE << shift, 0x8000));
 	}
 
 	/**
@@ -54,8 +56,7 @@ public class PolygonSubdivSizeSplitterFilter extends PolygonSplitterBase impleme
 		assert element instanceof MapShape;
 		MapShape shape = (MapShape) element;
 
-		int maxSize = MAX_SIZE << shift;
-		if (isSizeOk(shape, maxSize)) {
+		if (isSizeOk(shape)) {
 			// This is ok let it through and return.
 			next.doFilter(element);
 			return;
@@ -70,7 +71,7 @@ public class PolygonSubdivSizeSplitterFilter extends PolygonSplitterBase impleme
 		// NOTE: the end condition is changed from within the loop.
 		for (int i = 0; i < outputs.size(); i++) {
 			MapShape s = outputs.get(i);
-			if (!isSizeOk(s, maxSize)) {
+			if (!isSizeOk(s)) {
 				// Not small enough, so remove it and split it again.  The resulting
 				// pieces will be placed at the end of the list and will be
 				// picked up later on.
@@ -87,12 +88,7 @@ public class PolygonSubdivSizeSplitterFilter extends PolygonSplitterBase impleme
 		}
 	}
 
-	private boolean isSizeOk(MapShape shape, int maxSize) {
-		// do not cut the background shape
-		if (shape.getType() == 0x4a)
-			return true;
-		
-		
+	private boolean isSizeOk(MapShape shape) {
 		// Estimate the size taken by lines and shapes as a constant plus
 		// a factor based on the number of points.
 		int numPoints = shape.getPoints().size();
@@ -108,8 +104,12 @@ public class PolygonSubdivSizeSplitterFilter extends PolygonSplitterBase impleme
 			log.debug("RGN Size larger than", MapSplitter.MAX_RGN_SIZE);
 			return false;
 		}
-	
-		return shape.getBounds().getMaxDimension() < Math.min(maxSize, 0x7fff);
+		int maxDim = shape.getBounds().getMaxDimension();
+		if (maxDim > maxSize){
+			log.debug("Size ", maxDim," larger than ", maxSize);
+			return false;
+		}
+		return true;
 	}
 
 }

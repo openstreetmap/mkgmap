@@ -324,8 +324,8 @@ public class RuleSetTest {
 	@Test
 	public void testContinueChangesTag() {
 		RuleSet rs = makeRuleSet("highway=crossing & crossing=zebra_crossing" +
-				"    {set highway=deleted_crossing} [0x4004 resolution 24 continue propagate]" +
-				"highway=crossing [0x610f resolution 24 continue]" +
+				"    {set highway=deleted_crossing} [0x10404 resolution 24 continue propagate]" +
+				"highway=crossing [0x1010f resolution 24 continue]" +
 				"highway=deleted_crossing [0x6 resolution 24 continue]"
 		);
 
@@ -334,7 +334,7 @@ public class RuleSetTest {
 		el.addTag("crossing", "zebra_crossing");
 
 		List<GType> list = resolveList(rs, el);
-		assertEquals("first element", 0x4004, list.get(0).getType());
+		assertEquals("first element", 0x10404, list.get(0).getType());
 		assertEquals("second element", 0x6, list.get(1).getType());
 	}
 

@@ -92,8 +92,10 @@ public class BoundaryLocationPreparer {
 	public HashMap<String, BoundaryLocationInfo> getPreparedLocationInfo(
 			List<Boundary> boundaries) {
 		HashMap<String, BoundaryLocationInfo> preparedLocationInfo = new HashMap<String, BoundaryLocationInfo> ();
-		for (Boundary b :boundaries){
-			preparedLocationInfo.put(b.getId(), parseTags(b.getTags())); 
+		if (boundaries != null){
+			for (Boundary b :boundaries){
+				preparedLocationInfo.put(b.getId(), parseTags(b.getTags())); 
+			}
 		}
 		return preparedLocationInfo;
 	}
@@ -175,7 +177,7 @@ public class BoundaryLocationPreparer {
 	 * @return the admin_level value. The value is UNSET_ADMIN_LEVEL if 
 	 * the conversion failed. 
 	 */
-	private int getAdminLevel(Tags tags) {
+	private static int getAdminLevel(Tags tags) {
 		String level = tags.get("admin_level");
 		if (level == null) {
 			return UNSET_ADMIN_LEVEL;

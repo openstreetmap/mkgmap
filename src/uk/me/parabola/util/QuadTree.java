@@ -80,48 +80,18 @@ public class QuadTree {
 		return itemCount;
 	}
 
-	private boolean isCloseToPolygon(Coord point, List<Coord> polygon,
+	private static boolean isCloseToPolygon(Coord point, List<Coord> polygon,
 			int gap) {
 		Iterator<Coord> polyIter = polygon.iterator();
 		Coord c2 = polyIter.next();
 		while (polyIter.hasNext()) {
 			Coord c1 = c2;
 			c2 = polyIter.next();
-			double dist = distanceToSegment(c1, c2, point);
+			double dist = point.shortestDistToLineSegment(c1, c2);
 			if (dist <= gap) {
 				return true;
 			}
 		}
 		return false;
-	}
-
-	/**
-	 * Calculates the distance to the given segment in meter.
-	 * @param spoint1 segment point 1
-	 * @param spoint2 segment point 2
-	 * @param point point
-	 * @return the distance in meter
-	 */
-	private double distanceToSegment(Coord spoint1, Coord spoint2, Coord point) {
-
-		double dx = spoint2.getLongitude() - spoint1.getLongitude();
-		double dy = spoint2.getLatitude() - spoint1.getLatitude();
-
-		if ((dx == 0) && (dy == 0)) {
-			return spoint1.distance(point);
-		}
-
-		double frac = ((point.getLongitude() - spoint1.getLongitude()) * dx + (point
-				.getLatitude() - spoint1.getLatitude()) * dy)
-				/ (dx * dx + dy * dy);
-
-		if (frac < 0) {
-			return spoint1.distance(point);
-		} else if (frac > 1) {
-			return spoint2.distance(point);
-		} else {
-			return spoint1.makeBetweenPoint(spoint2, frac).distance(point);
-		}
-
 	}
 }

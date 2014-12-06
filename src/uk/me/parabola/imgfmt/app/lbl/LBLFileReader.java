@@ -28,6 +28,8 @@ import uk.me.parabola.imgfmt.app.labelenc.DecodedText;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 
+import static uk.me.parabola.imgfmt.app.Label.NULL_LABEL;
+
 /**
  * The file that holds all the labels for the map.
  *
@@ -41,18 +43,17 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
  * @author Steve Ratcliffe
  */
 public class LBLFileReader extends ImgFile {
-	private static final Label NULL_LABEL = new Label("");
 
 	private CharacterDecoder textDecoder = CodeFunctions.getDefaultDecoder();
 
 	private final LBLHeader header = new LBLHeader();
 
-	private final Map<Integer, Label> labels = new HashMap<Integer, Label>();
-	private final Map<Integer, POIRecord> pois = new HashMap<Integer, POIRecord>();
-	private final List<Country> countries = new ArrayList<Country>();
-	private final List<Region> regions = new ArrayList<Region>();
-	private final Map<Integer, Zip> zips = new HashMap<Integer, Zip>();
-	private final List<City> cities = new ArrayList<City>();
+	private final Map<Integer, Label> labels = new HashMap<>();
+	private final Map<Integer, POIRecord> pois = new HashMap<>();
+	private final List<Country> countries = new ArrayList<>();
+	private final List<Region> regions = new ArrayList<>();
+	private final Map<Integer, Zip> zips = new HashMap<>();
+	private final List<City> cities = new ArrayList<>();
 
 	public LBLFileReader(ImgChannel chan) {
 		setHeader(header);
@@ -107,7 +108,7 @@ public class LBLFileReader extends ImgFile {
 	}
 	
 	public List<Zip> getZips() {
-		return new ArrayList<Zip>(zips.values());
+		return new ArrayList<>(zips.values());
 	}
 
 	/**
@@ -385,14 +386,13 @@ public class LBLFileReader extends ImgFile {
 
 			if (hasStreetNum) {
 				byte b = reader.get();
-				String num = reader.getBase11str(b, '-');
-				if (num.isEmpty()) {
+				if ((b & 0x80) == 0) {
 					int mpoffset = (b << 16) & 0xff0000;
 					mpoffset |= reader.getChar() & 0xffff;
 
-					poi.setComplexPhoneNumber(fetchLabel(mpoffset));
+					poi.setComplexStreetNumber(fetchLabel(mpoffset));
 				} else {
-					poi.setSimpleStreetNumber(num);
+					poi.setSimpleStreetNumber(reader.getBase11str(b, '-'));
 				}
 			}
 
@@ -424,16 +424,14 @@ public class LBLFileReader extends ImgFile {
 			
 			if (hasPhone) {
 				byte b = reader.get();
-				String num = reader.getBase11str(b, '-');
-				if (num.isEmpty()) {
+				if ((b & 0x80) == 0) {
 					// Yes this is a bit strange it is a byte followed by a char
 					int mpoffset = (b << 16) & 0xff0000;
 					mpoffset |= reader.getChar() & 0xffff;
 
-					Label label = fetchLabel(mpoffset);
-					poi.setComplexPhoneNumber(label);
+					poi.setComplexPhoneNumber(fetchLabel(mpoffset));
 				} else {
-					poi.setSimplePhoneNumber(num);
+					poi.setSimplePhoneNumber(reader.getBase11str(b, '-'));
 				}
 			}
 
@@ -521,7 +519,7 @@ public class LBLFileReader extends ImgFile {
 	}
 
 	public Map<Integer, String> getLabels() {
-		Map<Integer, String> m = new HashMap<Integer, String>();
+		Map<Integer, String> m = new HashMap<>();
 		for (Map.Entry<Integer, Label> ent : labels.entrySet()) {
 			m.put(ent.getKey(), ent.getValue().getText());
 		}
@@ -544,5 +542,9 @@ public class LBLFileReader extends ImgFile {
 		private char phoneMask;
 		private char highwayExitMask;
 		private char tidesMask;
+	}
+
+	public int getEncodingType() {
+		return header.getEncodingType();
 	}
 }

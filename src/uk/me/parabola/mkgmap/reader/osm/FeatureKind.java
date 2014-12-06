@@ -23,6 +23,7 @@ public enum FeatureKind {
 	POLYLINE,
 	POLYGON,
 
-	// This is not really a feature kind, as there is no corresponding Garmin object.
+	// These are not really feature kinds, as there is no corresponding Garmin object.
 	RELATION,
+	ALL,
 }

@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.Reader;
@@ -29,7 +30,7 @@ import uk.me.parabola.log.Logger;
  *
  * @author Steve Ratcliffe
  */
-public abstract class StyleFileLoader {
+public abstract class StyleFileLoader implements Closeable {
 	private static final Logger log = Logger.getLogger(StyleFileLoader.class);
 
 	/**
@@ -57,6 +58,8 @@ public abstract class StyleFileLoader {
 			File dir = file;
 			if (name != null) {
 				dir = new File(file, name);
+				if (dir.exists() == false)
+					throw new FileNotFoundException("style " + name + " not found in " + dir);
 				if (!dir.isDirectory())
 					dir = file;
 			}
@@ -65,7 +68,7 @@ public abstract class StyleFileLoader {
 			loader = new DirectoryFileLoader(dir);
 		} else if (file.isFile()) {
 			String loclc = loc.toLowerCase();
-			if (loclc.endsWith(".style") || loclc.endsWith(".csv")) {
+			if (loclc.endsWith(".style")) {
 				if (name != null)
 					throw new FileNotFoundException("no sub styles in a simple style file");
 				log.debug("a single file style");

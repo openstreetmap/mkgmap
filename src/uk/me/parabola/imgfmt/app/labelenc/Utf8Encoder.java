@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 Steve Ratcliffe
+ * Copyright (C) 2007,2014 Steve Ratcliffe
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -20,15 +20,14 @@ import java.io.UnsupportedEncodingException;
 import java.util.Locale;
 
 /**
- * Encoder for labels in utf-8, note that I am not actually sure that this
- * is in fact used anywhere.
+ * Encoder for labels in utf-8.
  * 
  * @author Steve Ratcliffe
  */
 public class Utf8Encoder extends BaseEncoder implements CharacterEncoder {
 	
 	public EncodedText encodeText(String text) {
-		if (text == null)
+		if (text == null || text.isEmpty())
 			return NO_TEXT;
 
 		String uctext;
@@ -43,11 +42,11 @@ public class Utf8Encoder extends BaseEncoder implements CharacterEncoder {
 			byte[] res = new byte[buf.length + 1];
 			System.arraycopy(buf, 0, res, 0, buf.length);
 			res[buf.length] = 0;
-			et = new EncodedText(res, res.length);
+			et = new EncodedText(res, res.length, uctext.toCharArray());
 		} catch (UnsupportedEncodingException e) {
 			// As utf-8 must be supported, this can't happen
 			byte[] buf = uctext.getBytes();
-			et = new EncodedText(buf, buf.length);
+			et = new EncodedText(buf, buf.length, uctext.toCharArray());
 		}
 		return et;
 	}

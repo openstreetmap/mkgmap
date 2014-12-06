@@ -19,6 +19,9 @@ import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgReader;
+import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.Section;
+import uk.me.parabola.imgfmt.app.lbl.LBLFileReader;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.util.EnhancedProperties;
 
@@ -50,12 +53,17 @@ public class TREFileReader extends ImgReader {
 		header.readHeader(getReader());
 		readMapLevels();
 		readSubdivs();
+		readExtTypeOffsetsRecords();
 	}
 
 	public Area getBounds() {
 		return header.getBounds();
 	}
 
+	public Zoom[] getMapLevels() {
+		return mapLevels;
+	}
+	
 	/**
 	 * Return the subdivisions for the given level.
 	 * @param level The level, 0 being the most detailed.  There may not be
@@ -87,6 +95,7 @@ public class TREFileReader extends ImgReader {
 		for (int count = 0; count < levelDivs.length && reader.position() < end; count++) {
 
 			Subdivision[] divs = levelDivs[count];
+			Zoom zoom = mapLevels[count];
 			if (divs == null)
 				break;
 
@@ -103,18 +112,53 @@ public class TREFileReader extends ImgReader {
 				int endRgnOffset = reader.getu3();
 
 				SubdivData subdivData = new SubdivData(flags,
-						lat, lon, width, height,
+						lat, lon, 2*width, 2*height,
 						lastRgnOffset, endRgnOffset);
 
 				Subdivision subdiv = Subdivision.readSubdivision(mapLevels[count], subdivData);
 				subdiv.setNumber(subdivNum++);
 				
 				divs[i] = subdiv;
+				zoom.addSubdivision(subdiv);
 
 				lastRgnOffset = endRgnOffset;
 			}
 		}
 	}
+	
+	/**
+	 * Read the extended type info for the sub divisions. Corresponds to {@link TREFile#writeExtTypeOffsetsRecords()}.
+	 */
+	private void readExtTypeOffsetsRecords() {
+		ImgFileReader reader = getReader();
+		int start = header.getExtTypeOffsetsPos();
+		int end = start + header.getExtTypeOffsetsSize();
+		int skipBytes = header.getExtTypeSectionSize() - 13;
+			
+		reader.position(start);
+		Subdivision sd = null;
+		Subdivision sdPrev = null;
+		for (int count = 0; count < levelDivs.length && reader.position() < end; count++) {
+			Subdivision[] divs = levelDivs[count];
+			if (divs == null)
+				break;
+
+			for (int i = 0; i < divs.length; i++) {
+				sdPrev = sd;
+				sd = divs[i];
+				sd.readExtTypeOffsetsRecord(reader, sdPrev);
+				if (skipBytes > 0)
+					reader.get(skipBytes);
+			}
+		}
+		if(sd != null) {
+			sd.readLastExtTypeOffsetsRecord(reader);
+			if (skipBytes > 0)
+				reader.get(skipBytes);
+		}
+		
+	}
+
 
 	/**
 	 * Read the map levels.  This is needed to make sense of the subdivision
@@ -152,7 +196,7 @@ public class TREFileReader extends ImgReader {
 		header.config(props);
 	}
 
-	public String[] getCopyrights() {
+	public String[] getMapInfo() {
 
 		List<String> msgs = new ArrayList<String>();
 
@@ -164,27 +208,26 @@ public class TREFileReader extends ImgReader {
 			msgs.add(m);
 		}
 
-		// Now get the copyright messages that are listed in the section.
-		//Section sect = header.getCopyrightSection();
 
-		// TODO This needs the label section to work...
-		//
-		//long pos = sect.getPosition();
-		//while (pos < sect.getEndPos()) {
-		//	reader.position(pos);
-		//	int labelNum = header.getHeaderLength() + reader.get3();
-		//
-		//
-		//	System.out.println("position at " + labelNum);
-		//	reader.position(labelNum);
-		//	String m = reader.getZString();
-		//	System.out.println("C/R msg " + m);
-		//
-		//	messages.add(m);
-		//
-		//	pos += sect.getItemSize();
-		//}
+		return msgs.toArray(new String[msgs.size()]);
+	}
 
+	public String[] getCopyrights(LBLFileReader lblReader) {
+		Section sect = header.getCopyrightSection();
+		ImgFileReader reader = getReader();
+		List<String> msgs = new ArrayList<String>();
+
+		long pos = sect.getPosition();
+		while (pos < sect.getEndPos()) {
+			reader.position(pos);
+			int offset = reader.get3();
+			Label label = lblReader.fetchLabel(offset);
+			if (label != null) {
+				msgs.add(label.getText());
+			}
+		
+			pos += sect.getItemSize();
+		}
 		return msgs.toArray(new String[msgs.size()]);
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Steve Ratcliffe
+ * Copyright (C) 2008,2014 Steve Ratcliffe
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -19,10 +19,7 @@ package uk.me.parabola.mkgmap.scan;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.Deque;
 import java.util.LinkedList;
-
-import uk.me.parabola.imgfmt.Utils;
 
 /**
  * Read a file in terms of word and symbol tokens.
@@ -33,19 +30,16 @@ public class TokenScanner {
 	private static final int NO_PUSHBACK = 0;
 
 	// Reading state
-	private Reader reader;
+	private final Reader reader;
 	private int pushback = NO_PUSHBACK;
 	private boolean isEOF;
 
-	private String fileName;
+	private final String fileName;
 	private int linenumber;
 
-	private LinkedList<Token> tokens = new LinkedList<Token>();
+	private final LinkedList<Token> tokens = new LinkedList<>();
 
 	private boolean bol = true;
-
-	// Included file state
-	private final Deque<ScanState> states = new LinkedList<ScanState>();
 
 	// Extra word characters.
 	private String extraWordChars = "";
@@ -114,6 +108,7 @@ public class TokenScanner {
 	}
 
 	public boolean isEndOfFile() {
+		ensureTok();
 		if (tokens.isEmpty()) {
 			return isEOF;
 		} else {
@@ -127,7 +122,6 @@ public class TokenScanner {
 	 */
 	public void skipSpace() {
 		while (!isEndOfFile()) {
-			ensureTok();
 			if (tokens.peek().isValue(commentChar)) {
 				skipLine();
 				continue;
@@ -184,7 +178,12 @@ public class TokenScanner {
 		val.append((char) c);
 
 		TokType tt;
-		if (c == '\n') {
+		if (c == '\r') {
+			c = readChar();
+			if (c != '\n')
+				pushback = c;
+			tt = TokType.EOL;
+		} else if (c == '\n') {
 			tt = TokType.EOL;
 		} else if (isSpace(c)) {
 			while (isSpace(c = readChar()) && c != '\n')
@@ -234,39 +233,16 @@ public class TokenScanner {
 			return c;
 		}
 
-		do {
-			try {
-				c = reader.read();
-			} catch (IOException e) {
-				c = -1;
-			}
-
-			// Finished a file, return to the including file if there was one.
-			if (c == -1)
-				popState();
-		} while (!isEOF && c == -1);
-
-		return c;
-	}
-
-	/**
-	 * Finish the currently included file and return the state to start reading from the parent
-	 * file.
-	 *
-	 * This is called when at the end of the current input file.
-	 * If there are no more parent files then the end of file flag is set.
-	 */
-	private void popState() {
-		// Close the current reader that is finished.
-		Utils.closeFile(reader);
-
-		if (states.isEmpty()) {
+		try {
+			c = reader.read();
+			if (c == 0xfffd)
+				throw new SyntaxException(this, "Bad character in input, file probably not in utf-8");
+		} catch (IOException e) {
 			isEOF = true;
-			return;
+			c = -1;
 		}
 
-		ScanState state = states.removeFirst();
-		state.copyTo(this);
+		return c;
 	}
 
 	private boolean isSpace(int nextch) {
@@ -440,67 +416,5 @@ public class TokenScanner {
 			this.commentChar = "";
 		else
 			this.commentChar = commentChar;
-	}
-
-	/**
-	 * Include a new file in the token stream.
-	 *
-	 * Stop reading from the current file and save all the details about the file. Sets up to read from
-	 * the included file.
-	 *
-	 * @param filename The name of the file that is being read. This is only used for messages and so doesn't
-	 * have to be a name that can be directly opened for example.
-	 * @param r The input reader for the file.
-	 */
-	public void includeFile(String filename, Reader r) {
-		ScanState state = new ScanState(this);
-		states.addFirst(state);
-
-		reader = r;
-		pushback = NO_PUSHBACK;
-		isEOF = false;
-		fileName = filename;
-		linenumber = 1;
-		tokens = new LinkedList<Token>();
-		bol = true;
-	}
-
-	/**
-	 * Saved state of scanning and individual file. Used when including files.
-	 */
-	private class ScanState {
-		private final Reader reader;
-		private final int pushback;
-
-		private final String fileName;
-		private final int linenumber;
-
-		private final LinkedList<Token> tokens;
-
-		private final boolean bol;
-
-		/**
-		 * Create this state with the state of the token scanner.
-		 */
-		public ScanState(TokenScanner ts) {
-			reader = ts.reader;
-			pushback = ts.pushback;
-			fileName = ts.fileName;
-			linenumber = ts.linenumber;
-			tokens = ts.tokens;
-			bol = ts.bol;
-		}
-
-		/**
-		 * Copy this state to the given token scanner.
-		 */
-		public void copyTo(TokenScanner ts) {
-			ts.reader = reader;
-			ts.pushback = pushback;
-			ts.fileName = fileName;
-			ts.linenumber = linenumber;
-			ts.tokens = tokens;
-			ts.bol = bol;
-		}
 	}
 }

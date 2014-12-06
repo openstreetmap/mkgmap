@@ -122,4 +122,10 @@ public class OverlayReader {
 			adder.add(line);
 		}
 	}
+
+	public Map<Integer, List<Integer>> getOverlays() {
+		return overlays;
+	}
+	
+
 }

@@ -53,7 +53,7 @@ public class SimpleTest extends Base {
 	@Test
 	public void testBasic() throws FileNotFoundException {
 
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				Args.TEST_STYLE_ARG,
 				"--preserve-element-order",
 				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz"
@@ -68,16 +68,16 @@ public class SimpleTest extends Base {
 		Area expBox = new Area(2402404, -11185, 2407064, -6524);
 		assertEquals("bounds of map", expBox, bounds);
 
-		List<Point> list = mr.pointsForLevel(0);
+		List<Point> list = mr.pointsForLevel(0, MapReader.WITH_EXT_TYPE_DATA);
 		assertEquals("number of points at level 0", 204, list.size());
 
 		List<Polyline> list1 = mr.linesForLevel(0);
-		assertEquals("number of lines at level 0", 3752, list1.size());
+		assertEquals("number of lines at level 0", 3382, list1.size());
 	}
 
 	@Test
 	public void testNoSuchFile() {
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				"no-such-file-xyz.osm",
 		});
 		assertFalse("no file generated", new File(Args.DEF_MAP_FILENAME).exists());
@@ -85,7 +85,7 @@ public class SimpleTest extends Base {
 
 	@Test
 	public void testPolish() throws FileNotFoundException {
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				Args.TEST_STYLE_ARG,
 				Args.TEST_RESOURCE_MP + "test1.mp"
 		});
@@ -99,15 +99,22 @@ public class SimpleTest extends Base {
 			String ext = ent.getExt();
 
 			int size = ent.getSize();
-			if (ext.equals("RGN")) {
+			switch (ext) {
+			case "RGN":
 				count++;
-				assertThat("RGN size", size, new RangeMatcher(2901));
-			} else if (ext.equals("TRE")) {
+				System.out.println("RGN size " + size);
+				assertThat("RGN size", size, new RangeMatcher(2702));
+				break;
+			case "TRE":
 				count++;
-				assertEquals("TRE size", 596, size);
-			} else if (ext.equals("LBL")) {
+				System.out.println("TRE size " + size);
+				// Size varies depending on svn modified status
+				assertThat("TRE size", size, new RangeMatcher(769, 2));
+				break;
+			case "LBL":
 				count++;
-				assertEquals("LBL size", 957, size);
+				assertEquals("LBL size", 989, size);
+				break;
 			}
 		}
 		assertTrue("enough checks run", count >= 3);

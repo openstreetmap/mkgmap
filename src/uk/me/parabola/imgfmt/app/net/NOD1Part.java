@@ -17,8 +17,12 @@
 package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -181,9 +185,9 @@ public class NOD1Part {
 	// The area that actually has nodes.
 	private final BBox bboxActual = new BBox();
 
-	private final List<RouteNode> nodes = new ArrayList<RouteNode>();
-	private final TableA tabA = new TableA();
-	private final TableB tabB = new TableB();
+	private List<RouteNode> nodes = new ArrayList<RouteNode>();
+	private TableA tabA = new TableA();
+	private Map<RouteNode,RouteNode> destNodes = new LinkedHashMap<RouteNode, RouteNode>();
 
 	/**
 	 * Create an unbounded NOD1Part.
@@ -224,11 +228,34 @@ public class NOD1Part {
 		for (RouteArc arc : node.arcsIteration()) {
 			tabA.addArc(arc);
 			RouteNode dest = arc.getDest();
-			if (bbox != null && !bbox.contains(dest.getCoord())) {
+			if (arc.isInternal() == false){
+				destNodes.put(dest, dest);
+			}
+			else if (bbox != null && !bbox.contains(dest.getCoord()) || dest.getGroup() != node.getGroup()) {
 				arc.setInternal(false);
-				tabB.addNode(dest);
+				destNodes.put(dest, dest);
 			}
 		}
+		
+		for (RouteRestriction rr: node.getRestrictions()){
+			List<RouteArc> arcs = rr.getArcs();
+			if (arcs.size() >= 3){
+				for (int i = 0; i < arcs.size(); i++){
+					RouteArc arc = arcs.get(i);
+					if (arc.getSource() != node){
+						tabA.addArc(arc);
+						RouteNode dest = arc.getDest();
+						if (arc.isInternal() == false)
+							destNodes.put(dest, dest);
+						else if (bbox != null && !bbox.contains(dest.getCoord()) || dest.getGroup() != node.getGroup()) {
+							arc.setInternal(false);
+							destNodes.put(dest, dest);
+						} 
+					}
+				}
+			}
+		}
+		
 		nodesSize += node.boundSize();
 	}
 
@@ -269,14 +296,17 @@ public class NOD1Part {
 
 		for (int i = 0; i < split.length; i++)
 			parts[i] = new NOD1Part(split[i]);
-
+		
+		
 		for (RouteNode node : nodes) {
 			int i = 0;
 			while (!split[i].contains(node.getCoord()))
 				i++;
 			parts[i].addNode(node);
 		}
-
+		this.tabA = null;
+		this.destNodes = null;
+		this.nodes = null;
 		for (NOD1Part part : parts)
 			if(!part.bboxActual.empty)
 				centers.addAll(part.subdivideHelper(depth + 1));
@@ -285,10 +315,10 @@ public class NOD1Part {
 	}
 
 	private boolean satisfiesConstraints() {
-		log.debug("constraints:", bboxActual, tabA.size(), tabB.size(), nodesSize);
+		log.debug("constraints:", bboxActual, tabA.size(), destNodes.size(), nodesSize);
 		return bboxActual.getMaxDimension() < MAX_SIZE
 			&& tabA.size() < MAX_TABA
-			&& tabB.size() < MAX_TABB
+			&& destNodes.size() < MAX_TABB
 			&& nodesSize < MAX_NODES_SIZE;
 	}
 
@@ -299,6 +329,14 @@ public class NOD1Part {
 	 * be a legal RouteCenter.
 	 */
 	private RouteCenter toRouteCenter() {
+		Collections.sort(nodes, new Comparator<RouteNode>() {
+			public int compare(RouteNode n1, RouteNode n2) {
+				return n1.getCoord().compareTo(n2.getCoord());
+			}
+		});
+		TableB tabB = new TableB();
+		for (RouteNode rn : destNodes.keySet())
+			tabB.addNode(rn);
 		return new RouteCenter(bboxActual.toArea(), nodes, tabA, tabB);
 	}
 }

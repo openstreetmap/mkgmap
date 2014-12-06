@@ -12,6 +12,8 @@
  */
 package uk.me.parabola.imgfmt;
 
+import uk.me.parabola.log.Logger;
+
 /**
  * Used for cases where the current map has failed to compile, but the error
  * is expected to be specific to the map (eg it is too big etc).  When this
@@ -24,7 +26,7 @@ package uk.me.parabola.imgfmt;
  * @author Steve Ratcliffe
  */
 public class MapFailedException extends RuntimeException {
-
+	private static final Logger log = Logger.getLogger(MapFailedException.class);
 
 	/**
 	 * Constructs a new runtime exception with the specified detail message.
@@ -36,6 +38,7 @@ public class MapFailedException extends RuntimeException {
 	 */
 	public MapFailedException(String message) {
 		super(message);
+		log(message);
 	}
 
 	/**
@@ -54,5 +57,19 @@ public class MapFailedException extends RuntimeException {
 	 */
 	public MapFailedException(String message, Throwable cause) {
 		super(message, cause);
+		log(message);
+	}
+	
+	private static void log(String message){
+		String thrownBy = "";
+		try{
+			StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+			int callerPosInStack = 3; 
+			String[] caller = stackTraceElements[callerPosInStack].getClassName().split("\\.");
+			thrownBy = "(thrown in " + caller[caller.length-1]+ "." +stackTraceElements[callerPosInStack].getMethodName() + "()) ";
+		} catch(Exception e){
+			log.info(e);
+		}
+		log.error(thrownBy + message);
 	}
 }

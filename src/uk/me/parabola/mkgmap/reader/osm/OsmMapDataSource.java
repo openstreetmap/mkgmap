@@ -20,22 +20,22 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
-import uk.me.parabola.imgfmt.ExitException;
+import uk.me.parabola.imgfmt.FormatException;
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
 import uk.me.parabola.mkgmap.osmstyle.StyledConverter;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
-import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.util.EnhancedProperties;
 
 /**
@@ -45,7 +45,7 @@ import uk.me.parabola.util.EnhancedProperties;
  * @author Steve Ratcliffe
  */
 public abstract class OsmMapDataSource extends MapperBasedMapDataSource
-		implements LoadableMapDataSource
+		implements LoadableMapDataSource, LoadableOsmDataSource
 {
 	private static final Logger log = Logger.getLogger(OsmMapDataSource.class);
 
@@ -53,12 +53,12 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	private final OsmReadingHooks[] POSSIBLE_HOOKS = {
 			new SeaGenerator(),
 			new MultiPolygonFinishHook(),
+			new RelationStyleHook(), 
 			new LinkDestinationHook(),
 			new UnusedElementsRemoverHook(),
 			new RoutingHook(),
 			new HighwayHooks(),
 			new LocationHook(),
-			new RelationStyleHook(),
 			new POIGeneratorHook(),
 	};
 	protected OsmConverter converter;
@@ -89,21 +89,42 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	 * pair.
 	 */
 	public LevelInfo[] mapLevels() {
-
-		// First try command line, then style, then our default.
-		String levelSpec = getConfig().getProperty("levels");
-		log.debug("levels", levelSpec, ", ", ((levelSpec!=null)?levelSpec.length():""));
-		if (levelSpec == null || levelSpec.length() < 2) {
-			if (style != null) {
-				levelSpec = style.getOption("levels");
-				log.debug("getting levels from style:", levelSpec);
-			}
-		}
-
+		String levelSpec = getLevelSpec("levels");
 		if (levelSpec == null)
 			levelSpec = LevelInfo.DEFAULT_LEVELS;
 
 		return LevelInfo.createFromString(levelSpec);
+	}
+
+	@Override
+	public LevelInfo[] overviewMapLevels() {
+		String levelSpec = getLevelSpec("overview-levels");
+		
+		if (levelSpec == null)
+			return null;
+		LevelInfo[] levels = LevelInfo.createFromString(levelSpec); 
+		for (int i = 0; i < levels.length; i++)
+			levels[i] = new LevelInfo(levels.length-i-1,levels[i].getBits());
+		return levels;
+	}
+		
+	private String getLevelSpec (String optionName){
+		// First try command line, then style, then our default.
+		String levelSpec = getConfig().getProperty(optionName);
+		log.debug(optionName, levelSpec, ", ", ((levelSpec!=null)?levelSpec.length():""));
+		if (levelSpec == null || levelSpec.length() < 2) {
+			if (style != null) {
+				levelSpec = style.getOption(optionName);
+				log.debug("getting " + optionName + " from style:", levelSpec);
+			}
+		}
+		return levelSpec;
+	}
+	
+	@Override
+	public void load(String name) throws FileNotFoundException, FormatException {
+		InputStream is = Utils.openFile(name);
+		load(is);
 	}
 
 	/**
@@ -129,12 +150,12 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	 */
 	protected void setupHandler(OsmHandler handler) {
 		createElementSaver();
+		createConverter();
+		
 		osmReadingHooks = pluginChain(elementSaver, getConfig());
 
 		handler.setElementSaver(elementSaver);
 		handler.setHooks(osmReadingHooks);
-
-		createConverter();
 
 		handler.setUsedTags(getUsedTags());
 
@@ -159,10 +180,12 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	
 	protected OsmReadingHooks pluginChain(ElementSaver saver, EnhancedProperties props) {
 		List<OsmReadingHooks> plugins = new ArrayList<OsmReadingHooks>();
-
 		for (OsmReadingHooks p : getPossibleHooks()) {
-			if (p.init(saver, props))
+			if (p.init(saver, props)){
 				plugins.add(p);
+				if (p instanceof RelationStyleHook)
+					((RelationStyleHook) p).setStyle(style);
+			}
 		}
 
 		OsmReadingHooks hooks;
@@ -228,41 +251,14 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	/**
 	 * Create the appropriate converter from osm to garmin styles.
 	 *
-	 * The option --style-file give the location of an alternate file or
-	 * directory containing styles rather than the default built in ones.
-	 *
-	 * The option --style gives the name of a style, either one of the
-	 * built in ones or selects one from the given style-file.
-	 *
-	 * If there is no name given, but there is a file then the file should
-	 * just contain one style.
-	 *
 	 */
 	protected void createConverter() {
+		EnhancedProperties props = getConfig();
+		Style style = StyleImpl.readStyle(props);
+		setStyle(style);
 
-		Properties props = getConfig();
-		String loc = props.getProperty("style-file");
-		if (loc == null)
-			loc = props.getProperty("map-features");
-		String name = props.getProperty("style");
-
-		if (loc == null && name == null)
-			name = "default";
-
-		try {
-			Style style = new StyleImpl(loc, name);
-			style.applyOptionOverride(props);
-			setStyle(style);
-
-			usedTags.addAll(style.getUsedTags());
-			converter = new StyledConverter(style, mapper, props);
-		} catch (SyntaxException e) {
-			System.err.println("Error in style: " + e.getMessage());
-			throw new ExitException("Could not open style " + name);
-		} catch (FileNotFoundException e) {
-			String name1 = (name != null)? name: loc;
-			throw new ExitException("Could not open style " + name1);
-		}
+		usedTags.addAll(style.getUsedTags());
+		converter = new StyledConverter(style, mapper, props);
 	}
 
 	public OsmConverter getConverter() {

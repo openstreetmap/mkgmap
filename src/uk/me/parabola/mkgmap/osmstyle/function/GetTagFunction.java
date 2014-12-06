@@ -13,6 +13,7 @@
 package uk.me.parabola.mkgmap.osmstyle.function;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.TagDict;
 
 /**
  * Get the value of a tag from the element.
@@ -23,13 +24,14 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  * @author Steve Ratcliffe
  */
 public class GetTagFunction extends StyleFunction {
-
+	short tagKey;
 	public GetTagFunction(String value) {
 		super(value);
+		tagKey = TagDict.getInstance().xlate(value);
 	}
 
 	public String value(Element el) {
-		return el.getTag(getKeyValue());
+		return el.getTag(tagKey);
 	}
 
 	/**
@@ -41,6 +43,6 @@ public class GetTagFunction extends StyleFunction {
 	}
 
 	public String toString() {
-		return getKeyValue();
+		return "$" + getKeyValue();
 	}
 }

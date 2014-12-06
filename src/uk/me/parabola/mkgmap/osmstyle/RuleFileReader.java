@@ -16,10 +16,14 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
+import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.Reader;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.osmstyle.actions.ActionList;
@@ -57,12 +61,18 @@ public class RuleFileReader {
 	private final TypeReader typeReader;
 
 	private final RuleSet rules;
-	private TokenScanner scanner;
-	private StyleFileLoader loader;
+	private RuleSet finalizeRules;
+	private final boolean performChecks;
+	private final Map<Integer, List<Integer>> overlays;
 
-	public RuleFileReader(FeatureKind kind, LevelInfo[] levels, RuleSet rules) {
+	private boolean inFinalizeSection = false;
+	
+	public RuleFileReader(FeatureKind kind, LevelInfo[] levels, RuleSet rules, boolean performChecks, 
+			Map<Integer, List<Integer>> overlays) {
 		this.kind = kind;
 		this.rules = rules;
+		this.performChecks = performChecks;
+		this.overlays = overlays;
 		typeReader = new TypeReader(kind, levels);
 	}
 
@@ -73,12 +83,21 @@ public class RuleFileReader {
 	 * @throws FileNotFoundException If the given file does not exist.
 	 */
 	public void load(StyleFileLoader loader, String name) throws FileNotFoundException {
-		this.loader = loader;
-		load(loader.open(name), name);
+		loadFile(loader, name);
+		rules.prepare();
+		if (finalizeRules != null) {
+			finalizeRules.prepare();
+			rules.setFinalizeRule(finalizeRules);
+		}
 	}
 
-	private void load(Reader r, String name) {
-		scanner = new TokenScanner(name, r);
+	/**
+	 * Load a rules file.  This should be used when calling recursively when including
+	 * files.
+	 */
+	private void loadFile(StyleFileLoader loader, String name) throws FileNotFoundException {
+		Reader r = loader.open(name);
+		TokenScanner scanner = new TokenScanner(name, r);
 		scanner.setExtraWordChars("-:.");
 
 		ExpressionReader expressionReader = new ExpressionReader(scanner, kind);
@@ -87,7 +106,9 @@ public class RuleFileReader {
 		// Read all the rules in the file.
 		scanner.skipSpace();
 		while (!scanner.isEndOfFile()) {
-			checkCommand();
+			if (checkCommand(loader, scanner))
+				continue;
+
 			if (scanner.isEndOfFile())
 				break;
 
@@ -98,17 +119,16 @@ public class RuleFileReader {
 			// If there is an action list, then we don't need a type
 			GType type = null;
 			if (scanner.checkToken("["))
-				type = typeReader.readType(scanner);
+				type = typeReader.readType(scanner, performChecks, overlays);
 			else if (actionList == null)
 				throw new SyntaxException(scanner, "No type definition given");
 
-			saveRule(expr, actionList, type);
+			saveRule(scanner, expr, actionList, type);
 			scanner.skipSpace();
 		}
 
 		rules.addUsedTags(expressionReader.getUsedTags());
 		rules.addUsedTags(actionReader.getUsedTags());
-		rules.prepare();
 	}
 
 	/**
@@ -126,11 +146,15 @@ public class RuleFileReader {
 	 *
 	 * Called before reading an expression, must put back any token (apart from whitespace) if there is
 	 * not a command.
+	 * @return true if a command was found. The caller should check again for a command.
+	 * @param currentLoader The current style loader. Any included files are loaded from here, if no other
+	 * style is specified.
+	 * @param scanner The current token scanner.
 	 */
-	private void checkCommand() {
+	private boolean checkCommand(StyleFileLoader currentLoader, TokenScanner scanner) {
 		scanner.skipSpace();
 		if (scanner.isEndOfFile())
-			return;
+			return false;
 
 		if (scanner.checkToken("include")) {
 			// Consume the 'include' token and skip spaces
@@ -143,9 +167,8 @@ public class RuleFileReader {
 					|| (next.getType() == TokType.SYMBOL && (next.isValue("'") || next.isValue("\""))))
 			{
 				String filename = scanner.nextWord();
-				String displayName = filename;
 
-				StyleFileLoader styleLoader = loader;
+				StyleFileLoader loader = currentLoader;
 				scanner.skipSpace();
 
 				// The include can be followed by an optional 'from' clause. The file is read from the given
@@ -157,11 +180,7 @@ public class RuleFileReader {
 						throw new SyntaxException(scanner, "No style name after 'from'");
 
 					try {
-						// Note: this style loader is never explicitly closed and so if the style loader opens
-						// a file it will not be explicitly closed either. The only loader where this happens has
-						// a finalise() method that closes its underlying file.
-						styleLoader = StyleFileLoader.createStyleLoader(null, styleName);
-						displayName = String.format("%s/%s", styleName, filename);
+						loader = StyleFileLoader.createStyleLoader(null, styleName);
 					} catch (FileNotFoundException e) {
 						throw new SyntaxException(scanner, "Cannot find style: " + styleName);
 					}
@@ -170,16 +189,46 @@ public class RuleFileReader {
 				scanner.validateNext(";");
 
 				try {
-					scanner.includeFile(displayName, styleLoader.open(filename));
+					loadFile(loader, filename);
+					return true;
 				} catch (FileNotFoundException e) {
 					throw new SyntaxException(scanner, "Cannot open included file: " + filename);
+				} finally {
+					if (loader != currentLoader)
+						Utils.closeFile(loader);
 				}
 			} else {
 				// Wrong syntax for include statement, so push back token to allow a possible expression to be read
 				scanner.pushToken(token);
 			}
+		} 
+		// check if it is the start label of the <finalize> section
+		else if (scanner.checkToken("<")) {
+			Token token = scanner.nextToken();
+			if (scanner.checkToken("finalize")) {
+				Token finalizeToken = scanner.nextToken();
+				if (scanner.checkToken(">")) {
+					if (inFinalizeSection) {
+						// there are two finalize sections which is not allowed
+						throw new SyntaxException(scanner, "There is only one finalize section allowed");
+					} else {
+						// consume the > token
+						scanner.nextToken();
+						// mark start of the finalize block
+						inFinalizeSection = true;
+						finalizeRules = new RuleSet();
+						return true;
+					}
+				} else {
+					scanner.pushToken(finalizeToken);
+					scanner.pushToken(token);
+				}
+			} else {
+				scanner.pushToken(token);
+			}
 		}
 		scanner.skipSpace();
+		return false;
 	}
 
 	/**
@@ -193,17 +242,21 @@ public class RuleFileReader {
 	 * in a basket we know that the first term is true so we can drop that
 	 * from the expression.
 	 */
-	private void saveRule(Op op, ActionList actions, GType gt) {
-		log.info("EXP", op, ", type=", gt);
+	private void saveRule(TokenScanner scanner, Op op, ActionList actions, GType gt) {
+		log.debug("EXP", op, ", type=", gt);
 
+		// check if the type definition is allowed
+		if (inFinalizeSection && gt != null)
+			throw new SyntaxException(scanner, "Element type definition is not allowed in <finalize> section");
+		
 		//System.out.println("From: " + op);
 		Op op2 = rearrangeExpression(op);
 		//System.out.println("TO  : " + op2);
 
 		if (op2 instanceof BinaryOp) {
-			optimiseAndSaveBinaryOp((BinaryOp) op2, actions, gt);
+			optimiseAndSaveBinaryOp(scanner, (BinaryOp) op2, actions, gt);
 		} else {
-			optimiseAndSaveOtherOp(op2, actions, gt);
+			optimiseAndSaveOtherOp(scanner, op2, actions, gt);
  		}
 	}
 
@@ -225,9 +278,21 @@ public class RuleFileReader {
 			rearrangeExpression(op.getSecond());
 
 			swapForSelectivity((BinaryOp) op);
+
+			// Rearrange ((A&B)&C) to (A&(B&C)).
+			while (op.getFirst().isType(AND)) {
+				Op aAndB = op.getFirst();
+				Op c = op.getSecond();
+				op.setFirst(aAndB.getFirst()); // A
+
+				aAndB.setFirst(aAndB.getSecond());
+				((BinaryOp) aAndB).setSecond(c);  // a-and-b is now b-and-c
+				((BinaryOp) op).setSecond(aAndB);
+			}
+
 			Op op1 = op.getFirst();
 			Op op2 = op.getSecond();
-			
+
 			// If the first term is an EQUALS or EXISTS then this subtree is
 			// already solved and we need to do no more.
 			if (isSolved(op1)) {
@@ -316,7 +381,8 @@ public class RuleFileReader {
 	 * Exists operation.
 	 */
 	private static boolean isIndexable(Op op) {
-		return (op.isType(EQUALS) && ((ValueOp) op.getFirst()).isIndexable())
+		return (op.isType(EQUALS)
+				&& ((ValueOp) op.getFirst()).isIndexable() && op.getSecond().isType(VALUE))
 				|| (op.isType(EXISTS) && ((ValueOp) op.getFirst()).isIndexable());
 	}
 
@@ -370,15 +436,17 @@ public class RuleFileReader {
 			return 10;
 
 		case AND:
-		case OR:
 			return Math.min(selectivity(op.getFirst()), selectivity(op.getSecond()));
-		
+
+		case OR:
+			return Math.max(selectivity(op.getFirst()), selectivity(op.getSecond()));
+
 		default:
 			return 1000;
 		}
 	}
 
-	private void optimiseAndSaveOtherOp(Op op, ActionList actions, GType gt) {
+	private void optimiseAndSaveOtherOp(TokenScanner scanner, Op op, ActionList actions, GType gt) {
 		if (op.isType(EXISTS)) {
 			// The lookup key for the exists operation is 'tag=*'
 			createAndSaveRule(op.getFirst().getKeyValue() + "=*", op, actions, gt);
@@ -390,11 +458,12 @@ public class RuleFileReader {
 	/**
 	 * Optimise the expression tree, extract the primary key and
 	 * save it as a rule.
+	 * @param scanner The token scanner, used for error message file/line numbers.
 	 * @param op a binary expression
 	 * @param actions list of actions to execute on match
 	 * @param gt the Garmin type of the element
 	 */
-	private void optimiseAndSaveBinaryOp(BinaryOp op, ActionList actions, GType gt) {
+	private void optimiseAndSaveBinaryOp(TokenScanner scanner, BinaryOp op, ActionList actions, GType gt) {
 		Op first = op.getFirst();
 		Op second = op.getSecond();
 
@@ -407,12 +476,8 @@ public class RuleFileReader {
 		 * An OR at the top level.
 		 */
 		String keystring;
-		if (op.isType(EQUALS)) {
-			if (first.isType(FUNCTION) && second.isType(VALUE)) {
-				keystring = first.getKeyValue() + "=" + second.getKeyValue();
-			} else {
-				throw new SyntaxException(scanner, "Invalid rule expression: " + op);
-			}
+		if (op.isType(EQUALS) && (first.isType(FUNCTION) && second.isType(VALUE))) {
+			keystring = first.getKeyValue() + "=" + second.getKeyValue();
 		} else if (op.isType(AND)) {
 			if (first.isType(EQUALS)) {
 				keystring = first.getFirst().getKeyValue() + "=" + first.getSecond().getKeyValue();
@@ -420,14 +485,22 @@ public class RuleFileReader {
 				keystring = first.getFirst().getKeyValue() + "=*";
 			} else if (first.isType(NOT_EXISTS)) {
 				throw new SyntaxException(scanner, "Cannot start rule with tag!=*");
+			} else if (first.getFirst() != null &&
+					first.getFirst().getType() == FUNCTION
+					&& ((StyleFunction) first.getFirst()).isIndexable())
+			{
+				// Extract the initial key and add an exists clause at the beginning
+				AndOp aop = combineWithExists(new ValueOp(first.getFirst().getKeyValue()), op);
+				optimiseAndSaveBinaryOp(scanner, aop, actions, gt);
+				return;
 			} else {
 				throw new SyntaxException(scanner, "Invalid rule expression: " + op);
 			}
 		} else if (op.isType(OR)) {
 			LinkedOp op1 = LinkedOp.create(first, true);
-			saveRule(op1, actions, gt);
+			saveRule(scanner, op1, actions, gt);
 
-			saveRestOfOr(actions, gt, second, op1);
+			saveRestOfOr(scanner, actions, gt, second, op1);
 			return;
 		} else {
 			if (!first.isType(FUNCTION) || !((StyleFunction) first).isIndexable())
@@ -435,29 +508,34 @@ public class RuleFileReader {
 
 			// We can make every other binary op work by converting to AND(EXISTS, op), as long as it does
 			// not involve an un-indexable function.
-			Op existsOp = new ExistsOp();
-			existsOp.setFirst(first);
-
-			AndOp andOp = new AndOp();
-			andOp.setFirst(existsOp);
-			andOp.setSecond(op);
-			optimiseAndSaveBinaryOp(andOp, actions, gt);
+			AndOp andOp = combineWithExists(first, op);
+			optimiseAndSaveBinaryOp(scanner, andOp, actions, gt);
 			return;
 		}
 
 		createAndSaveRule(keystring, op, actions, gt);
 	}
 
-	private void saveRestOfOr(ActionList actions, GType gt, Op second, LinkedOp op1) {
+	private AndOp combineWithExists(Op first, BinaryOp op) {
+		Op existsOp = new ExistsOp();
+		existsOp.setFirst(first);
+
+		AndOp andOp = new AndOp();
+		andOp.setFirst(existsOp);
+		andOp.setSecond(op);
+		return andOp;
+	}
+
+	private void saveRestOfOr(TokenScanner scanner, ActionList actions, GType gt, Op second, LinkedOp op1) {
 		if (second.isType(OR)) {
 			LinkedOp nl = LinkedOp.create(second.getFirst(), false);
 			op1.setLink(nl);
-			saveRule(nl, actions, gt);
-			saveRestOfOr(actions, gt, second.getSecond(), op1);
+			saveRule(scanner, nl, actions, gt);
+			saveRestOfOr(scanner, actions, gt, second.getSecond(), op1);
 		} else {
 			LinkedOp op2 = LinkedOp.create(second, false);
 			op1.setLink(op2);
-			saveRule(op2, actions, gt);
+			saveRule(scanner, op2, actions, gt);
 		}
 	}
 
@@ -469,16 +547,24 @@ public class RuleFileReader {
 		else
 			rule = new ActionRule(expr, actions.getList(), gt);
 
-		rules.add(keystring, rule, actions.getChangeableTags());
+		if (inFinalizeSection)
+			finalizeRules.add(keystring, rule, actions.getChangeableTags());
+		else
+			rules.add(keystring, rule, actions.getChangeableTags());
 	}
 
 	public static void main(String[] args) throws FileNotFoundException {
 		if (args.length > 0) {
-			Reader r = new FileReader(args[0]);
 			RuleSet rs = new RuleSet();
 			RuleFileReader rr = new RuleFileReader(FeatureKind.POLYLINE,
-					LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"), rs);
-			rr.load(r, "string");
+					LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"), rs, false,
+					Collections.<Integer, List <Integer>>emptyMap());
+
+			StyleFileLoader loader = new DirectoryFileLoader(
+					new File(args[0]).getAbsoluteFile().getParentFile());
+			String fname = new File(args[0]).getName();
+			rr.load(loader, fname);
+
 			System.out.println("Result: " + rs);
 		} else {
 			System.err.println("Usage: RuleFileReader <file>");

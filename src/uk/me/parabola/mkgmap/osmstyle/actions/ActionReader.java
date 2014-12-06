@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import java.util.ArrayList;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,6 +25,7 @@ import java.util.Set;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.Token;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
+import static uk.me.parabola.imgfmt.app.net.AccessTagsAndBits.*;
 
 /**
  * Read an action block.  This is contained within braces and contains
@@ -34,15 +36,15 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
 public class ActionReader {
 	private final TokenScanner scanner;
 
-	private final Set<String> usedTags = new HashSet<String>();
+	private final Set<String> usedTags = new HashSet<>();
 
 	public ActionReader(TokenScanner scanner) {
 		this.scanner = scanner;
 	}
 
 	public ActionList readActions() {
-		List<Action> actions = new ArrayList<Action>();
-		Set<String> changeableTags = new HashSet<String>();
+		List<Action> actions = new ArrayList<>();
+		Set<String> changeableTags = new HashSet<>();
 		scanner.skipSpace();
 		if (!scanner.checkToken("{"))
 			return new ActionList(actions, changeableTags);
@@ -58,15 +60,26 @@ public class ActionReader {
 				actions.add(readTagValue(true, changeableTags));
 			} else if ("add".equals(cmd)) {
 				actions.add(readTagValue(false, changeableTags));
+			} else if ("setaccess".equals(cmd)) { 
+				actions.add(readAccessValue(true, changeableTags));
+			} else if ("addaccess".equals(cmd)) { 
+				actions.add(readAccessValue(false, changeableTags));
 			} else if ("apply".equals(cmd)) {
 				actions.add(readAllCmd(false));
 			} else if ("apply_once".equals(cmd)) {
 				actions.add(readAllCmd(true));
 			} else if ("name".equals(cmd)) {
-				actions.add(readNameCmd());
+				actions.add(readValueBuilder(new NameAction()));
+				changeableTags.add("mkgmap:label:1");
+			} else if ("addlabel".equals(cmd)) {
+				actions.add(readValueBuilder(new AddLabelAction()));
+				for (int labelNo = 1; labelNo <= 4; labelNo++)
+					changeableTags.add("mkgmap:label:"+labelNo);
 			} else if ("delete".equals(cmd)) {
 				String tag = scanner.nextWord();
 				actions.add(new DeleteAction(tag));
+			} else if ("deletealltags".equals(cmd)) {
+				actions.add(new DeleteAllTagsAction());
 			} else if ("rename".equals(cmd)) {
 				String from = scanner.nextWord();
 				String to = scanner.nextWord();
@@ -80,6 +93,9 @@ public class ActionReader {
 			} else if ("echo".equals(cmd)) {
 				String str = scanner.nextWord();
 				actions.add(new EchoAction(str));
+			} else if ("echotags".equals(cmd)) {
+				String str = scanner.nextWord();
+				actions.add(new EchoTagsAction(str));
 			} else {
 				throw new SyntaxException(scanner, "Unrecognised command '" + cmd + '\'');
 			}
@@ -114,18 +130,17 @@ public class ActionReader {
 	/**
 	 * A name command has a number of alternatives separated by '|' characters.
 	 */
-	private Action readNameCmd() {
-		NameAction nameAct = new NameAction();
+	private Action readValueBuilder(ValueBuildedAction action) {
 		while (inActionCmd()) {
 			if (scanner.checkToken("|")) {
 				scanner.nextToken();
 				continue;
 			}
 			String val = scanner.nextWord();
-			nameAct.add(val);
+			action.add(val);
 		}
-		usedTags.addAll(nameAct.getUsedTags());
-		return nameAct;
+		usedTags.addAll(action.getUsedTags());
+		return action;
 	}
 
 	/**
@@ -170,6 +185,45 @@ public class ActionReader {
 		return action;
 	}
 
+	/**
+	 * Read a tag/value pair.  If the action is executed then the tag name
+	 * will possibly be modified or set.  If that is the case then we will
+	 * have to make sure that we are executing rules for that tag.
+	 *
+	 * @param modify If true the tag value can be modified.  If it is not set
+	 * then a tag can only be added; if it already exists, then it will not
+	 * be changed.
+	 * @param changeableTags Tags that could be changed by the action.  This is
+	 * an output parameter, any such tags should be added to this set.
+	 * @return The new add tag action.
+	 */
+	private AddAccessAction readAccessValue(boolean modify, Set<String> changeableTags) {
+		AddAccessAction action = null;
+		while (inActionCmd()) {
+
+			String val = scanner.nextWord();
+			if (action == null)
+				action = new AddAccessAction(val, modify);
+			else
+				action.add(val);
+			// Save the tag as one that is potentially set during the operation.
+			// If the value contains a variable, then we do not know what the
+			// value will be.  Otherwise save the full tag=value
+			if (val.contains("$")) {
+				for (String accessTag : ACCESS_TAGS.keySet())
+					changeableTags.add(accessTag);
+			} else {
+				for (String accessTag : ACCESS_TAGS.keySet())
+					changeableTags.add(accessTag + "=" + val);
+			}
+			if (scanner.checkToken("|"))
+				scanner.nextToken();
+		}
+		if (action != null)
+			usedTags.addAll(action.getUsedTags());
+		return action;
+	}
+	
 	private boolean inActionCmd() {
 		boolean end = scanner.checkToken(";");
 		return inAction() && !end;

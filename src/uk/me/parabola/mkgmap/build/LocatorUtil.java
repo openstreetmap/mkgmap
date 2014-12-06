@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -26,7 +27,7 @@ public class LocatorUtil {
 	private static final Pattern COMMA_OR_SPACE_PATTERN = Pattern
 			.compile("[,\\s]+");
 	
-	public static List<String> getNameTags(EnhancedProperties props) {
+	public static List<String> getNameTags(Properties props) {
 		String nameTagProp = props.getProperty("name-tag-list", "name");
 		return Arrays.asList(COMMA_OR_SPACE_PATTERN.split(nameTagProp));
 	}
@@ -34,7 +35,7 @@ public class LocatorUtil {
 	/**
 	 * Parses the parameters of the location-autofill option. Establishes also downwards
 	 * compatibility with the old integer values of location-autofill. 
-	 * @param optionStr the value of location-autofill
+	 * @param props program properties
 	 * @return the options
 	 */
 	public static Set<String> parseAutofillOption(EnhancedProperties props) {

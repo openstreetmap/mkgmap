@@ -17,9 +17,11 @@
 package uk.me.parabola.mkgmap.build;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.trergn.Overview;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.FilterConfig;
@@ -32,8 +34,9 @@ import uk.me.parabola.mkgmap.general.MapDataSource;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.general.RoadNetwork;
+import uk.me.parabola.imgfmt.app.net.RoadNetwork;
 
 /**
  * A sub area of the map.  We have to divide the map up into areas to meet the
@@ -50,7 +53,8 @@ public class MapArea implements MapDataSource {
 
 	private static final int INITIAL_CAPACITY = 100;
 	private static final int MAX_RESOLUTION = 24;
-
+	private static final int LARGE_OBJECT_DIM = 8192;
+	
 	public static final int POINT_KIND    = 0;
 	public static final int LINE_KIND     = 1;
 	public static final int SHAPE_KIND    = 2;
@@ -70,9 +74,9 @@ public class MapArea implements MapDataSource {
 	private int maxLon = Integer.MIN_VALUE;
 
 	// The contents of the area.
-	private final List<MapPoint> points = new ArrayList<MapPoint>(INITIAL_CAPACITY);
-	private final List<MapLine> lines = new ArrayList<MapLine>(INITIAL_CAPACITY);
-	private final List<MapShape> shapes = new ArrayList<MapShape>(INITIAL_CAPACITY);
+	private final List<MapPoint> points = new ArrayList<>(INITIAL_CAPACITY);
+	private final List<MapLine> lines = new ArrayList<>(INITIAL_CAPACITY);
+	private final List<MapShape> shapes = new ArrayList<>(INITIAL_CAPACITY);
 
 	// amount of space required for the contents
 	private final int[] sizes = new int[NUM_KINDS];
@@ -96,8 +100,6 @@ public class MapArea implements MapDataSource {
 	public MapArea(MapDataSource src, int resolution) {
 		this.areaResolution = 0;
 		this.bounds = src.getBounds();
-		addToBounds(bounds);
-
 		for (MapPoint p : src.getPoints()) {
 			if(bounds.contains(p.getLocation()))
 				addPoint(p);
@@ -117,16 +119,7 @@ public class MapArea implements MapDataSource {
 		MapFilterChain chain = new MapFilterChain() {
 			public void doFilter(MapElement element) {
 				MapShape shape = (MapShape) element;
-
-				if(true ||
-				   bounds.contains(element.getLocation()) ||
-				   element.getType() == 0x4b) {
-					shapes.add(shape);
-					addToBounds(shape.getBounds());
-					addSize(element, shape.hasExtendedType()? XT_SHAPE_KIND : SHAPE_KIND);
-				}
-				else
-					log.error("Polygon with type 0x" + Integer.toHexString(element.getType()) + " at " + element.getLocation().toOSMURL() + " is outside of the map area centred on " + bounds.getCenter().toOSMURL() + " width = " + bounds.getWidth() + " height = " + bounds.getHeight() + " resolution = " + resolution);
+				addShape(shape);
 			}
 		};
 
@@ -153,16 +146,7 @@ public class MapArea implements MapDataSource {
 		MapFilterChain chain = new MapFilterChain() {
 			public void doFilter(MapElement element) {
 				MapLine line = (MapLine) element;
-
-				if(true ||
-				   bounds.contains(element.getLocation())) {
-					lines.add(line);
-					addToBounds(line.getBounds());
-					addSize(element, line.hasExtendedType()? XT_LINE_KIND : LINE_KIND);
-				}
-				else
-					log.error("Line with type 0x" + Integer.toHexString(element.getType()) + " at " + element.getLocation().toOSMURL() + " is outside of the map area centred on " + bounds.getCenter().toOSMURL() + " width = " + bounds.getWidth() + " height = " + bounds.getHeight() + " resolution = " + resolution);
-
+				addLine(line);
 			}
 		};
 
@@ -185,7 +169,6 @@ public class MapArea implements MapDataSource {
 	private MapArea(Area area, int res) {
 		bounds = area;
 		areaResolution = res;
-		addToBounds(area);
 	}
 
 	/**
@@ -203,40 +186,95 @@ public class MapArea implements MapDataSource {
 		Area[] areas = bounds.split(nx, ny);
 		MapArea[] mapAreas = new MapArea[nx * ny];
 		log.info("Splitting area " + bounds + " into " + nx + "x" + ny + " pieces at resolution " + resolution);
-		for (int i = 0; i < nx * ny; i++) {
-			mapAreas[i] = new MapArea(areas[i], resolution);
-			if (log.isDebugEnabled())
-				log.debug("area before", mapAreas[i].getBounds());
-		}
+		boolean useNormalSplit = true;
+		while (true){
+			List<MapArea> largeObjectAreas = new ArrayList<>();
+			for (int i = 0; i < nx * ny; i++) {
+				mapAreas[i] = new MapArea(areas[i], resolution);
+				if (log.isDebugEnabled())
+					log.debug("area before", mapAreas[i].getBounds());
+			}
 
-		int xbase = areas[0].getMinLong();
-		int ybase = areas[0].getMinLat();
-		int dx = areas[0].getWidth();
-		int dy = areas[0].getHeight();
+			int xbase30 = areas[0].getMinLong() << Coord.DELTA_SHIFT;
+			int ybase30 = areas[0].getMinLat() << Coord.DELTA_SHIFT;
+			int dx30 = areas[0].getWidth() << Coord.DELTA_SHIFT;
+			int dy30 = areas[0].getHeight() << Coord.DELTA_SHIFT;
+			
+			boolean[] used = new boolean[nx * ny];
+			// Now sprinkle each map element into the correct map area.
+			for (MapPoint p : this.points) {
+				int pos = pickArea(mapAreas, p, xbase30, ybase30, nx, ny, dx30, dy30);
+				mapAreas[pos].addPoint(p);
+				used[pos] = true;
+			}
 
-		// Now sprinkle each map element into the correct map area.
-		for (MapPoint p : this.points) {
-			MapArea area1 = pickArea(mapAreas, p, xbase, ybase, nx, ny, dx, dy);
-			area1.addPoint(p);
-		}
+			int maxWidth = areas[0].getWidth();
+			int maxHeight = areas[0].getHeight();
+			if (nx*ny == 1 || maxWidth < LARGE_OBJECT_DIM|| maxHeight < LARGE_OBJECT_DIM){
+				// don't separate large objects
+				maxWidth = Integer.MAX_VALUE;  
+				maxHeight = Integer.MAX_VALUE; 
+			}
 
-		for (MapLine l : this.lines) {
-			// Drop any zero sized lines.
-			if (l.getBounds().getMaxDimension() <= 0)
+			int areaIndex = 0;
+			for (MapLine l : this.lines) {
+				// Drop any zero sized lines.
+				if (l instanceof MapRoad == false && l.getRect().height <= 0 && l.getRect().width <= 0)
+					continue;
+				if (useNormalSplit){
+					areaIndex = pickArea(mapAreas, l, xbase30, ybase30, nx, ny, dx30, dy30);
+					if (l.getBounds().getHeight() > maxHeight || l.getBounds().getWidth() > maxWidth){
+						MapArea largeObjectArea = new MapArea(l.getBounds(), resolution);
+						largeObjectArea.addLine(l);
+						largeObjectAreas.add(largeObjectArea);
+						continue;
+					}
+				}
+				else 
+					areaIndex = ++areaIndex % mapAreas.length;
+				mapAreas[areaIndex].addLine(l);
+				used[areaIndex] = true;
+			}
+
+			for (MapShape e : this.shapes) {
+				if (useNormalSplit){
+					areaIndex = pickArea(mapAreas, e, xbase30, ybase30, nx, ny, dx30, dy30);
+					if (e.getBounds().getHeight() > maxHeight || e.getBounds().getWidth() > maxWidth){
+						MapArea largeObjectArea = new MapArea(e.getBounds(), resolution);
+						largeObjectArea.addShape(e);
+						largeObjectAreas.add(largeObjectArea);
+						continue;
+					}
+				}
+				else 
+					areaIndex = ++areaIndex % mapAreas.length;
+				mapAreas[areaIndex].addShape(e);
+				used[areaIndex] = true;
+			}
+			// detect special case  
+			if (useNormalSplit && mapAreas.length == 2 && bounds.getMaxDimension() < 2 * (MapSplitter.MIN_DIMENSION + 1)
+					&& used[0] != used[1]
+					&& (this.lines.size() > 1 || this.shapes.size() > 1)) {
+				/* if we get here we probably have two or more identical long ways or
+				 * big shapes with the same center point. We can safely distribute
+				 * them equally to the two areas.  
+				 */
+				useNormalSplit = false;
 				continue;
-
-			MapArea area1 = pickArea(mapAreas, l, xbase, ybase, nx, ny, dx, dy);
-			area1.addLine(l);
+			} 
+			
+			if (largeObjectAreas.isEmpty() == false){
+				// combine list and array
+				int pos = mapAreas.length;
+				mapAreas = Arrays.copyOf(mapAreas, mapAreas.length + largeObjectAreas.size());
+				for (MapArea ma : largeObjectAreas)
+					mapAreas[pos++] = ma;
+			}
+			return mapAreas;
 		}
-
-		for (MapShape e : this.shapes) {
-			MapArea area1 = pickArea(mapAreas, e, xbase, ybase, nx, ny, dx, dy);
-			area1.addShape(e);
-		}
-
-		return mapAreas;
 	}
 
+	
 	/**
 	 * Get the full bounds of this area.  As lines and polylines are
 	 * added then may go outside of the initial area.  When this happens
@@ -449,7 +487,7 @@ public class MapArea implements MapDataSource {
 	 */
 	private void addPoint(MapPoint p) {
 		points.add(p);
-		addToBounds(p.getBounds());
+		addToBounds(p.getLocation()); 
 		addSize(p, p.hasExtendedType()? XT_POINT_KIND : POINT_KIND);
 	}
 
@@ -499,6 +537,30 @@ public class MapArea implements MapDataSource {
 	}
 
 	/**
+	 * Add to bounds considering high precision values. 
+	 * @param co
+	 */
+	private void addToBounds(Coord co) {
+		int lat30 = co.getHighPrecLat();
+		int latLower  = lat30 >> Coord.DELTA_SHIFT;
+		int latUpper  = (latLower << Coord.DELTA_SHIFT) < lat30 ? latLower + 1 : latLower;
+		if (latLower < minLat)
+			minLat = latLower;
+		if (latUpper > maxLat)
+			maxLat = latUpper;
+		
+		int lon30 = co.getHighPrecLon();
+		int lonLeft = lon30 >> Coord.DELTA_SHIFT;
+		int lonRight = (lonLeft << Coord.DELTA_SHIFT) < lon30 ? lonLeft + 1 : lonLeft;
+		if (lonLeft < minLon)
+			minLon = lonLeft;
+		if (lonRight > maxLon)
+			maxLon = lonRight;
+	}
+
+	
+	
+	/**
 	 * Out of all the available areas, it picks the one that the map element
 	 * should be placed into.
 	 *
@@ -508,31 +570,30 @@ public class MapArea implements MapDataSource {
 	 *
 	 * @param areas The available areas to choose from.
 	 * @param e The map element.
-	 * @param xbase The x coord at the origin
-	 * @param ybase The y coord of the origin
+	 * @param xbase30 The 30-bit x coord at the origin
+	 * @param ybase30 The 30-bit y coord of the origin
 	 * @param nx number of divisions.
 	 * @param ny number of divisions in y.
-	 * @param dx The size of each division (x direction)
-	 * @param dy The size of each division (y direction)
-	 * @return The area from areas where the map element fits.
+	 * @param dx30 The size of each division (x direction)
+	 * @param dy30 The size of each division (y direction)
+	 * @return The index to areas where the map element fits.
 	 */
-	private MapArea pickArea(MapArea[] areas, MapElement e,
-			int xbase, int ybase,
+	private int pickArea(MapArea[] areas, MapElement e,
+			int xbase30, int ybase30,
 			int nx, int ny,
-			int dx, int dy)
+			int dx30, int dy30)
 	{
-		int x = e.getLocation().getLongitude();
-		int y = e.getLocation().getLatitude();
-
-		int xcell = (x - xbase) / dx;
-		int ycell = (y - ybase) / dy;
+		int x = e.getLocation().getHighPrecLon();
+		int y = e.getLocation().getHighPrecLat();
+		int xcell = (x - xbase30) / dx30;
+		int ycell = (y - ybase30) / dy30;
 
 		if (xcell < 0) {
-			log.info("xcell was", xcell, "x", x, "xbase", xbase);
+			log.info("xcell was", xcell, "x", x, "xbase", xbase30);
 			xcell = 0;
 		}
 		if (ycell < 0) {
-			log.info("ycell was", ycell, "y", y, "ybase", ybase);
+			log.info("ycell was", ycell, "y", y, "ybase", ybase30);
 			ycell = 0;
 		}
 		
@@ -545,6 +606,15 @@ public class MapArea implements MapDataSource {
 			log.debug("adding", e.getLocation(), "to", xcell, "/", ycell,
 					areas[xcell * ny + ycell].getBounds());
 		}
-		return areas[xcell * ny + ycell];
+		return xcell * ny + ycell;
+	}
+
+	/**
+	 * @return true if this area contains any data
+	 */
+	public boolean hasData() {
+		if (points.isEmpty() && lines.isEmpty() && shapes.isEmpty())
+			return false;
+		return true;
 	}
 }

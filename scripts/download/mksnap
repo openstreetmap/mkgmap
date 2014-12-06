@@ -1,12 +1,24 @@
 #!/bin/bash
 
 PROGDIR=$(dirname $(readlink -f $0))
-PATH=$JAVA_HOME/bin:/opt/jars/apache-ant-1.8.2/bin:/opt/jars/apache-ant-1.7.1/bin:/usr/bin:/bin:/usr/local/bin:$PROGDIR
+#ANT_JAVAC_TARGET="-Dant.build.javac.target=1.6 -Dant.build.javac.source=1.6"
+#ANT_JAVAC_TARGET="-Dant.build.javac.target=1.7 -Dant.build.javac.source=1.7"
+
+export JAVA_HOME=/opt/java
+export PATH="$JAVA_HOME/bin:$VIRTUAL_ENV/bin:/bin:/usr/bin:/usr/local/bin:$PROGDIR"
+export LANG=en_GB.UTF-8
+
+source mksnapfuncs
 
 typeset -i VERSION
-while getopts "r:d:" c
+while getopts "r:d:b:" c
 do
 	case $c in
+	b)	BRANCH=$OPTARG
+		if [ $OPTARG != 'trunk' ];then
+			BRANCH_URL=branches/$OPTARG 
+		fi
+		;;
 	r) VERSION=$OPTARG;;
 	d) SNAPDIR=$OPTARG;;
 	esac
@@ -15,37 +27,45 @@ shift $[OPTIND-1]
 
 PRODUCT=$1
 if [ "$PRODUCT" = "" ]; then
-	echo Usage: "mksnap [-d dir] [-r vers] <product>"
+	echo Usage: "mksnap [-d dir] [-b branch] [-r vers] <product>"
 	exit
 fi
 
-source mksnapfuncs
-
-export LANG=en_GB.UTF-8
-
-export JAVA_HOME=/opt/java
-
-SVN=http://svn.parabola.me.uk/$PRODUCT
-if [ "$VERSION" = "" ]; then
-VERSION=$(svn log --xml --limit 1 $SVN/trunk 2> /dev/null | sed \
-	-n 's/revision="\([0-9]*\)".*/\1/p' | head -1)
-LATEST=1
-fi
-SPACE='&nbsp;&nbsp;&nbsp;'
-
+SVN=http://svn.mkgmap.org.uk/$PRODUCT
+BRANCH=${BRANCH:-trunk}
+BRANCH_URL=${BRANCH_URL:-trunk}
 SNAPDIR=${SNAPDIR:-$HOME/www/mkgmap.org.uk/docroot/download}
-RELNAME=$PRODUCT-r$VERSION
+
+#
+# Get the real highest revision that was commited to the given branch
+# that is less that the given revision.
+# If no revision given then get the latest on the branch.
+#
+CHECK_URL=$SVN/$BRANCH_URL
+if [ "$VERSION" != "" ]; then
+	CHECK_URL="${CHECK_URL}@$VERSION"
+fi
+VERSION=$(svn log --xml --limit 1 $CHECK_URL 2> /dev/null | \
+	sed -n '/<logentry/N;/\n/s/.*revision="\([0-9]*\)".*/\1/p')
+
+RELNAME=$PRODUCT-$BRANCH-r$VERSION
+RELNAME=${RELNAME/-trunk/}
+
 TARGET=$SNAPDIR/$RELNAME.tar.gz
-TARGET_SRC=$SNAPDIR/$RELNAME-src.tar.gz
-TARGET_SRC_LATEST_TAR=$SNAPDIR/$PRODUCT-src.tar.gz
-TARGET_SRC_LATEST_ZIP=$SNAPDIR/$PRODUCT-src.zip
 TARGET_ZIP=$SNAPDIR/$RELNAME.zip
+TARGET_JAR=$SNAPDIR/$RELNAME.jar
+TARGET_SRC=$SNAPDIR/$RELNAME-src.tar.gz
+TARGET_SRC_ZIP=$SNAPDIR/$RELNAME-src.zip
 
 BUILD_DIST=1
 BUILD_TARGETS='dist'
+
+# No standard between different products, so set the build target
+# appropriate to the product.
 case "$PRODUCT" in
 display)
 	BUILD_DIST=0
+	BUILD_TARGETS='dist'
 	;;
 mkgmap)
 	BUILD_TARGETS='dist obtain-test-input-files test'
@@ -55,51 +75,64 @@ splitter)
 	;;
 esac
 
+# On a branch we do not run the tests, anything goes!
+if [ $BRANCH != 'trunk' ]; then
+	BUILD_TARGETS='dist'
+fi
+
 if [ ! -f $TARGET ]; then
-	echo Rebuilding
+	echo Rebuilding $TARGET
 	cd /usr/tmp
 
 	BUILD_DIR=/usr/tmp/build-mkgmap/$RELNAME
 	mkdir -p $(dirname $BUILD_DIR)
 	trap "rm -rf $BUILD_DIR" 0
 
-	svn export -q -r$VERSION $SVN/trunk $BUILD_DIR
-
-	# Create a pure source distribution
-	tar czCf $(dirname $BUILD_DIR) $TARGET_SRC $RELNAME
-	ln -f $TARGET_SRC $TARGET_SRC_LATEST_TAR
-	rm -f $TARGET_SRC_LATEST_ZIP
-	(cd $(dirname $BUILD_DIR); zip -r $TARGET_SRC_LATEST_ZIP $RELNAME) > /dev/null
+	rm -rf $BUILD_DIR    # make sure it does not exist before export
+	svn export -q -r$VERSION $SVN/$BRANCH_URL $BUILD_DIR
 
 	cd $BUILD_DIR
+
+	# Create version files to record the version that is being built
 	if [ -d resources ]; then
 		echo "svn.version: $VERSION" > resources/$PRODUCT-version.properties
 		echo "build.timestamp: $(date -Iseconds)" >> resources/$PRODUCT-version.properties
 	fi
 
-	if [ "$BUILD_DIST" = 1 ]; then
-		echo BUILDING TARGET
-		ant -Dhave.version=1 $BUILD_TARGETS || exit 1
+	# Create a pure source distribution as tar
+	tar czCf $(dirname $BUILD_DIR) $TARGET_SRC $RELNAME
 
-		if [ -x $PROGDIR/mkdoc ]; then
-			mkdoc $PRODUCT
+	# Create source as zip
+	(cd $(dirname $BUILD_DIR); zip -r $TARGET_SRC_ZIP $RELNAME) > /dev/null
+
+	if [ "$BUILD_DIST" = 1 ]; then
+		ant $ANT_JAVAC_TARGET -Dhave.version=1 $BUILD_TARGETS || {
+			redis-cli lpush svn:build "failed:$PRODUCT:$BRANCH:$VERSION"
+			rm -f $TARGET_SRC_ZIP $TARGET_SRC
+			exit 1
+		}
+
+		CURRENT=$(redis-cli hget svn:current:$PRODUCT version)
+		if [ -x $PROGDIR/mkdoc -a $VERSION -gt $CURRENT ]; then
+			$PROGDIR/mkdoc $PRODUCT
 		fi
+
+		# Save the jar file separately
+		cp dist/$PRODUCT.jar $TARGET_JAR
 
 		mv dist $RELNAME
 		tar czf $TARGET $RELNAME
 		zip -r $TARGET_ZIP $RELNAME
+
+		redis-cli lpush svn:build "success:$PRODUCT:$BRANCH:$VERSION"
 	fi
 fi
 
 cd $SNAPDIR
-rm -f $PRODUCT-latest.tar.gz
-
-if [ "$LATEST" = 1 -a "$BUILD_DIST" = 1 ]; then
-	ln $RELNAME.tar.gz $PRODUCT-latest.tar.gz
-fi
 
 if [ "$BUILD_DIST" = 1 ]; then
-	mksnap_setdate $RELNAME.tar.gz $VERSION
+	mksnap_setdate $VERSION $TARGET $TARGET_ZIP \
+		$TARGET_SRC $TARGET_SRC_ZIP \
+		$TARGET_JAR
 fi
 
-mksnapindex -d $SNAPDIR $PRODUCT

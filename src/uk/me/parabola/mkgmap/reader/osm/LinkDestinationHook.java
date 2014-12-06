@@ -18,9 +18,11 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
@@ -28,7 +30,9 @@ import java.util.Set;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.build.LocatorUtil;
+import uk.me.parabola.mkgmap.osmstyle.function.LengthFunction;
 import uk.me.parabola.util.EnhancedProperties;
+import uk.me.parabola.util.MultiHashMap;
 
 /**
  * Copies the destination tag from motorway_link and trunk_link ways to the 
@@ -44,16 +48,18 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 	/** Maps which ways can be driven from a given Coord */
 	private IdentityHashMap<Coord, Set<Way>> adjacentWays = new IdentityHashMap<Coord, Set<Way>>();
 	/** Contains all _link ways that have to be processed */
-	private Queue<Way> destinationLinkWays = new ArrayDeque<Way>();
+	private Map<Long, Way> destinationLinkWays = new HashMap<Long, Way>();
 
 	private HashSet<String> tagValues = new HashSet<String>(Arrays.asList(
 			"motorway_link", "trunk_link"));
 
+	/** Map way ids to its restriction relations so that the relations can easily be updated when the way is split. */
+	private MultiHashMap<Long, RestrictionRelation> restrictions = new MultiHashMap<>();
+	
 	private List<String> nameTags;
 
 	/** Maps which nodes contains to which ways */ 
 	private IdentityHashMap<Coord, Set<Way>> wayNodes = new IdentityHashMap<Coord, Set<Way>>();
-	private boolean onlyMotorwayExitHint;
 	
 	private boolean processDestinations;
 	private boolean processExits;
@@ -61,7 +67,6 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 	public boolean init(ElementSaver saver, EnhancedProperties props) {
 		this.saver = saver;
 		nameTags = LocatorUtil.getNameTags(props);
-		onlyMotorwayExitHint = props.containsKey("all-exit-hints") == false;
 		processDestinations = props.containsKey("process-destination");
 		processExits = props.containsKey("process-exits");
 		return processDestinations || processExits;
@@ -81,15 +86,18 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 			if (highwayTag != null) {
 				// the points of the way are kept so that it is easy to get
 				// the adjacent ways for a given _link way
+				String directedDestination = null;
 				List<Coord> points;
 				if (isOnewayInDirection(w)) {
 					// oneway => don't need the last point because the
 					// way cannot be driven standing at the last point
 					points = w.getPoints().subList(0, w.getPoints().size() - 1);
+					directedDestination = w.getTag("direction:forward");
 				} else if (isOnewayOppositeDirection(w)) {
 					// reverse oneway => don't need the first point because the
 					// way cannot be driven standing at the first point
 					points = w.getPoints().subList(1, w.getPoints().size());
+					directedDestination = w.getTag("direction:backward");
 				} else {
 					points = w.getPoints();
 				}
@@ -101,119 +109,79 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 					}
 					ways.add(w);
 				}
-				for (Coord c : w.getPoints()) {
-					Set<Way> ways = wayNodes.get(c);
-					if (ways == null) {
-						ways = new HashSet<Way>(4);
-						wayNodes.put(c, ways);
-					}
-					ways.add(w);
-				}
+				registerPointsOfWay(w);
 
 				// if the way is a link way and has a destination tag
 				// put it the list of ways that have to be processed
-				if (tagValues.contains(highwayTag)
-						&& w.getTag("destination") != null) {
-					destinationLinkWays.add(w);
+				if (tagValues.contains(highwayTag)) {
+					String destinationTag = w.getTag("destination");
+					
+					if (destinationTag == null) {
+						// destination is not set 
+						// => check if destination:lanes is without any lane specific information (no |) 
+						String destLanesTag = w.getTag("destination:lanes");
+						if (destLanesTag != null && destLanesTag.contains("|") == false) {
+							// the destination:lanes tag contains no | => no lane specific information
+							// use this tag as destination tag 
+							w.addTag("destination", destLanesTag);
+							destinationTag = destLanesTag;
+							if (log.isDebugEnabled())
+								log.debug("Use destination:lanes tag as destination tag because there is one lane information only. Way ",w.getId(),w.toTagString());
+						}
+					}
+					
+					if (destinationTag == null) {
+						// use the destination:forward or :backward value
+						destinationTag = directedDestination;
+					}
+					
+					if (destinationTag != null)
+						destinationLinkWays.put(w.getId(), w);
 				}
+			}
+		}
+		
+		// get all restriction relations
+		// eventually they must be modified if one of its ways is split
+		for (Relation rel : saver.getRelations().values()) {
+			if (rel instanceof RestrictionRelation) {
+				RestrictionRelation rrel = (RestrictionRelation) rel;
+				for (Long wayId : rrel.getWayIds())
+					restrictions.add(wayId, rrel);
 			}
 		}
 	}
 	
+	
 	/**
-	 * Copies the destination tags of all motorway_link and trunk_link ways to the adjacent ways.
+	 * Registers the points of the given way for the internal data structures.
+	 * @param w a new way
 	 */
-	private void processDestinations() {
-		// process all links with a destination tag
-		// while checking new ways can be added to the list
-		while (destinationLinkWays.isEmpty() == false) {
-			Way link = destinationLinkWays.poll();
-
-			if (isNotOneway(link)) {
-				// non oneway links cannot be handled. The destination tag is probably wrong.
-				if (log.isInfoEnabled())
-					log.info("Link is not oneway. Do not handle it.", link);
-				continue;
+	private void registerPointsOfWay(Way w) {
+		for (Coord c : w.getPoints()) {
+			Set<Way> ways = wayNodes.get(c);
+			if (ways == null) {
+				ways = new HashSet<Way>(4);
+				wayNodes.put(c, ways);
 			}
-
-			// get the last point of the link to retrieve all connected ways
-			Coord connectPoint = link.getPoints().get(link.getPoints().size() - 1);
-			if (isOnewayOppositeDirection(link)) {
-				// for reverse oneway ways it's the first point
-				connectPoint = link.getPoints().get(0);
-			}
-
-			String destinationTag = link.getTag("destination");
-			
-			Set<Way> connectedWays = adjacentWays.get(connectPoint);
-			if (connectedWays == null) {
-				connectedWays = Collections.emptySet();
-			} else {
-				connectedWays = new HashSet<Way>(connectedWays);
-			}
-			connectedWays.remove(link);
-
-			if (log.isInfoEnabled())
-				log.info("Link", link);
-			for (Way connection : connectedWays) {
-				if (connection.getTag("destination") != null) {
-					if (log.isInfoEnabled())
-						log.info("Way already has destionation tag", connection);
-					continue;
-				}
-				if (log.isInfoEnabled())
-					log.info("-", connection);
-
-				// check if the connected way can have an unambiguous direction
-				// => it must not have more than one further connections
-				boolean oneDestination = true;
-				List<Coord> pointsToCheck;
-				if (isOnewayInDirection(connection)) {
-					pointsToCheck = connection.getPoints();
-				} else if (isOnewayOppositeDirection(connection)) {
-					pointsToCheck = new ArrayList<Coord>(
-							connection.getPoints());
-					Collections.reverse(pointsToCheck);
-				} else {
-					pointsToCheck = Collections.emptyList();
-					if (log.isInfoEnabled())
-						log.info("Way is not oneway - do not add destination", connection);
-					oneDestination = false;
-				}
-				// check if the target way has an unambiguous destination
-				// so it has no other connections to other destinations
-				for (Coord c : pointsToCheck) {
-					if (c.equals(connectPoint)) {
-						break;
-					}
-					Set<Way> furtherConnects = adjacentWays.get(c);
-					for (Way fc : furtherConnects) {
-						String fcDest = fc.getTag("destination");
-						if (fcDest != null
-								&& destinationTag.equals(fcDest) == false) {
-							if (log.isInfoEnabled())
-								log.info("Ambiguous destination:", destinationTag, "!=", fcDest);
-							oneDestination = false;
-							break;
-						}
-					}
-					if (oneDestination == false) {
-						break;
-					}
-				}
-
-				if (oneDestination) {
-					if (log.isInfoEnabled())
-						log.info("Add destination=" + destinationTag, "to", connection);
-					connection.addTag("destination", destinationTag);
-
-					if (tagValues.contains(connection.getTag("highway"))) {
-						// it is a link so process that way too
-						destinationLinkWays.add(connection);
-					}
-				}
-			}
+			ways.add(w);
+		}			
+	}
+	
+	/**
+	 * Removes the points in range from to to from the way and the internal data structures.
+	 * @param w way
+	 * @param from first point to remove
+	 * @param to range end to remove (exclusive)
+	 */
+	private void removePointsFromWay(Way w, int from, int to) {
+		// first remove them from the wayNodes map
+		for (Coord c : w.getPoints().subList(from, to)) {
+			wayNodes.get(c).remove(w);
 		}
+		// second remove them from the way
+		w.getPoints().subList(from, to).clear();
+
 	}
 	
 	/**
@@ -235,47 +203,97 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 	}
 	
 	/**
+	 * Check all restriction relations and eventually update the relations to use
+	 * the split way if appropriate.
+	 * 
+	 * @param oldWay the original way
+	 * @param newWay the split part of the old way
+	 */
+	private void changeWayIdInRelations(Way oldWay, Way newWay) {
+		List<RestrictionRelation> wayRestrictions = restrictions.get(oldWay.getId());
+		if (wayRestrictions.isEmpty()) {
+			return;
+		}
+		if (oldWay.isViaWay())
+			newWay.setViaWay(true);
+		// create a copy because original list may be modified within the loop
+		for (RestrictionRelation rr : new ArrayList<>(wayRestrictions)) {
+			Coord lastPointNewWay = newWay.getPoints().get(0);
+			List<Coord> viaCoords = rr.getViaCoords();
+			for (Coord via : viaCoords){
+				if (via == lastPointNewWay) {
+					if (rr.isToWay(oldWay.getId())) {
+						log.debug("Change to-way",oldWay.getId(),"to",newWay.getId(),"for relation",rr.getId(),"at",lastPointNewWay.toOSMURL());
+						rr.replaceWay(oldWay.getId(), newWay.getId());
+						restrictions.removeMapping(oldWay.getId(), rr);
+						restrictions.add(newWay.getId(), rr);
+						
+					} else if (rr.isFromWay(oldWay.getId())){
+						log.debug("Change from-way",oldWay.getId(),"to",newWay.getId(),"for relation",rr.getId(),"at",lastPointNewWay.toOSMURL());
+						rr.replaceWay(oldWay.getId(), newWay.getId());
+						restrictions.removeMapping(oldWay.getId(), rr);
+						restrictions.add(newWay.getId(), rr);
+					} 
+				}
+			}
+		}
+	}
+	
+	/**
 	 * Cuts off at least minLength meter of the given way and returns the cut off way tagged
 	 * identical to the given way.   
 	 * @param w the way to be cut 
-	 * @param minLength the cut off way must have at least this length
+	 * @param maxLength the cut off way is no longer than this value
 	 * @return the cut off way or <code>null</code> if cutting not possible
 	 */
-	private Way cutoffWay(Way w, double minLength, Coord c1, Coord c2) {
+	private Way cutoffWay(Way w, double cutLength, double maxLength, Coord c1, Coord c2) {
 		if (w.getPoints().size()<2) {
 			return null;
 		}
+
+		if (w.getPoints().size() >= 3) {
+			// try to use existing points - that does not deform the way
+			Coord firstPoint = w.getPoints().get(0);
+			Coord cutPoint = w.getPoints().get(1);
+
+			// check if the maxLength is not exceeded
+			double dist = firstPoint.distance(cutPoint);
+			if (dist <= maxLength) {
+				// create a new way with the first two points and identical tags
+				Way precedingWay = new Way(FakeIdGenerator.makeFakeId(), w
+						.getPoints().subList(0, 1 + 1));
+				precedingWay.copyTags(w);
+
+				saver.addWay(precedingWay);
+				// remove the points of the new way from the original way
+				removePointsFromWay(w, 0, 1);
+
+				registerPointsOfWay(precedingWay);
+
+				// check and update relations so that they use the new way if appropriate
+				changeWayIdInRelations(w, precedingWay);
+				
+				log.debug("Cut way", w, "at existing point 1. New way:",
+						precedingWay);
+
+				// return the new way
+				return precedingWay;
+			} else {
+				log.debug("Cannot cut way",	w,
+						"on existing nodes because the first distance is too big:",	dist);
+			}
+		}
 		
-		boolean useExistingPoints = w.getPoints().size() >= 3;
-		useExistingPoints = false;
-		double remainLength = minLength;
+		double startSegmentLength = 0;
+		
 		Coord lastC = w.getPoints().get(0);
 		for (int i = 1; i < w.getPoints().size(); i++) {
 			Coord c = w.getPoints().get(i);
 			double segmentLength = lastC.distance(c);
 			
-			// do not use the last point of the way
-			// instead it need to be split in such a case
-			useExistingPoints = useExistingPoints && i < w.getPoints().size()-1;
-			
-			if (useExistingPoints && remainLength - segmentLength <= 0.0) {
-				// create a new way with all points 0..i and identical tags
-				Way precedingWay = new Way(FakeIdGenerator.makeFakeId(), new ArrayList<Coord>(w.getPoints().subList(0, i+1)));
-				precedingWay.copyTags(w);
-				// the first node of the new way is now used by the org and the new way
-				precedingWay.getPoints().get(0).incHighwayCount();
-				
-				saver.addWay(precedingWay);
-				// remove the points of the new way from the original way
-				w.getPoints().subList(0, i).clear();
-				
-				// return the new way
-				return precedingWay;
-			} 
-			
-			if (useExistingPoints == false && remainLength - segmentLength <=  0.0d) {
-				double frac = remainLength / segmentLength;
-				// insert a new point and the minimum distance  
+			if (startSegmentLength + segmentLength  >= cutLength) {
+				double frac = (cutLength - startSegmentLength) / segmentLength;
+				// insert a new point at the minimum distance  
 				Coord cConnection = lastC.makeBetweenPoint(c, frac);
 
 				if (c1 != null && c2 != null && cConnection != null) {
@@ -305,25 +323,23 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 					}
 				}
 				
-				// the new point is used by the old and the new way
-				cConnection.incHighwayCount();
-				cConnection.incHighwayCount();
-				
-				w.getPoints().add(i,cConnection);
-				
 				// create the new way with identical tags
-				Way precedingWay = new Way(FakeIdGenerator.makeFakeId(), new ArrayList<Coord>(w.getPoints().subList(0, i+1)));
+				w.getPoints().add(i,cConnection);
+				Way  precedingWay = new Way(FakeIdGenerator.makeFakeId(), new ArrayList<Coord>(w.getPoints().subList(0, i+1)));
 				precedingWay.copyTags(w);
 				
 				saver.addWay(precedingWay);
 				
 				// remove the points of the new way from the old way
-				w.getPoints().subList(0, i).clear();
-				
+				removePointsFromWay(w, 0, i);
+				registerPointsOfWay(precedingWay);
+
+				// check and update relations so that they use the new way if appropriate
+				changeWayIdInRelations(w, precedingWay);
+
 				// return the split way
 				return precedingWay;			
 			} 		
-			remainLength -= segmentLength;
 			lastC = c;
 		}
 		
@@ -345,7 +361,7 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 				if (dLat == 0 && dLon == 0) {
 					continue;
 				}
-				neighbours.add(new Coord(c.getLatitude()+dLat, c.getLongitude()+dLon));
+				neighbours.add(new Coord(c.getLatitude()+dLat, c.getLongitude()+dLon));//TODO: move to Coord class?
 			}
 		}
 		return neighbours;
@@ -400,131 +416,256 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 	}
 	
 	/**
-	 * Cuts motorway_link ways connected to an exit node
-	 * (highway=motorway_junction) into three parts to be able to get a hint on
-	 * Garmin GPS. The mid part way is tagged additionally with the following
-	 * tags:
+	 * Cuts motorway_link and trunk_link ways into three parts to be able to get
+	 * a hint on Garmin GPS. This happens if the the option process-exits is set
+	 * and the way is connected to an exit node (highway=motorway_junction)
+	 * and/or the option process-destination is set and the destination tag is
+	 * set. The mid part way is tagged additionally with the following tags:
 	 * <ul>
-	 * <li>mkgmap:exit_hint=true</li>
-	 * <li>mkgmap:exit_hint_ref: Tagged with the ref tag value of the exit node</li>
-	 * <li>mkgmap:exit_hint_exit_to: Tagged with the exit_to tag value of the exit node</li>
-	 * <li>mkgmap:exit_hint_name: Tagged with the name tag value of the exit
-	 * node</li>
+	 * <li>mkgmap:dest_hint=true (for destinations)</li>
+	 * <li>mkgmap:exit_hint=true (for exits)</li>
+	 * <li>mkgmap:exit_hint_ref: Tagged with the ref tag value of the motorway
+	 * junction node</li>
+	 * <li>mkgmap:exit_hint_exit_to: Tagged with the exit_to tag value of the
+	 * motorway junction node</li>
+	 * <li>mkgmap:exit_hint_name: Tagged with the name tag value of the motorway
+	 * junction node</li>
 	 * </ul>
 	 * Style implementors can use the common Garmin code 0x09 for motorway_links
-	 * and the motorway code 0x01 for the links with mkgmap:exit_hint=true. The
-	 * naming of this middle way can be assigned from mkgmap:exit_hint_ref and
-	 * mkgmap:exit_hint_name.
+	 * and any other routable id (except 0x08 and 0x09) for the links with
+	 * mkgmap:exit_hint=true and/or mkgmap:dest_hint=true. The naming of this
+	 * middle way can be typically assigned from destination, ref, destination:ref, 
+	 * mkgmap:exit_hint_ref, mkgmap:exit_hint_name and/or mkgmap:exit_hint_exit_to.
 	 */
-	private void createExitHints() {
-		// collect all nodes of highway=motorway ways so that we can check if an exit node
-		// belongs to a motorway or is a "subexit" within a motorway junction
-		Set<Coord> highwayCoords = new HashSet<Coord>();
+	private void processWays() {
+		// collect all nodes of highway=motorway/trunk ways so that we can check if an exit node
+		// belongs to a motorway/trunk or is a "subexit" within a motorway/trunk junction
+		Set<Coord> motorwayCoords = new HashSet<Coord>();
+		Set<Coord> trunkCoords = new HashSet<Coord>();
 		for (Way w : saver.getWays().values()) {
-			if ("motorway".equals(w.getTag("highway"))) {
-				highwayCoords.addAll(w.getPoints());
+			String motorwayTag = w.getTag("highway");
+			if (motorwayTag != null) {
+				if (motorwayTag.equals("motorway"))
+					motorwayCoords.addAll(w.getPoints());
+				else if (motorwayTag.equals("trunk"))
+					trunkCoords.addAll(w.getPoints());
 			}
 		}	
 		
-		// get all nodes tagged with highway=motorway_junction
-		for (Node exitNode : saver.getNodes().values()) {
-			if (isTaggedAsExit(exitNode) && saver.getBoundingBox().contains(exitNode.getLocation())) {
-				
-				boolean isHighwayExit = highwayCoords.contains(exitNode.getLocation());
-				// use exits only if they are located on a motorway
-				if (onlyMotorwayExitHint && isHighwayExit == false) {
-					if (log.isDebugEnabled())
-						log.debug("Skip non highway exit:", exitNode.toBrowseURL(), exitNode.toTagString());
-					continue;
-				}
-				
-				// retrieve all ways with this exit node
-				Set<Way> exitWays = adjacentWays.get(exitNode.getLocation());
-				if (exitWays==null) {
-					log.debug("Exit node", exitNode, "has no connected ways. Skip it.");
-					continue;
-				}
-				
-				// if the exit is on a motorway_link it must be ensured that the hint is 
-				// created on the right / left link only
-				if (onlyMotorwayExitHint == false && isHighwayExit == false) {
-//					List<Entry<Coord, Way>> prevNodes = getNextNodes(exitNode.getLocation(), false);
-//					log.error("Prev nodes: "+prevNodes);
-//					if (prevNodes.isEmpty()) {
-//						log.error("Node "+exitNode+" has no predecessor way. Cannot create exit hint for it.");
-//						continue;
-//					}
-//					if (prevNodes.size() > 1) {
-//						log.error("Node "+exitNode+" has multiple predecessor ways. Cannot create exit hint for it.");
-//						continue;
-//					}
-//					
-//					// there is one predecessor way 
-//					Coord predecessorNode = prevNodes.get(0).getKey();
-					
-//					List<Entry<Coord, Way>> nextNodes = getNextNodes(exitNode.getLocation(), true);
-//					log.error("Next nodes: "+nextNodes);
-//					
-//					// TODO: differ drive-on-left and drive-on-right
-//					// at the moment select the rightmost way
-//					Entry<Coord, Way> possibleExit = null;
-//					for (Entry<Coord, Way> checkWay : nextNodes) {
-//						if (possibleExit == null) {
-//							possibleExit = checkWay;
-//						} else {
-//							
-//						}
-//					}
-					
-				}
+		
+		// remove the adjacent links from the destinationLinkWays list
+		// to avoid duplicate dest_hints
+		Queue<Way> linksWithDestination = new ArrayDeque<Way>();
+		linksWithDestination.addAll(destinationLinkWays.values());
+		log.debug(destinationLinkWays.size(),"links with destination tag");
+		while (linksWithDestination.isEmpty()== false) {
+			Way linkWay = linksWithDestination.poll();
+			String destination = linkWay.getTag("destination");
 
-				// retrieve the next node on the highway to be able to check if 
-				// the inserted node has the correct orientation 
-				List<Entry<Coord, Way>> nextNodes = getNextNodes(exitNode.getLocation(), true);
-				Coord nextHighwayNode = null;
-				for (Entry<Coord, Way> nextNode : nextNodes) {
-					if ("motorway".equals(nextNode.getValue().getTag("highway"))) {
-						nextHighwayNode = nextNode.getKey();
-						break;
+			if (log.isDebugEnabled())
+				log.debug("Check way",linkWay.getId(),linkWay.toTagString());
+			
+			// Retrieve all adjacent ways of the current link
+			Coord c = linkWay.getPoints().get(linkWay.getPoints().size()-1);
+			if (isOnewayOppositeDirection(linkWay)) {
+				c = linkWay.getPoints().get(0);
+			}
+			
+			Set<Way> nextWays = adjacentWays.get(c);
+			if (nextWays != null) {
+				for (Way connectedWay : nextWays) {
+					String nextDest = connectedWay.getTag("destination");
+					if (log.isDebugEnabled())
+						log.debug("Followed by",connectedWay.getId(),connectedWay.toTagString());
+
+					// remove the way from destination handling only if both ways are connected with start/end points
+					// otherwise it is a crossroads and therefore both ways need to be handled
+					boolean startEndConnection = connectedWay.getPoints().isEmpty()==false && connectedWay.getPoints().get(0).equals(c);
+					if (startEndConnection && connectedWay.equals(linkWay) == false 
+							&& connectedWay.getTag("highway").endsWith("_link")
+							&& destination.equals(nextDest)) {
+						// do not use this way because there is another link before that with the same destination
+						destinationLinkWays.remove(connectedWay.getId());
+						if (log.isDebugEnabled())
+							log.debug("Removed",connectedWay.getId(),connectedWay.toTagString());
 					}
 				}
+			}
+		}
+		log.debug(destinationLinkWays.size(),"links with destination tag after cleanup");
+		
+		if (processExits) {
+			// get all nodes tagged with highway=motorway_junction
+			for (Node exitNode : saver.getNodes().values()) {
+				if (isTaggedAsExit(exitNode) && saver.getBoundingBox().contains(exitNode.getLocation())) {
 				
-				// use the motorway_link ways only
-				for (Way w : exitWays) {
-					if ("motorway_link".equals(w.getTag("highway"))) {
-						log.debug("Try to cut motorway_link", w, "into three parts for giving hint to exit", exitNode);
-
-						// now create three parts:
-						// wayPart1: 10m having the original tags only
-						// hintWay: 10m having the original tags plus the mkgmap:exit_hint* tags
-						// w: the rest of the original way 
-						
-						Way wayPart1 = cutoffWay(w,10.0, exitNode.getLocation(), nextHighwayNode);
-						if (wayPart1 == null) {
-							log.info("Way", w, "is too short to cut at least 10m from it. Cannot create exit hint.");
+					boolean isMotorwayExit = motorwayCoords.contains(exitNode.getLocation());
+					boolean isTrunkExit = trunkCoords.contains(exitNode.getLocation());
+					boolean isHighwayExit = isMotorwayExit || isTrunkExit;
+					// use exits only if they are located on a motorway or trunk
+					if (isHighwayExit == false) {
+						if (log.isDebugEnabled())
+							log.debug("Skip non highway exit:", exitNode.toBrowseURL(), exitNode.toTagString());
+						continue;
+					}
+				
+					// retrieve all ways with this exit node
+					Set<Way> exitWays = adjacentWays.get(exitNode.getLocation());
+					if (exitWays==null) {
+						log.debug("Exit node", exitNode, "has no connected ways. Skip it.");
+						continue;
+					}
+				
+					// retrieve the next node on the highway to be able to check if 
+					// the inserted node has the correct orientation 
+					List<Entry<Coord, Way>> nextNodes = getNextNodes(exitNode.getLocation(), true);
+					Coord nextHighwayNode = null;
+					String expectedHighwayTag = (isMotorwayExit ? "motorway" : "trunk");
+					for (Entry<Coord, Way> nextNode : nextNodes) {
+						if (expectedHighwayTag.equals(nextNode.getValue().getTag("highway"))) {
+							nextHighwayNode = nextNode.getKey();
+							break;
+						} 	
+					}
+				
+					// use link ways only
+					for (Way w : exitWays) {
+						destinationLinkWays.remove(w.getId());
+						if (isNotOneway(w)) {
+							log.warn("Ignore way",w,"because it is not oneway");
 							continue;
-						} else {
-							if (log.isDebugEnabled())
-								log.debug("Cut off way", wayPart1, wayPart1.toTagString());
+						}
+						if (w.isViaWay()){
+							log.warn("Ignore way",w,"because it is a via way in a restriction  relation");
+							continue;
 						}
 						
-						Way hintWay = cutoffWay(w,10.0, exitNode.getLocation(), nextHighwayNode);
-						if (hintWay == null) {
-							log.info("Way", w, "is too short to cut at least 20m from it. Cannot create exit hint.");
-						} else {
-							hintWay.addTag("mkgmap:exit_hint", "true");
-							
-							if (exitNode.getTag("ref") != null)
-								hintWay.addTag("mkgmap:exit_hint_ref", exitNode.getTag("ref"));
-							if (exitNode.getTag("exit_to") != null)
-								hintWay.addTag("mkgmap:exit_hint_exit_to", exitNode.getTag("exit_to"));
-							if (getName(exitNode) != null)
-								hintWay.addTag("mkgmap:exit_hint_name", getName(exitNode));
-							
-							if (log.isInfoEnabled())
-								log.info("Cut off exit hint way", hintWay, hintWay.toTagString());
-						}
+						String highwayLinkTag = w.getTag("highway");
+						if (highwayLinkTag.endsWith("_link")) {
+							log.debug("Try to cut",highwayLinkTag, w, "into three parts for giving hint to exit", exitNode);
 
+							// calc the way length to decide how to cut the way
+							double wayLength = getLength(w);
+							if (wayLength < 10 && w.getPoints().size() < 3) {
+								log.info("Way", w, "is too short (", wayLength," m) to cut it into several pieces. Cannot place exit hint.");
+								continue;
+							}
+							
+							
+							// now create three parts:
+							// wayPart1: original tags only
+							// hintWay: original tags plus the mkgmap:exit_hint* tags
+							// w: rest of the original way 
+							
+							double cut1 =  Math.min(wayLength/2,20.0);
+							double cut2 = Math.min(wayLength, 100);
+							Way wayPart1 = cutoffWay(w,cut1, cut2, exitNode.getLocation(), nextHighwayNode);
+							if (wayPart1 == null) {
+								log.info("Way", w, "is too short to cut at least ",cut1,"m from it. Cannot create exit hint.");
+								continue;
+							} else {
+								if (log.isDebugEnabled())
+									log.debug("Cut off way", wayPart1, wayPart1.toTagString());
+							}
+							
+							Way hintWay = w;
+							if (wayLength > 50) {
+								hintWay = cutoffWay(w, 10.0, 50.0, exitNode.getLocation(), nextHighwayNode);
+							}
+							if (hintWay == null) {
+								log.info("Way", w, "is too short to cut at least 20m from it. Cannot create exit hint.");
+							} else {
+								hintWay.addTag("mkgmap:exit_hint", "true");
+								
+								if (processDestinations && hintWay.getTag("destination") != null) {
+									hintWay.addTag("mkgmap:dest_hint", "true");
+								}
+								if (exitNode.getTag("ref") != null)
+									hintWay.addTag("mkgmap:exit_hint_ref", exitNode.getTag("ref"));
+								if (exitNode.getTag("exit_to") != null)
+									hintWay.addTag("mkgmap:exit_hint_exit_to", exitNode.getTag("exit_to"));
+								if (getName(exitNode) != null)
+									hintWay.addTag("mkgmap:exit_hint_name", getName(exitNode));
+								
+								if (log.isInfoEnabled())
+									log.info("Cut off exit hint way", hintWay, hintWay.toTagString());
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		if (processDestinations) {
+			// use link ways only
+			while (destinationLinkWays.isEmpty() == false) {
+				Way w = destinationLinkWays.values().iterator().next();
+				destinationLinkWays.remove(w.getId());
+				if (isNotOneway(w)) {
+					log.warn("Ignore way",w,"because it is not oneway");
+					continue;
+				}
+				if (w.isViaWay()){
+					log.warn("Ignore way",w,"because it is a via way in a restriction  relation");
+					continue;
+				}
+				
+				String highwayLinkTag = w.getTag("highway");
+				if (highwayLinkTag.endsWith("_link")) {
+					log.debug("Try to cut",highwayLinkTag, w, "into three parts for giving hint");
+	
+					Coord firstNode = w.getPoints().get(0);
+					Coord secondNode = w.getPoints().get(1);
+					// retrieve the next node on the highway to be able to check if 
+					// the inserted node has the correct orientation 
+					List<Entry<Coord, Way>> nextNodes = getNextNodes(firstNode, true);
+					Coord nextHighwayNode = null;
+					double angle = Double.MAX_VALUE;
+					for (Entry<Coord, Way> nextNode : nextNodes) {
+						if (nextNode.getValue().equals(w)) {
+							continue;
+						}
+						double thisAngle = getAngle(firstNode, secondNode, nextNode.getKey());
+						if (Math.abs(thisAngle) < angle) {
+							angle = Math.abs(thisAngle);
+							nextHighwayNode = nextNode.getKey();
+						}
+					}
+					
+					// calc the way length to decide how to cut the way
+					double wayLength = getLength(w);
+					if (wayLength < 10) {
+						log.info("Way", w, "is too short (", wayLength," m) to cut it into several pieces. Cannot place destination hint.");
+						continue;
+					}
+
+					// now create three parts:
+					// wayPart1: original tags only
+					// hintWay: original tags plus the mkgmap:exit_hint* tags
+					// w: rest of the original way 
+					
+					double cut1 = Math.min(wayLength/2, 20.0);
+					double cut2 = Math.min(wayLength, 100);
+					Way wayPart1 = cutoffWay(w, cut1, cut2, firstNode, nextHighwayNode);
+					if (wayPart1 == null) {
+						log.info("Way", w, "is too short to cut at least 10m from it. Cannot create destination hint.");
+						continue;
+					} else {
+						if (log.isDebugEnabled())
+							log.debug("Cut off way", wayPart1, wayPart1.toTagString());
+					}
+					
+					Way hintWay = w;
+					if (wayLength > 50) {
+						hintWay = cutoffWay(w, 10.0, 50.0, firstNode, nextHighwayNode);
+					}
+					if (hintWay == null) {
+						log.info("Way", w, "is too short to cut at least 20m from it. Cannot create destination hint.");
+					} else {
+						hintWay.addTag("mkgmap:dest_hint", "true");
+						
+						if (log.isInfoEnabled())
+							log.info("Cut off exit hint way", hintWay, hintWay.toTagString());
 					}
 				}
 			}
@@ -565,22 +706,30 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 		nameTags = null;
 	}
 
-// Do not return any used tag because this hook only has an effect if the tag destination is
-// additionally used in the style file.
-//	public Set<String> getUsedTags() {
-//		// TODO Auto-generated method stub
-//		return super.getUsedTags();
-//	}	
+	public Set<String> getUsedTags() {
+		if (processDestinations) {
+			// When processing destinations also load the destination:lanes,forward and backward tag 
+			// to be able to copy the value to the destination tag
+			// Do not load destination because it makes sense only if the tag is
+			// referenced in the style file
+			Set<String> tags = new HashSet<String>();
+			tags.add("destination:lanes");
+			tags.add("destination:forward");
+			tags.add("destination:backward");
+			return tags;
+		} else 
+			return Collections.emptySet();
+	}	
 
 	public void end() {
 		log.info("LinkDestinationHook started");
 
 		retrieveWays();
 		
-		if (processDestinations)
-			processDestinations();
-		if (processExits)
-			createExitHints();
+//		if (processDestinations)
+//			processDestinations();
+		if (processExits || processDestinations)
+			processWays();
 		
 		cleanup();
 
@@ -593,7 +742,7 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 	 * @return <code>true</code> way is oneway
 	 */
 	private boolean isOnewayInDirection(Way w) {
-		if (w.isBoolTag("oneway")) {
+		if (w.tagIsLikeYes("oneway")) {
 			return true;
 		}
 		
@@ -626,5 +775,26 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 				(isOnewayInDirection(w) == false
 				 && isOnewayOppositeDirection(w) == false);
 	}
-
+	
+	/** Private length function without caching */
+	private LengthFunction length = new LengthFunction() {
+		public boolean isCached() {
+			return false;
+		}
+	};
+	
+	/**
+	 * Retrieve the length of the given way.
+	 * @param w way
+	 * @return length in m
+	 */
+	private double getLength(Way w) {
+		String lengthValue = length.value(w);
+		try {
+			return Math.round(Double.valueOf(lengthValue));
+		} catch (Exception exp) {
+			return 0;
+		}
+	}
+	
 }

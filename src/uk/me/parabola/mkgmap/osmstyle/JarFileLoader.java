@@ -16,12 +16,13 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
-import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -77,10 +78,7 @@ public class JarFileLoader extends StyleFileLoader {
 			jarFile = jurl.getJarFile();
 			prefix = jurl.getEntryName();
 			if (prefix == null) {
-				if (name != null)
-					prefix = searchPrefix(jarFile, '/' + name + "/version");
-				else
-					prefix = searchPrefix(jarFile);
+				prefix = searchVersion(jarFile, name);
 			}
 
 			log.debug("jar prefix is", prefix);
@@ -89,17 +87,21 @@ public class JarFileLoader extends StyleFileLoader {
 		}
 	}
 
-	private String searchPrefix(JarFile file) {
-		return searchPrefix(file, "/version");
-	}
-
-	private String searchPrefix(JarFile file, String end) {
+	/**
+	 * Find path in archive 
+	 * @param file the JarFile instance
+	 * @param style a style name or null to find any version file
+	 * @return return prefix of (first) entry that contains file version
+	 */
+	private String searchVersion(JarFile file, String style) {
 		Enumeration<JarEntry> en = file.entries();
+		String flatEnd = style==null ? "version" : style + "/version";
+		String end = "/" + flatEnd;
 		while (en.hasMoreElements()) {
 			JarEntry entry = en.nextElement();
-			String name = entry.getName();
-			if (name.endsWith(end))
-				return name.substring(0, name.length() - 7);
+			String ename = entry.getName();
+			if (ename.endsWith(end) || ename.equals(flatEnd))
+				return ename.substring(0, ename.length() - "version".length());
 		}
 		return null;
 	}
@@ -129,7 +131,14 @@ public class JarFileLoader extends StyleFileLoader {
 		} catch (IOException e) {
 			throw new FileNotFoundException("Could not open " + filename);
 		}
-		return new InputStreamReader(new BufferedInputStream(stream));
+		Reader reader = null;
+		try {
+			reader = new InputStreamReader(stream, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			System.out.println("JarFileLoader: Encoding UTF-8 not supported");
+			reader = new InputStreamReader(stream);
+		}
+		return new BufferedReader(reader);
 	}
 
 	public void close() {

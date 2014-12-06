@@ -24,6 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.scan.SyntaxException;
 
 /**
  * Build a value that can have tag values substituted in it.
@@ -32,8 +33,15 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  * @author Toby Speight
  */
 public class ValueBuilder {
+	private static final Pattern[] FILTER_ARG_PATTERNS = {
+			Pattern.compile("[ \t]*([^: \\t|]+:\"[^\"]+\")[ \t]*"),
+			Pattern.compile("[ \t]*([^: \\t|]+:'[^']+')[ \t]*"),
 
-	private final List<ValueItem> items = new ArrayList<ValueItem>();
+			// This must be last
+			Pattern.compile("[ \t]*([^: \\t|]+:[^|]*)"),
+	};
+
+	private final List<ValueItem> items = new ArrayList<>();
 	private final boolean completeCheck;
 	
 	public ValueBuilder(String pattern) {
@@ -149,11 +157,32 @@ public class ValueBuilder {
 	private void addTagValue(String tagname, boolean is_local) {
 		ValueItem item = new ValueItem();
 		if (tagname.contains("|")) {
-			String[] parts = tagname.split("\\|");
+			String[] parts = tagname.split("[ \t]*\\|", 2);
 			assert parts.length > 1;
+
 			item.setTagname(parts[0], is_local);
-			for (int i = 1; i < parts.length; i++)
-				addFilter(item, parts[i]);
+
+			String s = parts[1];
+
+			int start = 0;
+			int end = s.length();
+			while (start < end) {
+				Matcher matcher = null;
+				for (Pattern p : FILTER_ARG_PATTERNS) {
+					matcher = p.matcher(s);
+					matcher.region(start, end);
+					if (matcher.lookingAt())
+						break;
+				}
+
+				if (matcher != null && matcher.lookingAt()) {
+					start = matcher.end() + 1;
+					addFilter(item, matcher.group(1));
+				} else {
+					assert false;
+					start = end;
+				}
+			}
 		} else {
 			item.setTagname(tagname, is_local);
 		}
@@ -161,28 +190,46 @@ public class ValueBuilder {
 	}
 
 	private void addFilter(ValueItem item, String expr) {
-		Pattern pattern = Pattern.compile("([^:]+):(.*)");
-		//pattern.
+		Pattern pattern = Pattern.compile("([^:]+):[\"']?(.*?)[\"']?", Pattern.DOTALL);
+
 		Matcher matcher = pattern.matcher(expr);
-		matcher.find();
+		matcher.matches();
 		String cmd = matcher.group(1);
 		String arg = matcher.group(2);
-		if (cmd.equals("def")) {
+
+		switch (cmd) {
+		case "def":
 			item.addFilter(new DefaultFilter(arg));
-		} else if (cmd.equals("conv")) {
+			break;
+		case "conv":
 			item.addFilter(new ConvertFilter(arg));
-		} else if (cmd.equals("subst")) {
+			break;
+		case "subst":
 			item.addFilter(new SubstitutionFilter(arg));
-		} else if (cmd.equals("prefix")) {
+			break;
+		case "prefix":
 			item.addFilter(new PrependFilter(arg));
-		} else if (cmd.equals("highway-symbol")) {
+			break;
+		case "highway-symbol":
 			item.addFilter(new HighwaySymbolFilter(arg));
-		} else if (cmd.equals("height")) {
+			break;
+		case "height":
 			item.addFilter(new HeightFilter(arg));
-		} else if (cmd.equals("not-equal")) {
+			break;
+		case "not-equal":
 			item.addFilter(new NotEqualFilter(arg));
-		} else if (cmd.equals("substring")) {
+			break;
+		case "substring":
 			item.addFilter(new SubstringFilter(arg));
+			break;
+		case "part":
+			item.addFilter(new PartFilter(arg));
+			break;
+		case "country-ISO":
+			item.addFilter(new CountryISOFilter());
+			break;
+		default:
+			throw new SyntaxException(String.format("Unknown filter '%s'", cmd));
 		}
 	}
 
@@ -196,7 +243,7 @@ public class ValueBuilder {
 	}
 
 	public Set<String> getUsedTags() {
-		Set<String> set = new HashSet<String>();
+		Set<String> set = new HashSet<>();
 		for (ValueItem v : items) {
 			String tagname = v.getTagname();
 			if (tagname != null)

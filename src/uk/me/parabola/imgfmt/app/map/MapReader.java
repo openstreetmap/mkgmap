@@ -31,10 +31,12 @@ import uk.me.parabola.imgfmt.app.lbl.Zip;
 import uk.me.parabola.imgfmt.app.net.NETFileReader;
 import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.imgfmt.app.trergn.Point;
+import uk.me.parabola.imgfmt.app.trergn.Polygon;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.app.trergn.RGNFileReader;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.app.trergn.TREFileReader;
+import uk.me.parabola.imgfmt.app.trergn.Zoom;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
@@ -51,7 +53,10 @@ public class MapReader implements Closeable {
 	private final RGNFileReader rgnFile;
 	private final LBLFileReader lblFile;
 	private final NETFileReader netFile;
-
+	
+	public static final boolean WITH_EXT_TYPE_DATA = true;
+	public static final boolean WITHOUT_EXT_TYPE_DATA = false;
+	
 	private final Deque<Closeable> toClose = new ArrayDeque<Closeable>();
 
 	public MapReader(String filename) throws FileNotFoundException {
@@ -106,32 +111,52 @@ public class MapReader implements Closeable {
 	 * Get a list of all the points for a given level.
 	 * @param level The level, lower numbers are the most detailed.
 	 */
-	public List<Point> pointsForLevel(int level) {
+	public List<Point> pointsForLevel(int level, boolean withExtType) {
 		List<Point> points = new ArrayList<Point>();
 
 		Subdivision[] subdivisions = treFile.subdivForLevel(level);
 		for (Subdivision sd : subdivisions) {
-			List<Point> subdivPoints = rgnFile.pointsForSubdiv(sd);
+			List<Point> subdivPoints = rgnFile.pointsForSubdiv(sd, withExtType);
 			points.addAll(subdivPoints);
 		}
 
 		return points;
 	}
 
+	public Zoom[] getLevels() {
+		return treFile.getMapLevels();
+	}
+
+	public String[] getCopyrights(){
+		return treFile.getCopyrights(lblFile);
+	}
 	/**
 	 * Get a list of all the lines for a given level.
 	 * @param level The level, lower numbers are the most detailed.
 	 */
 	public List<Polyline> linesForLevel(int level) {
-		ArrayList<Polyline> points = new ArrayList<Polyline>();
+		ArrayList<Polyline> lines = new ArrayList<Polyline>();
 
 		Subdivision[] subdivisions = treFile.subdivForLevel(level);
 		for (Subdivision div : subdivisions) {
-			List<Polyline> subdivPoints = rgnFile.linesForSubdiv(div);
-			points.addAll(subdivPoints);
+			List<Polyline> subdivLines = rgnFile.linesForSubdiv(div);
+			lines.addAll(subdivLines);
 		}
 
-		return points;
+		return lines;
+	}
+
+
+	public List<Polygon> shapesForLevel(int level) {
+		ArrayList<Polygon> shapes = new ArrayList<Polygon>();
+
+		Subdivision[] subdivisions = treFile.subdivForLevel(level);
+		for (Subdivision div : subdivisions) {
+			List<Polygon> subdivShapes = rgnFile.shapesForSubdiv(div);
+			shapes.addAll(subdivShapes);
+		}
+
+		return shapes;
 	}
 
 	public void close() throws IOException {
@@ -178,5 +203,9 @@ public class MapReader implements Closeable {
 		if (netFile == null)
 			return Collections.emptyList();
 		return netFile.getRoads();
+	}
+	
+	public int getEncodingType(){
+		return lblFile.getEncodingType();
 	}
 }

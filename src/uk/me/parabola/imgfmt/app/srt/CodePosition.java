@@ -20,11 +20,11 @@ import java.text.Collator;
  * @author Steve Ratcliffe
  */
 class CodePosition {
-	private byte primary;
+	private char primary;
 	private byte secondary;
 	private byte tertiary;
 
-	public byte getPrimary() {
+	public char getPrimary() {
 		return primary;
 	}
 
@@ -42,20 +42,20 @@ class CodePosition {
 	 * @param type The strength, Collator.PRIMARY, SECONDARY etc.
 	 * @return The collation position at the given strength.
 	 */
-	public byte getPosition(int type) {
+	public int getPosition(int type) {
 		switch (type) {
 		case Collator.PRIMARY:
 			return primary;
 		case Collator.SECONDARY:
-			return secondary;
+			return secondary & 0xff;
 		case Collator.TERTIARY:
-			return tertiary;
+			return tertiary & 0xff;
 		default:
 			return 0;
 		}
 	}
 
-	public void setPrimary(byte primary) {
+	public void setPrimary(char primary) {
 		this.primary = primary;
 	}
 

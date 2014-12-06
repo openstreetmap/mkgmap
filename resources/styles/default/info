@@ -12,10 +12,6 @@ summary: The default style
 #
 version=1.0
 
-base-style=contours_ft
-base-style=landuse
-base-style=waters
-
 # A longer description of the style.
 description {
 The default style.  This is a heavyweight style that is

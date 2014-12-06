@@ -52,41 +52,68 @@ public class RouteCenter {
 		log.info("new RouteCenter at " + centralPoint.toDegreeString() +
 				 ", nodes: " + nodes.size()	+ " tabA: " + tabA.size() +
 				 " tabB: " + tabB.size());
+	}
 
-		// update lat/lon offsets; update arcs with table indices; populate tabC
+	/**
+	 * update arcs with table indices; populate tabC
+	 */
+	private void updateOffsets(){
 		for (RouteNode node : nodes) {
 			node.setOffsets(centralPoint);
 			for (RouteArc arc : node.arcsIteration()) {
 				arc.setIndexA(tabA.getIndex(arc));
+				arc.setInternal(nodes.contains(arc.getDest()));
 				if (!arc.isInternal())
 					arc.setIndexB(tabB.getIndex(arc.getDest()));
 			}
-			for (RouteRestriction restr : node.getRestrictions())
+
+			for (RouteRestriction restr : node.getRestrictions()){
+				if (restr.getArcs().size() >= 3){
+					// only restrictions with more than 2 arcs can contain further arcs 
+					for (RouteArc arc : restr.getArcs()){
+						if (arc.getSource() == node)
+							continue;
+						arc.setIndexA(tabA.getIndex(arc));
+						arc.setInternal(nodes.contains(arc.getDest()));
+						if (!arc.isInternal())
+							arc.setIndexB(tabB.getIndex(arc.getDest()));
+					}
+				}
 				restr.setOffsetC(tabC.addRestriction(restr));
+			}
 		}
 		// update size of tabC offsets, now that tabC has been populated
 		tabC.propagateSizeBytes();
 	}
-
+	
 	/**
 	 * Write a route center.
 	 *
 	 * writer.position() is relative to the start of NOD 1.
 	 * Space for Table A is reserved but not written. See writeTableA.
 	 */
-	public void write(ImgFileWriter writer) {
+	public void write(ImgFileWriter writer, int[] classBoundaries) {
 		assert !nodes.isEmpty(): "RouteCenter without nodes";
-
-		for (RouteNode node : nodes)
+		updateOffsets();
+		int centerPos = writer.position();
+		for (RouteNode node : nodes){
 			node.write(writer);
+			int group = node.getGroup();
+			if (group == 0)
+				continue;
+			if (centerPos < classBoundaries[group-1]){
+				// update positions (loop is used because style might not use all classes  
+				for (int i = group-1; i >= 0; i--){
+					if (centerPos < classBoundaries[i] )
+						classBoundaries[i] = centerPos;
+				}
+			}
+		}
+		int alignment = 1 << NODHeader.DEF_ALIGN;
+		int alignMask = alignment - 1;
 
-		int mult = 1 << NODHeader.DEF_ALIGN;
-
-		// Get the position of the tables, and position there.
-		int roundpos = (writer.position() + mult - 1) 
-					>> NODHeader.DEF_ALIGN
-					<< NODHeader.DEF_ALIGN;
-		int tablesOffset = roundpos + mult;
+		// Calculate the position of the tables.
+		int tablesOffset = (writer.position() + alignment) & ~alignMask;
 		log.debug("write table a at offset", Integer.toHexString(tablesOffset));
 
 		// Go back and fill in all the table offsets

@@ -51,11 +51,23 @@ public class SortExpandTest {
 	}
 
 	/**
-	 * Expanded letters should sort just after what they expand to.
+	 * Expanded letters should sort equal to what they expand to.
 	 */
 	@Test
 	public void testAgainstExpansion() {
-		checkOrder("asssst", "asßst");
+		assertEquals(0, compareKey("asssst", "asßst"));
+	}
+
+	@Test
+	public void testExpandSize() {
+		// make sure buffer doesn't overflow when all characters are expanded.
+		assertEquals(0, compareKey("……………………", "……………………"));
+	}
+
+	private int compareKey(String s1, String s2) {
+		SortKey<Object> key1 = sort.createSortKey(null, s1);
+		SortKey<Object> key2 = sort.createSortKey(null, s2);
+		return key1.compareTo(key2);
 	}
 
 	@Test

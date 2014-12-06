@@ -68,6 +68,10 @@ public class ElementTestDataSource extends MapperBasedMapDataSource implements L
 		};
 	}
 
+	public LevelInfo[] overviewMapLevels() {
+		return null; // TODO: probably this should return something 
+	}
+
 	public String[] copyrightMessages() {
 		return new String[] {"test data"};
 	}

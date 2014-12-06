@@ -28,7 +28,6 @@ import uk.me.parabola.imgfmt.app.Coord;
  * @see <a href="http://www.skytopia.com/project/articles/compsci/clipping.html">A very clear explaination of the Liang-Barsky algorithm</a>
  */
 public class LineClipper {
-
 	/**
 	 * Clips a polyline by the given bounding box.  This may produce several
 	 * separate lines if the line meanders in and out of the box.
@@ -78,7 +77,7 @@ public class LineClipper {
 		// lines from it.
 		for (int i = 0; i <= coords.size() - 2; i++) {
 			Coord[] pair = {coords.get(i), coords.get(i+1)};
-			if (pair[0].equals(pair[1])) {
+			if (pair[0].highPrecEquals(pair[1])) {
 				continue;
 			}
 			Coord[] clippedPair = clip(a, pair);
@@ -87,12 +86,12 @@ public class LineClipper {
 		
 		// in case the coords build a closed way the first and the last clipped line 
 		// might have to be joined
-		if (seg.ret.size() >= 2 && coords.get(0).equals(coords.get(coords.size()-1))) {
+		if (seg.ret.size() >= 2 && coords.get(0) == coords.get(coords.size()-1)) {
 			List<Coord> firstSeg = seg.ret.get(0);
 			List<Coord> lastSeg = seg.ret.get(seg.ret.size()-1);
 			// compare the first point of the first segment with the last point of 
 			// the last segment
-			if (firstSeg.get(0).equals(lastSeg.get(lastSeg.size()-1))) {
+			if (firstSeg.get(0).equals(lastSeg.get(lastSeg.size()-1))) { //TODO : equal, ident or highPrecEqual? 
 				// they are the same so the two segments should be joined
 				lastSeg.addAll(firstSeg.subList(1, firstSeg.size()));
 				seg.ret.remove(0);
@@ -126,12 +125,13 @@ public class LineClipper {
 		if (a.insideBoundary(ends[0]) && a.insideBoundary(ends[1])) {
 			return (nullIfInside ? null : ends);
 		}
-		
-		int x0 = ends[0].getLongitude();
-		int y0 = ends[0].getLatitude();
+		Coord lowerLeft = new Coord(a.getMinLat(),a.getMinLong());
+		Coord upperRight = new Coord(a.getMaxLat(),a.getMaxLong());
+		int x0 = ends[0].getHighPrecLon();
+		int y0 = ends[0].getHighPrecLat();
 
-		int x1 = ends[1].getLongitude();
-		int y1 = ends[1].getLatitude();
+		int x1 = ends[1].getHighPrecLon();
+		int y1 = ends[1].getHighPrecLat();
 
 		int dx = x1 - x0;
 		int dy = y1 - y0;
@@ -139,22 +139,22 @@ public class LineClipper {
 		double[] t = {0, 1};
 
 		int p = -dx;
-		int q = -(a.getMinLong() - x0);
+		int q = -(lowerLeft.getHighPrecLon() - x0);
 		boolean scrap = checkSide(t, p, q);
 		if (scrap) return null;
 
 		p = dx;
-		q = a.getMaxLong() - x0;
+		q = upperRight.getHighPrecLon() - x0;
 		scrap = checkSide(t, p, q);
 		if (scrap) return null;
 
 		p = -dy;
-		q = -(a.getMinLat() - y0);
+		q = -(lowerLeft.getHighPrecLat() - y0);
 		scrap = checkSide(t, p, q);
 		if (scrap) return null;
 
 		p = dy;
-		q = a.getMaxLat() - y0;
+		q = upperRight.getHighPrecLat() - y0;
 		scrap = checkSide(t, p, q);
 		if (scrap) return null;
 
@@ -171,11 +171,10 @@ public class LineClipper {
 			// line requires clipping so create a new end point and if
 			// its position (in map coordinates) is different from the
 			// original point, use the new point as a boundary node
-			Coord new0 = new Coord(calcCoord(y0, dy, t[0]), calcCoord(x0, dx, t[0]));
-
+			Coord new0 = Coord.makeHighPrecCoord(calcCoord(y0, dy, t[0]), calcCoord(x0, dx, t[0]));
 			// check the maths worked out
 			assert a.onBoundary(new0) : "New boundary point at " + new0.toString() + " not on boundary of [" + a.getMinLat() + ", " + a.getMinLong() + ", " + a.getMaxLat() + ", " + a.getMaxLong() + "]";
-			if(!new0.equals(orig0))
+			if(!new0.highPrecEquals(orig0))
 				ends[0] = new0;
 			ends[0].setOnBoundary(true);
 		}
@@ -192,11 +191,11 @@ public class LineClipper {
 			// line requires clipping so create a new end point and if
 			// its position (in map coordinates) is different from the
 			// original point, use the new point as a boundary node
-			Coord new1 = new Coord(calcCoord(y0, dy, t[1]), calcCoord(x0, dx, t[1]));
-
+			Coord new1 = Coord.makeHighPrecCoord(calcCoord(y0, dy, t[1]), calcCoord(x0, dx, t[1])); 
+			
 			// check the maths worked out
 			assert a.onBoundary(new1) : "New boundary point at " + new1.toString() + " not on boundary of [" + a.getMinLat() + ", " + a.getMinLong() + ", " + a.getMaxLat() + ", " + a.getMaxLong() + "]";
-			if(!new1.equals(orig1))
+			if(!new1.highPrecEquals(orig1))
 				ends[1] = new1;
 			ends[1].setOnBoundary(true);
 		}
@@ -216,8 +215,8 @@ public class LineClipper {
 		// are equal could catch the situation where although t[0] and
 		// t[1] differ, the coordinates come out the same for both
 		// points
-
-		if(t[0] >= t[1] || ends[0].equals(ends[1]))
+		
+		if(t[0] >= t[1] || ends[0].highPrecEquals(ends[1]))
 			return null;
 
 		return ends;

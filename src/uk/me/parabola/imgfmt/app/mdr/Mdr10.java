@@ -43,7 +43,7 @@ public class Mdr10 extends MdrMapSection {
 		setConfig(config);
 
 		for (int i = 1; i <= MAX_GROUP_NUMBER; i++) {
-			poiTypes[i] = new ArrayList<Mdr10Record>();
+			poiTypes[i] = new ArrayList<>();
 		}
 	}
 
@@ -98,7 +98,7 @@ public class Mdr10 extends MdrMapSection {
 	 * number of entries in that group.
 	 */
 	public Map<Integer, Integer> getGroupSizes() {
-		Map<Integer, Integer> m = new LinkedHashMap<Integer, Integer>();
+		Map<Integer, Integer> m = new LinkedHashMap<>();
 
 		for (int i = 1; i < MAX_GROUP_NUMBER; i++) {
 			List<Mdr10Record> poiGroup = poiTypes[i];
@@ -131,5 +131,14 @@ public class Mdr10 extends MdrMapSection {
 	public int getExtraValue() {
 		// Nothing to do here
 		return 0;
+	}
+
+	/**
+	 * Nothing to do for this section.
+	 *
+	 * Although this section has a subsection by map index in mdr1, its record does not contain the
+	 * map index and so nothing needs to be re-written here.  The map index is contained in its mdr11ref.
+	 */
+	public void relabelMaps(Mdr1 maps) {
 	}
 }

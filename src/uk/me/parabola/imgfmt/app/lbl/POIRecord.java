@@ -295,27 +295,6 @@ public class POIRecord {
 	}
 
 	/**
-	 * Address abbreviations.
-	 */
-	//static class AddrAbbr {
-	//	private final char code;
-	//	private final String value;
-	//
-	//	AddrAbbr(char code, String value) {
-	//		this.code = code;
-	//		this.value = value;
-	//	}
-	//
-	//	public String toString() {
-	//		return value;
-	//	}
-	//
-	//	public char getCode() {
-	//		return code;
-	//	}
-	//}
-
-	/**
 	 * Street and Phone numbers can be stored in two different ways in the poi record
 	 * Simple Number that only contain digits are coded in base 11 coding.
 	 * This helper class tries to code the given number. If the number contains other
@@ -330,7 +309,7 @@ public class POIRecord {
 		 * Encode a string as base 11.
 		 * @param str The input string.
 		 * @return If the string is not all numeric (or A) then false is returned
-		 * and the string will be encoded as a label instead.
+		 * and this object is invalid.
 		 */
 		public boolean set(String str) {
 
@@ -393,10 +372,18 @@ public class POIRecord {
 			return encodedSize;
 		}
 
-		private int decodeChar(char ch)
-		{
-			return (ch - '0');
+		/**
+		 * Convert the characters '0' to '9' and '-' to a number 0-10 (base 11).
+		 * @param ch The character to convert.
+		 * @return A number between 0 and 10 or -1 if the character is not valid.
+		 */
+		private int decodeChar(char ch) {
+			if (ch == '-')
+				return 10;
+			else if (ch >= '0' && ch <= '9')
+				return (ch - '0');
+			else
+				return -1;
 		}
-
 	}	
 }

@@ -1,9 +1,9 @@
-
 include ../resources/make.param
 
 
-SOURCES= about.txt creating.txt design.txt files.txt rules.txt rules-filters.txt \
-	style-manual.txt $(XSL) 
+SOURCES= about.txt creating.txt design.txt files.txt rules.txt internal-tags.txt \
+		 rules-filters.txt style-manual.txt $(XSL) 
+
 STYLE_MAIN=style-manual.txt
 TARGET_PDF=style-manual.pdf
 
@@ -19,7 +19,7 @@ style-manual.html: $(SOURCES)
 	$(ASCIIDOC) $(HTML_ATTRS) -a icons -a iconsdir=$(ICONSDIR) -b html5 $(STYLE_MAIN)
 
 $(TARGET_PDF): $(SOURCES)
-	$(A2X) --xsl-file=$(XSL) --fop $(PDF_OPTS) $(STYLE_MAIN)
+	$(A2X) -L --xsl-file=$(XSL) --fop $(PDF_OPTS) $(STYLE_MAIN)
 
 style-manual.epub: $(SOURCES)
 	mkdir -p build

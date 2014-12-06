@@ -13,6 +13,7 @@
 package uk.me.parabola.mkgmap.main;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,6 +51,8 @@ import uk.me.parabola.mkgmap.combiners.GmapsuppBuilder;
 import uk.me.parabola.mkgmap.combiners.MdrBuilder;
 import uk.me.parabola.mkgmap.combiners.MdxBuilder;
 import uk.me.parabola.mkgmap.combiners.NsisBuilder;
+import uk.me.parabola.mkgmap.combiners.OverviewBuilder;
+import uk.me.parabola.mkgmap.combiners.OverviewMap;
 import uk.me.parabola.mkgmap.combiners.TdbBuilder;
 import uk.me.parabola.mkgmap.osmstyle.StyleFileLoader;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
@@ -58,6 +61,7 @@ import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.srt.SrtTextReader;
+import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * The new main program.  There can be many file names to process and there can
@@ -74,6 +78,7 @@ public class Main implements ArgumentProcessor {
 
 	private final Map<String, MapProcessor> processMap = new HashMap<String, MapProcessor>();
 	private String styleFile = "classpath:styles";
+	private String styleOption;
 	private boolean verbose;
 
 	private final List<FilenameTask> futures = new LinkedList<FilenameTask>();
@@ -81,6 +86,27 @@ public class Main implements ArgumentProcessor {
 	// default number of threads
 	private int maxJobs = 1;
 
+	private boolean createTdbFiles = false;
+	private boolean tdbBuilderAdded = false;
+	// used for messages in listStyles and checkStyles
+	private String searchedStyleName;
+
+	private volatile int programRC = 0;
+
+	/**
+	 * Used for unit tests
+	 * @param args
+	 */
+	public static void mainNoSystemExit(String[] args) {
+		Main.mainStart(args);
+	}
+	
+	public static void main(String[] args) {
+		int rc = Main.mainStart(args);
+		if (rc != 0)
+			System.exit(1);
+	}
+	
 	/**
 	 * The main program to make or combine maps.  We now use a two pass process,
 	 * first going through the arguments and make any maps and collect names
@@ -88,32 +114,53 @@ public class Main implements ArgumentProcessor {
 	 *
 	 * @param args The command line arguments.
 	 */
-	public static void main(String[] args) {
+	private static int mainStart(String[] args) {
 		long start = System.currentTimeMillis();
 		System.out.println("Time started: " + new Date());
 		// We need at least one argument.
 		if (args.length < 1) {
-			System.err.println("Usage: mkgmap [options...] <file.osm>");
+			printUsage();
 			printHelp(System.err, getLang(), "options");
-			return;
+			return 0;
 		}
 
 		Main mm = new Main();
 
+		int numExitExceptions = 0;
 		try {
 			// Read the command line arguments and process each filename found.
 			CommandArgsReader commandArgs = new CommandArgsReader(mm);
 			commandArgs.setValidOptions(getValidOptions(System.err));
 			commandArgs.readArgs(args);
 		} catch (MapFailedException e) {
-			System.err.println(e.getMessage());
+			System.err.println(e.getMessage()); // should not happen
 		} catch (ExitException e) {
+			++numExitExceptions;
 			System.err.println(e.getMessage());
 		}
+		
+		System.out.println("Number of ExitExceptions: " + numExitExceptions);
+		
 		System.out.println("Time finished: " + new Date());
-		System.out.println("Total time taken: " + (System.currentTimeMillis() - start) + "ms"); 
+		System.out.println("Total time taken: " + (System.currentTimeMillis() - start) + "ms");
+		if (numExitExceptions > 0 || mm.getProgramRC() != 0){
+			return 1;
+		}
+		return 0;
+	}
+	
+	private static void printUsage (){
+		System.err.println("Usage: mkgmap [options...] <file.osm>");
 	}
 
+	private void setProgramRC(int rc){
+		programRC = rc;
+	}
+
+	private int getProgramRC(){
+		return programRC;
+	}
+	
 	/**
 	 * Grab the options help file and print it.
 	 * @param err The output print stream to write to.
@@ -187,9 +234,13 @@ public class Main implements ArgumentProcessor {
 	 * Switch out to the appropriate class to process the filename.
 	 */
 	public void processFilename(final CommandArgs args, final String filename) {
+		
 		final String ext = extractExtension(filename);
 		log.debug("file", filename, ", extension is", ext);
-
+		// ignore ovm_* files given as command line arguments
+		if (OverviewBuilder.isOverviewImg(filename))
+			return;
+		
 		final MapProcessor mp = mapMaker(ext);
 
 		args.setSort(getSort(args));
@@ -198,10 +249,15 @@ public class Main implements ArgumentProcessor {
 		FilenameTask task = new FilenameTask(new Callable<String>() {
 			public String call() {
 				log.threadTag(filename);
-				String output = mp.makeMap(args, filename);
-				log.debug("adding output name", output);
-				log.threadTag(null);
-				return output;
+				if (filename.startsWith("test-map:") || new File(filename).exists()){
+					String output = mp.makeMap(args, filename);
+					log.debug("adding output name", output);
+					log.threadTag(null);
+					return output;
+				} else {
+					log.error("file " + filename + " doesn't exist");
+					return null;
+				}
 			}
 		});
 		task.setArgs(args);
@@ -211,7 +267,7 @@ public class Main implements ArgumentProcessor {
 	private MapProcessor mapMaker(String ext) {
 		MapProcessor mp = processMap.get(ext);
 		if (mp == null)
-			mp = new MapMaker();
+			mp = new MapMaker(createTdbFiles);
 		return mp;
 	}
 
@@ -225,20 +281,20 @@ public class Main implements ArgumentProcessor {
 			// to process.
 			int n = Integer.valueOf(val);
 			if (n > 0) // TODO temporary, this option will become properly default of on.
-				addTdbBuilder();
+				createTdbFiles = true;
 
-		} else if (opt.equals("tdbfile")) {
-			addTdbBuilder();
-		} else if (opt.equals("nsis")) {
-			addCombiner(new NsisBuilder());
 		} else if (opt.equals("help")) {
 			printHelp(System.out, getLang(), (!val.isEmpty()) ? val : "help");
 		} else if (opt.equals("style-file") || opt.equals("map-features")) {
 			styleFile = val;
+		} else if (opt.equals("style")) {
+			styleOption = val;
 		} else if (opt.equals("verbose")) {
 			verbose = true;
 		} else if (opt.equals("list-styles")) {
 			listStyles();
+		} else if (opt.equals("check-styles")) {
+			checkStyles();
 		} else if (opt.equals("max-jobs")) {
 			if (val.isEmpty())
 				maxJobs = Runtime.getRuntime().availableProcessors();
@@ -255,16 +311,27 @@ public class Main implements ArgumentProcessor {
 	}
 
 	public void removeOption(String opt) {
+		if ("tdbfile".equals(opt))
+			createTdbFiles = false;
 	}
 
+	/**
+	 * Add the builders for the TDB and overview map.  These are always
+	 * generated together as we use some info that is calculated when constructing
+	 * the overview map in the TDB file.
+	 */
 	private void addTdbBuilder() {
-		TdbBuilder builder = new TdbBuilder();
-		builder.setOverviewSource(new OverviewMapDataSource());
-		addCombiner(builder);
+		if (!tdbBuilderAdded ){
+			OverviewMap overviewSource = new OverviewMapDataSource();
+			OverviewBuilder overviewBuilder = new OverviewBuilder(overviewSource);
+			addCombiner(overviewBuilder);
+			TdbBuilder tdbBuilder = new TdbBuilder(overviewBuilder);
+			addCombiner(tdbBuilder);
+			tdbBuilderAdded = true;
+		}
 	}
 
 	private void listStyles() {
-
 		String[] names;
 		try {
 			StyleFileLoader loader = StyleFileLoader.createStyleLoader(styleFile, null);
@@ -278,35 +345,90 @@ public class Main implements ArgumentProcessor {
 		Arrays.sort(names);
 		System.out.println("The following styles are available:");
 		for (String name : names) {
-			Style style;
-			try {
-				style = new StyleImpl(styleFile, name);
-			} catch (SyntaxException e) {
-				System.err.println("Error in style: " + e.getMessage());
+			Style style = readOneStyle(name, false);
+			if (style == null)
 				continue;
-			} catch (FileNotFoundException e) {
-				log.debug("could not find style", name);
-				try {
-					style = new StyleImpl(styleFile, null);
-				} catch (SyntaxException e1) {
-					System.err.println("Error in style: " + e1.getMessage());
-					continue;
-				} catch (FileNotFoundException e1) {
-					log.debug("could not find style", styleFile);
-					continue;
-				}
-			}
-
 			StyleInfo info = style.getInfo();
 			System.out.format("%-15s %6s: %s\n",
-					name,info.getVersion(), info.getSummary());
+					searchedStyleName,info.getVersion(), info.getSummary());
 			if (verbose) {
 				for (String s : info.getLongDescription().split("\n"))
 					System.out.printf("\t%s\n", s.trim());
 			}
 		}
 	}
+ 
+	/**
+	 * Check one or all styles in the path given in styleFile. 
+	 */
+	private void checkStyles() {
+		String[] names;
+		int checked = 0;
+		try {
+			StyleFileLoader loader = StyleFileLoader.createStyleLoader(styleFile, null);
+			names = loader.list();
+			loader.close();
+		} catch (FileNotFoundException e) {
+			log.debug("didn't find style file", e);
+			throw new ExitException("Could not check style file " + styleFile);
+		}
 
+		Arrays.sort(names);
+		
+		if (styleOption == null){
+			if (names.length > 1)
+				System.out.println("The following styles are available:");
+			else 
+				System.out.println("Found one style in " + styleFile);
+		}
+		for (String name : names) {
+			if (styleOption != null && name.equals(styleOption) == false)
+				continue;
+			if (names.length > 1){
+				System.out.println("checking style: " + name);
+			}
+			++checked;
+			boolean performChecks = true;
+			if ("classpath:styles".equals(styleFile) && "default".equals(name) == false){ 
+					performChecks = false;
+			}
+			Style style = readOneStyle(name, performChecks);
+			if (style == null){
+				System.out.println("could not open style " + name);
+			}
+		}
+		if (checked == 0)
+			System.out.println("could not open style " + styleOption + " in " + styleFile );
+		System.out.println("finished check-styles");
+	}
+
+	/**
+	 * Try to read a style from styleFile directory
+	 * @param name name of the style
+	 * @param performChecks perform checks?
+	 * @return the style or null in case of errors
+	 */
+	private Style readOneStyle(String name, boolean performChecks){
+		Style style = null;
+		searchedStyleName = name;
+		try {
+			style = new StyleImpl(styleFile, name, new EnhancedProperties(), performChecks);
+		} catch (SyntaxException e) {
+			System.err.println("Error in style: " + e.getMessage());
+		} catch (FileNotFoundException e) {
+			log.debug("could not find style", name);
+			try {
+				searchedStyleName = new File(styleFile).getName();
+				style = new StyleImpl(styleFile, null, new EnhancedProperties(), performChecks);
+			} catch (SyntaxException e1) {
+				System.err.println("Error in style: " + e1.getMessage());
+			} catch (FileNotFoundException e1) {
+				log.debug("could not find style", styleFile);
+			}
+		}
+		return style;
+	}
+	
 	private static String getLang() {
 		return "en";
 	}
@@ -331,7 +453,9 @@ public class Main implements ArgumentProcessor {
 
 
 		List<FilenameTask> filenames = new ArrayList<FilenameTask>();
-
+		
+		int numMapFailedExceptions = 0;
+		
 		if (threadPool != null) {
 			threadPool.shutdown();
 			while (!futures.isEmpty()) {
@@ -362,7 +486,9 @@ public class Main implements ArgumentProcessor {
 				} catch (ExitException ee) {
 					throw ee;
 				} catch (MapFailedException mfe) {
-					System.err.println(mfe.getMessage());
+//					System.err.println(mfe.getMessage()); // already printed via log
+					numMapFailedExceptions++;
+					setProgramRC(-1);
 				} catch (Throwable t) {
 					t.printStackTrace();
 					if (!args.getProperties().getProperty("keep-going", false)) {
@@ -371,10 +497,24 @@ public class Main implements ArgumentProcessor {
 				}
 			}
 		}
+		System.out.println("Number of MapFailedExceptions: " + numMapFailedExceptions);
 
 		if (combiners.isEmpty())
 			return;
-
+		boolean hasFiles = false;
+		for (FilenameTask file : filenames) {
+			if (file == null || file.isCancelled() || file.getFilename() == null){
+				if (args.getProperties().getProperty("keep-going", false))
+					continue;
+				else 
+					throw new ExitException("Exiting - if you want to carry on regardless, use the --keep-going option");
+			}
+			hasFiles = true;
+		}
+		if (!hasFiles){
+			log.warn("nothing to do for combiners.");
+			return;
+		}
 		log.info("Combining maps");
 
 		args.setSort(getSort(args));
@@ -383,7 +523,34 @@ public class Main implements ArgumentProcessor {
 		for (Combiner c : combiners)
 			c.init(args);
 
-		// Tell them about each filename
+		// will contain img files for which an additional ovm file was found  
+		HashSet<String> foundOvmFiles = new HashSet<String>();
+		// try OverviewBuilder with special files  
+		if (tdbBuilderAdded){
+			for (FilenameTask file : filenames) {
+				if (file == null || file.isCancelled())
+					continue;
+
+				try {
+					String fileName = file.getFilename();
+					if (fileName.endsWith(".img") == false)
+						continue;
+					fileName = OverviewBuilder.getOverviewImgName(fileName);
+					log.info("  " + fileName);
+					FileInfo fileInfo = FileInfo.getFileInfo(fileName);
+					fileInfo.setArgs(file.getArgs());
+					// add the real input file 
+					foundOvmFiles.add(file.getFilename());
+					for (Combiner c : combiners){
+						if (c instanceof OverviewBuilder)
+							c.onMapEnd(fileInfo);
+					}
+				} catch (FileNotFoundException e) {
+				}
+			} 
+		}
+		
+		// Tell them about each filename (OverviewBuilder excluded) 
 		for (FilenameTask file : filenames) {
 			if (file == null || file.isCancelled())
 				continue;
@@ -392,23 +559,40 @@ public class Main implements ArgumentProcessor {
 				log.info("  " + file);
 				FileInfo fileInfo = FileInfo.getFileInfo(file.getFilename());
 				fileInfo.setArgs(file.getArgs());
-				for (Combiner c : combiners)
+				for (Combiner c : combiners){
+					if (c instanceof OverviewBuilder && foundOvmFiles.contains(file.getFilename()))
+						continue;
 					c.onMapEnd(fileInfo);
+				}
 			} catch (FileNotFoundException e) {
 				throw new MapFailedException("could not open file " + e.getMessage());
 			}
-		}
+		} 
+		
 
 		// All done, allow tidy up or file creation to happen
 		for (Combiner c : combiners)
 			c.onFinish();
+		
+		if (tdbBuilderAdded && args.getProperties().getProperty("remove-ovm-work-files", false)){
+			for (String fName:foundOvmFiles){
+				String ovmFile = OverviewBuilder.getOverviewImgName(fName);
+				log.info("removing " + ovmFile);
+				new File(ovmFile).delete();
+			}
+		}
 	}
 
 	private void fileOptions(CommandArgs args) {
 		boolean indexOpt = args.exists("index");
 		boolean gmapOpt = args.exists("gmapsupp");
 		boolean tdbOpt = args.exists("tdbfile");
-
+		if (tdbOpt || createTdbFiles){ 
+			addTdbBuilder();
+		}
+		if (args.exists("nsis")) {
+			addCombiner(new NsisBuilder());
+		}
 		if (gmapOpt) {
 			GmapsuppBuilder gmapBuilder = new GmapsuppBuilder();
 			gmapBuilder.setCreateIndex(indexOpt);
@@ -428,7 +612,7 @@ public class Main implements ArgumentProcessor {
 	 * @param filename The original filename.
 	 * @return The file extension.
 	 */
-	private String extractExtension(String filename) {
+	private static String extractExtension(String filename) {
 		String[] parts = filename.toLowerCase(Locale.ENGLISH).split("\\.");
 		List<String> ignore = Arrays.asList("gz", "bz2", "bz");
 

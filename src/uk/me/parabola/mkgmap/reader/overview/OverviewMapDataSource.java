@@ -17,12 +17,12 @@
 package uk.me.parabola.mkgmap.reader.overview;
 
 import java.io.FileNotFoundException;
-import java.util.HashSet;
-import java.util.Set;
-
+import java.util.ArrayList;
+import java.util.List;
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.CoordNode;
+import uk.me.parabola.imgfmt.app.net.GeneralRouteRestriction;
+import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.combiners.OverviewMap;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.MapLine;
@@ -41,13 +41,11 @@ import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
 public class OverviewMapDataSource extends MapperBasedMapDataSource
 		implements OverviewMap
 {
-	// We keep all non-duplicated copyright messages from the component maps.
-	private final Set<String> copyrights = new HashSet<String>();
-
-	// TODO need to change this.
-	private final int topLevel = 5;
-	private final int topBits = 14;
-
+	private static final Logger log = Logger.getLogger(OverviewMapDataSource.class);
+	
+	private final List<String> copyrights = new ArrayList<String>();
+	LevelInfo[] levels = null;	
+	
 	/**
 	 * This is a fake source of data and is not read from a file, so always
 	 * return false here.
@@ -67,17 +65,34 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 	}
 
 	public LevelInfo[] mapLevels() {
-		// We use one level of zoom for the overview map and it has a level
-		// that is greater than that of the maps that go to make it up.
-		// (An extra invisible level will be added as always).
-		LevelInfo info = new LevelInfo(topLevel + 1, topBits - 1);
-
-		LevelInfo[] levels = new LevelInfo[1];
-		levels[0] = info;
-
 		return levels;
 	}
+	
+	public LevelInfo[] overviewMapLevels() {
+		return mapLevels();
+	}
+	
+	public void setMapLevels (LevelInfo[] mapLevels) {
+		if (levels == null){
+			levels = mapLevels;
+		} else {
+			boolean ok = true;
+			if (levels.length != mapLevels.length)
+				ok = false;
+			else {
+				for (int i = 0; i < levels.length; i++){
+					if (levels[i].compareTo(mapLevels[i]) != 0){
+						ok = false;
+					}
+				}
+			}
+			if (!ok)
+				log.error("invalid attempt to change map levels" );
+		}
+	}
 
+
+	
 	/**
 	 * Add a copyright string to the map.
 	 *
@@ -140,15 +155,12 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 		addLine(road);
 	}
 
-	public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode, byte exceptMask) {
-		getRoadNetwork().addRestriction(fromNode, toNode, viaNode, exceptMask);
+	public int addRestriction(GeneralRouteRestriction grr) {
+		log.error("This is not supposed to be called");
+		return 0;
 	}
 
-	public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {
-		getRoadNetwork().addThroughRoute(junctionNodeId, roadIdA, roadIdB);
-	}
-
-	public int getShift() {
-		return 24 - (topBits - 1);
+	public void addThroughRoute(int junctionNodeId, long roadIdA, long roadIdB) {
+		log.error("This is not supposed to be called");
 	}
 }

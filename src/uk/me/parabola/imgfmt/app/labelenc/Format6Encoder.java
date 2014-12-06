@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 Steve Ratcliffe
+ * Copyright (C) 2007,2014 Steve Ratcliffe
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -48,6 +48,8 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 		"xxxxxxxxxx:;<=>?" +	// 0x10-0x1F
 		"xxxxxxxxxxx[\\]^_";	// 0x20-0x2F
 
+	private final Transliterator transliterator = new TableTransliterator("ascii");
+
 	/**
 	 * Encode the text into the 6 bit format.  See the class level notes.
 	 *
@@ -56,10 +58,10 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 	 * some escape sequences will be present.
 	 */
 	public EncodedText encodeText(String text) {
-		if (text == null || text.length() == 0)
+		if (text == null || text.isEmpty())
 			return NO_TEXT;
 
-		String s = text.toUpperCase(Locale.ENGLISH);
+		String s = transliterator.transliterate(text).toUpperCase(Locale.ENGLISH);
 
 		// Allocate more than enough space on average for the label.
 		// if you overdo it then it will waste a lot of space , but
@@ -92,7 +94,8 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 
 		int len = ((off - 1) * 6) / 8 + 1;
 
-		return new EncodedText(buf, len);
+		char[] chars = s.toCharArray();
+		return new EncodedText(buf, len, chars);
 	}
 
 	/**
@@ -145,5 +148,4 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 
 		return buf;
 	}
-
 }

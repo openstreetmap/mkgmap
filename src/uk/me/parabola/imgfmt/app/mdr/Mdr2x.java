@@ -25,7 +25,7 @@ import uk.me.parabola.imgfmt.app.Label;
  * @author Steve Ratcliffe
  */
 public abstract class Mdr2x extends MdrMapSection implements HasHeaderFlags {
-	protected List<Mdr7Record> streets = new ArrayList<Mdr7Record>();
+	protected List<Mdr7Record> streets = new ArrayList<>();
 
 	/**
 	 * Write out the contents of this section.
@@ -34,6 +34,7 @@ public abstract class Mdr2x extends MdrMapSection implements HasHeaderFlags {
 	 */
 	public void writeSectData(ImgFileWriter writer) {
 		String lastName = null;
+		Mdr7Record prev = null;
 
 		int size = getSizes().getStreetSizeFlagged();
 
@@ -47,11 +48,10 @@ public abstract class Mdr2x extends MdrMapSection implements HasHeaderFlags {
 			String name = Label.stripGarminCodes(street.getName());
 			
 			int flag = 1;
-			if (name.equals(lastName)) {
+			if (name.equals(lastName) && sameGroup(street, prev))
 				flag = 0;
-			} else {
-				lastName = name;
-			}
+			lastName = name;
+			prev = street;
 
 			if (hasLabel) {
 				putMapIndex(writer, street.getMapIndex());
@@ -97,5 +97,20 @@ public abstract class Mdr2x extends MdrMapSection implements HasHeaderFlags {
 
 	protected void releaseMemory() {
 		streets = null;
+	}
+
+	/**
+	 * These sections are divided into groups based on city, region or country. This routine is
+	 * implemented to return true if the two streets are in the same group.
+	 *
+	 * It is not clear if this is needed for region or country.
+	 * @param street1 The first street.
+	 * @param street2 The street to compare against.
+	 * @return True if the streets are in the same group (city, region etc).
+	 */
+	protected abstract boolean sameGroup(Mdr7Record street1, Mdr7Record street2);
+
+	public void relabelMaps(Mdr1 maps) {
+		// Nothing to do, since all streets are re-labeled in their own section.
 	}
 }

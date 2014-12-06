@@ -29,8 +29,9 @@ public class EchoAction implements Action {
 		this.value = new ValueBuilder(str, false);
 	}
 
-	public void perform(Element el) {
+	public boolean perform(Element el) {
 		String e = value.build(el, el);
 		System.err.println(el.getId() + ": " + e);
+		return false;
 	}
 }

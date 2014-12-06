@@ -72,6 +72,7 @@ public class NODFile extends ImgFile {
 		writeNodes();
 		writeRoadData();
 		writeBoundary();
+		writeHighClassBoundary();
 	}
 
 	public void writePost() {
@@ -96,8 +97,14 @@ public class NODFile extends ImgFile {
 		Section section = nodHeader.getNodeSection();
 		writer = new SectionWriter(writer, section);
 
-		for (RouteCenter cp : centers)
-			cp.write(writer);
+		int[] classBoundaries = nodHeader.getClassBoundaries();
+		for (RouteCenter cp : centers){
+			cp.write(writer, classBoundaries);
+		}
+		for (int i = 4; i >= 0; --i){
+			if (classBoundaries[i] > writer.position())
+				classBoundaries[i] = writer.position();
+		}
 		nodHeader.setNodeSize(writer.position());
 		log.debug("the nod offset", Integer.toHexString(getWriter().position()));
 		Section.close(writer);
@@ -136,11 +143,42 @@ public class NODFile extends ImgFile {
 		for (RouteNode node : boundary) {
 			if(debug)
 				log.debug("wrting nod3", writer.position());
-			node.writeNod3(writer);
+			node.writeNod3OrNod4(writer);
 		}
 		if(debug)
 			log.debug("ending nod3", writer.position());
 		nodHeader.setBoundarySize(writer.position());
+	}
+
+	/**
+	 * Write the high class boundary node table (NOD4).
+	 * Like NOD3, but contains only nodes on roads with class > 0
+	 */
+	private void writeHighClassBoundary() {
+		log.info("writeBoundary");
+
+//		Collections.sort(boundary); // already sorted for NOD3
+
+		Section section = nodHeader.getHighClassBoundary();
+		int pos = section.getPosition();
+		pos = (pos + 0x200) & ~0x1ff; // align on 0x200  
+		int numBytesToWrite = pos - section.getPosition();
+		for (int i = 0; i < numBytesToWrite; i++)
+			getWriter().put((byte)0); 
+		section.setPosition(pos);
+		ImgFileWriter writer = new SectionWriter(getWriter(), section);
+		
+		boolean debug = log.isDebugEnabled();
+		for (RouteNode node : boundary) {
+			if (node.getNodeClass() == 0)
+				continue;
+			if(debug)
+				log.debug("wrting nod4", writer.position());
+			node.writeNod3OrNod4(writer);
+		}
+		if(debug)
+			log.debug("ending nod4", writer.position());
+		nodHeader.setHighClassBoundarySize(writer.position());
 	}
 
 	public void setNetwork(List<RouteCenter> centers, List<RoadDef> roads, List<RouteNode> boundary) {

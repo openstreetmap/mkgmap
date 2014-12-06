@@ -14,6 +14,8 @@ package uk.me.parabola.mkgmap.filters;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapElement;
@@ -21,7 +23,7 @@ import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapShape;
 
 /**
- * Filter for shapes. Remove obsolete points on straight lines and spikes.
+ * Filter for lines and shapes. Remove obsolete points on straight lines and spikes.
  * @author GerdP
  *
  */
@@ -30,7 +32,9 @@ public class RemoveObsoletePointsFilter implements MapFilter {
 	
 	final Coord[] areaTest = new Coord[3];
 
+	private boolean checkPreserved;
 	public void init(FilterConfig config) {
+		checkPreserved = config.getLevel() == 0 && config.isRoutable();
 	}
 
 	/**
@@ -38,70 +42,88 @@ public class RemoveObsoletePointsFilter implements MapFilter {
 	 * @param next This is used to pass the possibly transformed element onward.
 	 */
 	public void doFilter(MapElement element, MapFilterChain next) {
-		if(element instanceof MapShape == false) {
-			// do nothing
-			next.doFilter(element);
+		MapLine line = (MapLine) element;
+		List<Coord> points = line.getPoints();
+		int numPoints = points.size();
+		if (numPoints <= 1){
 			return;
 		}
-		MapShape shape = (MapShape) element;
-		int numPoints = shape.getPoints().size();
-		if (numPoints <= 3){
-			// too few points for a shape
-			return;
-		}
-		
+		int requiredPoints = (line instanceof MapShape ) ? 4:2; 
 		List<Coord> newPoints = new ArrayList<Coord>(numPoints);
-		
-		Coord lastP = null;
-		
-		for(int i = 0; i < numPoints; i++) {
-			Coord newP = shape.getPoints().get(i);
-			// only add the new point if it has different
-			// coordinates to the last point 
-			if(lastP == null ||!lastP.equals(newP)) {
+		while (true){
+			boolean removedSpike = false;
+			numPoints = points.size();
+			
+
+			Coord lastP = points.get(0);
+			newPoints.add(lastP);
+			for(int i = 1; i < numPoints; i++) {
+				Coord newP = points.get(i);
+				int last = newPoints.size()-1;
+				lastP = newPoints.get(last);
+				if (lastP.equals(newP)){
+					// only add the new point if it has different
+					// coordinates to the last point or is preserved
+					if (checkPreserved && line.isRoad()){
+						if (newP.preserved() == false)
+							continue;
+						else if (lastP.preserved() == false){
+							newPoints.set(last, newP); // replace last
+						} 
+					} else  
+						continue;
+				}
 				if (newPoints.size() > 1) {
-					if (newPoints.get(newPoints.size()-2).equals(newP)){
-						// detected simple spike
-						log.debug("removing spike");
-						newPoints.remove(newPoints.size()-1);
-						lastP = newP;
-						continue;
-					}
-					int last = newPoints.size()-1;
-					areaTest[0] = newPoints.get(last-1);
-					areaTest[1] = newPoints.get(last);
-					areaTest[2] = newP;
-					// calculate area that is enclosed the last two points and the new point
-					long area = 0;
-					Coord p1 = newP;
-					for(int j = 0; j < 3; j++) {
-						Coord p2 = areaTest[j];
-						area += ((long)p1.getLongitude() * p2.getLatitude() - 
-								(long)p2.getLongitude() * p1.getLatitude());
-						p1 = p2;
-					}
-					if (area == 0){
-						log.debug("found three consecutive points on straight line");
-						// area is empty-> points lie on a straight line
-						newPoints.set(last, newP);
-						lastP = newP;
-						continue;
+					switch (Utils.isStraight(newPoints.get(last-1), lastP, newP)){
+					case Utils.STRICTLY_STRAIGHT:
+						if (checkPreserved && lastP.preserved() && line.isRoad()){
+							// keep it
+						} else {
+							log.debug("found three consecutive points on strictly straight line");
+							newPoints.set(last, newP);
+							continue;
+						}
+						break;
+					case Utils.STRAIGHT_SPIKE:
+						if (line instanceof MapShape){
+							log.debug("removing spike");
+							newPoints.remove(last);
+							removedSpike = true;
+							if (newPoints.get(last-1).equals(newP))
+								continue;
+						}
+						break;
+					default:
+						break;
 					}
 				}
 
 				newPoints.add(newP);
-				lastP = newP;
+			}
+			if (!removedSpike || newPoints.size() < requiredPoints)
+				break;
+			points = newPoints;
+			newPoints = new ArrayList<Coord>(points.size());
+		}
+		if (line instanceof MapShape && newPoints.size() > 3){
+			// check special case: shape starts with spike
+			if (Utils.isStraight(newPoints.get(0), newPoints.get(1), newPoints.get(newPoints.size()-2)) == Utils.STRICTLY_STRAIGHT){
+				newPoints.remove(0);
+				newPoints.set(newPoints.size()-1, newPoints.get(0));
+				if (newPoints.get(newPoints.size()-2).equals(newPoints.get(newPoints.size()-1)))
+					newPoints.remove(newPoints.size()-1);
 			}
 		}
-		if (newPoints.size() != shape.getPoints().size()){
-			if (newPoints.size() <= 3)
+		
+		if (newPoints.size() != line.getPoints().size()){
+			if (line instanceof MapShape && newPoints.size() <= 3 || newPoints.size() <= 1)
 				return;
-			MapLine newLine = shape.copy();
+			MapLine newLine = line.copy();
 			newLine.setPoints(newPoints);
 			next.doFilter(newLine);
 		} else {
 			// no need to create new object
-			next.doFilter(shape);
+			next.doFilter(line);
 		}
 	}
 }

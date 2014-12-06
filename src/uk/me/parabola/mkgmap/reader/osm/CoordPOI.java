@@ -25,15 +25,16 @@ import uk.me.parabola.imgfmt.app.Coord;
  */
 public class CoordPOI extends Coord {
 	private Node node;
+	private boolean used;
+	private boolean convertToViaInRouteRestriction;
 
 	/**
-	 * Construct from co-ordinates that are already in map-units.
-	 *
-	 * @param latitude The latitude in map units.
-	 * @param longitude The longitude in map units.
+	 * Construct from other coord instance, copies the lat/lon values in high precision,
+	 * nothing else.
+ 
 	 */
-	public CoordPOI(int latitude, int longitude) {
-		super(latitude, longitude);
+	public CoordPOI(Coord co) {
+		super(co);
 	}
 
 	public Node getNode() {
@@ -42,5 +43,27 @@ public class CoordPOI extends Coord {
 
 	public void setNode(Node node) {
 		this.node = node;
+	}
+
+	public void setUsed(boolean b) {
+		this.used = b;
+	}
+	public boolean isUsed() {
+		return used;
+	}
+
+	/** 
+	 * @param b true means: Convert the access restriction coded in the node to a via
+	 * node in an route restriction. 
+	 */
+	public void setConvertToViaInRouteRestriction(boolean b) {
+		this.convertToViaInRouteRestriction = b;
+	}
+	
+	/**
+	 * @return true if the node should be converted 
+	 */
+	public boolean getConvertToViaInRouteRestriction(){
+		return convertToViaInRouteRestriction;
 	}
 }

@@ -24,11 +24,15 @@ import java.util.Map;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.CoordNode;
+import uk.me.parabola.imgfmt.app.net.GeneralRouteRestriction;
+import uk.me.parabola.imgfmt.app.net.RoadNetwork;
 import uk.me.parabola.imgfmt.app.trergn.Overview;
 import uk.me.parabola.imgfmt.app.trergn.PointOverview;
 import uk.me.parabola.imgfmt.app.trergn.PolygonOverview;
 import uk.me.parabola.imgfmt.app.trergn.PolylineOverview;
+import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.filters.ShapeMergeFilter;
+import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.util.EnhancedProperties;
 
 /**
@@ -37,6 +41,8 @@ import uk.me.parabola.util.EnhancedProperties;
  * @author Steve Ratcliffe
  */
 public class MapDetails implements MapCollector, MapDataSource {
+	private static final Logger log = Logger.getLogger(MapDetails.class);
+	
 	private final List<MapLine> lines = new ArrayList<MapLine>();
 	private final List<MapShape> shapes = new ArrayList<MapShape>();
 	private final List<MapPoint> points = new ArrayList<MapPoint>();
@@ -96,9 +102,15 @@ public class MapDetails implements MapCollector, MapDataSource {
 	 * @param shape The polygon to add.
 	 */
 	public void addShape(MapShape shape) {
-		if (shape.getPoints().isEmpty())
+		if (shape.getPoints().size() < 4)
 			return;
-
+		if (ShapeMergeFilter.calcAreaSizeTestVal(shape.getPoints()) == 0){
+			log.info("ignoring shape with id", shape.getOsmid(), "and type",
+					GType.formatType(shape.getType()) + ", it", 
+					(shape.wasClipped() ?   "was clipped to" : "has"), 
+					shape.getPoints().size(), "points and has an empty area ");
+			return;
+		}
 		int type;
 		if(shape.hasExtendedType())
 			type = shape.getType();
@@ -111,15 +123,15 @@ public class MapDetails implements MapCollector, MapDataSource {
 	}
 
 	public void addRoad(MapRoad road) {
-		roadNetwork.addRoad(road);
+		roadNetwork.addRoad(road.getRoadDef(), road.getPoints());
 		addLine(road);
 	}
 
-	public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode, byte exceptMask) {
-		roadNetwork.addRestriction(fromNode, toNode, viaNode, exceptMask);
+	public int addRestriction(GeneralRouteRestriction grr) {
+		return roadNetwork.addRestriction(grr);
 	}
 
-	public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {
+	public void addThroughRoute(int junctionNodeId, long roadIdA, long roadIdB) {
 		roadNetwork.addThroughRoute(junctionNodeId, roadIdA, roadIdB);
 	}
 
@@ -199,7 +211,7 @@ public class MapDetails implements MapCollector, MapDataSource {
 		return ovlist;
 	}
 
-	private void updateOverview(Map<Integer, Integer> overviews, int type, int minResolution) {
+	private static void updateOverview(Map<Integer, Integer> overviews, int type, int minResolution) {
 		Integer prev = overviews.get(type);
 		if (prev == null || minResolution < prev)
 			overviews.put(type, minResolution);

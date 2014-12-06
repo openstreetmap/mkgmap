@@ -135,10 +135,20 @@
 <xsl:attribute-set name="shade.verbatim.style">
   <xsl:attribute name="background-color">
     <xsl:choose>
-      <xsl:when test="self::programlisting|self::screen">#E0E0E0</xsl:when>
+      <xsl:when test="self::programlisting|self::screen">#f8f8f8</xsl:when>
       <xsl:otherwise>inherit</xsl:otherwise>
     </xsl:choose>
   </xsl:attribute>
+</xsl:attribute-set>
+<xsl:attribute-set name="verbatim.properties">
+  <xsl:attribute name="border-left-style">solid</xsl:attribute>
+  <xsl:attribute name="border-left-width">2pt</xsl:attribute>
+  <xsl:attribute name="border-left-color">#CC7777</xsl:attribute>
+  <xsl:attribute name="margin-left">1pt</xsl:attribute>
+  <xsl:attribute name="margin-right">0pt</xsl:attribute>
+  <xsl:attribute name="padding-left">4pt</xsl:attribute>
+  <xsl:attribute name="padding-top">2pt</xsl:attribute>
+  <xsl:attribute name="padding-bottom">2pt</xsl:attribute>
 </xsl:attribute-set>
 
 <xsl:attribute-set name="component.title.properties">
@@ -166,5 +176,15 @@
 <xsl:attribute-set name="table.properties">
   <xsl:attribute name="keep-together.within-column">auto</xsl:attribute>
 </xsl:attribute-set>
+
+<!-- Give links a colour -->
+<xsl:attribute-set name="xref.properties">
+	<xsl:attribute name="color">#0000dd</xsl:attribute>
+</xsl:attribute-set>
+
+<xsl:template match="fo:inline|fo:block">
+	<xsl:copy-of select=".">
+	</xsl:copy-of>
+</xsl:template>
 
 </xsl:stylesheet>

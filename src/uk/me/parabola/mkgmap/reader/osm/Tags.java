@@ -37,23 +37,34 @@ import java.util.Map.Entry;
  */
 public class Tags implements Iterable<String> {
 	private static final int INIT_SIZE = 8;
+	private static final TagDict tagDict = TagDict.getInstance();  
 
 	private short keySize;
 	private short capacity;
 	
 	private short size;
 
-	private String[] keys;
+	private short[] keys;
 	private String[] values;
 
 	public Tags() {
-		keys = new String[INIT_SIZE];
+		keys = new short[INIT_SIZE];
 		values = new String[INIT_SIZE];
 		capacity = INIT_SIZE;
 	}
 
 	public String get(String key) {
+		short k = tagDict.xlate(key);
+		int ind = keyPos(k);
+		if (ind < 0)
+			return null;
+
+		return values[ind];
+	}
+	
+	public String get(short key) {
 		int ind = keyPos(key);
+		
 		if (ind < 0)
 			return null;
 
@@ -70,6 +81,11 @@ public class Tags implements Iterable<String> {
 
 	public String put(String key, String value) {
 		assert key != null : "key is null";
+		short dictIdx = tagDict.xlate(key);
+		return put(dictIdx,value);
+	}
+
+	public String put(short key, String value) {
 		assert value != null : "value is null";
 		ensureSpace();
 		int ind = keyPos(key);
@@ -87,7 +103,7 @@ public class Tags implements Iterable<String> {
 		return old;
 	}
 
-	public String remove(String key) {
+	public String remove(short key) {
 		int k = keyPos(key);
 
 		if (k >= 0 && values[k] != null) {
@@ -99,6 +115,11 @@ public class Tags implements Iterable<String> {
 			return old;
 		}
 		return null;
+	}
+	
+	public String remove(String key) {
+		short kd = tagDict.xlate(key);
+		return remove(kd); 
 	}
 	
 	/**
@@ -119,31 +140,35 @@ public class Tags implements Iterable<String> {
 	private void ensureSpace() {
 		while (keySize + 1 >= capacity) {
 			short ncap = (short) (capacity*2);
-			String[] okey = keys;
+			short[] okey = keys;
 			String[] oval = values;
-			keys = new String[ncap];
+			keys = new short[ncap];
 			values = new String[ncap];
 			capacity = ncap;
 			keySize = 0;
 			size = 0;
 			for (int i = 0; i < okey.length; i++) {
-				String k = okey[i];
+				short k = okey[i];
 				String v = oval[i]; // null if tag has been removed
-				if (k != null && v != null)
-					put(k, v);
+				if (k != TagDict.INVALID_TAG_VALUE && v != null){
+					//put(keyDict.get(k), v);
+					int ind = keyPos(k);
+					keys[ind] = k;
+					values[ind] = v;
+					++keySize;
+					++size;
+				}
 			}
 		}
 		assert keySize < capacity;
 	}
 
-	private int keyPos(String key) {
-		int h = key.hashCode();
-		int k = h & (capacity - 1);
+	private int keyPos(short key) {
+		int k = key & (capacity - 1);
 
 		int i = k;
 		do {
-			String fk = keys[i];
-			if (fk == null || fk.equals(key))
+			if (keys[i] == TagDict.INVALID_TAG_VALUE || keys[i] == key)
 				return i;
 			i++;
 			if (i >= capacity)
@@ -194,7 +219,7 @@ public class Tags implements Iterable<String> {
 					for (int i = pos; i < capacity; i++) {
 						if (values[i] != null) {
 							pos = i+1;
-							return (keys[i] + "=" + values[i]);
+							return (tagDict.get(keys[i]) + "=" + values[i]);
 						}
 					}
 					pos = capacity;
@@ -224,7 +249,34 @@ public class Tags implements Iterable<String> {
 			}
 
 			public Map.Entry<String, String> next() {
-				Map.Entry<String, String> entry = new AbstractMap.SimpleEntry<String, String>(keys[pos], values[pos]);
+				Map.Entry<String, String> entry = new AbstractMap.SimpleEntry<>(tagDict.get(keys[pos]), values[pos]);
+
+				pos++;
+				return entry;
+			}
+
+			public void remove() {
+				throw new UnsupportedOperationException();
+			}
+		};
+	}
+
+	public Iterator<Map.Entry<Short, String>> entryShortIterator() {
+		return new Iterator<Map.Entry<Short, String>>() {
+			private int pos;
+			
+			public boolean hasNext() {
+				for (int i = pos; i < capacity; i++) {
+					if (values[i] != null) {
+						pos = i;
+						return true;
+					}
+				}
+				return false;
+			}
+
+			public Map.Entry<Short, String> next() {
+				Map.Entry<Short, String> entry = new AbstractMap.SimpleEntry<>(keys[pos], values[pos]);
 
 				pos++;
 				return entry;
@@ -237,15 +289,18 @@ public class Tags implements Iterable<String> {
 	}
 
 	public Map<String, String> getTagsWithPrefix(String prefix, boolean removePrefix) {
-		Map<String, String> map = new HashMap<String, String>();
+		Map<String, String> map = new HashMap<>();
 
 		int prefixLen = prefix.length();
 		for(int i = 0; i < capacity; ++i) {
-			if(keys[i] != null && keys[i].startsWith(prefix)) {
+			if (keys[i] != 0){
+				String k = tagDict.get(keys[i]);
+				if(k != null && k.startsWith(prefix)) {
 				if(removePrefix)
-					map.put(keys[i].substring(prefixLen), values[i]);
+						map.put(k.substring(prefixLen), values[i]);
 				else
-					map.put(keys[i], values[i]);
+						map.put(k, values[i]);
+				}
 			}
 		}
 
@@ -253,10 +308,8 @@ public class Tags implements Iterable<String> {
 	}
 	
 	public void removeAll() {
-		for (int i = 0; i < capacity; i++){
-			keys[i] = null;
-			values[i] = null;
-		}
+		Arrays.fill(keys, TagDict.INVALID_TAG_VALUE);
+		Arrays.fill(values, null);
 		keySize = 0;
 		size = 0;
 	}
@@ -276,5 +329,29 @@ public class Tags implements Iterable<String> {
 		}
 		s.append("]");
 		return s.toString();
+	}
+	
+	/**
+	 * Each tag has a position in the TagDict. This routine fills an array
+	 * so that the caller can use direct access. 
+	 * The caller has to make sure that the array is large enough to hold
+	 * the values he is looking for.  
+	 * @param tagVals
+	 * @return
+	 */
+	public int expand(short[] keyArray, String[] tagVals){
+		if (tagVals == null)
+			return 0;
+		int maxKey = tagVals.length - 1;
+		int cntTags = 0;
+		for (int i = 0; i< capacity; i++){
+			short tagKey = keys[i];
+			if (tagKey != TagDict.INVALID_TAG_VALUE && values[i] != null && tagKey <= maxKey){
+				tagVals[tagKey] = values[i];
+				keyArray[cntTags++] = tagKey;
+			}
+
+		}
+		return cntTags;
 	}
 }

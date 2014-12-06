@@ -1,0 +1,20 @@
+WAY
+highway=primary
+oneway=yes
+
+WAY 2
+highway=secondary
+oneway=reverse
+
+WAY 3
+highway=secondary
+oneway=-1
+
+<<<lines>>>
+highway=primary [0x2 road_class=2 road_speed=2]
+highway=secondary [0x3 road_class=2 road_speed=2]
+
+<<<results>>>
+WAY 1: Road 0x2, labels=[null, null, null, null], res=24-24 oneway (1/1),(2/2), road class=2 speed=2
+WAY 2: Road 0x3, labels=[null, null, null, null], res=24-24 oneway (2/2),(1/1), road class=2 speed=2
+WAY 3: Road 0x3, labels=[null, null, null, null], res=24-24 oneway (2/2),(1/1), road class=2 speed=2

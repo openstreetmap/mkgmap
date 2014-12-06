@@ -13,11 +13,10 @@
 
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.io.FileNotFoundException;
+import java.util.List;
 
-import uk.me.parabola.imgfmt.ExitException;
+import uk.me.parabola.mkgmap.build.LocatorUtil;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
-import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.util.EnhancedProperties;
 
 /**
@@ -28,44 +27,39 @@ public class RelationStyleHook extends OsmReadingHooksAdaptor {
 
 	private Style style;
 	private ElementSaver saver;
-	
+	List<String> nameTagList;
+
 	public RelationStyleHook() {
 	}
 
 	public boolean init(ElementSaver saver, EnhancedProperties props) {
 		this.saver = saver;
-		
-		String loc = props.getProperty("style-file");
-		if (loc == null)
-			loc = props.getProperty("map-features");
-		String name = props.getProperty("style");
-
-		if (loc == null && name == null)
-			name = "default";
-
-		try {
-			this.style = new StyleImpl(loc, name);
-			this.style.applyOptionOverride(props);
-
-		} catch (SyntaxException e) {
-			System.err.println("Error in style: " + e.getMessage());
-			throw new ExitException("Could not open style " + name);
-		} catch (FileNotFoundException e) {
-			String name1 = (name != null)? name: loc;
-			throw new ExitException("Could not open style " + name1);
-		}
-
+		nameTagList = LocatorUtil.getNameTags(props);
 		return super.init(saver, props);
 	}
 
+	public void setStyle(Style style){
+		this.style = style;
+	}
+	
 	public void end() {
 		Rule relationRules = style.getRelationRules();
 		for (Relation rel : saver.getRelations().values()) {
+			if (nameTagList != null){
+				for (String t : nameTagList) {
+					String val = rel.getTag(t);
+					if (val != null) {
+						rel.addTag("name", val);
+						break;
+					}
+				}
+			}			
 			relationRules.resolveType(rel, TypeResult.NULL_RESULT);
+			if (rel instanceof RestrictionRelation){
+				((RestrictionRelation) rel).eval(saver.getBoundingBox());
+			}
 		}
 		super.end();
-		
-		style = null;
 	}
 
 	

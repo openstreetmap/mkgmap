@@ -43,3 +43,6 @@ natural=wood [0x50 resolution 18]
 place=village [0x03 resolution 18]
 
 waterway=riverbank [0x46 resolution 20]
+
+<finalize>
+name=* | ref=* {name '${name} (${ref})' | '${ref}' | '${name}' }

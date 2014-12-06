@@ -16,6 +16,9 @@
  */
 package uk.me.parabola.mkgmap.reader.polish;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -36,7 +39,7 @@ import java.util.Map;
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.net.RouteRestriction;
+import uk.me.parabola.imgfmt.app.net.AccessTagsAndBits;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
@@ -97,7 +100,8 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	// Use to decode labels if they are not in cp1252
 	private CharsetDecoder dec;
 
-    public boolean isFileSupported(String name) {
+	Long2ObjectOpenHashMap<Coord> coordMap = new Long2ObjectOpenHashMap<>();
+	public boolean isFileSupported(String name) {
 		// Supported if the extension is .mp
 		return name.endsWith(".mp") || name.endsWith(".MP") || name.endsWith(".mp.gz");
 	}
@@ -146,6 +150,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		}
 
 		addBackground(havePolygon4B);
+		coordMap = null;
 	}
 
 	public LevelInfo[] mapLevels() {
@@ -163,6 +168,11 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	}
 
 	
+	@Override
+	public LevelInfo[] overviewMapLevels() {
+		return null;
+	}
+
 	/**
 	 * Get the copyright message.  We use whatever was specified inside the
 	 * MPF itself.
@@ -234,14 +244,14 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 						polyline.setExtTypeAttributes(makeExtTypeAttributes());
 					final int maxPointsInLine = LineSplitterFilter.MAX_POINTS_IN_LINE;
 					if(points.size() > maxPointsInLine) {
-						List<Coord> segPoints = new ArrayList<Coord>(maxPointsInLine);
+						List<Coord> segPoints = new ArrayList<>(maxPointsInLine);
 						for(Coord p : points) {
 							segPoints.add(p);
 							if(segPoints.size() == maxPointsInLine) {
 								MapLine seg = polyline.copy();
 								seg.setPoints(segPoints);
 								mapper.addLine(seg);
-								segPoints = new ArrayList<Coord>(maxPointsInLine);
+								segPoints = new ArrayList<>(maxPointsInLine);
 								segPoints.add(p);
 							}
 						}
@@ -259,6 +269,10 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			break;
 		case S_POLYGON:
 			if (points != null) {
+				if (points.get(0) != points.get(points.size()-1)){
+					// not closed, close it
+					points.add(points.get(0));  
+				}
 				shape.setPoints(points);
 				if(extraAttributes != null && shape.hasExtendedType())
 					shape.setExtTypeAttributes(makeExtTypeAttributes());
@@ -351,7 +365,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		}
 		else {
 			if(extraAttributes == null)
-				extraAttributes = new HashMap<String, String>();
+				extraAttributes = new HashMap<>();
 			extraAttributes.put(name, value);
 		}
 	}
@@ -396,14 +410,14 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			roadHelper.addNumbers(value);
 		} else {
 			if (extraAttributes == null)
-				extraAttributes = new HashMap<String, String>();
+				extraAttributes = new HashMap<>();
 			extraAttributes.put(name, value);
 		}
 	}
 
 	private List<Coord> coordsFromString(String value) {
 		String[] ords = value.split("\\) *, *\\(");
-		List<Coord> points = new ArrayList<Coord>();
+		List<Coord> points = new ArrayList<>();
 
 		for (String s : ords) {
 			Coord co = makeCoord(s);
@@ -461,7 +475,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		}
 		else {
 			if(extraAttributes == null)
-				extraAttributes = new HashMap<String, String>();
+				extraAttributes = new HashMap<>();
 			extraAttributes.put(name, value);
 		}
 	}
@@ -671,11 +685,17 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 
 		Double f1 = Double.valueOf(fields[i]);
 		Double f2 = Double.valueOf(fields[i+1]);
-		return new Coord(f1, f2);
+		Coord co = new Coord(f1, f2);
+		long key = Utils.coord2Long(co);
+		Coord co2 = coordMap.get(key);
+		if (co2 != null)
+			return co2;
+		coordMap.put(key, co);
+		return co;
 	}
 
 	private ExtTypeAttributes makeExtTypeAttributes() {
-		Map<String, String> eta = new HashMap<String, String>();
+		Map<String, String> eta = new HashMap<>();
 		int colour = 0;
 		int style = 0;
 
@@ -770,8 +790,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
                             [END-RESTRICT]
                          */
                         restriction.setValid(false);
-                        log.info("Restrictions composed\n" +
-                                "from 3 roads are not yet supported\n");
+                        log.info("Restrictions composed from 3 or more roads are not yet supported");
                     }
                 } else if (name.equals("TraffRoads")) {
                     String[] traffRoads = value.split(",");
@@ -809,6 +828,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
      * will NOT apply for Delivery and Car.
      *
      * @param value Tag value
+     * @return the exceptMask in mkgmap internal format
      */
     private byte getRestrictionExceptionMask(String value) {
         String[] params = value.split(",");
@@ -818,28 +838,28 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
                 if ("1".equals(params[i])) {
                     switch(i) {
 					case 0:
-						// Mask is not known for Emergency.
+						exceptMask |= AccessTagsAndBits.EMERGENCY;
 						break;
 					case 1:
-						exceptMask |= RouteRestriction.EXCEPT_DELIVERY;
+						exceptMask |= AccessTagsAndBits.DELIVERY;
 						break;
 					case 2:
-						exceptMask |= RouteRestriction.EXCEPT_CAR;
+						exceptMask |= AccessTagsAndBits.CAR;
 						break;
 					case 3:
-						exceptMask |= RouteRestriction.EXCEPT_BUS;
+						exceptMask |= AccessTagsAndBits.BUS;
 						break;
 					case 4:
-						exceptMask |= RouteRestriction.EXCEPT_TAXI;
+						exceptMask |= AccessTagsAndBits.TAXI;
 						break;
 					case 5:
-						// Mask is not known for Pedestrian.
+						exceptMask |= AccessTagsAndBits.FOOT;
 						break;
 					case 6:
-						exceptMask |= RouteRestriction.EXCEPT_BICYCLE;
+						exceptMask |= AccessTagsAndBits.BIKE;
 						break;
 					case 7:
-						exceptMask |= RouteRestriction.EXCEPT_TRUCK;
+						exceptMask |= AccessTagsAndBits.TRUCK;
 						break;
                     }
                 }

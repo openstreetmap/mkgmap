@@ -13,7 +13,6 @@
 
 package uk.me.parabola.mkgmap.reader.osm.xml;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -22,7 +21,6 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import uk.me.parabola.imgfmt.FormatException;
-import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.mkgmap.reader.osm.OsmMapDataSource;
 
 import org.xml.sax.SAXException;
@@ -39,21 +37,16 @@ import org.xml.sax.SAXException;
  */
 public class Osm5MapDataSource extends OsmMapDataSource {
 
+	@Override
 	public boolean isFileSupported(String name) {
 		// This is the default format so say supported if we get this far,
 		// this one must always be last for this reason.
 		return true;
 	}
 
-	/**
-	 * Load the .osm file and produce the intermediate format.
-	 *
-	 * @param name The filename to read.
-	 * @throws FileNotFoundException If the file does not exist.
-	 */
-	public void load(String name) throws FileNotFoundException, FormatException {
+	@Override
+	public void load(InputStream is) throws FormatException {
 		try {
-			InputStream is = Utils.openFile(name);
 			SAXParserFactory parserFactory = SAXParserFactory.newInstance();
 			parserFactory.setXIncludeAware(true);
 			parserFactory.setNamespaceAware(true);

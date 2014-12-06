@@ -57,6 +57,7 @@ import uk.me.parabola.imgfmt.app.trergn.TREFile;
 import uk.me.parabola.imgfmt.app.trergn.Zoom;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Version;
+import uk.me.parabola.mkgmap.combiners.OverviewBuilder;
 import uk.me.parabola.mkgmap.filters.BaseFilter;
 import uk.me.parabola.mkgmap.filters.DouglasPeuckerFilter;
 import uk.me.parabola.mkgmap.filters.FilterConfig;
@@ -70,6 +71,7 @@ import uk.me.parabola.mkgmap.filters.PreserveHorizontalAndVerticalLinesFilter;
 import uk.me.parabola.mkgmap.filters.RemoveEmpty;
 import uk.me.parabola.mkgmap.filters.RemoveObsoletePointsFilter;
 import uk.me.parabola.mkgmap.filters.RoundCoordsFilter;
+import uk.me.parabola.mkgmap.filters.ShapeMergeFilter;
 import uk.me.parabola.mkgmap.filters.SizeFilter;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
@@ -80,8 +82,9 @@ import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.general.RoadNetwork;
+import uk.me.parabola.imgfmt.app.net.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
+import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.util.Configurable;
 import uk.me.parabola.util.EnhancedProperties;
 
@@ -103,6 +106,8 @@ public class MapBuilder implements Configurable {
 
 	private final java.util.Map<MapPoint,POIRecord> poimap = new HashMap<MapPoint,POIRecord>();
 	private final java.util.Map<MapPoint,City> cityMap = new HashMap<MapPoint,City>();
+	private List<String> mapInfo = new ArrayList<String>();
+	private List<String> copyrights = new ArrayList<String>();
 
 	private boolean doRoads;
 
@@ -122,11 +127,14 @@ public class MapBuilder implements Configurable {
 	private Set<String> locationAutofill;
 
 	private int minSizePolygon;
+	private String polygonSizeLimitsOpt;
+	private HashMap<Integer,Integer> polygonSizeLimits = null;
 	private double reducePointError;
 	private double reducePointErrorPolygon;
 	private boolean mergeLines;
+	private boolean mergeShapes;
 
-	private boolean	poiAddresses = true;
+	private boolean	poiAddresses;
 	private int		poiDisplayFlags;
 	private boolean enableLineCleanFilters = true;
 	private boolean makePOIIndex;
@@ -149,16 +157,20 @@ public class MapBuilder implements Configurable {
 		regionName = props.getProperty("region-name", null);
 		regionAbbr = props.getProperty("region-abbr", null);
  		minSizePolygon = props.getProperty("min-size-polygon", 8);
+ 		polygonSizeLimitsOpt = props.getProperty("polygon-size-limits", null);
 		reducePointError = props.getProperty("reduce-point-density", 2.6);
  		reducePointErrorPolygon = props.getProperty("reduce-point-density-polygon", -1);
 		if (reducePointErrorPolygon == -1)
 			reducePointErrorPolygon = reducePointError;
 		mergeLines = props.containsKey("merge-lines");
 
+		// undocumented option - usually used for debugging only
+		mergeShapes = props.getProperty("no-mergeshapes", false) == false;
+
 		makePOIIndex = props.getProperty("make-poi-index", false);
 
-		if(props.getProperty("no-poi-address", null) != null)
-			poiAddresses = false;
+		if(props.getProperty("poi-address") != null)
+			poiAddresses = true;
 
 		routeCenterBoundaryType = props.getProperty("route-center-boundary", 0);
 
@@ -191,6 +203,8 @@ public class MapBuilder implements Configurable {
 				((MapperBasedMapDataSource)src).addBoundaryLine(rc.getArea(), routeCenterBoundaryType, rc.reportSizes());
 			}
 		}
+		if (mapInfo.isEmpty())
+			getMapInfo();
 
 		normalizeCountries(src);
 		
@@ -510,22 +524,16 @@ public class MapBuilder implements Configurable {
 					r.setStreetName(streetName);			  
 				}
 
-				if(p.getHouseNumber() != null)
-				{
-					if(!r.setSimpleStreetNumber(p.getHouseNumber()))
-					{
-						Label streetNumber = lbl.newLabel(p.getHouseNumber());
-						r.setComplexStreetNumber(streetNumber);
-					}
+				String houseNumber = p.getHouseNumber();
+				if (houseNumber != null && !houseNumber.isEmpty()) {
+					if(!r.setSimpleStreetNumber(houseNumber))
+						r.setComplexStreetNumber(lbl.newLabel(houseNumber));
 				}
 
-				if(p.getPhone() != null)
-				{
-					if(!r.setSimplePhoneNumber(p.getPhone()))
-					{
-						Label phoneNumber = lbl.newLabel(p.getPhone());
-						r.setComplexPhoneNumber(phoneNumber);
-					}
+				String phone = p.getPhone();
+				if (phone != null && !phone.isEmpty()) {
+					if(!r.setSimplePhoneNumber(phone))
+						r.setComplexPhoneNumber(lbl.newLabel(phone));
 				}	
 		  	
 				poimap.put(p, r);
@@ -602,7 +610,19 @@ public class MapBuilder implements Configurable {
 	private void makeMapAreas(Map map, LoadableMapDataSource src) {
 		// The top level has to cover the whole map without subdividing, so
 		// do a special check to make sure.
-		LevelInfo[] levels = src.mapLevels();
+		LevelInfo[] levels = null; 
+		if (src instanceof OverviewMapDataSource)
+			levels = src.mapLevels();
+		else {
+			if (OverviewBuilder.isOverviewImg(map.getFilename())) {
+				levels = src.overviewMapLevels();
+			} else {
+				levels = src.mapLevels();
+			}
+		}
+		if (levels == null){
+			throw new ExitException("no info about levels available.");
+		}
 		LevelInfo levelInfo = levels[0];
 
 		// If there is already a top level zoom, then we shouldn't add our own
@@ -675,7 +695,7 @@ public class MapBuilder implements Configurable {
 	 * @param zoom The zoom level.
 	 * @return The new top level subdivision.
 	 */
-	private Subdivision makeTopArea(MapDataSource src, Map map, Zoom zoom) {
+	private static Subdivision makeTopArea(MapDataSource src, Map map, Zoom zoom) {
 		Subdivision topdiv = map.topLevelSubdivision(src.getBounds(), zoom);
 		topdiv.setLast(true);
 		return topdiv;
@@ -749,6 +769,62 @@ public class MapBuilder implements Configurable {
 	 * @param map The map to write to.
 	 * @param src The source of map information.
 	 */
+	protected void getMapInfo() {
+		if (licenseFileName != null) {
+			File file = new File(licenseFileName);
+
+			try {
+				BufferedReader reader = new BufferedReader(new FileReader(file));
+				String text;
+
+				// repeat until all lines is read
+				while ((text = reader.readLine()) != null) {
+					if (!text.isEmpty()) {
+						mapInfo.add(text);
+					}
+				}
+
+				reader.close();
+			} catch (FileNotFoundException e) {
+				throw new ExitException("Could not open license file " + licenseFileName);
+			} catch (IOException e) {
+				throw new ExitException("Error reading license file " + licenseFileName);
+			}
+		} else {
+			mapInfo.add("Map data (c) OpenStreetMap and its contributors");
+			mapInfo.add("http://www.openstreetmap.org/copyright");
+			mapInfo.add("");
+			mapInfo.add("This map data is made available under the Open Database License:");
+			mapInfo.add("http://opendatacommons.org/licenses/odbl/1.0/");
+			mapInfo.add("Any rights in individual contents of the database are licensed under the");
+			mapInfo.add("Database Contents License: http://opendatacommons.org/licenses/dbcl/1.0/");
+			mapInfo.add("");
+
+			// Pad the version number with spaces so that version
+			// strings that are different lengths do not change the size and
+			// offsets of the following sections.
+			mapInfo.add("Map created with mkgmap-r"
+					+ String.format("%-10s", Version.VERSION));
+
+			mapInfo.add("Program released under the GPL");
+		}
+	}
+	
+	public void setMapInfo(List<String> msgs){
+		mapInfo = msgs;
+	}
+	
+	public void setCopyrights(List<String> msgs){
+		copyrights = msgs;
+	}
+	
+	
+	/**
+	 * Set all the information that appears in the header.
+	 *
+	 * @param map The map to write to.
+	 * @param src The source of map information.
+	 */
 	protected void processInfo(Map map, LoadableMapDataSource src) {
 		// The bounds of the map.
 		map.setBounds(src.getBounds());
@@ -760,50 +836,27 @@ public class MapBuilder implements Configurable {
 		// But there has to be something, otherwise the map does not show up.
 		//
 		// We use it to add copyright information that there is no room for
-		// elsewhere.
-		if (licenseFileName != null) {
-			File file = new File(licenseFileName);
-
-			try {
-				BufferedReader reader = new BufferedReader(new FileReader(file));
-				String text;
-
-				// repeat until all lines is read
-				while ((text = reader.readLine()) != null) {
-					if (!text.isEmpty()) {
-						map.addInfo(text);
-					}
-				}
-
-				reader.close();
-			} catch (FileNotFoundException e) {
-				throw new ExitException("Could not open license file " + licenseFileName);
-			} catch (IOException e) {
-				throw new ExitException("Error reading license file " + licenseFileName);
-			}
-		} else {
-			map.addInfo("OpenStreetMap and contributors");
-			map.addInfo("www.openstreetmap.org");
-			map.addInfo("Map data licenced under Creative Commons Attribution ShareAlike 2.0");
-			map.addInfo("http://creativecommons.org/licenses/by-sa/2.0/");
-
-			// Pad the version number with spaces so that version
-			// strings that are different lengths do not change the size and
-			// offsets of the following sections.
-			map.addInfo("Map created with mkgmap-r"
-					+ String.format("%-10s", Version.VERSION));
-
-			map.addInfo("Program released under the GPL");
+		// elsewhere
+		String info = "";
+		for (String s: mapInfo){
+			info += s.trim() + "\n";
 		}
-		// There has to be (at least) two copyright messages or else the map
-		// does not show up.  The second one will be displayed at startup,
-		// although the conditions where that happens are not known.
-		map.addCopyright("program licenced under GPL v2");
+		if (!info.isEmpty())
+			map.addInfo(info);
+		if (copyrights.isEmpty()){
+			// There has to be (at least) two copyright messages or else the map
+			// does not show up.  The second one will be displayed at startup,
+			// although the conditions where that happens are not known.
+			map.addCopyright("program licenced under GPL v2");
 
-		// This one gets shown when you switch on, so put the actual
-		// map copyright here.
-		for (String cm : src.copyrightMessages())
-			map.addCopyright(cm);
+			// This one gets shown when you switch on, so put the actual
+			// map copyright here.
+			for (String cm : src.copyrightMessages())
+				map.addCopyright(cm);
+		} else {
+			for (String cm : copyrights)
+				map.addCopyright(cm);
+		}
 	}
 
 	/**
@@ -865,7 +918,7 @@ public class MapBuilder implements Configurable {
 			catch (AssertionError ae) {
 				log.error("Problem with point of type 0x" + Integer.toHexString(point.getType()) + " at " + coord.toOSMURL());
 				log.error("  Subdivision shift is " + div.getShift() +
-						  " and its centre is at " + new Coord(div.getLatitude(), div.getLongitude()).toOSMURL());
+						  " and its centre is at " + div.getCenter().toOSMURL());
 				log.error("  " + ae.getMessage());
 				continue;
 			}
@@ -916,7 +969,7 @@ public class MapBuilder implements Configurable {
 				catch (AssertionError ae) {
 					log.error("Problem with point of type 0x" + Integer.toHexString(point.getType()) + " at " + coord.toOSMURL());
 					log.error("  Subdivision shift is " + div.getShift() +
-							  " and its centre is at " + new Coord(div.getLatitude(), div.getLongitude()).toOSMURL());
+							  " and its centre is at " + div.getCenter().toOSMURL());
 					log.error("  " + ae.getMessage());
 					continue;
 				}
@@ -959,18 +1012,17 @@ public class MapBuilder implements Configurable {
 
 		FilterConfig config = new FilterConfig();
 		config.setResolution(res);
-
+		config.setLevel(div.getZoom().getLevel());
+		config.setRoutable(doRoads);
 
 		//TODO: Maybe this is the wrong place to do merging.
 		// Maybe more efficient if merging before creating subdivisions.
-		if (mergeLines && res < 22) {
+		if (mergeLines) {
 			LineMergeFilter merger = new LineMergeFilter();
-			lines = merger.merge(lines);
+			lines = merger.merge(lines, res);
 		}
-
 		LayerFilterChain filters = new LayerFilterChain(config);
 		if (enableLineCleanFilters && (res < 24)) {
-			filters.addFilter(new PreserveHorizontalAndVerticalLinesFilter());
 			filters.addFilter(new RoundCoordsFilter());
 			filters.addFilter(new SizeFilter(MIN_SIZE_LINE));
 			if(reducePointError > 0)
@@ -978,6 +1030,7 @@ public class MapBuilder implements Configurable {
 		}
 		filters.addFilter(new LineSplitterFilter());
 		filters.addFilter(new RemoveEmpty());
+		filters.addFilter(new RemoveObsoletePointsFilter());
 		filters.addFilter(new LinePreparerFilter(div));
 		filters.addFilter(new LineAddFilter(div, map, doRoads));
 		
@@ -1008,12 +1061,22 @@ public class MapBuilder implements Configurable {
 
 		FilterConfig config = new FilterConfig();
 		config.setResolution(res);
+		config.setLevel(div.getZoom().getLevel());
+		config.setRoutable(doRoads);
+		
+		if (mergeShapes){
+			ShapeMergeFilter shapeMergeFilter = new ShapeMergeFilter(res);
+			List<MapShape> mergedShapes = shapeMergeFilter.merge(shapes);
+			shapes = mergedShapes;
+		}
+		
 		LayerFilterChain filters = new LayerFilterChain(config);
 		if (enableLineCleanFilters && (res < 24)) {
 			filters.addFilter(new PreserveHorizontalAndVerticalLinesFilter());
 			filters.addFilter(new RoundCoordsFilter());
-			if (minSizePolygon > 0)
-				filters.addFilter(new SizeFilter(minSizePolygon));
+			int sizefilterVal =  getMinSizePolygonForResolution(res);
+			if (sizefilterVal > 0)
+				filters.addFilter(new SizeFilter(sizefilterVal));
 			//DouglasPeucker behaves at the moment not really optimal at low zooms, but acceptable.
 			//Is there an similar algorithm for polygons?
 			if(reducePointErrorPolygon > 0)
@@ -1057,18 +1120,73 @@ public class MapBuilder implements Configurable {
 	 * @return The largest number of bits where we can still represent the
 	 *         whole map.
 	 */
-	private int getMaxBits(MapDataSource src) {
+	private static int getMaxBits(MapDataSource src) {
 		int topshift = Integer.numberOfLeadingZeros(src.getBounds().getMaxDimension());
 		int minShift = Math.max(CLEAR_TOP_BITS - topshift, 0);
 		return 24 - minShift;
 	}
 
+	/**
+	 * Enable/disable the creation of a routable map 
+	 * @param doRoads 
+	 */
 	public void setDoRoads(boolean doRoads) {
 		this.doRoads = doRoads;
 	}
 
 	public void setEnableLineCleanFilters(boolean enable) {
 		this.enableLineCleanFilters = enable;
+	}
+
+	/**
+	 * Determine the minimum size for a polygon for the given level.
+	 * @param res the resolution
+	 * @return the size filter value
+	 */
+	private int getMinSizePolygonForResolution(int res) {
+	
+		if (polygonSizeLimitsOpt == null)
+			return minSizePolygon;
+	
+		if (polygonSizeLimits == null){
+			polygonSizeLimits = new HashMap<Integer, Integer>();
+			String[] desc = polygonSizeLimitsOpt.split("[, \\t\\n]+");
+	
+			int count = 0;
+			for (String s : desc) {
+				String[] keyVal = s.split("[=:]");
+				if (keyVal == null || keyVal.length < 2) {
+					System.err.println("incorrect polygon-size-limits specification " + polygonSizeLimitsOpt);
+					continue;
+				}
+	
+				try {
+					int key = Integer.parseInt(keyVal[0]);
+					int value = Integer.parseInt(keyVal[1]);
+					Integer testDup = polygonSizeLimits.put(key, value);
+					if (testDup != null){
+						System.err.println("duplicate resolution value in polygon-size-limits specification " + polygonSizeLimitsOpt);
+						continue;
+					}
+				} catch (NumberFormatException e) {
+					System.err.println("polygon-size-limits specification not all numbers " + keyVal[count]);
+				}
+				count++;
+			}
+		}
+		if (polygonSizeLimits != null){
+			// return the value for the desired resolution or the next higher one
+			for (int r = res; r <= 24; r++){
+				Integer limit = polygonSizeLimits.get(r);
+				if (limit != null){
+					if (r != res)
+						polygonSizeLimits.put(res, limit);
+					return limit;
+				}
+			}
+			return 0;
+		}
+		return minSizePolygon;
 	}
 
 	private static class SourceSubdiv {
@@ -1104,7 +1222,7 @@ public class MapBuilder implements Configurable {
 			MapLine line = (MapLine) element;
 			assert line.getPoints().size() < 255 : "too many points";
 
-			Polyline pl = div.createLine(line.getName(), line.getRef());
+			Polyline pl = div.createLine(line.getLabels());
 			if (element.hasExtendedType()) {
 				ExtTypeAttributes eta = element.getExtTypeAttributes();
 				if (eta != null) {
@@ -1119,16 +1237,20 @@ public class MapBuilder implements Configurable {
 			pl.addCoords(line.getPoints());
 
 			pl.setType(line.getType());
+			if (doRoads){
+				if (line instanceof MapRoad) {
+					if (log.isDebugEnabled())
+						log.debug("adding road def: " + line.getName());
+					MapRoad road = (MapRoad) line;
+					RoadDef roaddef = road.getRoadDef();
 
-			if (doRoads && line.isRoad()) {
-				if (log.isDebugEnabled())
-					log.debug("adding road def: " + line.getName());
-				RoadDef roaddef = ((MapRoad) line).getRoadDef();
-
-				pl.setRoadDef(roaddef);
-				roaddef.addPolylineRef(pl);
+					pl.setRoadDef(roaddef);
+					if (road.hasSegmentsFollowing() )
+						pl.setLastSegment(false);
+					
+					roaddef.addPolylineRef(pl);
+				}
 			}
-
 			map.addMapObject(pl);
 		}
 	}

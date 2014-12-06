@@ -1030,6 +1030,7 @@
 	<country name="Taiwan" abr="TWN">
 		<variant>TW</variant>
 		<variant>TWN</variant>
+		<variant>Republic of China</variant>
 	</country>
 	<country name="Tajikistan" abr="TJK">
 		<variant>TJ</variant>

@@ -36,8 +36,9 @@ public class SimpleRouteTest extends Base {
 	 */
 	@Test
 	public void testSize() throws FileNotFoundException {
-		Main.main(new String[]{
+		Main.mainNoSystemExit(new String[]{
 				Args.TEST_STYLE_ARG,
+				"--preserve-element-order",
 				"--route",
 				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz",
 				Args.TEST_RESOURCE_MP + "test1.mp"
@@ -52,21 +53,30 @@ public class SimpleRouteTest extends Base {
 			String ext = ent.getExt();
 
 			int size = ent.getSize();
-			if (ext.equals("RGN")) {
+			switch (ext) {
+			case "RGN":
 				count++;
-				assertThat("RGN size", size, new RangeMatcher(141999));
-			} else if (ext.equals("TRE")) {
+				System.out.println("RGN size " + size);
+				assertThat("RGN size", size, new RangeMatcher(128717));
+				break;
+			case "TRE":
 				count++;
-				assertEquals("TRE size", 1445, size);
-			} else if (ext.equals("LBL")) {
+				System.out.println("TRE size " + size);
+				// Size varies depending on svn modified status
+				assertThat("TRE size", size, new RangeMatcher(1454, 2));
+				break;
+			case "LBL":
 				count++;
-				assertEquals("LBL size", 27680, size);
-			} else if (ext.equals("NET")) {
+				assertEquals("LBL size", 28744, size);
+				break;
+			case "NET":
 				count++;
-				assertEquals("NET size", 73791, size);
-			} else if (ext.equals("NOD")) {
+				assertEquals("NET size", 66851, size);
+				break;
+			case "NOD":
 				count++;
-				assertEquals("NOD size", 191874, size);
+				assertEquals("NOD size", 170201, size);
+				break;
 			}
 		}
 		assertTrue("enough checks run", count == 5);
@@ -80,21 +90,30 @@ public class SimpleRouteTest extends Base {
 			String ext = ent.getExt();
 
 			int size = ent.getSize();
-			if (ext.equals("RGN")) {
+			switch (ext) {
+			case "RGN":
 				count++;
-				assertThat("RGN size", size, new RangeMatcher(2934));
-			} else if (ext.equals("TRE")) {
+				System.out.println("RGN size " + size);
+				assertThat("RGN size", size, new RangeMatcher(2726));
+				break;
+			case "TRE":
 				count++;
-				assertEquals("TRE size", 596, size);
-			} else if (ext.equals("LBL")) {
+				System.out.println("TRE size " + size);
+				// Size varies depending on svn modified status
+				assertThat("TRE size", size, new RangeMatcher(769, 2));
+				break;
+			case "LBL":
 				count++;
-				assertEquals("LBL size", 957, size);
-			} else if (ext.equals("NET")) {
+				assertEquals("LBL size", 989, size);
+				break;
+			case "NET":
 				count++;
 				assertEquals("NET size", 1280, size);
-			} else if (ext.equals("NOD")) {
+				break;
+			case "NOD":
 				count++;
-				assertEquals("NOD size", 3114, size);
+				assertEquals("NOD size", 3584, size);
+				break;
 			}
 		}
 		assertTrue("enough checks run", count == 5);

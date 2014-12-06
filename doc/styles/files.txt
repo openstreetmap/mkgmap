@@ -54,6 +54,7 @@ base-style:: Do not use anymore. This was used to base a style on
 another one. However, it is bug prone and behaves in a way that is not
 intuitive without a good understanding of how things work.
 The preferred way to do this is to use the include mechanism.
+This command will be removed altogether at some point in the future.
 
 .An example info file
 ====
@@ -86,7 +87,7 @@ areas.
 This file contains a number of options that should be set for this style
 as if they were set on the command line.
 Only command line options that affect the style will have any effect.
-The current list is +name-tag-list+, +levels+ and +extra-used-tags+.
+The current list is +levels+, +overview-levels+, and +extra-used-tags+.
 
 It is advisable to set up the levels that you want, as the default is not
 suitable for all kinds of maps and may change in the future.  Ideally,
@@ -97,8 +98,8 @@ explicitly.
 
 .An example options file
 ====
- name-tag-list = name:en, int_name, name
- levels = 0:24, 1:22, 2:20, 3:18, 4:16
+ levels = 0:24, 1:22, 2:20, 3:18 
+ overview-levels = 4:17, 5:16, 6:15, 7:14, 8:12  
  extra-used-tags=
 ====
 

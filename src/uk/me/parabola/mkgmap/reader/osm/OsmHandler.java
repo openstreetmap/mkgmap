@@ -76,8 +76,14 @@ public class OsmHandler {
 			return;
 		}
 		usedTags = new HashMap<String, String>();
-		for (String s : used)
+		for (String s : used) {
+			if (s == null) {
+				continue;
+			}
+			// intern the keys
+			s = s.intern();
 			usedTags.put(s, s);
+		}
 	}
 
 	/**
@@ -163,7 +169,7 @@ public class OsmHandler {
 	 * @param way The way that was read.
 	 */
 	protected void endWay(Way way) {
-		way.setClosed(firstNodeRef == lastNodeRef);
+		way.setClosedInOSM(firstNodeRef == lastNodeRef);
 		way.setComplete(!missingNodeRef);
 
 		saver.addWay(way);

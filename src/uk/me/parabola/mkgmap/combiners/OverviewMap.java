@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.mkgmap.combiners;
 
+import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapCollector;
 
@@ -34,11 +35,5 @@ public interface OverviewMap extends LoadableMapDataSource, MapCollector {
 	 */
 	public void addCopyright(String cw);
 
-	/**
-	 * Get the 'shift' value of the overview map.  This is used for rounding
-	 * coordinates of objects that are added to the map.
-	 *
-	 * @return An integer shift value, that is 24-bits.
-	 */
-	public int getShift();
+	public void setMapLevels(LevelInfo[] levels);
 }

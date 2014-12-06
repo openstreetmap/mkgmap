@@ -28,7 +28,7 @@ import uk.me.parabola.mkgmap.general.MapDetails;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.general.RoadNetwork;
+import uk.me.parabola.imgfmt.app.net.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.dem.DEM;
 import uk.me.parabola.util.Configurable;
 import uk.me.parabola.util.EnhancedProperties;
@@ -110,27 +110,12 @@ public abstract class MapperBasedMapDataSource implements MapDataSource, Configu
 
 	protected void addBackground(boolean mapHasPolygon4B) {
 		if (!mapHasPolygon4B && !getConfig().getProperty("transparent", false)) {
-			// Make a list of points to trace out the background area.
-			List<Coord> coords = new ArrayList<Coord>();
-			Area bounds = mapper.getBounds();
-			Coord start = new Coord(bounds.getMinLat(), bounds.getMinLong());
-			coords.add(start);
-			Coord co = new Coord(bounds.getMinLat(), bounds.getMaxLong());
-			coords.add(co);
-			co = new Coord(bounds.getMaxLat(), bounds.getMaxLong());
-			coords.add(co);
-			co = new Coord(bounds.getMaxLat(), bounds.getMinLong());
-			coords.add(co);
-			coords.add(start);
 
-			// Now add the background area
 			MapShape background = new MapShape();
+			background.setPoints(mapper.getBounds().toCoords());
 			background.setType(0x4b); // background type
 			background.setMinResolution(0); // On all levels
-			background.setPoints(coords);
 
-			// Note we add directly to the shapes list, we do not add to
-			// the overview section.
 			mapper.addShape(background);
 		}
 		if (getConfig().getProperty("contours", false)) {		    

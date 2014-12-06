@@ -356,6 +356,17 @@ public class RuleFileReaderTest {
 	}
 
 	@Test
+	public void testNEAtTopWithRE() {
+		RuleSet rs = makeRuleSet("a != 'fred' &  a ~ '.*' [0x2]");
+		Element el = new Way(1);
+		el.addTag("a", "tom");
+
+		GType type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals(2, type.getType());
+	}
+
+	@Test
 	public void testNumberOpAtTop() {
 		RuleSet rs = makeRuleSet("QUOTA > 10 [0x1] QUOTA < 6 [0x2]");
 		Element el = new Way(1);
@@ -364,6 +375,88 @@ public class RuleFileReaderTest {
 		GType type = getFirstType(rs, el);
 		assertNotNull(type);
 		assertEquals(2, type.getType());
+	}
+
+	/**
+	 * Failure of the optimiser to promote the correct term to the front.
+	 * Example from mailing list.
+	 */
+	@Test
+	public void testOptimizeWithOr() {
+		String s = "highway ~ '(secondary|tertiary|unclassified|residential|minor|living_street|service)' " +
+				"& oneway=* " +
+				"& (cycleway=opposite | cycleway=opposite_lane | cycleway=opposite_track )" +
+				"[0x2 ]";
+		RuleSet rs = makeRuleSet(s);
+
+		Element el = new Way(1);
+		el.addTag("highway", "tertiary");
+		el.addTag("oneway", "1");
+		el.addTag("cycleway", "opposite_track");
+
+		GType type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals(2, type.getType());
+
+		el.addTag("cycleway", "fred");
+		type = getFirstType(rs, el);
+		assertNull(type);
+
+		el.addTag("cycleway", "opposite");
+		type = getFirstType(rs, el);
+		assertNotNull(type);
+
+		el.addTag("cycleway", "opposite_lane");
+		type = getFirstType(rs, el);
+		assertNotNull(type);
+
+		el.addTag("highway", "fred");
+		type = getFirstType(rs, el);
+		assertNull(type);
+	}
+
+	/**
+	 * Test is a simplified version of a rule in the floodblocker style.
+	 */
+	@Test
+	public void testOptimizeWithOr2() {
+		String s = "highway=*" +
+				"& tunnel!=*" +
+				"& (layer!=* | layer=0)" +
+				" [0x02]\n"
+				;
+		RuleSet rs = makeRuleSet(s);
+		Element el = new Way(1);
+
+		el.addTag("highway", "primary");
+		GType type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals(2, type.getType());
+
+		el.addTag("layer", "0");
+		type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals(2, type.getType());
+
+		el.addTag("layer", "1");
+		type = getFirstType(rs, el);
+		assertNull(type);
+	}
+
+	@Test
+	public void testOptimizeWithOr3() throws Exception {
+		String s = "highway=* &  bridge!=* & " +
+				"   (mtb:scale>0 | mtb:scale='0+' | tracktype ~ 'grade[2-6]' |" +
+				"   sac_scale ~ '.*(mountain|alpine)_hiking' |" +
+				"   sport=via_ferrata) [0x3]";
+
+		RuleSet rs = makeRuleSet(s);
+
+		Element el = new Way(1);
+		el.addTag("highway", "primary");
+		el.addTag("mtb:scale", "0+");
+		GType type = getFirstType(rs, el);
+		assertNotNull(type);
 	}
 
 	/**
@@ -585,7 +678,7 @@ public class RuleFileReaderTest {
 		Way el = new Way(1);
 		el.addTag("highway", "primary");
 
-		final List<GType> list = new ArrayList<GType>();
+		final List<GType> list = new ArrayList<>();
 
 		rs.resolveType(el, new TypeResult() {
 			public void add(Element el, GType type) {
@@ -770,6 +863,54 @@ public class RuleFileReaderTest {
 		assertEquals(2, type.getType());
 	}
 
+	/**
+	 * Bug when the first statement of an include file is itself an include statement.
+	 * As luck would have the test tested the supposedly more difficult case of an
+	 * include statement in the middle of the file.
+	 */
+	@Test
+	public void testNestedIncludeAndImmediateInclude() {
+		StyleFileLoader loader = new StringStyleFileLoader(new String[][] {
+				{"lines", "a=1 [0x1] include 'first'; a=2 [0x2]"},
+				{"first", "include 'second'; b=2 [0x2 ]"},
+				{"second", "c=1 [0x1] c=2 [0x2 ]"},
+		});
+
+		RuleSet rs = makeRuleSet(loader);
+		Element el = new Way(1);
+
+		el.addTag("a", "2");
+
+		GType type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals(2, type.getType());
+
+		el = new Way(2);
+		el.addTag("c", "1");
+		type = getFirstType(rs, el);
+		assertEquals(1, type.getType());
+
+		el = new Way(2);
+		el.addTag("c", "2");
+		type = getFirstType(rs, el);
+		assertEquals(2, type.getType());
+	}
+
+	@Test
+	public void testIncludeFrom() {
+		// NOTE: this test uses the default style, which could change.
+		StyleFileLoader loader = new StringStyleFileLoader(new String[][] {
+				{"lines", "include 'lines' from default;\n"},
+		});
+		RuleSet rs = makeRuleSet(loader);
+
+		Way way = new Way(1);
+		way.addTag("highway", "motorway");
+		GType type = getFirstType(rs, way);
+		assertNotNull("Check type not null", type);
+		assertEquals(1, type.getType());
+	}
+
 	@Test
 	public void testLengthFunction() {
 		// Its less than 92m
@@ -806,15 +947,12 @@ public class RuleFileReaderTest {
 		assertNotNull(type);
 	}
 
-	@Test
+	@Test(expected = SyntaxException.class)
 	public void testFunctionWithParameters() {
 		// a parameter in a function is not allowed yet
-		try {
-			// this should throw a SyntaxException
-			makeRuleSet("A=B & length(a) > 91 [0x5]");
-			assertTrue("Function with parameters are not allowed", false);
-		} catch (SyntaxException exp) {
-		}
+		// this should throw a SyntaxException
+		makeRuleSet("A=B & length(a) > 91 [0x5]");
+		assertTrue("Function with parameters are not allowed", false);
 	}
 	
 	@Test
@@ -881,7 +1019,8 @@ public class RuleFileReaderTest {
 
 		RuleSet rs = new RuleSet();
 				RuleFileReader rr = new RuleFileReader(FeatureKind.POINT,
-						LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"), rs);
+						LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"),
+						rs, false, null);
 		try {
 			rr.load(loader, "points");
 		} catch (FileNotFoundException e) {
@@ -910,6 +1049,45 @@ public class RuleFileReaderTest {
 	}
 
 	/**
+	 * Test the syntax to get a tag value on the RHS of the expression.
+	 */
+	@Test
+	public void testGetTagValueEquality() {
+		RuleSet rs = makeRuleSet("a=b & a=$c [0x5] a=b [0x6]");
+		Way w = new Way(1);
+		w.addTag("a", "b");
+		w.addTag("c", "b");
+
+		GType type = getFirstType(rs, w);
+		assertNotNull(type);
+		assertEquals(5, type.getType());
+
+		w.addTag("c", "x");
+		type = getFirstType(rs, w);
+		assertEquals(6, type.getType());
+	}
+
+	@Test
+	public void testGetTagValueNotFound() {
+		RuleSet rs = makeRuleSet("a=b & b<$c [0x5] a=b [0x6]");
+		Way w = new Way(1);
+		w.addTag("a", "b");
+		w.addTag("b", "50");
+		GType type = getFirstType(rs, w);
+		assertEquals(6, type.getType());
+	}
+
+	@Test
+	public void testGetTagValueAlone() {
+		RuleSet rs = makeRuleSet("a<$b [0x5] a=b [0x6]");
+		Way w = new Way(1);
+		w.addTag("a", "1");
+		w.addTag("b", "2");
+		GType type = getFirstType(rs, w);
+		assertEquals(5, type.getType());
+	}
+
+	/**
 	 * Get a way with a few points for testing length.
 	 *
 	 * The length of this segment was independently confirmed to be around 91m.
@@ -935,9 +1113,9 @@ public class RuleFileReaderTest {
 		el.addPoint(new Coord(2000,2000));
 		el.addPoint(new Coord(2000,1000));
 		if (closed)
-			el.addPoint(new Coord(1000,1000));
+			el.addPoint(el.getPoints().get(0));
 		el.setComplete(complete);
-		el.setClosed(true);
+		el.setClosedInOSM(true);
 		return el;
 	}
 	
@@ -948,7 +1126,7 @@ public class RuleFileReaderTest {
 	 * resolved type.
 	 */
 	private GType getFirstType(Rule rs, Element el) {
-		final List<GType> types = new ArrayList<GType>();
+		final List<GType> types = new ArrayList<>();
 		rs.resolveType(el, new TypeResult() {
 			public void add(Element el, GType type) {
 				types.add(type);

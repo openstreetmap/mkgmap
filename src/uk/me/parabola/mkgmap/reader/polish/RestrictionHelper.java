@@ -13,10 +13,11 @@
 package uk.me.parabola.mkgmap.reader.polish;
 
 import uk.me.parabola.imgfmt.app.CoordNode;
-import uk.me.parabola.log.Logger;
+import uk.me.parabola.imgfmt.app.net.GeneralRouteRestriction;
 import uk.me.parabola.mkgmap.general.MapDetails;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -30,7 +31,6 @@ import java.util.Map;
  * @author Supun Jayathilake
  */
 public class RestrictionHelper {
-    private static final Logger log = Logger.getLogger(RestrictionHelper.class);
 
     // Holds all collected restrictions.
     private final List<PolishTurnRestriction> allRestrictions = new ArrayList<PolishTurnRestriction>();
@@ -38,18 +38,20 @@ public class RestrictionHelper {
     public void processAndAddRestrictions(RoadHelper roadHelper, MapDetails mapper) {
         Map<Long, CoordNode> allNodes = roadHelper.getNodeCoords();
 
-		for (PolishTurnRestriction tr : allRestrictions) {
-            if (tr.isValid()) { // Process only the restrictions marked as valid.
-				CoordNode from = allNodes.get(tr.getFromNodId());
-				CoordNode to = allNodes.get(tr.getToNodId());
-				CoordNode via = allNodes.get(tr.getNodId());
-
-				if (from != null && to != null && via != null) {            // All nodes participating in the
-                    mapper.addRestriction(from, to, via, tr.getExceptMask()); // restriction should be part of the map
-                } else {
-                    log.error("");
-                }
-            }
+        for (PolishTurnRestriction tr : allRestrictions) {
+        	GeneralRouteRestriction grr = new GeneralRouteRestriction("not", tr.getExceptMask(),Long.toString(tr.getNodId()));
+        	grr.setFromNode(allNodes.get(tr.getFromNodId()));
+        	grr.setFromWayId(tr.getRoadIdA());
+        	grr.setToNode(allNodes.get(tr.getToNodId()));
+        	if (tr.getViaNodId() != 0){
+        		grr.setViaNodes(Arrays.asList(allNodes.get(tr.getNodId()),allNodes.get(tr.getViaNodId())));
+        		grr.setViaWayIds(Arrays.asList(tr.getRoadIdB()));
+        		grr.setToWayId(tr.getRoadIdC());
+        	} else {
+        		grr.setViaNodes(Arrays.asList(allNodes.get(tr.getNodId())));
+        		grr.setToWayId(tr.getRoadIdB());
+        	}
+        	mapper.addRestriction(grr); // restriction should be part of the map
         }
     }
 

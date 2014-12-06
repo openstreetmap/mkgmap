@@ -53,7 +53,7 @@ import uk.me.parabola.log.Logger;
  * @author Robert Vollmert
  */
 
-public class RoadDef implements Comparable<RoadDef> {
+public class RoadDef {
 	private static final Logger log = Logger.getLogger(RoadDef.class);
 
 	public static final int NET_FLAG_NODINFO  = 0x40;
@@ -62,28 +62,27 @@ public class RoadDef implements Comparable<RoadDef> {
 	private static final int NET_FLAG_ONEWAY   = 0x02;
 
 	private static final int NOD2_FLAG_UNK        = 0x01;
-	private static final int NOD2_FLAG_EXTRA_DATA = 0x80;
+//	private static final int NOD2_FLAG_EXTRA_DATA = 0x80; just documentation
 
 	// first byte of Table A info in NOD 1
 	private static final int TABA_FLAG_TOLL = 0x80;
-	private static final int TABA_MASK_CLASS = 0x70;
+//	private static final int TABA_MASK_CLASS = 0x70; just documentation
 	private static final int TABA_FLAG_ONEWAY = 0x08;
-	private static final int TABA_MASK_SPEED = 0x07;
+//	private static final int TABA_MASK_SPEED = 0x07; just documentation
 
-	// second byte: access flags - order must correspond to constants
-	// in RoadNetwork - bits 0x08, 0x80 missing (purpose unknown)
-	private static final int[] ACCESS = {
-		0x8000, // emergency (net pointer bit 31)
-		0x4000, // delivery (net pointer bit 30)
-		0x0001, // car
-		0x0002, // bus
-		0x0004, // taxi
-		0x0010, // foot
-		0x0020, // bike
-		0x0040, // truck
-		0x0008, // carpool
-	};
-
+	private static final int TABAACCESS_FLAG_CARPOOL = 0x0008;
+	private static final int TABAACCESS_FLAG_NOTHROUGHROUTE = 0x0080;
+	
+	// second byte: access flags, bits 0x08, 0x80 are set separately 
+	private static final int TABAACCESS_FLAG_NO_EMERGENCY = 0x8000;
+	private static final int TABAACCESS_FLAG_NO_DELIVERY  = 0x4000;
+	private static final int TABAACCESS_FLAG_NO_CAR     = 0x0001;
+	private static final int TABAACCESS_FLAG_NO_BUS     = 0x0002;
+	private static final int TABAACCESS_FLAG_NO_TAXI    = 0x0004;
+	private static final int TABAACCESS_FLAG_NO_FOOT    = 0x0010;
+	private static final int TABAACCESS_FLAG_NO_BIKE    = 0x0020;
+	private static final int TABAACCESS_FLAG_NO_TRUCK   = 0x0040;
+	
 	// the offset in Nod2 of our Nod2 record
 	private int offsetNod2;
 
@@ -95,6 +94,9 @@ public class RoadDef implements Comparable<RoadDef> {
 	 */
 	private int netFlags = NET_FLAG_UNK1;
 
+	// the allowed vehicles in mkgmap internal format
+	private byte mkgmapAccess; 
+	
 	// The road length units may be affected by other flags in the header as
 	// there is doubt as to the formula.
 	private int roadLength;
@@ -105,7 +107,7 @@ public class RoadDef implements Comparable<RoadDef> {
 	private final Label[] labels = new Label[MAX_LABELS];
 	private int numlabels;
 
-	private final SortedMap<Integer,List<RoadIndex>> roadIndexes = new TreeMap<Integer,List<RoadIndex>>();
+	private final SortedMap<Integer,List<RoadIndex>> roadIndexes = new TreeMap<>();
 
 	private City city;
 	private Zip zip;
@@ -115,10 +117,9 @@ public class RoadDef implements Comparable<RoadDef> {
 	private boolean linkRoad;
 	private boolean synthesised;
 	private boolean flareCheck;
-	private boolean deadEndCheck;
 	private Set<String> messageIssued;
 
-	private final List<Offset> rgnOffsets = new ArrayList<Offset>(4);
+	private final List<Offset> rgnOffsets = new ArrayList<>();
 
 	/*
 	 * Everything that's relevant for writing out Nod 2.
@@ -144,6 +145,7 @@ public class RoadDef implements Comparable<RoadDef> {
 	private final long id;
 	private final String name;
 	private List<Numbers> numbersList;
+	private int nodeCount;
 
 	public RoadDef(long id, String name) {
 		this.id = id;
@@ -167,9 +169,9 @@ public class RoadDef implements Comparable<RoadDef> {
 	public String toString() {
 		// assumes id is an OSM id
 		String browseURL = "http://www.openstreetmap.org/browse/way/" + id;
-		if(getName() != null)
-			return "(" + getName() + ", " + browseURL + ")";
-		else
+		//if(getName() != null)
+		//	return "(" + getName() + ", " + browseURL + ")";
+		//else
 			return "(" + browseURL + ")";
 	}
 
@@ -177,7 +179,7 @@ public class RoadDef implements Comparable<RoadDef> {
 		if (name != null)
 			return name;
 		if (labels[0] != null)
-			return labels[0].getText();
+			return labels[0].toString();
 		return null;
 	}
 
@@ -201,14 +203,15 @@ public class RoadDef implements Comparable<RoadDef> {
 		if (numbersList != null) {
 			numbers = new NumberPreparer(numbersList);
 			numbers.fetchBitStream();
-			if (!numbers.isValid())
+			if (!numbers.isValid()){
 				numbers = null;
+				log.warn("Invalid housenumbers in",this.toString());
+			}
 		}
 
 		writeLabels(writer);
-		if (numbers != null) { // TODO combine if
-			if (numbers.getSwapped())
-				netFlags |= 0x20; // swapped default; left=even, right=odd
+		if (numbers != null && numbers.getSwapped()) {
+			netFlags |= 0x20; // swapped default; left=even, right=odd
 		}
 		writer.put((byte) netFlags);
 		writer.put3(roadLength);
@@ -218,8 +221,11 @@ public class RoadDef implements Comparable<RoadDef> {
 		writeLevelDivs(writer, maxlevel);
 
 		if((netFlags & NET_FLAG_ADDRINFO) != 0) {
-			writer.put((byte)0); // unknown (nearly always zero)
+			nodeCount--;
+			writer.put((byte) (nodeCount & 0xff)); // lo bits of node count
+
 			int code = 0xe8;     // zip and city present
+			code |= ((nodeCount >> 8) & 0x3); // top bits of node count
 			if(city == null)
 				code |= 0x10; // no city
 			if(zip == null)
@@ -227,7 +233,7 @@ public class RoadDef implements Comparable<RoadDef> {
 			if (numbers != null) {
 				code &= ~0xc0;
 				if (numbers.fetchBitStream().getLength() > 255)
-					code |= 1;
+					code |= 0x40;
 			}
 			writer.put((byte)code);
 			if(zip != null) {
@@ -335,7 +341,7 @@ public class RoadDef implements Comparable<RoadDef> {
 	 *
 	 * References to these are written to NET. At a given zoom
 	 * level, we're writing these in the order we get them,
-	 * which possibly needs to be the order the segments have
+	 * which must(!) be the order the segments have
 	 * in the road.
 	 */
 	public void addPolylineRef(Polyline pl) {
@@ -344,13 +350,14 @@ public class RoadDef implements Comparable<RoadDef> {
 		int level = pl.getSubdiv().getZoom().getLevel();
 		List<RoadIndex> l = roadIndexes.get(level);
 		if (l == null) {
-			l = new ArrayList<RoadIndex>(4);
+			l = new ArrayList<>();
 			roadIndexes.put(level, l);
 		}
-		int s = l.size();
-		if (s > 0)
-			l.get(s-1).getLine().setLastSegment(false);
 		l.add(new RoadIndex(pl));
+
+		if (level == 0) {
+			nodeCount += pl.getNodeCount();
+		}
 	}
 
 	private int getMaxZoomLevel() {
@@ -385,9 +392,8 @@ public class RoadDef implements Comparable<RoadDef> {
 	/**
 	 * Set the road length (in meters).
 	 */
-	public void setLength(double l) {
-		// XXX: this is from test.display.NetDisplay, possibly varies
-		roadLength = (int) l / 2;
+	public void setLength(double lenInMeter) {
+		roadLength = NODHeader.metersToRaw(lenInMeter);
 	}
 
 	public boolean hasHouseNumbers() {
@@ -470,6 +476,10 @@ public class RoadDef implements Comparable<RoadDef> {
 		this.node = node;
 	}
 
+	public RouteNode getNode(){
+		return node;
+	}
+	
 	private boolean hasNodInfo() {
 		return (netFlags & NET_FLAG_NODINFO) != 0;
 	}
@@ -551,20 +561,67 @@ public class RoadDef implements Comparable<RoadDef> {
 		return offsetNet1;
 	}
 
+	/**
+	 * Flag that a toll must be payed when using this road.
+	 */
 	public void setToll() {
 		tabAInfo |= TABA_FLAG_TOLL;
 	}
+	
+	/**
+	 * Flag that the road has a carpool lane.<br>
+	 * Warning: This bit does not seem to work. Maybe it does not control
+	 * the carpool flag.
+	 */
+	public void setCarpoolLane() {
+		tabAAccess |= TABAACCESS_FLAG_CARPOOL;
+	}
 
+	/**
+	 * Sets the flag that routing is allowed only if the route starts or
+	 * end on this road. 
+	 */
 	public void setNoThroughRouting() {
-		tabAAccess |= 0x80;
+		tabAAccess |= TABAACCESS_FLAG_NOTHROUGHROUTE;
 	}
 
-	public void setAccess(boolean[] access) {
-		for (int i = 0; i < access.length; i++)
-			if (access[i])
-				tabAAccess |= ACCESS[i];
+	/**
+	 * @return allowed vehicles in mkgmap format  
+	 */
+	public byte getAccess() {
+		return mkgmapAccess;
 	}
 
+	/**
+	 * Set allowed vehicles
+	 * @param mkgmapAccess bit mask in mkgmap format
+	 */
+	public void setAccess(byte mkgmapAccess) {
+		this.mkgmapAccess = mkgmapAccess;
+		// translate internal format to that used in TableA
+		//clear the corresponding bits
+		tabAAccess &= ~(0xc077);
+		if (mkgmapAccess == (byte) 0xff)
+			return; // all vehicles allowed
+
+		if ((mkgmapAccess & AccessTagsAndBits.FOOT) == 0)
+			tabAAccess |= TABAACCESS_FLAG_NO_FOOT; 
+		if ((mkgmapAccess & AccessTagsAndBits.BIKE) == 0)
+			tabAAccess |=TABAACCESS_FLAG_NO_BIKE;
+		if ((mkgmapAccess & AccessTagsAndBits.CAR) == 0)
+			tabAAccess |=TABAACCESS_FLAG_NO_CAR;
+		if ((mkgmapAccess & AccessTagsAndBits.DELIVERY) == 0)
+			tabAAccess |=TABAACCESS_FLAG_NO_DELIVERY;
+		if ((mkgmapAccess & AccessTagsAndBits.TRUCK) == 0)
+			tabAAccess |=TABAACCESS_FLAG_NO_TRUCK;
+		if ((mkgmapAccess & AccessTagsAndBits.BUS) == 0)
+			tabAAccess |=TABAACCESS_FLAG_NO_BUS;
+		if ((mkgmapAccess & AccessTagsAndBits.TAXI) == 0)
+			tabAAccess |=TABAACCESS_FLAG_NO_TAXI;
+		if ((mkgmapAccess & AccessTagsAndBits.EMERGENCY) == 0)
+			tabAAccess |=TABAACCESS_FLAG_NO_EMERGENCY;
+	}
+	
 	public int getTabAInfo() {
 		return tabAInfo;
 	}
@@ -582,7 +639,7 @@ public class RoadDef implements Comparable<RoadDef> {
 	// road class that goes in various places (really?)
 	public void setRoadClass(int roadClass) {
 		assert roadClass < 0x08;
-
+		
 		/* for RouteArcs to get as their "destination class" */
 		this.roadClass = roadClass;
 
@@ -630,23 +687,6 @@ public class RoadDef implements Comparable<RoadDef> {
 	public void setZip(Zip zip) {
 		this.zip = zip;
 		netFlags |= NET_FLAG_ADDRINFO;
-	}
-
-	public int compareTo(RoadDef other) {
-		// sort by city name - this is used to group together
-		// roads that have been split into segments
-		if(other == this)
-			return 0;
-
-		// TODO: look at what this is doing...
-		if(city != null && other.city != null)
-			return city.getName().compareTo(other.city.getName());
-		if (hashCode() == other.hashCode())
-			return 0;
-		else if (hashCode() < other.hashCode())
-			return -1;
-		else
-			return 0;
 	}
 
 	public City getCity() {
@@ -701,19 +741,12 @@ public class RoadDef implements Comparable<RoadDef> {
 		return flareCheck;
 	}
 
-	public void doDeadEndCheck(boolean dec) {
-		deadEndCheck = dec;
-	}
-
-	public boolean doDeadEndCheck() {
-		return deadEndCheck;
-	}
-
 	public boolean messagePreviouslyIssued(String key) {
 		if(messageIssued == null)
-			messageIssued = new HashSet<String>();
+			messageIssued = new HashSet<>();
 		boolean previouslyIssued = messageIssued.contains(key);
 		messageIssued.add(key);
 		return previouslyIssued;
 	}
+
 }

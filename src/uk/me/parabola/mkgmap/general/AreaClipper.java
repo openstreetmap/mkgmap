@@ -36,6 +36,10 @@ public class AreaClipper implements Clipper {
 	}
 
 	public void clipLine(MapLine line, LineAdder collector) {
+		if (bbox == null || bbox.insideBoundary(line.getBounds())){
+			collector.add(line);
+			return;
+		}
 		List<List<Coord>> list = LineClipper.clip(bbox, line.getPoints());
 		if (list == null) {
 			collector.add(line);
@@ -49,6 +53,10 @@ public class AreaClipper implements Clipper {
 	}
 
 	public void clipShape(MapShape shape, MapCollector collector) {
+		if (bbox == null || bbox.contains(shape.getBounds())){
+			collector.addShape(shape);
+			return;
+		}
 		List<List<Coord>> list = PolygonClipper.clip(bbox, shape.getPoints());
 		if (list == null) {
 			collector.addShape(shape);
@@ -56,6 +64,7 @@ public class AreaClipper implements Clipper {
 			for (List<Coord> lco : list) {
 				MapShape nshape = new MapShape(shape);
 				nshape.setPoints(lco);
+				nshape.setClipped(true);
 				collector.addShape(nshape);
 			}
 		}

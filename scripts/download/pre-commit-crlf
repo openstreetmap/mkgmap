@@ -1,0 +1,22 @@
+#!/bin/bash
+
+REPOS="$1"
+TXN="$2"
+
+TMP=$(mktemp)
+trap "rm -f $TMP" 0
+
+# Make sure that the log message contains some text.
+SVNLOOK=/usr/bin/svnlook
+
+$SVNLOOK changed -t "$TXN" "$REPOS" | while read kind file
+do
+		$SVNLOOK -t "$TXN" cat "$REPOS" "$file" > $TMP
+		file $TMP | grep -q 'CRLF line'
+		if [ $? = 0 ]; then
+				echo "File '$file' contains CRLF line endings" >&2
+				exit 2
+		fi
+	done
+exit $?
+

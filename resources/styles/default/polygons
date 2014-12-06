@@ -8,8 +8,6 @@
 # and http://wiki.openstreetmap.org/wiki/Mkgmap/help/Custom_styles
 # for more information.
 
-include 'inc/address';
-
 leisure=* & sport=* & name=* { set name='${name} (${sport})' }
 leisure=* & sport=* & name!=* { add name='${sport}' }
 
@@ -38,7 +36,6 @@ leisure=common [0x17 resolution 21]
 leisure=garden [0x17 resolution 21]
 leisure=golf_course [0x18 resolution 21]
 leisure=ice_rink [0x19 resolution 22]
-leisure=marina [0x09 resolution 20]
 leisure=nature_reserve [0x16 resolution 19]
 leisure=park [0x17 resolution 20]
 leisure=pitch [0x19 resolution 21]
@@ -64,13 +61,23 @@ historic=museum | historic=memorial [0x1e resolution 21]
 historic=archaeological_site | historic=ruins [0x1e resolution 21]
 
 # building tag should be last
-(building=* | amenity=*) & area!=no [0x13 resolution 24]
-tourism=* & area!=no & waterway!=* [0x13 resolution 24]
+(building=* | amenity=*) & area!=no & amenity!=grave_yard [0x13 resolution 24]
+tourism=* & area!=no & waterway!=* [0x1f resolution 24]
 # man_made can be used on areas or lines
 man_made=* & area!=no
 & (man_made!=door & man_made!=embankment & man_made!=breakwater
    & man_made!=cable_line & man_made!=cutline & man_made!=cutting
-   & man_made!=levee & man_made!=trench)
+   & man_made!=levee & man_made!=trench
+   & man_made!=groyne & man_made!=reinforced_slope)
 [0x13 resolution 24]
+
 man_made=* & area=yes
 [0x13 resolution 24]
+
+include 'inc/water_polygons';
+include 'inc/landuse_polygons';
+
+<finalize>
+# The finalizer section is executed for each element when a rule with an element type matches
+
+name=* { name '${name}' }

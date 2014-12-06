@@ -16,8 +16,9 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import static org.junit.Assert.*;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 
 public class BitReaderTest {
@@ -36,5 +37,21 @@ public class BitReaderTest {
 		assertEquals("five bits", 0x18, br.get(5));
 		assertEquals("four bits", 0xf, br.get(4));
 		assertEquals("sixteen bits", 0x709c, br.get(16));
+	}
+
+	@Test
+	public void testSpecialNegative() {
+		BitReader br = new BitReader(new byte[]{0x24, 0xb});
+
+		int s = br.sget2(3);
+		assertEquals(-12, s);
+	}
+
+	@Test
+	public void testSpecialPositive() {
+		BitReader br = new BitReader(new byte[]{(byte) 0xa4, 0});
+
+		int s = br.sget2(3);
+		assertEquals(8, s);
 	}
 }

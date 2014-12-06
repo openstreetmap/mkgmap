@@ -68,10 +68,13 @@ public final class CoastlineFileLoader {
 	private final AtomicBoolean coastlinesLoaded = new AtomicBoolean(false);
 	private final AtomicBoolean loadingStarted = new AtomicBoolean(false);
 
-	private final EnhancedProperties coastConfig = new EnhancedProperties();
+	private final EnhancedProperties coastConfig;
 
 	private CoastlineFileLoader() {
 		this.coastlineFiles = new HashSet<String>();
+		this.coastConfig = new EnhancedProperties();
+		// disable drive-on-left handling
+		this.coastConfig.setProperty("ignore-drive-on-left", "true");
 	}
 
 	private static final CoastlineFileLoader loader = new CoastlineFileLoader();
@@ -254,7 +257,7 @@ public final class CoastlineFileLoader {
 		}
 
 		@Override
-		public Iterable<Entry<String, String>> getEntryIteratable() {
+		public Iterable<Entry<String, String>> getTagEntryIterator() {
 			return Collections.singletonMap("natural", "coastline").entrySet();
 		}
 

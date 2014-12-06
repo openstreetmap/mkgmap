@@ -60,6 +60,8 @@ public class CommandArgsReader {
 		add(new CommandOption("description", "OSM street map"));
 		add(new CommandOption("overview-mapname", "osmmap"));
 		add(new CommandOption("overview-mapnumber", "63240000"));
+		add(new CommandOption("poi-address", ""));
+		add(new CommandOption("merge-lines", ""));
 	}
 
 	public CommandArgsReader(ArgumentProcessor proc) {
@@ -157,9 +159,7 @@ public class CommandArgsReader {
 		String value = opt.getValue();
 
 		if (validOptions != null && !validOptions.contains(option) && !opt.isExperimental()) {
-			Formatter f = new Formatter();
-			f.format("Invalid option: '%s'", option);
-			throw new ExitException(f.toString());
+			throw new ExitException(String.format("Invalid option: '%s'", option));
 		}
 
 		log.debug("adding option", option, value);
@@ -168,15 +168,23 @@ public class CommandArgsReader {
 		if (option.equals("mapname"))
 			mapnameWasSet = true;
 
-		if (option.equals("input-file")) {
+		switch (option) {
+		case "input-file":
 			log.debug("adding filename", value);
 			add(new Filename(value));
-		} else if (option.equals("read-config")) {
+			break;
+		case "read-config":
 			readConfigFile(value);
-		} else if (option.equals("latin1")) {
+			break;
+		case "latin1":
 			add(new CommandOption("code-page", "1252"));
-		} else {
+			break;
+		case "unicode":
+			add(new CommandOption("code-page", "65001"));
+			break;
+		default:
 			add(opt);
+			break;
 		}
 	}
 

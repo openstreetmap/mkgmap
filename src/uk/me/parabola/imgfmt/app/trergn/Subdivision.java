@@ -17,10 +17,13 @@
 package uk.me.parabola.imgfmt.app.trergn;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
@@ -82,7 +85,7 @@ public class Subdivision {
 	// Set if this is the last one.
 	private boolean last;
 
-	private final List<Subdivision> divisions = new ArrayList<Subdivision>();
+	private final List<Subdivision> divisions = new ArrayList<>();
 
 	private int extTypeAreasOffset;
 	private int extTypeLinesOffset;
@@ -109,18 +112,24 @@ public class Subdivision {
 		int shift = getShift();
 		int mask = getMask();
 
-		this.latitude = (area.getMinLat() + area.getMaxLat())/2;
-		this.longitude = (area.getMinLong() + area.getMaxLong())/2;
-
-		int w = ((area.getWidth() + 1)/2 + mask) >> shift;
+		// Calculate the center, move it right and up so that it lies on a point
+		// which is divisible by 2 ^shift
+		this.latitude = Utils.roundUp((area.getMinLat() + area.getMaxLat())/2, shift);
+		this.longitude = Utils.roundUp((area.getMinLong() + area.getMaxLong())/2, shift);
+		int w = 2 * (longitude - area.getMinLong());
+		int h = 2 * (latitude - area.getMinLat());
+		
+		// encode the values for the img format
+		w = ((w + 1)/2 + mask) >> shift;
+		h = ((h + 1)/2 + mask) >> shift;
+		
 		if (w > 0x7fff) {
-			log.warn("Subdivision width is " + w + " at " + new Coord(latitude, longitude));
+			log.warn("Subdivision width is " + w + " at " + getCenter());
 			w = 0x7fff;
 		}
 
-		int h = ((area.getHeight() + 1)/2 + mask) >> shift;
 		if (h > 0xffff) {
-			log.warn("Subdivision height is " + h + " at " + new Coord(latitude, longitude));
+			log.warn("Subdivision height is " + h + " at " + getCenter());
 			h = 0xffff;
 		}
 
@@ -273,17 +282,26 @@ public class Subdivision {
 		return p;
 	}
 
-	public Polyline createLine(String name, String ref) {
+	public Polyline createLine(String[] labels) {
 		// don't be tempted to "trim()" the name as it zaps the highway shields
-		Label label = lblFile.newLabel(name);
-		String nameSansGC = Label.stripGarminCodes(name);
+		Label label = lblFile.newLabel(labels[0]);
+		String nameSansGC = Label.stripGarminCodes(labels[0]);
 		Polyline pl = new Polyline(this);
 
 		pl.setLabel(label);
 
-		if(ref != null) {
+		if(labels[1] != null) {
 			// ref may contain multiple ids separated by ";"
-			String[] refs = ref.split(";");
+			int maxSetIdx = 3;
+			if (labels[3] == null) {
+				if (labels[2] == null) {
+					maxSetIdx = 1;
+				} else {
+					maxSetIdx = 2;
+				}
+			}
+
+			String[] refs = Arrays.copyOfRange(labels, 1, maxSetIdx+1);
 			if(refs.length == 1) {
 				// don't bother to add a single ref that looks the
 				// same as the name (sans shield) because it doesn't
@@ -291,11 +309,11 @@ public class Subdivision {
 				String tr = refs[0].trim();
 				String trSansGC = Label.stripGarminCodes(tr);
 				if(trSansGC.length() > 0 &&
-				   !trSansGC.equalsIgnoreCase(nameSansGC)) {
+						!trSansGC.equalsIgnoreCase(nameSansGC)) {
 					pl.addRefLabel(lblFile.newLabel(tr));
 				}
 			}
-			else {
+			else if (refs.length > 1){
 				// multiple refs, always add the first so that it will
 				// be used in routing instructions when the name has a
 				// shield prefix
@@ -307,13 +325,12 @@ public class Subdivision {
 					String tr = refs[i].trim();
 					String trSansGC = Label.stripGarminCodes(tr);
 					if(trSansGC.length() > 0 &&
-					   !trSansGC.equalsIgnoreCase(nameSansGC)) {
+							!trSansGC.equalsIgnoreCase(nameSansGC)) {
 						pl.addRefLabel(lblFile.newLabel(tr));
 					}
 				}
 			}
 		}
-
 		return pl;
 	}
 
@@ -417,7 +434,7 @@ public class Subdivision {
 	}
 
 	public String toString() {
-		return "Sub" + zoomLevel + '(' + new Coord(latitude, longitude).toOSMURL() + ')';
+		return "Sub" + zoomLevel + '(' + getCenter().toOSMURL() + ')';
 	}
 	/**
 	 * Get a type that shows if this area has lines, points etc.
@@ -447,6 +464,30 @@ public class Subdivision {
 
 	public boolean hasNextLevel() {
 		return !divisions.isEmpty();
+	}
+
+	public int getExtTypeAreasOffset() {
+		return extTypeAreasOffset;
+	}
+
+	public int getExtTypeLinesOffset() {
+		return extTypeLinesOffset;
+	}
+
+	public int getExtTypePointsOffset() {
+		return extTypePointsOffset;
+	}
+
+	public int getExtTypeAreasSize() {
+		return extTypeAreasSize;
+	}
+
+	public int getExtTypeLinesSize() {
+		return extTypeLinesSize;
+	}
+
+	public int getExtTypePointsSize() {
+		return extTypePointsSize;
 	}
 
 	public void startDivision() {
@@ -483,6 +524,35 @@ public class Subdivision {
 		file.put((byte)0);
 	}
 
+	/**
+	 * Read offsets for extended type data and set sizes for predecessor sub-div.
+	 * Corresponds to {@link #writeExtTypeOffsetsRecord(ImgFileWriter)} 
+	 * @param reader the reader
+	 * @param sdPrev the pred. sub-div or null
+	 */
+	public void readExtTypeOffsetsRecord(ImgFileReader reader,
+			Subdivision sdPrev) {
+		extTypeAreasOffset = reader.getInt();
+		extTypeLinesOffset = reader.getInt();
+		extTypePointsOffset = reader.getInt();
+		reader.get();
+		if (sdPrev != null){
+			sdPrev.extTypeAreasSize = extTypeAreasOffset - sdPrev.extTypeAreasOffset;
+			sdPrev.extTypeLinesSize = extTypeLinesOffset - sdPrev.extTypeLinesOffset;
+			sdPrev.extTypePointsSize = extTypePointsOffset - sdPrev.extTypePointsOffset;
+		}
+	}
+	/**
+	 * Set the sizes for the extended type data. See {@link #writeLastExtTypeOffsetsRecord(ImgFileWriter)} 
+	 */
+	public void readLastExtTypeOffsetsRecord(ImgFileReader reader) {
+		extTypeAreasSize = reader.getInt() - extTypeAreasOffset;
+		extTypeLinesSize = reader.getInt() - extTypeLinesOffset;
+		extTypePointsSize = reader.getInt() - extTypePointsOffset;
+		byte test = reader.get();
+		assert test == 0;
+	}
+	
 	/**
 	 * Add this subdivision as our child at the next level.  Each subdivision
 	 * can be further divided into smaller divisions.  They form a tree like
@@ -562,5 +632,26 @@ public class Subdivision {
 		int val = absval - getLongitude();
 		val += ((1 << shift) / 2);
 		return (val >> shift);
+	}
+
+
+	public Coord getCenter(){
+		return new Coord(getLatitude(),getLongitude());
+	}
+
+	/**
+	 * Get the unshifted width of the subdivision.
+	 * @return The true (unshifted) width.
+	 */
+	public int getWidth() {
+		return width << getShift();
+	}
+
+	/**
+	 * Get the unshifted height of the subdivision.
+	 * @return The true (unshifted) height.
+	 */
+	public int getHeight() {
+		return height << getShift();
 	}
 }

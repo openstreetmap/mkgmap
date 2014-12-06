@@ -24,6 +24,7 @@ import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
+import uk.me.parabola.imgfmt.app.net.AccessTagsAndBits;
 import uk.me.parabola.imgfmt.app.net.NumberStyle;
 import uk.me.parabola.imgfmt.app.net.Numbers;
 import uk.me.parabola.log.Logger;
@@ -41,16 +42,14 @@ import uk.me.parabola.mkgmap.general.MapRoad;
 class RoadHelper {
 	private static final Logger log = Logger.getLogger(RoadHelper.class);
 
-	private static final int NUM_ACCESS = 8;
-
 	// routing node store, persistent over resets
-	private final Map<Long, CoordNode> nodeCoords = new HashMap<Long, CoordNode>();
+	private final Map<Long, CoordNode> nodeCoords = new HashMap<>();
 
 	// Next node number to use for nodes constructed for house numbers. Persists over reset.
 	private long houseNumberNodeNumber = 16000000;
 
 	private int roadId;
-	private final List<NodeIndex> nodes = new ArrayList<NodeIndex>();
+	private final List<NodeIndex> nodes = new ArrayList<>();
 
 	private int speed;
 	private int roadClass;
@@ -58,7 +57,7 @@ class RoadHelper {
 	private boolean oneway;
 	private boolean toll;
 
-	private boolean[] access;
+	private byte mkgmapAccess;
 	private List<Numbers> numbers;
 
 	public RoadHelper() {
@@ -73,7 +72,6 @@ class RoadHelper {
 		roadClass = 0;
 		oneway = false;
 		toll = false;
-		access = new boolean[NUM_ACCESS];
 		numbers = null;
 	}
 
@@ -86,14 +84,41 @@ class RoadHelper {
 		nodes.add(new NodeIndex(f));
 	}
 
+	/**
+	 * @param param cgpsmapper manual:
+	 * RouteParam=speed,road_class,one_way,toll,
+	 * denied_emergency,denied_delivery,denied_car,denied_bus,denied_taxi,denied_pedestrain,denied_bicycle,denied_truck
+	 */
 	public void setParam(String param) {
 		String[] f = param.split(",");
 		speed = Integer.parseInt(f[0]);
+		if (speed < 0)
+			speed = 0;
+		if (speed > 7)
+			speed = 7;
 		roadClass = Integer.parseInt(f[1]);
+		if (roadClass < 0)
+			roadClass = 0;
+		if (roadClass > 4)
+			roadClass = 4;
 		oneway = Integer.parseInt(f[2]) > 0;
 		toll = Integer.parseInt(f[3]) > 0;
-		for (int j = 0; j < f.length - 4; j++)
-			access[j] = Integer.parseInt(f[4+j]) > 0;
+		byte noAccess = 0;
+		for (int j = 0; j < f.length - 4; j++){
+			if (Integer.parseInt(f[4+j]) == 0)
+				continue;
+			switch (j){
+			case 0: noAccess |= AccessTagsAndBits.EMERGENCY; break; 
+			case 1: noAccess |= AccessTagsAndBits.DELIVERY; break; 
+			case 2: noAccess |= AccessTagsAndBits.CAR; break; 
+			case 3: noAccess |= AccessTagsAndBits.BUS; break; 
+			case 4: noAccess |= AccessTagsAndBits.TAXI; break; 
+			case 5: noAccess |= AccessTagsAndBits.FOOT; break; 
+			case 6: noAccess |= AccessTagsAndBits.BIKE; break; 
+			case 7: noAccess |= AccessTagsAndBits.TRUCK; break; 
+			}
+		}
+		mkgmapAccess = (byte) ~noAccess; // we store the allowed vehicles
 	}
 
 	public MapRoad makeRoad(MapLine l) {
@@ -111,7 +136,7 @@ class RoadHelper {
 			road.setOneway();
 		if (toll)
 			road.setToll();
-		road.setAccess(access);
+		road.setAccess(mkgmapAccess);
 
 		if (numbers != null && !numbers.isEmpty()) {
 			convertNodesForHouseNumbers();
@@ -136,7 +161,7 @@ class RoadHelper {
 			if (id == 0) {
 				CoordNode node = nodeCoords.get((long) ni.nodeId);
 				if (node == null) {
-					node = new CoordNode(coord.getLatitude(), coord.getLongitude(), ni.nodeId, ni.boundary);
+					node = new CoordNode(coord, ni.nodeId, ni.boundary);
 					nodeCoords.put((long) ni.nodeId, node);
 				}
 				points.set(n, node);
@@ -225,7 +250,7 @@ class RoadHelper {
 
 	public void addNumbers(String value) {
 		if (numbers == null)
-			numbers = new ArrayList<Numbers>();
+			numbers = new ArrayList<>();
 		Numbers num = new Numbers(value);
 		if (num.getLeftNumberStyle() != NumberStyle.NONE || num.getRightNumberStyle() != NumberStyle.NONE)
 			numbers.add(num);
@@ -245,7 +270,7 @@ class RoadHelper {
 			if (f.length > 2)
 				boundary = Integer.parseInt(f[2]) > 0;
 			if (log.isDebugEnabled())
-				log.debug("ind=%d, node=%d, bound=%b\n", index, nodeId, boundary);
+				log.debug("ind=" + index + "node=" + nodeId + "bound=" + boundary);
 		}
 
 		public String toString() {

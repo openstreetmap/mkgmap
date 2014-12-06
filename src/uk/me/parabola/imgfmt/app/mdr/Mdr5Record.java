@@ -12,6 +12,8 @@
  */
 package uk.me.parabola.imgfmt.app.mdr;
 
+import java.text.Collator;
+
 /**
  * Holds information about a city that will make its way into mdr 5.
  * This class is used in several places as the information has to be gathered
@@ -114,7 +116,7 @@ public class Mdr5Record extends RecordBase implements NamedRecord {
 
 	/**
 	 * Set the index into the mdr20 array that we use to get/set the value.
-	 * @see {@link #setMdr20set(int[])}
+	 * @see #setMdr20set(int[])
 	 */
 	public void setMdr20Index(int mdr20Index) {
 		this.mdr20Index = mdr20Index;
@@ -135,25 +137,27 @@ public class Mdr5Record extends RecordBase implements NamedRecord {
 	 * Is this the same city, by the rules segregating the cities in mdr5 and 20.
 	 * @return True if in the same tile and has the same name for city/region/country.
 	 */
-	public boolean isSameByMapAndName(Mdr5Record other) {
+	public boolean isSameByMapAndName(Collator collator, Mdr5Record other) {
 		if (other == null)
 			return false;
 
-		return getMapIndex() == other.getMapIndex() && isSameByName(other);
+		return getMapIndex() == other.getMapIndex() && isSameByName(collator, other);
 	}
 
 	/**
 	 * Same city by the name of the city/region/country combination.
+	 *
+	 * @param collator Used to sort names.
 	 * @param other The other city to compare with.
 	 * @return True if is the same city, maybe in a different tile.
 	 */
-	public boolean isSameByName(Mdr5Record other) {
+	public boolean isSameByName(Collator collator, Mdr5Record other) {
 		if (other == null)
 			return false;
 
-		return getName().equals(other.getName())
-				&& getRegionName().equals(other.getRegionName())
-				&& getCountryName().equals(other.getCountryName());
+		return collator.compare(getName(), other.getName()) == 0
+				&& collator.compare(getRegionName(), other.getRegionName()) == 0
+				&& collator.compare(getCountryName(), other.getCountryName()) == 0;
 	}
 
 	public String toString() {

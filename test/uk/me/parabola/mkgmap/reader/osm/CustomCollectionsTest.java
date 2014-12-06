@@ -36,7 +36,7 @@ public class CustomCollectionsTest {
 		
 		for (long i = 1; i < 1000; i++) {
 			Long j = map.put(idOffset + i, new Long(i));
-			assertEquals(j, null);
+			assertEquals(true, j == null);
 			assertEquals(map.size(), i);
 		}
 
@@ -57,7 +57,7 @@ public class CustomCollectionsTest {
 		}
 
 		for (long i = 1000; i < 2000; i++) {
-			assertEquals((Long)map.get(idOffset + i), null);
+			assertEquals(true, (Long)map.get(idOffset + i) == null);
 		}
 		
 		for (long i = 1000; i < 2000; i++) {
@@ -66,7 +66,7 @@ public class CustomCollectionsTest {
 		}
 		for (long i = 1000; i < 1200; i++) {
 			Long j = map.put(idOffset + i, new Long(333));
-			assertEquals(j, null);
+			assertEquals(true, j == null);
 			assertEquals(map.size(), i);
 		}
 		// random read access 2 
@@ -77,7 +77,7 @@ public class CustomCollectionsTest {
 
 
 		for (long i = -2000; i < -1000; i++) {
-			assertEquals(map.get(idOffset + i), null);
+			assertEquals(true, map.get(idOffset + i) == null);
 		}
 		for (long i = -2000; i < -1000; i++) {
 			boolean b = map.containsKey(idOffset + i);
@@ -97,13 +97,13 @@ public class CustomCollectionsTest {
 			assertEquals(map.size(), mapSize);
 		}
 				
-		assertEquals(map.get(idOffset + 123456), null);
+		assertEquals(true, map.get(idOffset + 123456) == null);
 		map.put(idOffset + 123456, (long) 999);
 		assertEquals((Long)map.get(idOffset + 123456), new Long(999));
 		map.put(idOffset + 123456, (long) 888);
 		assertEquals((Long)map.get(idOffset + 123456), new Long(888));
 
-		assertEquals(map.get(idOffset - 123456), null);
+		assertEquals(true, map.get(idOffset - 123456) == null);
 		map.put(idOffset - 123456, (long) 999);
 		assertEquals((Long)map.get(idOffset - 123456), new Long(999));
 		map.put(idOffset - 123456, (long) 888);
@@ -117,7 +117,7 @@ public class CustomCollectionsTest {
 		Long old = map.remove(idOffset + 5);
 		assertEquals(old, new Long(5));
 		assertEquals(map.size(), 99);
-		assertEquals(map.get(idOffset + 5), null);
+		assertEquals(true, map.get(idOffset + 5) == null);
 	}
 	
 }

@@ -1,0 +1,104 @@
+
+WAY
+highway=primary
+maxspeed=60
+
+WAY 2
+highway=primary
+maxspeed:forward=30
+
+WAY 3
+highway=primary
+maxspeed:backward=20
+
+WAY 4
+highway=primary
+maxspeed=30
+maxspeed:forward=32
+
+WAY 5
+highway=primary
+maxspeed=30
+maxspeed:forward=28
+
+WAY 6
+highway=primary
+maxspeed=30
+maxspeed:backward=32
+
+WAY 7
+highway=primary
+maxspeed=30
+maxspeed:backward=28
+
+WAY 8
+highway=primary
+maxspeed=30
+maxspeed:forward=26
+maxspeed:backward=27
+
+WAY 9
+highway=primary
+maxspeed:forward=26
+maxspeed:backward=27
+
+WAY 10
+highway=secondary
+test=2
+test1=1
+test2=2
+name=fred
+
+WAY 11
+highway=secondary
+test=2
+name=fred
+
+WAY 12
+highway=secondary
+test=2
+test1=10
+name=fred
+
+WAY 14
+highway=secondary
+test3=3
+test1=1
+name=fred
+
+<<<lines>>>
+maxspeed:forward=* & maxspeed!=* { set maxspeed='${maxspeed:forward}' }
+$maxspeed:forward < $maxspeed { set maxspeed='${maxspeed:forward}' }
+maxspeed:backward=* & maxspeed!=* { set maxspeed='${maxspeed:backward}' }
+maxspeed:backward < $maxspeed { set maxspeed='${maxspeed:backward}' }
+
+highway=primary {name '${maxspeed}' } [0x1]
+
+
+test=test1 { name 'wrong' }
+test=test2 { name 'wrong' }
+test=$test1 { name 'wrong' }
+test=$test2 { name 'ok' }
+$test1 < $test2 { set ref=A2 }
+$test1 > 4 { set ref=A4 }
+test1=* & test3 > test1 { set ref=A99}
+highway=secondary [0x2]
+
+<finalize>
+name=* { name '${name}' }
+ref=* { addlabel '${ref}' }
+
+<<<results>>>
+WAY 1: Line 0x1, labels=[60, null, null, null], res=24-24 (1/1),(2/2),
+WAY 2: Line 0x1, labels=[30, null, null, null], res=24-24 (1/1),(2/2),
+WAY 3: Line 0x1, labels=[20, null, null, null], res=24-24 (1/1),(2/2),
+WAY 4: Line 0x1, labels=[30, null, null, null], res=24-24 (1/1),(2/2),
+WAY 5: Line 0x1, labels=[28, null, null, null], res=24-24 (1/1),(2/2),
+WAY 6: Line 0x1, labels=[30, null, null, null], res=24-24 (1/1),(2/2),
+WAY 7: Line 0x1, labels=[28, null, null, null], res=24-24 (1/1),(2/2),
+WAY 8: Line 0x1, labels=[26, null, null, null], res=24-24 (1/1),(2/2),
+WAY 9: Line 0x1, labels=[26, null, null, null], res=24-24 (1/1),(2/2),
+WAY 10: Line 0x2, labels=[ok, A2, null, null], res=24-24 (1/1),(2/2),
+WAY 11: Line 0x2, labels=[fred, null, null, null], res=24-24 (1/1),(2/2),
+WAY 12: Line 0x2, labels=[fred, A4, null, null], res=24-24 (1/1),(2/2),
+WAY 14: Line 0x2, labels=[fred, A99, null, null], res=24-24 (1/1),(2/2),

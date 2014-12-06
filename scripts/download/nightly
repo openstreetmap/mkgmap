@@ -1,0 +1,11 @@
+
+CMDS='prune:mkgmap prune:splitter
+current:mkgmap current:splitter
+build:mkgmap:trunk: build:splitter:trunk:
+stats
+'
+
+for cmd in $CMDS
+do
+	redis-cli lpush svn:build $cmd
+done > /dev/null

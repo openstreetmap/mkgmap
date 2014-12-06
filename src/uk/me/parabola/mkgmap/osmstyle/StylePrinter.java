@@ -56,8 +56,6 @@ public class StylePrinter {
 
 	private void dumpOptions(Formatter fmt) {
 		fmt.format("<<<options>>>\n");
-		if (style.getNameTagList() != null)
-			fmt.format("name-tag-list: %s\n", fmtArray(style.getNameTagList()));
 
 		if (generalOptions != null) {
 			for (Entry<String, String> entry : generalOptions.entrySet())
@@ -84,16 +82,6 @@ public class StylePrinter {
 			return "{\n" + str + "\n}";
 		else
 			return ": " + str;
-	}
-
-	private String fmtArray(String[] strings) {
-		StringBuffer sb = new StringBuffer();
-		for (String s : strings) {
-			sb.append(s);
-			sb.append(", ");
-		}
-		sb.setLength(sb.length() - 2); // trim final separator
-		return sb.toString();
 	}
 
 	private void dumpRuleSet(Formatter fmt, String name, RuleSet set) {

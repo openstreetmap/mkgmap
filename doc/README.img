@@ -13,23 +13,6 @@ See
 This site also has a program 'imgdecode' which reads a .img file and
 produces a textual representation of it.
 
-** Codepoints
-
-Besides the structure of files, mkgmap needs to know the codepoints to
-represent different kinds of roads and different POIs.  Information
-about these values is stored in the file:
-
-  resources/garmin_feature_list.csv
-
-The files
-
-  resources/map-features.csv
-  resources/osm_garmin_map.csv
-
-are obsolete and used to be used to convert OSM tags to garmin
-codepoints.  Now, style files are used - see README.styles.  They have
-not been modified in a long time and should perhaps be deleted.
-
 mkgmap has support for generating test maps with lines and points of
 possible codepoints.  Instead of using an OSM file as input, use the
 special input name "test-map:all-elements":

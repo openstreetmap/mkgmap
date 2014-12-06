@@ -19,6 +19,7 @@ package uk.me.parabola.imgfmt.app.lbl;
 import java.util.HashMap;
 import java.util.Map;
 
+import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.Exit;
@@ -28,7 +29,7 @@ import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.labelenc.BaseEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
-import uk.me.parabola.imgfmt.app.labelenc.Transliterator;
+import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
@@ -48,18 +49,21 @@ public class LBLFile extends ImgFile {
 	private static final Logger log = Logger.getLogger(LBLFile.class);
 
 	private CharacterEncoder textEncoder = CodeFunctions.getDefaultEncoder();
-	private Transliterator transliterator = CodeFunctions.getDefaultTransliterator();
 
-	private final Map<String, Label> labelCache = new HashMap<String, Label>();
+	private final Map<EncodedText, Label> labelCache = new HashMap<EncodedText, Label>();
 
 	private final LBLHeader lblHeader = new LBLHeader();
 
 	private final PlacesFile places = new PlacesFile();
 	private Sort sort;
 
+	// Shift value for the label offset.
+	private final int offsetMultiplier = 1;
+
 	public LBLFile(ImgChannel chan, Sort sort) {
 		this.sort = sort;
 		lblHeader.setSort(sort);
+		lblHeader.setOffsetMultiplier(offsetMultiplier);
 		setHeader(lblHeader);
 
 		setWriter(new BufferedImgFileWriter(chan));
@@ -68,8 +72,11 @@ public class LBLFile extends ImgFile {
 
 		// The zero offset is for no label.
 		getWriter().put((byte) 0);
+		alignForNext();
 
 		places.init(this, lblHeader.getPlaceHeader());
+		places.setSort(sort);
+		labelCache.put(BaseEncoder.NO_TEXT, Label.NULL_OUT_LABEL);
 	}
 
 	public void write() {
@@ -101,35 +108,64 @@ public class LBLFile extends ImgFile {
 		
 		lblHeader.setEncodingType(cfuncs.getEncodingType());
 		textEncoder = cfuncs.getEncoder();
-		transliterator = cfuncs.getTransliterator();
 		if (forceUpper && textEncoder instanceof BaseEncoder) {
 			BaseEncoder baseEncoder = (BaseEncoder) textEncoder;
 			baseEncoder.setUpperCase(true);
 		}
-		if (forceUpper)
-			transliterator.forceUppercase(true);
+	}
+
+	public void setEncoder(int encodingType, int codepage ) {
+		CodeFunctions cfuncs = CodeFunctions.createEncoderForLBL(encodingType, codepage);
+		
+		lblHeader.setEncodingType(cfuncs.getEncodingType());
+		textEncoder = cfuncs.getEncoder();
 	}
 	
 	/**
 	 * Add a new label with the given text.  Labels are shared, so that identical
 	 * text is always represented by the same label.
 	 *
-	 * @param inText The text of the label, it will be in uppercase.
+	 * @param text The text of the label, it will be in uppercase.
 	 * @return A reference to the created label.
 	 */
-	public Label newLabel(String inText) {
-		String text = transliterator.transliterate(inText);
-		Label l = labelCache.get(text);
-		if (l == null) {
-			l = new Label(text);
-			labelCache.put(text, l);
+	public Label newLabel(String text) {
+		EncodedText encodedText = textEncoder.encodeText(text);
 
-			l.setOffset(position() - (LBLHeader.HEADER_LEN + lblHeader.getSortDescriptionLength()));
-			l.write(getWriter(), textEncoder);
+		Label l = labelCache.get(encodedText);
+		if (l == null) {
+			l = new Label(encodedText.getChars());
+			labelCache.put(encodedText, l);
+
+			l.setOffset(getNextLabelOffset());
+			l.write(getWriter(), encodedText);
+
+			alignForNext();
+
+			if (l.getOffset() > 0x3fffff)
+				throw new MapFailedException("Overflow of LBL section");
 		}
 
 		return l;
 	}
+
+	/**
+	 * Align for the next label.
+	 *
+	 * Only has any effect when offsetMultiplier is not zero.
+	 */
+	private void alignForNext() {
+		// Align ready for next label
+		while ((getCurrentLabelOffset() & ((1 << offsetMultiplier) - 1)) != 0)
+			getWriter().put((byte) 0);
+	}
+
+	private int getNextLabelOffset() {
+		return getCurrentLabelOffset() >> offsetMultiplier;
+	}
+
+	private int getCurrentLabelOffset() {
+		return position() - (LBLHeader.HEADER_LEN + lblHeader.getSortDescriptionLength());
+ 	}
 
 	public POIRecord createPOI(String name) {
 		return places.createPOI(name);

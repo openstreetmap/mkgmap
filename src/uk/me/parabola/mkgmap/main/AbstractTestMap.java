@@ -22,10 +22,10 @@ import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.map.Map;
-import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.app.trergn.Zoom;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.srt.SrtTextReader;
 
 /**
  * Common code used for the test maps.  The test maps are programmatically
@@ -55,14 +55,14 @@ public abstract class AbstractTestMap {
 
 		Map map;
 		try {
-			map = Map.createMap("32860003", ".", params, "32860003", Sort.defaultSort(1252));
+			map = Map.createMap("32860003", ".", params, "32860003", SrtTextReader.sortForCodepage(1252));
 		} catch (FileExistsException e) {
 			throw new ExitException("File exists already", e);
 		} catch (FileNotWritableException e) {
 			throw new ExitException("Could not create or write file", e);
 		}
 		map.addInfo("Program released under the GPL");
-		map.addInfo("Map data licenced under Creative Commons Attribution ShareAlike 2.0");
+		map.addInfo("This map data is made available under the Open Database License:");
 
 		// There has to be (at least) two copyright messages or else the map
 		// does not show up.  The second one will be displayed at startup,
@@ -95,5 +95,4 @@ public abstract class AbstractTestMap {
 	}
 
 	protected abstract void drawTestMap(Map map, Subdivision div, double lat, double lng);
-
 }

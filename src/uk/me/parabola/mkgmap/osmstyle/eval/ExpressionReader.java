@@ -1,3 +1,16 @@
+/*
+ * Copyright (C) 2013
+ * 
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License version 2 as
+ *  published by the Free Software Foundation.
+ * 
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ * 
+ */
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
 import java.util.HashSet;
@@ -45,9 +58,18 @@ public class ExpressionReader {
 				break;
 
 			WordInfo wordInfo = scanner.nextWordWithInfo();
-			if (isOperation(wordInfo))
+			if (isOperation(wordInfo)) {
 				saveOp(wordInfo.getText());
-			else if (scanner.checkToken("(")) {
+			} else if (wordInfo.isQuoted()) {
+				pushValue(wordInfo.getText());
+			} else if (wordInfo.getText().charAt(0) == '$') {
+				String tagname = scanner.nextWord();
+				if (tagname.equals("{")) {
+					tagname = scanner.nextWord();
+					scanner.validateNext("}");
+				}
+				stack.push(new GetTagFunction(tagname));
+			} else if (scanner.checkToken("(")) {
 				// it is a function
 				// this requires a () after the function name
 				scanner.validateNext("(");
@@ -150,7 +172,7 @@ public class ExpressionReader {
 			Op arg2 = stack.pop();
 			Op arg1 = stack.pop();
 
-			if (arg1.isType(VALUE) && arg2.isType(VALUE))
+			if (arg1.isType(VALUE) /*&& arg2.isType(VALUE)*/)
 				arg1 = new GetTagFunction(arg1.getKeyValue());
 
 			BinaryOp binaryOp = (BinaryOp) op;
@@ -229,6 +251,9 @@ public class ExpressionReader {
 			break;
 		case RELATION:
 			if (function.supportsRelation()) supported = true;
+			break;
+		case ALL:
+			if (function.supportsNode() || function.supportsWay() || function.supportsRelation()) supported = true;
 			break;
 		}
 

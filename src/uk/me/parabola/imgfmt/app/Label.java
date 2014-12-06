@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 Steve Ratcliffe
+ * Copyright (C) 2006,2014 Steve Ratcliffe
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -18,7 +18,6 @@ package uk.me.parabola.imgfmt.app;
 
 import java.util.regex.Pattern;
 
-import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
 
 /**
@@ -32,32 +31,49 @@ import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
  * 2. An 8 bit format.  This seems to be a fairly straightforward latin-1 like
  * encoding with no tricks to reduce the amount of space required.
  *
+ * 3. A multi-byte format. For unicode, cp932 etc.
+ *
  * @author Steve Ratcliffe
  */
-public class Label implements Comparable<Label> {
+public class Label {
+	public static final Label NULL_LABEL = new Label("");
+	public static final Label NULL_OUT_LABEL = new Label(new char[0]);
 
 	private final String text;
+	private final char[] encText;
 
 	// The offset in to the data section.
 	private int offset;
 
 	public Label(String text) {
 		this.text = text;
+		this.encText = null;
+	}
+
+	public Label(char[] encText) {
+		this.encText = encText;
+		this.text = null;
 	}
 
 	public int getLength() {
-		if (text == null)
-			return 0;
-		else
+		if (text != null)
 			return text.length();
+		if (encText != null)
+			return encText.length;
+		return 0;
 	}
 
 	public String getText() {
+		assert text != null;
 		return text;
 	}
 
+	public char[] getEncText() {
+		return encText;
+	}
+
 	// highway shields and "thin" separators
-	private final static Pattern SHIELDS = Pattern.compile("[\u0001-\u0006\u001b-\u001c]");
+	public final static Pattern SHIELDS = Pattern.compile("[\u0001-\u0006\u001b-\u001c]");
 
 	// "fat" separators
 	private final static Pattern SEPARATORS = Pattern.compile("[\u001d-\u001f]");
@@ -76,7 +92,7 @@ public class Label implements Comparable<Label> {
 	}
 
 	public static String squashSpaces(String s) {
-		if(s == null)
+		if(s == null || s.isEmpty())
 			return null;
 		return SQUASH_SPACES.matcher(s).replaceAll(" "); // replace with single space
 	}
@@ -89,10 +105,7 @@ public class Label implements Comparable<Label> {
 	 * @return The offset within the LBL file of this string.
 	 */
 	public int getOffset() {
-		if (text == null || text.isEmpty())
-			return 0;
-		else
-			return offset;
+		return offset;
 	}
 
 	public void setOffset(int offset) {
@@ -103,12 +116,9 @@ public class Label implements Comparable<Label> {
 	 * Write this label to the given img file.
 	 *
 	 * @param writer The LBL file to write to.
-	 * @param textEncoder The encoder to use for this text.  Converts the
-	 * unicode string representation to the correct byte stream for the file.
-	 * This depends on encoding format, character set etc.
+	 * @param encText The encoded version of the text for this label.
 	 */
-	public void write(ImgFileWriter writer, CharacterEncoder textEncoder) {
-		EncodedText encText = textEncoder.encodeText(text);
+	public void write(ImgFileWriter writer, EncodedText encText) {
 		assert encText != null;
 
 		if (encText.getLength() > 0)
@@ -119,30 +129,17 @@ public class Label implements Comparable<Label> {
 	 * String version of the label, for diagnostic purposes.
 	 */
 	public String toString() {
-		return "[" + offset + "]" + text;
+		return text != null ? text : "[" + offset + "]";
 	}
 
 	public boolean equals(Object o) {
-		if (this == o)
-			return true;
-		if (o == null || !(o instanceof Label))
-			return false;
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
 
 		return offset == ((Label) o).offset;
-
 	}
 
 	public int hashCode() {
 		return offset;
-	}
-
-	/**
-	 * Note: this class has a natural ordering that is inconsistent with equals.
-	 * (But perhaps it shouldn't?)
-	 */
-	public int compareTo(Label other) {
-		if(this == other)
-			return 0;
-		return text.compareToIgnoreCase(other.text);
 	}
 }

@@ -58,7 +58,13 @@ public class MapSplitter {
 	public static final int MAX_XT_POINTS_SIZE = 0xff00;
 	public static final int MAX_XT_LINES_SIZE  = 0xff00;
 	public static final int MAX_XT_SHAPES_SIZE = 0xff00;
+	
+	public static final int MIN_DIMENSION = 10; // just a reasonable value
 
+	// The target number of estimated bytes for one area, smaller values
+	// result in more and typically smaller areas and larger *.img files
+	private static final int WANTED_MAX_AREA_SIZE = 0x3fff; 
+	
 	private final Zoom zoom;
 
 	/**
@@ -97,7 +103,7 @@ public class MapSplitter {
 		// Now step through each area and see if any have too many map features
 		// in them.  For those that do, we further split them.  This is done
 		// recursively until everything fits.
-		List<MapArea> alist = new ArrayList<MapArea>();
+		List<MapArea> alist = new ArrayList<>();
 		addAreasToList(areas, alist, 0);
 
 		MapArea[] results = new MapArea[alist.size()];
@@ -118,6 +124,8 @@ public class MapSplitter {
 		for (MapArea area : areas) {
 			Area bounds = area.getBounds();
 			int[] sizes = area.getEstimatedSizes();
+			if (area.hasData() == false)
+				continue;
 			if(log.isInfoEnabled()) {
 				String padding = depth + "                                                                      ";
 				log.info(padding.substring(0, (depth + 1) * 2) + 
@@ -127,7 +135,8 @@ public class MapSplitter {
 						 ", lines = " + area.getNumLines() + "/" + sizes[MapArea.LINE_KIND] +
 						 ", shapes = " + area.getNumShapes() + "/" + sizes[MapArea.SHAPE_KIND]);
 			}
-
+			boolean doSplit = false;
+			
 			if (area.getNumLines() > MAX_NUM_LINES ||
 				area.getNumPoints() > MAX_NUM_POINTS ||
 				(sizes[MapArea.POINT_KIND] +
@@ -135,8 +144,22 @@ public class MapSplitter {
 				 sizes[MapArea.SHAPE_KIND]) > MAX_RGN_SIZE ||
 				sizes[MapArea.XT_POINT_KIND] > MAX_XT_POINTS_SIZE ||
 				sizes[MapArea.XT_LINE_KIND] > MAX_XT_LINES_SIZE ||
-				sizes[MapArea.XT_SHAPE_KIND] > MAX_XT_SHAPES_SIZE) {
-				if (bounds.getMaxDimension() > 10) {
+				sizes[MapArea.XT_SHAPE_KIND] > MAX_XT_SHAPES_SIZE)
+				doSplit = true; // we must split
+			else if (bounds.getMaxDimension() > MIN_DIMENSION) {
+				int sumSize = 0;
+				for (int s : sizes)
+					sumSize += s;
+				if (sumSize > WANTED_MAX_AREA_SIZE) {
+					if (area.getLines().size() + area.getShapes().size() >= 2) {
+						// area has more bytes than wanted, and we can split
+						log.debug("splitting area because size is larger than wanted: " + sumSize);
+						doSplit = true;
+					}
+				}
+			}
+			if (doSplit){
+				if (bounds.getMaxDimension() > MIN_DIMENSION) {
 					if (log.isDebugEnabled())
 						log.debug("splitting area", area);
 					MapArea[] sublist;

@@ -38,12 +38,13 @@ public class LineSizeSplitterFilter implements MapFilter {
 
 	private static final int MAX_SIZE = 0x7fff;
 
-	private int shift;
+	private int maxSize;
 
 	public void init(FilterConfig config) {
-		shift = config.getShift();
+		int shift = config.getShift();
 		if (shift > 15)
 			shift = 16;
+		maxSize = Math.min((1<<24)-1, Math.max(MAX_SIZE << shift, 0x8000));		
 	}
 
 	// return the greater of the absolute values of HEIGHT and WIDTH
@@ -64,8 +65,6 @@ public class LineSizeSplitterFilter implements MapFilter {
 		// We do not deal with shapes.
 		assert !(element instanceof MapShape) && element instanceof MapLine;
 
-		int maxSize = MAX_SIZE << shift;
-
 		MapLine line = (MapLine) element;
 
 		if (line.getBounds().getMaxDimension() < maxSize) {
@@ -83,7 +82,7 @@ public class LineSizeSplitterFilter implements MapFilter {
 		// in the subdivision creation
 		List<Coord> points = splitLinesToMaxSize(line.getPoints(), maxSize-10);
 
-		log.debug("line too big, splitting");
+		log.debug("line bbox too big, splitting");
 
 		MapLine l = line.copy();
 
@@ -182,9 +181,7 @@ public class LineSizeSplitterFilter implements MapFilter {
 			int width = Math.abs( p1.getLongitude() - p2.getLongitude());
 			int height = Math.abs( p1.getLatitude() - p2.getLatitude());
 			if (width > maxSize || height > maxSize){
-				int midLon = (p1.getLongitude() + p2.getLongitude())/2;
-				int midLat = (p1.getLatitude() + p2.getLatitude())/2;
-				testedCoords.add(posToTest+1, new Coord(midLat,midLon));
+				testedCoords.add(posToTest+1, p1.makeBetweenPoint(p2, 0.5));
 				++posToTest;
 			}
 			else

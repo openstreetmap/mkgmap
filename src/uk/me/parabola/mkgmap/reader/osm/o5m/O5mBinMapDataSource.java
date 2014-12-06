@@ -13,11 +13,9 @@
 
 package uk.me.parabola.mkgmap.reader.osm.o5m;
 
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 import uk.me.parabola.imgfmt.FormatException;
-import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.mkgmap.reader.osm.OsmMapDataSource;
 
 /**
@@ -31,18 +29,14 @@ import uk.me.parabola.mkgmap.reader.osm.OsmMapDataSource;
  */
 public class O5mBinMapDataSource extends OsmMapDataSource {
 
+	@Override
 	public boolean isFileSupported(String name) {
 		return name.endsWith(".o5m");
 	}
 
-	/**
-	 * Load the .o5m file and produce the intermediate format.
-	 *
-	 * @param name The filename to read.
-	 * @throws FileNotFoundException If the file does not exist.
-	 */
-	public void load(String name) throws FileNotFoundException, FormatException {
-		InputStream is = Utils.openFile(name);
+
+	@Override
+	public void load(InputStream is) throws FormatException {
 
 		O5mBinHandler handler = new O5mBinHandler(is);
 

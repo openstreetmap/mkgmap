@@ -16,12 +16,8 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.TagDict;
 
 /**
  * Set the name on the given element.  The tags of the element may be
@@ -31,10 +27,8 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  *
  * @author Steve Ratcliffe
  */
-public class NameAction implements Action {
-
-	private final List<ValueBuilder> names = new ArrayList<ValueBuilder>();
-
+public class NameAction extends ValueBuildedAction {
+	private final short label1TagKey = TagDict.getInstance().xlate("mkgmap:label:1"); 
 	/**
 	 * search for the first matching name pattern and set the element name
 	 * to it.
@@ -42,42 +36,30 @@ public class NameAction implements Action {
 	 * If the element name is already set, then nothing is done.
 	 *
 	 * @param el The element on which the name may be set.
+	 * @return 
 	 */
-	public void perform(Element el) {
-		if (el.getName() != null)
-			return;
+	public boolean perform(Element el) {
+		if (el.getTag(label1TagKey) != null)
+			return false;
 		
-		for (ValueBuilder vb : names) {
+		for (ValueBuilder vb : getValueBuilder()) {
 			String s = vb.build(el, el);
 			if (s != null) {
-				el.setName(s);
-				break;
+				el.addTag(label1TagKey, s);
+				return true;
 			}
 		}
-	}
-
-	public void add(String val) {
-		names.add(new ValueBuilder(val));
-	}
-
-	public Set<String> getUsedTags() {
-		Set<String> set = new HashSet<String>();
-		if (names != null) {
-			for (ValueBuilder vb : names) {
-				set.addAll(vb.getUsedTags());
-			}
-		}
-		return set;
+		return false;
 	}
 
 	public String toString() {
 		StringBuilder sb = new  StringBuilder();
 		sb.append("name ");
-		for (ValueBuilder vb : names) {
+		for (ValueBuilder vb : getValueBuilder()) {
 			sb.append(vb);
 			sb.append(" | ");
 		}
-		sb.setLength(sb.length() - 1);
+		sb.setLength(sb.length() - 3);
 		return sb.toString();
 	}
 }

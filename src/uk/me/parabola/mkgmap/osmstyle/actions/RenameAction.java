@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.TagDict;
 
 /**
  * Renames a tag.  Specifically takes the value of the 'from' tag, sets
@@ -24,19 +25,21 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  * @author Steve Ratcliffe
  */
 public class RenameAction implements Action {
-	private final String from;
-	private final String to;
+	private final short from;
+	private final short to;
 
 	public RenameAction(String from, String to) {
-		this.from = from;
-		this.to = to;
+		this.from = TagDict.getInstance().xlate(from);
+		this.to = TagDict.getInstance().xlate(to);
 	}
 
-	public void perform(Element el) {
+	public boolean perform(Element el) {
 		String fromval = el.getTag(from);
 		if (fromval != null) {
 			el.addTag(to, fromval);
 			el.deleteTag(from);
+			return true;
 		}
+		return false;
 	}
 }

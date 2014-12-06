@@ -1,3 +1,16 @@
+/*
+ * Copyright (C) 2013.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 or
+ * version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ */
+
 package uk.me.parabola.util;
 
 import java.util.ArrayList;
@@ -27,10 +40,8 @@ public class MultiHashMap<K,V> extends HashMap<K,List<V>> {
 	}
 
 
-	public V add(K key, V value )
-	{
-	    
-	    List<V> values = super.get(key);
+	public V add(K key, V value ) {
+		List<V> values = super.get(key);
 	    if (values == null ) {
 	        values = new LinkedList<V>();
 	        super.put( key, values );
@@ -41,13 +52,11 @@ public class MultiHashMap<K,V> extends HashMap<K,List<V>> {
 	    return ( results ? value : null );
 	}
 
-	public V remove(K key, V value )
-	{
-	    
+	public V removeMapping(K key, V value) {
 	    List<V> values = super.get(key);
 	    if (values == null )
 			return null;
-	
+
 	    values.remove(value);
 		
 		if (values.isEmpty())

@@ -67,7 +67,6 @@ public class ElementSaver {
 	// Options
 	private final boolean ignoreBuiltinRelations;
 	private final boolean ignoreTurnRestrictions;
-	private final Double minimumArcLength;
 
 	/** name of the tag that contains a ;-separated list of tagnames that should be removed after all elements have been processed */
 	public static final String MKGMAP_REMOVE_TAG = "mkgmap:removetags";
@@ -85,23 +84,17 @@ public class ElementSaver {
 			relationMap = new HashMap<Long, Relation>();
 		}
 
-		String rsa = args.getProperty("remove-short-arcs", "5");
-		if(rsa != null)
-			minimumArcLength = (!rsa.isEmpty())? Double.parseDouble(rsa) : 0.0;
-		else
-			minimumArcLength = null;
-
 		ignoreBuiltinRelations = args.getProperty("ignore-builtin-relations", false);
 		ignoreTurnRestrictions = args.getProperty("ignore-turn-restrictions", false);
 	}
 
 	/**
-	 * {@inheritDoc}
-	 *
+	 * Store the {@link Coord} with the associated OSM id.
 	 * We use this to calculate a bounding box in the situation where none is
 	 * given.  In the usual case where there is a bounding box, then nothing
 	 * is done.
 	 *
+	 * @param id the OSM id
 	 * @param co The point.
 	 */
 	public void addPoint(long id, Coord co) {
@@ -135,6 +128,15 @@ public class ElementSaver {
 	 */
 	public void addWay(Way way) {
 		wayMap.put(way.getId(), way);
+		/*
+		Way old = wayMap.put(way.getId(), way);
+		if (old != null){
+			if (old == way)
+				log.error("way",way.toBrowseURL(),"was added again");
+			else 
+				log.error("duplicate way",way.toBrowseURL(),"replaces previous way");
+		}
+		*/
 	}
 
 	/**
@@ -148,9 +150,11 @@ public class ElementSaver {
 			if (type == null) {
 			} else if ("multipolygon".equals(type) || "boundary".equals(type)) {
 				rel = createMultiPolyRelation(rel); 
-			} else if("restriction".equals(type)) {
+			} else if("restriction".equals(type) || type.startsWith("restriction:")) {
 				if (ignoreTurnRestrictions)
 					rel = null;
+				else if (rel.getTag("restriction") == null && rel.getTagsWithPrefix("restriction:", false).isEmpty())
+					log.warn("ignoring unspecified/unsupported restriction " + rel.toBrowseURL());
 				else
 					rel = new RestrictionRelation(rel);
 			}
@@ -216,7 +220,7 @@ public class ElementSaver {
 	public void convert(OsmConverter converter) {
 
 		// We only do this if an explicit bounding box was given.
-		if (boundingBox != null && minimumArcLength != null)
+		if (boundingBox != null)
 			makeBoundaryNodes();
 
 		converter.setBoundingBox(getBoundingBox());
@@ -224,8 +228,14 @@ public class ElementSaver {
 		for (Relation r : relationMap.values())
 			converter.convertRelation(r);
 
-		for (Node n : nodeMap.values())
+		short fixmeTagKey = TagDict.getInstance().xlate("fixme"); 
+		short fixmeTagKey2 = TagDict.getInstance().xlate("FIXME"); 
+		for (Node n : nodeMap.values()){
 			converter.convertNode(n);
+			if (n.getTag(fixmeTagKey) != null || n.getTag(fixmeTagKey2) != null){
+				n.getLocation().setFixme(true);
+			}
+		}
 
 		nodeMap = null;
 
@@ -315,7 +325,12 @@ public class ElementSaver {
 		} else if (minLat == Utils.toMapUnit(180.0) && maxLat == Utils.toMapUnit(-180.0)) {
 			return new Area(0, 0, 0, 0);
 		} else {
-			return new Area(minLat, minLon, maxLat, maxLon);
+			// calculate an area that is slightly larger so that high precision coordinates
+			// are safely within the bbox.
+			return new Area(Math.max(Utils.toMapUnit(-90.0), minLat-1), 
+					Math.max(Utils.toMapUnit(-180.0), minLon-1),
+					Math.min(Utils.toMapUnit(90.0), maxLat+1),
+					Math.min(Utils.toMapUnit(180.0), maxLon+1)); 
 		}
 	}
 

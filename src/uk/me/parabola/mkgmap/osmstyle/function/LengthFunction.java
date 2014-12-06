@@ -80,10 +80,6 @@ public class LengthFunction extends CachedFunction {
 		return "length";
 	}
 
-	public String toString() {
-		return getName() + "()";
-	}
-
 	public boolean supportsWay() {
 		return true;
 	}

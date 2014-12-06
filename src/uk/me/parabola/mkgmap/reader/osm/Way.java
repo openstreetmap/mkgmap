@@ -23,6 +23,7 @@ import java.util.List;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.log.Logger;
 
 /**
  * Represent a OSM way in the 0.5 api.  A way consists of an ordered list of
@@ -31,18 +32,20 @@ import uk.me.parabola.imgfmt.app.Coord;
  * @author Steve Ratcliffe
  */
 public class Way extends Element {
-
+	private static final Logger log = Logger.getLogger(Way.class);
 	private final List<Coord> points;
 
 	// This will be set if a way is read from an OSM file and the first node is the same node as the last
 	// one in the way. This can be set to true even if there are missing nodes and so the nodes that we
 	// have do not form a closed loop.
-	// Note: this is not always set, you must use isClosed()
-	private boolean closed;
+	// Note: this is not always set
+	private boolean closedInOSM;
 
 	// This is set to false if, we know that there are nodes missing from this way.
 	// If you set this to false, then you *must* also set closed to the correct value.
 	private boolean complete  = true;
+	
+	private boolean isViaWay;
 
 	public Way(long id) {
 		points = new ArrayList<Coord>(5);
@@ -56,10 +59,10 @@ public class Way extends Element {
 
 	public Way copy() {
 		Way dup = new Way(getId(), points);
-		dup.setName(getName());
 		dup.copyTags(this);
-		dup.closed = this.closed;
+		dup.closedInOSM = this.closedInOSM;
 		dup.complete = this.complete;
+		dup.isViaWay = this.isViaWay;
 		return dup;
 	}
 
@@ -96,13 +99,40 @@ public class Way extends Element {
 	 */
 	public boolean isClosed() {
 		if (!isComplete())
-			return closed;
+			return closedInOSM;
 
+		return !points.isEmpty() && hasIdenticalEndPoints();
+	}
+
+	/**
+	 * 
+	 * @return true if the way is really closed in OSM,
+	 * false if the way was created by mkgmap or read from polish
+	 * input file (*.mp). 
+	 * 
+	 */
+	public boolean isClosedInOSM() {
+		return closedInOSM;
+	}
+
+	/**
+	 *  
+	 * @return Returns true if the first point in the way is identical to the last.
+	 */
+	public boolean hasIdenticalEndPoints() {
+		return !points.isEmpty() && points.get(0) == points.get(points.size()-1);
+	}
+
+	/**
+	 *  
+	 * @return Returns true if the first point in the way is identical to the last.
+	 */
+	public boolean hasEqualEndPoints() {
 		return !points.isEmpty() && points.get(0).equals(points.get(points.size()-1));
 	}
 
-	public void setClosed(boolean closed) {
-		this.closed = closed;
+	public void setClosedInOSM(boolean closed) {
+		this.closedInOSM = closed;
 	}
 
 	public boolean isComplete() {
@@ -152,19 +182,22 @@ public class Way extends Element {
 		return getId() == ((Way) o).getId();
 	}
 
+	/**
+	 * calculate weighted centre of way, using high precision
+	 * @return
+	 */
 	public Coord getCofG() {
 		int numPoints = points.size();
 		if(numPoints < 1)
 			return null;
 
-		int lat = 0;
-		int lon = 0;
+		double lat = 0;
+		double lon = 0;
 		for(Coord p : points) {
-			lat += p.getLatitude();
-			lon += p.getLongitude();
+			lat += (double)p.getHighPrecLat()/numPoints;
+			lon += (double)p.getHighPrecLon()/numPoints;
 		}
-		return new Coord((lat + numPoints / 2) / numPoints,
-						 (lon + numPoints / 2) / numPoints);
+		return Coord.makeHighPrecCoord((int)Math.round(lat), (int)Math.round(lon));
 	}
 
 	public String kind() {
@@ -175,15 +208,19 @@ public class Way extends Element {
 	// direction
 	public static boolean clockwise(List<Coord> points) {
 
+		
 		if(points.size() < 3 || !points.get(0).equals(points.get(points.size() - 1)))
 			return false;
-
+		if (points.get(0).highPrecEquals(points.get(points.size() - 1)) == false){
+			log.error("Way.clockwise was called for way that is not closed in high precision");
+		}
+		
 		long area = 0;
 		Coord p1 = points.get(0);
 		for(int i = 1; i < points.size(); ++i) {
 			Coord p2 = points.get(i);
-			area += ((long)p1.getLongitude() * p2.getLatitude() - 
-					 (long)p2.getLongitude() * p1.getLatitude());
+			area += ((long)p1.getHighPrecLon() * p2.getHighPrecLat() - 
+					 (long)p2.getHighPrecLon() * p1.getHighPrecLat());
 			p1 = p2;
 		}
 
@@ -198,10 +235,18 @@ public class Way extends Element {
 	public boolean containsPointsOf(Way other) {
 		Polygon thisPoly = new Polygon();
 		for(Coord p : points)
-			thisPoly.addPoint(p.getLongitude(), p.getLatitude());
+			thisPoly.addPoint(p.getHighPrecLon(), p.getHighPrecLat());
 		for(Coord p : other.points)
-			if(!thisPoly.contains(p.getLongitude(), p.getLatitude()))
+			if(!thisPoly.contains(p.getHighPrecLon(), p.getHighPrecLat()))
 				return false;
 		return true;
+	}
+
+	public boolean isViaWay() {
+		return isViaWay;
+	}
+
+	public void setViaWay(boolean isViaWay) {
+		this.isViaWay = isViaWay;
 	}
 }

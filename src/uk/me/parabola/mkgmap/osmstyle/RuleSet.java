@@ -19,9 +19,18 @@ package uk.me.parabola.mkgmap.osmstyle;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.Set;
+
+import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.osmstyle.eval.AbstractBinaryOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.AbstractOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.LinkedBinaryOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.LinkedOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.TypeResult;
@@ -35,11 +44,23 @@ import uk.me.parabola.mkgmap.reader.osm.WatchableTypeResult;
  * @author Steve Ratcliffe
  */
 public class RuleSet implements Rule, Iterable<Rule> {
+	private static final Logger log = Logger.getLogger(RuleSet.class);
 	private Rule[] rules;
+	private Rule finalizeRule;
+
+	// identifies cached values 
+	int cacheId;
+	boolean compiled = false;
 
 	private RuleIndex index = new RuleIndex();
 	private final Set<String> usedTags = new HashSet<String>();
-
+	
+	@Override
+	public void resolveType(Element el, TypeResult result) {
+		cacheId = resolveType(cacheId, el, result);
+	}
+	
+	
 	/**
 	 * Resolve the type for this element by running the rules in order.
 	 *
@@ -52,23 +73,27 @@ public class RuleSet implements Rule, Iterable<Rule> {
 	 * one type may be saved here.  If there are no matches then nothing will
 	 * be saved.
 	 */
-	public void resolveType(Element el, TypeResult result) {
+	public int resolveType(int cacheId, Element el, TypeResult result) {
 		WatchableTypeResult a = new WatchableTypeResult(result);
-
+		if (!compiled || cacheId == Integer.MAX_VALUE)
+			compile();
+		// new element, invalidate all caches
+		cacheId++;
+		
 		// Get all the rules that could match from the index.  
 		BitSet candidates = new BitSet();
-		for (String tag : el) {
-			BitSet rules = index.getRulesForTag(tag);
-			if (rules != null)
+		for (Entry<Short, String> tagEntry : el.getFastTagEntryIterator()) {
+			BitSet rules = index.getRulesForTag(tagEntry.getKey(), tagEntry.getValue());
+			if (rules != null && !rules.isEmpty() )
 				candidates.or(rules);
 		}
-
 		for (int i = candidates.nextSetBit(0); i >= 0; i = candidates.nextSetBit(i + 1)) {			
 			a.reset();
-			rules[i].resolveType(el, a);
+			cacheId = rules[i].resolveType(cacheId, el, a);
 			if (a.isResolved())
-				return;
+				return cacheId;
 		}
+		return cacheId;
 	}
 
 	public Iterator<Rule> iterator() {
@@ -86,6 +111,7 @@ public class RuleSet implements Rule, Iterable<Rule> {
 	 * will be either a plain tag name A, or with a value A=B.
 	 */
 	public void add(String keystring, Rule rule, Set<String> changeableTags) {
+		compiled = false;
 		index.addRuleToIndex(new RuleDetails(keystring, rule, changeableTags));
 	}
 
@@ -133,6 +159,7 @@ public class RuleSet implements Rule, Iterable<Rule> {
 		//		   + rs.getUsedTags());
 		addUsedTags(rs.usedTags);
 		//System.out.println("Result: " + getUsedTags().toString());
+		compiled = false;
 	}
 
 	/**
@@ -142,6 +169,7 @@ public class RuleSet implements Rule, Iterable<Rule> {
 	public void prepare() {
 		index.prepare();
 		rules = index.getRules();
+		compile();
 	}
 
 	public Set<String> getUsedTags() {
@@ -151,4 +179,99 @@ public class RuleSet implements Rule, Iterable<Rule> {
 	public void addUsedTags(Collection<String> usedTags) {
 		this.usedTags.addAll(usedTags);
 	}
-}
+
+	/**
+	 * Compile the rules and reset caches. Detect common sub-expressions and
+	 * make sure that all rules use the same instance of these common
+	 * sub-expressions.
+	 */
+	private void compile(){
+		HashMap<String, Op> tests = new HashMap<String, Op>();
+
+		for (Rule rule:rules){
+			Op op;
+			if (rule instanceof ExpressionRule)
+				op = ((ExpressionRule)rule).getOp();
+			else if (rule instanceof ActionRule)
+				op = ((ActionRule) rule).getOp();
+			else {
+				log.error("unexpected rule instance");
+				continue;
+			}
+			if (op instanceof AbstractBinaryOp){
+				AbstractBinaryOp binOp = (AbstractBinaryOp) op;
+				binOp.setFirst(compileOp(tests, binOp.getFirst()));
+				binOp.setSecond(compileOp(tests, binOp.getSecond()));
+				op = compileOp(tests, binOp);
+			} else if (op instanceof AbstractOp){
+				op = compileOp(tests, op);
+			} else if (op instanceof LinkedBinaryOp){
+				((LinkedBinaryOp) op).setFirst(compileOp(tests, ((LinkedBinaryOp) op).getFirst()));
+				((LinkedBinaryOp) op).setSecond(compileOp(tests, ((LinkedBinaryOp) op).getSecond()));
+			} else if (op instanceof LinkedOp) {
+				Op wrappedOp = compileOp(tests, ((LinkedOp) op).getFirst());
+				op.setFirst(wrappedOp);
+			} else {
+				log.error("unexpected op instance");
+				continue;
+			}
+			if (rule instanceof ExpressionRule)
+				((ExpressionRule)rule).setOp(op);
+			else if (rule instanceof ActionRule)
+				((ActionRule) rule).setOp(op);
+			else {
+				log.error("unexpected rule instance");
+				continue;
+			}
+		}
+		cacheId = 0;
+		compiled = true;
+	}
+	
+	private Op compileOp(HashMap<String, Op> tests, Op op){
+		if (op instanceof AbstractBinaryOp){
+			AbstractBinaryOp binOp = (AbstractBinaryOp) op;
+			binOp.setFirst(compileOp(tests, binOp.getFirst()));
+			binOp.setSecond(compileOp(tests, binOp.getSecond()));
+		}
+		if (op instanceof LinkedOp){
+			// LinkedOp is referenced by other OPs, don't replace it 
+			return op;
+		}
+		String test = op.toString();
+		Op commonOp = tests.get(test);
+		if (commonOp == null){
+			if (op instanceof AbstractOp)
+				((AbstractOp)op).resetCache();
+			tests.put(test, op);
+			commonOp = op;
+		}
+		
+		return commonOp;
+	}
+	
+	public void setFinalizeRule(Rule finalizeRule) {
+		if (rules == null) {
+			// this method must be called after prepare() is called so
+			// that we have rules to which the finalize rules can be applied
+			throw new IllegalStateException("First call prepare() before setting the finalize rules");
+		}
+		for (Rule rule : rules) 
+			rule.setFinalizeRule(finalizeRule);
+		
+		compiled = false;
+		this.finalizeRule = finalizeRule;  
+	}
+
+	@Override
+	public void printStats(String header) {
+		if (rules == null)
+		  return;
+		for (Rule rule : rules){ 
+			rule.printStats(header);
+		}
+		if (finalizeRule != null)
+			finalizeRule.printStats(header);
+	}
+
+} 

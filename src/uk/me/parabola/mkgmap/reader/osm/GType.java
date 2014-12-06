@@ -45,7 +45,8 @@ public class GType {
 	private int roadClass;
 	private int roadSpeed;
 
-	private boolean road;
+	private boolean hasRoadAttribute;
+	private boolean levelsWereFixed = false;
 
 	/** If this is set, then we look for further types after this one is matched */
 	private boolean continueSearch;
@@ -55,39 +56,37 @@ public class GType {
 	// actions will always be executed
 	private boolean propogateActionsOnContinue;
 
+	public static boolean checkType(FeatureKind featureKind, int type) {
+		if (type >= 0x010000){
+			if ((type & 0xff) > 0x1f)
+				return false;
+		} else {
+			if (featureKind == FeatureKind.POLYLINE && type > 0x3f)
+				return false;
+			else if (featureKind == FeatureKind.POLYGON && (type> 0x7f || type == 0x4a))
+				return false;
+			else if (featureKind == FeatureKind.POINT){
+				if (type < 0x0100 || (type & 0x00ff) > 0x1f) 
+					return false;
+			}
+		}
+		return true;
+	}
+	
 	public GType(FeatureKind featureKind, String type) {
 		this.featureKind = featureKind;
 		try {
-			this.type = Integer.decode(type);
+			int t = Integer.decode(type);
+			if (featureKind == FeatureKind.POLYGON){
+				// allow 0xYY00 instead of 0xYY
+				if (t >= 0x100 && t < 0x10000 && (t & 0xff) == 0)
+					t >>= 8;
+			}
+			this.type = t;
 		} catch (NumberFormatException e) {
 			log.error("not numeric " + type);
-			throw new ExitException("non-numeric type in map-features file");
+			throw new ExitException("non-numeric type in style file");
 		}
-	}
-
-	public GType(FeatureKind featureKind, String type, String subtype) {
-		this.featureKind = featureKind;
-		try {
-			this.type = (Integer.decode(type) << 8) + Integer.decode(subtype);
-		} catch (NumberFormatException e) {
-			log.error("not numeric " + type + ' ' + subtype);
-			throw new ExitException("non-numeric type in map-features file");
-		}
-	}
-
-	public GType(GType other) {
-		this.continueSearch = other.continueSearch;
-		this.defaultName = other.defaultName;
-		this.featureKind = other.featureKind;
-		this.maxLevel = other.maxLevel;
-		this.maxResolution = other.maxResolution;
-		this.minLevel = other.minLevel;
-		this.minResolution = other.minResolution;
-		this.propogateActionsOnContinue = other.propogateActionsOnContinue;
-		this.road = other.road;
-		this.roadClass = other.roadClass;
-		this.roadSpeed = other.roadSpeed;
-		this.type = other.type;
 	}
 
 	public FeatureKind getFeatureKind() {
@@ -135,6 +134,7 @@ public class GType {
 			if (info.getBits() <= maxResolution)
 				minLevel = info.getLevel();
 		}
+		levelsWereFixed = true;
 	}
 
 	public String toString() {
@@ -153,7 +153,7 @@ public class GType {
 			else
 				fmt.format(" level %d-%d", minLevel, maxLevel);
 		}
-		if (road)
+		if (hasRoadAttribute)
 			fmt.format(" road_class=%d road_speed=%d", roadClass, roadSpeed);
 		
 		if (continueSearch)
@@ -161,7 +161,9 @@ public class GType {
 		if (propogateActionsOnContinue)
 			fmt.format(" propagate");
 		sb.append(']');
-		return sb.toString();
+		String res = sb.toString();
+		fmt.close();
+		return res;
 	}
 
 	public int getMinLevel() {
@@ -177,7 +179,9 @@ public class GType {
 	}
 
 	public void setRoadClass(int roadClass) {
-		road = true;
+		// road class might also be set for nodes used by the link-pois-to-ways option
+		if (getFeatureKind() == FeatureKind.POLYLINE)
+			hasRoadAttribute = true;
 		this.roadClass = roadClass;
 	}
 
@@ -186,12 +190,23 @@ public class GType {
 	}
 
 	public void setRoadSpeed(int roadSpeed) {
-		road = true;
+		// road speed might also be set for nodes used by the link-pois-to-ways option
+		if (getFeatureKind() == FeatureKind.POLYLINE)
+			hasRoadAttribute = true;
 		this.roadSpeed = roadSpeed;
 	}
 
+	public boolean hasRoadAttribute() {
+		return hasRoadAttribute;
+	}
+
+	/**
+	 * @return true if the object has valid attributes to be used as a routable way 
+	 */
 	public boolean isRoad() {
-		return road;
+		if (!levelsWereFixed)
+			log.error("internal: isRoad() called before fixLevels()");
+		return hasRoadAttribute && minLevel == 0;
 	}
 
 	public boolean isContinueSearch() {
@@ -209,4 +224,33 @@ public class GType {
 	public void setContinueSearch(boolean continueSearch) {
 		this.continueSearch = continueSearch;
 	}
+	
+	/**
+	 * 
+	 * @param type the type value
+	 * @return true if the type can be used for routable lines
+	 */
+	public static boolean isRoutableLineType(int type){
+		return type >= 0x01 && type <= 0x3f;
+	}
+	/**
+	 *  
+	 * @param type the type value
+	 * @return true if the type is known as routable in Garmin maps. These are 
+	 * known to cause routing errors if used for non-routable lines. 
+	 */
+	public static boolean isSpecialRoutableLineType(int type){
+		return type >= 0x01 && type <= 0x13 || type == 0x16 || type == 0x1b; 
+	}
+	
+	/**
+	 * Return a type value in the commonly used hex format 
+	 * @param type the integer value
+	 * @return a hex string with even number of digits 
+	 */
+	public static String formatType(int type){
+		String s = String.format("%x", type);
+		return (s.length() % 2 != 0 ? "0x0":"0x") + s;
+	}
+	
 }

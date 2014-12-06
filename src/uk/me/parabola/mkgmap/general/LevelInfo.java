@@ -62,16 +62,19 @@ public class LevelInfo implements Comparable<LevelInfo> {
 		for (String s : desc) {
 			String[] keyVal = s.split("[=:]");
 			if (keyVal == null || keyVal.length < 2) {
-				System.err.println("incorrect level specification " + levelSpec);
-				continue;
+				throw new ExitException("Error: incorrect level specification " + levelSpec);
 			}
 
 			try {
 				int key = Integer.parseInt(keyVal[0]);
+				if (key < 0 || key > 16)
+					throw new ExitException("Error: Level value out of range 0-16: " + s);
 				int value = Integer.parseInt(keyVal[1]);
+				if (value <= 0 || value > 24)
+					throw new ExitException("Error: Resolution value out of range 0-24: " + s);
 				levels[count] = new LevelInfo(key, value);
 			} catch (NumberFormatException e) {
-				System.err.println("Levels specification not all numbers " + keyVal[count]);
+				throw new ExitException("Error: Levels specification not all numbers: " + levelSpec + " check " + s);
 			}
 			count++;
 		}

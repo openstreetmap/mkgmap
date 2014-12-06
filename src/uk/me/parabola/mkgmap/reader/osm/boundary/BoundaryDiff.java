@@ -56,16 +56,15 @@ public class BoundaryDiff {
 	 * or a single *.bnd file
 	 * @return
 	 */
-	private List<String> getBoundsFiles(String dirName) {
+	private static List<String> getBoundsFiles(String dirName) {
 		File dir = new File(dirName);
 		System.out.println(dirName);
 		if (dir.isFile() && dir.getName().endsWith(".bnd")) {
-			List<String> boundaryFiles = new ArrayList<String>();
+			List<String> boundaryFiles = new ArrayList<>();
 			boundaryFiles.add(dir.getName());
 			return boundaryFiles;
-		} else {
-			return BoundaryUtil.getBoundaryDirContent(dirName);
 		}
+		return BoundaryUtil.getBoundaryDirContent(dirName);
 	}
 
 	/**
@@ -85,8 +84,8 @@ public class BoundaryDiff {
 		Collections.sort(b1);
 		Collections.sort(b2);
 
-		Queue<String> bounds1 = new LinkedList<String>(b1);
-		Queue<String> bounds2 = new LinkedList<String>(b2);
+		Queue<String> bounds1 = new LinkedList<>(b1);
+		Queue<String> bounds2 = new LinkedList<>(b2);
 		b1 = null;
 		b2 = null;
 
@@ -153,7 +152,7 @@ public class BoundaryDiff {
 	 * @param value the tag value
 	 * @return a new Area (which might be empty) 
 	 */
-	private Area loadArea(String dirName, String fileName, String tag, String value) {
+	private static Area loadArea(String dirName, String fileName, String tag, String value) {
 		String dir = dirName;
 		String bndFileName = fileName;
 		if (dir.endsWith(".bnd")){
@@ -170,17 +169,16 @@ public class BoundaryDiff {
 			return (bqt.getCoveredArea(Integer.valueOf(value)));
 		Map<String, Tags> bTags = bqt.getTagsMap();
 		Map<String, List<Area>> areas = bqt.getAreas();
-		Area a = new Area();
 		Path2D.Double path = new Path2D.Double();
 		for (Entry<String, Tags> entry: bTags.entrySet()){
 			if (value.equals(entry.getValue().get(tag))){
 				List<Area> aList = areas.get(entry.getKey());
 				for (Area area : aList){
-					BoundaryUtil.addToPath(path, area);
+					path.append(area, false);
 				}
 			}
 		}
-		a = new Area(path);
+		Area a = new Area(path);
 		return a;
 	}
 
@@ -191,7 +189,7 @@ public class BoundaryDiff {
 	 * @param tagKey used to build the gpx file name
 	 * @param tagValue used to build the gpx file name
 	 */
-	private void saveArea(Area a, String subDirName, String tagKey, String tagValue) {
+	private static void saveArea(Area a, String subDirName, String tagKey, String tagValue) {
 
 		String gpxBasename = "gpx/diff/" + subDirName + "/"
 				+ tagKey + "=" + tagValue + "/";
@@ -241,17 +239,17 @@ public class BoundaryDiff {
 			printUsage();
 		}
 
-		List<Entry<String,String>> tags = new ArrayList<Entry<String,String>>();
+		List<Entry<String,String>> tags = new ArrayList<>();
 		
 		if (args.length > 2) {
 			for (int i = 2; i < args.length; i++) {
 				final String[] parts = args[i].split(Pattern.quote("="));
-				tags.add(new AbstractMap.SimpleImmutableEntry<String, String>(
+				tags.add(new AbstractMap.SimpleImmutableEntry<>(
 						parts[0], parts[1]));
 			}
 		} else {
 			for (int adminlevel = 2; adminlevel <= 11; adminlevel++) {
-			tags.add(new AbstractMap.SimpleImmutableEntry<String, String>(
+			tags.add(new AbstractMap.SimpleImmutableEntry<>(
 					"admin_level", String.valueOf(adminlevel)));
 			}
 		}
@@ -259,8 +257,7 @@ public class BoundaryDiff {
 			
 		int processors = Runtime.getRuntime().availableProcessors();
 		ExecutorService excSvc = Executors.newFixedThreadPool(processors);
-		ExecutorCompletionService<String> executor = new ExecutorCompletionService<String>(
-				excSvc);
+		ExecutorCompletionService<String> executor = new ExecutorCompletionService<>(excSvc);
 
 		
 		for (final Entry<String, String> tag : tags) {

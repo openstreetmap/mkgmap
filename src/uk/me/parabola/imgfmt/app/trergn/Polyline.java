@@ -83,7 +83,7 @@ public class Polyline extends MapObject {
 		catch (AssertionError ae) {
 			log.error("Problem writing line (" + getClass() + ") of type 0x" + Integer.toHexString(getType()) + " containing " + points.size() + " points and starting at " + points.get(0).toOSMURL());
 			log.error("  Subdivision shift is " + getSubdiv().getShift() +
-					  " and its centre is at " + new Coord(getSubdiv().getLatitude(), getSubdiv().getLongitude()).toOSMURL());
+					  " and its centre is at " + getSubdiv().getCenter().toOSMURL());
 			log.error("  " + ae.getMessage());
 			if(roaddef != null)
 				log.error("  Way is " + roaddef);
@@ -93,7 +93,7 @@ public class Polyline extends MapObject {
 		int minPointsRequired = (this instanceof Polygon)? 3 : 2;
 		BitWriter bw = w.makeBitStream(minPointsRequired);
 		if(bw == null) {
-			log.info("Level " + getSubdiv().getZoom().getLevel() + " " + ((this instanceof Polygon)? "polygon" : "polyline") + " has less than " + minPointsRequired + " points, discarding");
+			log.error("Level " + getSubdiv().getZoom().getLevel() + " " + ((this instanceof Polygon)? "polygon" : "polyline") + " has less than " + minPointsRequired + " points, discarding");
 			return;
 		}
 
@@ -164,7 +164,7 @@ public class Polyline extends MapObject {
 		catch (AssertionError ae) {
 			log.error("Problem writing line (" + getClass() + ") of type 0x" + Integer.toHexString(getType()) + " containing " + points.size() + " points and starting at " + points.get(0).toOSMURL());
 			log.error("  Subdivision shift is " + getSubdiv().getShift() +
-					  " and its centre is at " + new Coord(getSubdiv().getLatitude(), getSubdiv().getLongitude()).toOSMURL());
+					  " and its centre is at " + getSubdiv().getCenter().toOSMURL());
 			log.error("  " + ae.getMessage());
 			if(roaddef != null)
 				log.error("  Way is " + roaddef);
@@ -173,7 +173,7 @@ public class Polyline extends MapObject {
 		int minPointsRequired = (this instanceof Polygon)? 3 : 2;
 		BitWriter bw = w.makeBitStream(minPointsRequired);
 		if(bw == null) {
-			log.info("Level " + getSubdiv().getZoom().getLevel() + " " + ((this instanceof Polygon)? "polygon" : "polyline") + " has less than " + minPointsRequired + " points, discarding");
+			log.error("Level " + getSubdiv().getZoom().getLevel() + " " + ((this instanceof Polygon)? "polygon" : "polyline") + " has less than " + minPointsRequired + " points, discarding");
 			return;
 		}
 		int blen = bw.getLength();
@@ -222,7 +222,7 @@ public class Polyline extends MapObject {
 		points.addAll(coords);
 	}
 
-	List<Coord> getPoints() {
+	public List<Coord> getPoints() {
 		return points;
 	}
 
@@ -268,5 +268,23 @@ public class Polyline extends MapObject {
 		}
 
 		return false;
+	}
+
+	public int getLat() {
+		return getSubdiv().getLatitude() + (getDeltaLat() << getSubdiv().getShift());
+	}
+
+	public int getLong() {
+		return getSubdiv().getLongitude() + (getDeltaLong() << getSubdiv().getShift());
+	}
+
+	public int getNodeCount() {
+		int idx = 0;
+		int count = 0;
+		for (Coord co : points) {
+			if (idx++ > 0 && co.getId() > 0)
+				count++;
+		}
+		return count;
 	}
 }
