@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
@@ -38,10 +39,10 @@ import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.net.AccessTagsAndBits;
 import uk.me.parabola.imgfmt.app.net.GeneralRouteRestriction;
-import uk.me.parabola.imgfmt.app.net.NODHeader;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.imgfmt.app.trergn.MapObject;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.build.LocatorConfig;
 import uk.me.parabola.mkgmap.build.LocatorUtil;
 import uk.me.parabola.mkgmap.filters.LineSizeSplitterFilter;
 import uk.me.parabola.mkgmap.general.AreaClipper;
@@ -126,8 +127,13 @@ public class StyledConverter implements OsmConverter {
 	private final Rule polygonRules;
 	private Style style;
 
-	private boolean driveOnLeft;
-	private boolean driveOnRight;
+	private String driveOn;
+	private Boolean driveOnLeft;
+	private int numDriveOnLeftRoads;
+	private int numDriveOnRightRoads;
+	private int numDriveOnSideUnknown;
+	private int numRoads;
+	
 	private final boolean checkRoundabouts;
 	private int reportDeadEnds; 
 	private final boolean linkPOIsToWays;
@@ -161,15 +167,37 @@ public class StyledConverter implements OsmConverter {
 		polygonRules = style.getPolygonRules();
 		
 		housenumberGenerator = new HousenumberGenerator(props);
-
-		driveOnLeft = props.getProperty("drive-on-left") != null;
-		// check if the setDriveOnLeft flag should be ignored 
-		// (this is the case if precompiled sea is loaded)
-		if (props.getProperty("ignore-drive-on-left") == null)
-			// do not ignore the flag => initialize it
-			NODHeader.setDriveOnLeft(driveOnLeft);
-		driveOnRight = props.getProperty("drive-on-right") != null;
-		checkRoundabouts = props.getProperty("check-roundabouts") != null;
+		
+		driveOn = props.getProperty("drive-on", null);
+		if (driveOn == null){
+			// support legacy options --drive-on-left and --drive-on-right
+			boolean dol = props.getProperty("drive-on-left", false);
+			boolean dor = props.getProperty("drive-on-right", false);
+			if (dol && dor)
+				throw new ExitException("options drive-on-left and drive-on-right and mutually exclusive");
+			if (dol)
+				driveOn = "left";
+			if (dor)
+				driveOn = "right";
+		}
+		if (driveOn == null)
+			driveOn = "detect,right";
+		switch (driveOn) {
+		case "left":
+			driveOnLeft = true; 
+			break;
+		case "right":
+			driveOnLeft = false; 
+			break;
+		case "detect":
+		case "detect,left":
+		case "detect,right":
+			break;
+		default:
+			throw new ExitException("invalid parameters for option drive-on:"+driveOn);
+		}
+		
+		checkRoundabouts = props.getProperty("check-roundabouts",false);
 		reportDeadEnds = props.getProperty("report-dead-ends", 1);  
 		
 		LineAdder overlayAdder = style.getOverlays(lineAdder);
@@ -333,8 +361,19 @@ public class StyledConverter implements OsmConverter {
 		cw.setReversed(wasReversed);
 		if (cw.isRoad()){
 			roads.add(cw);
-			if (wasReversed && cw.isRoundabout())
-				log.warn("Roundabout", way.getId(), "has reverse oneway tag (" + way.getPoints().get(0).toOSMURL() + ")");
+			numRoads++;
+			String country = way.getTag(countryTagKey);
+			if (country != null) {
+				if (LocatorConfig.get().getDriveOnLeftFlag(country))
+					numDriveOnLeftRoads++;
+				else
+					numDriveOnRightRoads++;
+			} else
+				numDriveOnSideUnknown++;
+			if (cw.isRoundabout()) {
+				if (wasReversed)
+					log.warn("Roundabout", way.getId(), "has reverse oneway tag (" + way.getPoints().get(0).toOSMURL() + ")");
+			}
 			lastRoadId = way.getId();
 		}
 		else 
@@ -506,6 +545,8 @@ public class StyledConverter implements OsmConverter {
 	
 	public void end() {
 		style.reportStats();
+		driveOnLeft = calcDrivingSide();
+		
 		setHighwayCounts();
 		findUnconnectedRoads();
 		rotateClosedWaysToFirstNode();
@@ -561,7 +602,6 @@ public class StyledConverter implements OsmConverter {
 			if (cw.isValid())
 				addRoad(cw);
 		}
-		
 		housenumberGenerator.generate(lineAdder);
 		
 		createRouteRestrictionsFromPOI();
@@ -571,6 +611,12 @@ public class StyledConverter implements OsmConverter {
 			rr.addRestriction(collector, nodeIdMap);
 		}
 		roads = null;
+
+		// at this point the check-roundabout option might have changed the driveOn value 
+//		if ("left".equals(driveOn) && !ignoreDriveOn){
+//			NODHeader.setDriveOnLeft(true);
+//			TREHeader.setDriveOnLeft(true);
+//		}
 
 		for(Relation relation : throughRouteRelations) {
 			Node node = null;
@@ -618,6 +664,49 @@ public class StyledConverter implements OsmConverter {
 		nodeIdMap = null;
 		throughRouteRelations.clear();
 		restrictions.clear();
+		
+	}
+
+	/**
+	 * Check the counters and verify the driveOn value to calculate
+	 * the drive on left flag. 
+	 */
+	private Boolean calcDrivingSide() {
+		Boolean dol = null;
+		log.info("Found", numRoads, "roads",
+				numDriveOnLeftRoads, "in drive-on-left country,",
+				numDriveOnRightRoads, "in drive-on-right country, and",
+				numDriveOnSideUnknown, " with unknwon country");
+		if (numDriveOnLeftRoads> 0 &&  numDriveOnRightRoads > 0)
+			log.error("Attention: Tile contains both drive-on-left (" + numDriveOnLeftRoads + 
+					") and drive-on-right roads (" + numDriveOnRightRoads + ")");
+		if (driveOn.startsWith("detect")) {
+			if (numDriveOnSideUnknown > numRoads * 0.05){
+				// warn if more than 5% of the roads are in unknown area
+				log.warn("Found", numDriveOnSideUnknown, "roads with unknown country and driving side");
+			}
+			if (numDriveOnLeftRoads > numDriveOnRightRoads + numDriveOnSideUnknown) {
+				dol = true;
+			} else if (numDriveOnRightRoads > numDriveOnLeftRoads + numDriveOnSideUnknown) {
+				dol = false;
+			} else {
+				if (driveOn.endsWith("left"))
+					dol = true;
+				else 
+					dol = false;
+			}
+			log.info("detected value for driving on left flag is:",dol);			
+		} else {
+			driveOnLeft = ("left".equals(driveOn));
+			// warn if user given flag is obviously wrong
+			if ("left".equals(driveOn) && numDriveOnLeftRoads == 0 && numDriveOnRightRoads > 0)
+				log.warn("The drive-on-left flag is set but tile contains only drive-on-right roads");
+			if ("right".equals(driveOn) && numDriveOnRightRoads == 0 && numDriveOnLeftRoads > 0)
+				log.warn("The drive-on-left flag is NOT set used but tile contains only drive-on-left roads");
+		}		
+		if (dol == null)
+			dol = false; // should not happen
+		return dol;
 	}
 
 	/**
@@ -707,32 +796,14 @@ public class StyledConverter implements OsmConverter {
 				boolean clockwise = dir > 0;
 				if (points.get(0) == points.get(points.size() - 1)) {
 					// roundabout is a loop
-					if (!driveOnLeft && !driveOnRight) {
-						if (clockwise) {
-							log.info("Roundabout "
-									+ way.getId()
-									+ " is clockwise so assuming vehicles should drive on left side of road ("
-									+ centre.toOSMURL() + ")");
-							driveOnLeft = true;
-							NODHeader.setDriveOnLeft(true);
-						} else {
-							log.info("Roundabout "
-									+ way.getId()
-									+ " is anti-clockwise so assuming vehicles should drive on right side of road ("
-									+ centre.toOSMURL() + ")");
-							driveOnRight = true;
-						}
-					}
-					if (driveOnLeft && !clockwise || driveOnRight
-							&& clockwise) {
+					if (driveOnLeft == true && !clockwise || driveOnLeft == false && clockwise) {
 						log.warn("Roundabout "
 								+ way.getId()
 								+ " direction is wrong - reversing it (see "
 								+ centre.toOSMURL() + ")");
 						way.reverse();
 					}
-				} else if (driveOnLeft && !clockwise || driveOnRight
-						&& clockwise) {
+				} else if (driveOnLeft == true && !clockwise || driveOnLeft == false && clockwise) {
 					// roundabout is a line
 					log.warn("Roundabout segment " + way.getId()
 							+ " direction looks wrong (see "
@@ -1688,8 +1759,8 @@ public class StyledConverter implements OsmConverter {
 				}
 			}
 		}
-		
 	}
+
 	
 	/**
 	 * Increment the highway counter for each coord of each road.
@@ -1935,5 +2006,9 @@ public class StyledConverter implements OsmConverter {
 		}
 	}
 
+	public Boolean getDriveOnLeft(){
+		assert roads == null : "getDriveOnLeft() should be called after end()";
+		return driveOnLeft;
+	}
 }
 

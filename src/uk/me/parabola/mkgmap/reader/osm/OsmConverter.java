@@ -72,4 +72,9 @@ public interface OsmConverter {
 	 * Called when all conversion has been done.
 	 */
 	public void end();
+	
+	/**
+	 * @return true/false if source contains info about driving side, else null
+	 */
+	public Boolean getDriveOnLeft();
 }

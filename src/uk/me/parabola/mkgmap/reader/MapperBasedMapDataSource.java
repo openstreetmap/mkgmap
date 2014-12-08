@@ -42,6 +42,7 @@ import uk.me.parabola.util.EnhancedProperties;
 public abstract class MapperBasedMapDataSource implements MapDataSource, Configurable {
 	protected final MapDetails mapper = new MapDetails();
 	private EnhancedProperties configProps;
+	private boolean driveOnLeft;
 
 	/**
 	 * Get the area that this map covers. Delegates to the map collector.
@@ -138,4 +139,16 @@ public abstract class MapperBasedMapDataSource implements MapDataSource, Configu
 		boundary.setPoints(coords);
 		mapper.addLine(boundary);
 	}
+	
+	/**
+	 * @return true/false if source contains info about driving side, else null
+	 */
+	public Boolean getDriveOnLeft(){
+		return driveOnLeft;
+	}
+	
+	protected void setDriveOnLeft(boolean b) {
+		driveOnLeft = b;
+	}
+
 }

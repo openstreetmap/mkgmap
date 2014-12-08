@@ -119,7 +119,7 @@ public class CommandArgsReader {
 		// If there is more than one filename argument we inform of this fact
 		// via a fake option.
 		proc.processOption("number-of-files", String.valueOf(arglist.getFilenameCount()));
-
+		
 		// Now process the arguments in order.
 		for (ArgType a : arglist) {
 			a.processArg();
@@ -145,6 +145,20 @@ public class CommandArgsReader {
 	 */
 	private void addOption(String optval) {
 		CommandOption opt = new CommandOption(new Option(optval));
+		boolean legacyOptionDetected = false; 
+		// translate legacy options drive-on-left and drive-on-right
+		String option = opt.getOption();
+		if ("drive-on-left".equals(option)){
+			opt = new CommandOption(new Option("drive-on=left"));
+			legacyOptionDetected = true;
+		} 
+		if ("drive-on-right".equals(option)){
+			opt = new CommandOption(new Option("drive-on=right"));
+			legacyOptionDetected = true;
+		} 
+		if (legacyOptionDetected){
+			System.err.println("Option " + option + " is deprecated. Will use " + opt.getOption() + "=" + opt.getValue() + " as replacement for " + optval);
+		}
 		addOption(opt);
 	}
 
@@ -267,6 +281,7 @@ public class CommandArgsReader {
 					fmt.format("%8.8s", mapname);
 				}
 				args.setProperty("mapname", fmt.toString());
+				fmt.close();
 			} catch (NumberFormatException e) {
 				// If the name is not a number then we just leave it alone...
 			}

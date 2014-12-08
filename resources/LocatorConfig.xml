@@ -33,7 +33,7 @@
 		<variant>AO</variant>
 		<variant>AGO</variant>
 	</country>
-	<country name="Anguilla" abr="AIA">
+	<country name="Anguilla" abr="AIA" driveOnLeft="true">
 		<variant>AI</variant>
 		<variant>AIA</variant>
 	</country>
@@ -41,7 +41,7 @@
 		<variant>AQ</variant>
 		<variant>ATA</variant>
 	</country>
-	<country name="Antigua and Barbuda" abr="ATG">
+	<country name="Antigua and Barbuda" abr="ATG" driveOnLeft="true">
 		<variant>AG</variant>
 		<variant>ATG</variant>
 	</country>
@@ -57,7 +57,7 @@
 		<variant>AW</variant>
 		<variant>ABW</variant>
 	</country>
-	<country name="Australia" abr="AUS">
+	<country name="Australia" abr="AUS" driveOnLeft="true">
 		<variant>AU</variant>
 		<variant>AUS</variant>
 	</country>
@@ -74,7 +74,7 @@
 		<variant>AZE</variant>
 		<variant>Azərbaycan</variant>
 	</country>
-	<country name="Bahamas" abr="BHS">
+	<country name="Bahamas" abr="BHS" driveOnLeft="true">
 		<variant>BS</variant>
 		<variant>BHS</variant>
 		<variant>The Bahamas</variant>
@@ -84,12 +84,12 @@
 		<variant>BHR</variant>
 		<variant>الإسلامية</variant>
 	</country>
-	<country name="Bangladesh" abr="BGD">
+	<country name="Bangladesh" abr="BGD" driveOnLeft="true">
 		<variant>BD</variant>
 		<variant>BGD</variant>
 		<variant>বাংলাদেশ</variant>
 	</country>
-	<country name="Barbados" abr="BRB">
+	<country name="Barbados" abr="BRB" driveOnLeft="true">
 		<variant>BB</variant>
 		<variant>BRB</variant>
 	</country>
@@ -117,11 +117,11 @@
 		<variant>BJ</variant>
 		<variant>BEN</variant>
 	</country>
-	<country name="Bermuda" abr="BMU">
+	<country name="Bermuda" abr="BMU" driveOnLeft="true">
 		<variant>BM</variant>
 		<variant>BMU</variant>
 	</country>
-	<country name="Bhutan" abr="BTN">
+	<country name="Bhutan" abr="BTN" driveOnLeft="true">
 		<variant>BT</variant>
 		<variant>BTN</variant>
 	</country>
@@ -139,7 +139,7 @@
 		<variant>BIH</variant>
 		<variant>Bosnia and Herzegovina</variant>
 	</country>
-	<country name="Botswana" abr="BWA">
+	<country name="Botswana" abr="BWA" driveOnLeft="true">
 		<variant>BW</variant>
 		<variant>BWA</variant>
 	</country>
@@ -155,7 +155,7 @@
 		<variant>IO</variant>
 		<variant>IOT</variant>
 	</country>
-	<country name="Brunei Darussalam" abr="BRN">
+	<country name="Brunei Darussalam" abr="BRN"  driveOnLeft="true">
 		<variant>BN</variant>
 		<variant>BRN</variant>
 		<variant>برني دارالسلام‎</variant>
@@ -193,7 +193,7 @@
 		<variant>CPV</variant>
 		<variant>Cabo Verde</variant>
 	</country>
-	<country name="Cayman Islands" abr="CYM">
+	<country name="Cayman Islands" abr="CYM" driveOnLeft="true">
 		<variant>KY</variant>
 		<variant>CYM</variant>
 	</country>
@@ -216,11 +216,11 @@
 		<variant>CHN</variant>
 		<variant>People's Republic of China</variant>
 	</country>
-	<country name="Christmas Island" abr="CXR">
+	<country name="Christmas Island" abr="CXR" driveOnLeft="true">
 		<variant>CX</variant>
 		<variant>CXR</variant>
 	</country>
-	<country name="Cocos (Keeling) Islands" abr="CCK">
+	<country name="Cocos (Keeling) Islands" abr="CCK" driveOnLeft="true">
 		<variant>CC</variant>
 		<variant>CCK</variant>
 	</country>
@@ -244,7 +244,7 @@
 		<variant>COD</variant>
 		<variant>Congo-Kinshasa</variant>
 	</country>
-	<country name="Cook Islands" abr="COK">
+	<country name="Cook Islands" abr="COK" driveOnLeft="true">
 		<variant>CK</variant>
 		<variant>COK</variant>
 	</country>
@@ -269,7 +269,7 @@
 		<variant>CW</variant>
 		<variant>CUW</variant>
 	</country>
-	<country name="Cyprus" abr="CYP">
+	<country name="Cyprus" abr="CYP" driveOnLeft="true">
 		<variant>CY</variant>
 		<variant>CYP</variant>
 		<variant>Κυπριακή Δημοκρατία</variant>
@@ -289,7 +289,7 @@
 		<variant>DJ</variant>
 		<variant>DJI</variant>
 	</country>
-	<country name="Dominica" abr="DMA">
+	<country name="Dominica" abr="DMA" driveOnLeft="true">
 		<variant>DM</variant>
 		<variant>DMA</variant>
 	</country>
@@ -330,7 +330,7 @@
 		<variant>ET</variant>
 		<variant>ETH</variant>
 	</country>
-	<country name="Falkland Islands (Malvinas)" abr="FLK">
+	<country name="Falkland Islands (Malvinas)" abr="FLK" driveOnLeft="true">
 		<variant>FK</variant>
 		<variant>FLK</variant>
 	</country>
@@ -339,7 +339,7 @@
 		<variant>FRO</variant>
 		<variant>Føroyar</variant>
 	</country>
-	<country name="Fiji" abr="FJI">
+	<country name="Fiji" abr="FJI" driveOnLeft="true">
 		<variant>FJ</variant>
 		<variant>FJI</variant>
 		<variant>VITI</variant>
@@ -406,7 +406,7 @@
 		<variant>GL</variant>
 		<variant>GRL</variant>
 	</country>
-	<country name="Grenada" abr="GRD">
+	<country name="Grenada" abr="GRD" driveOnLeft="true">
 		<variant>GD</variant>
 		<variant>GRD</variant>
 	</country>
@@ -423,7 +423,7 @@
 		<variant>GT</variant>
 		<variant>GTM</variant>
 	</country>
-	<country name="Guernsey" abr="GGY">
+	<country name="Guernsey" abr="GGY" driveOnLeft="true">
 		<variant>GG</variant>
 		<variant>GGY</variant>
 	</country>
@@ -436,7 +436,7 @@
 		<variant>GNB</variant>
 		<variant>Guiné-Bissau</variant>
 	</country>
-	<country name="Guyana" abr="GUY">
+	<country name="Guyana" abr="GUY" driveOnLeft="true">
 		<variant>GY</variant>
 		<variant>GUY</variant>
 	</country>
@@ -460,7 +460,7 @@
 		<variant>HN</variant>
 		<variant>HND</variant>
 	</country>
-	<country name="Hong Kong" abr="HKG">
+	<country name="Hong Kong" abr="HKG" driveOnLeft="true">
 		<variant>HK</variant>
 		<variant>HKG</variant>
 	</country>
@@ -476,11 +476,11 @@
 		<variant>ICE</variant>
 		<variant>ISL</variant>
 	</country>
-	<country name="India" abr="IND">
+	<country name="India" abr="IND" driveOnLeft="true">
 		<variant>IN</variant>
 		<variant>IND</variant>
 	</country>
-	<country name="Indonesia" abr="IDN" streetBeforeHousenumber="true">
+	<country name="Indonesia" abr="IDN" streetBeforeHousenumber="true" driveOnLeft="true">
 		<variant>ID</variant>
 		<variant>IDN</variant>
 	</country>
@@ -495,13 +495,13 @@
 		<variant>IRQ</variant>
 		<variant>جمهورية العراق</variant>
 	</country>
-	<country name="Ireland" abr="IRL" regionOffset="3">
+	<country name="Ireland" abr="IRL" regionOffset="3" driveOnLeft="true">
 		<variant>Republic of Ireland</variant>
 		<variant>Éire</variant>
 		<variant>IE</variant>
 		<variant>IRL</variant>
 	</country>
-	<country name="Isle of Man" abr="IMN">
+	<country name="Isle of Man" abr="IMN" driveOnLeft="true">
 		<variant>IM</variant>
 		<variant>IMN</variant>
 	</country>
@@ -515,16 +515,16 @@
 		<variant>IT</variant>
 		<variant>ITA</variant>
 	</country>
-	<country name="Jamaica" abr="JAM">
+	<country name="Jamaica" abr="JAM" driveOnLeft="true">
 		<variant>JM</variant>
 		<variant>JAM</variant>
 	</country>
-	<country name="Japan" abr="JPN">
+	<country name="Japan" abr="JPN" driveOnLeft="true">
 		<variant>JP</variant>
 		<variant>JPN</variant>
 		<variant>日本</variant>
 	</country>
-	<country name="Jersey" abr="JEY">
+	<country name="Jersey" abr="JEY" driveOnLeft="true">
 		<variant>JE</variant>
 		<variant>JEY</variant>
 	</country>
@@ -537,11 +537,11 @@
 		<variant>KAZ</variant>
 		<variant>Казахстан</variant>
 	</country>
-	<country name="Kenya" abr="KEN">
+	<country name="Kenya" abr="KEN" driveOnLeft="true">
 		<variant>KE</variant>
 		<variant>KEN</variant>
 	</country>
-	<country name="Kiribati" abr="KIR">
+	<country name="Kiribati" abr="KIR" driveOnLeft="true">
 		<variant>KI</variant>
 		<variant>KIR</variant>
 	</country>
@@ -581,7 +581,7 @@
 		<variant>LBN</variant>
 		<variant>الجمهورية اللبنانية</variant>
 	</country>
-	<country name="Lesotho" abr="LSO">
+	<country name="Lesotho" abr="LSO" driveOnLeft="true">
 		<variant>LS</variant>
 		<variant>LSO</variant>
 		<variant>Kingdom of Lesotho</variant>
@@ -612,7 +612,7 @@
 		<variant>Groussherzogtum Lëtzebuerg</variant>
 		<variant>Grand Duchy of Luxembourg</variant>
 	</country>
-	<country name="Macao" abr="MAC">
+	<country name="Macao" abr="MAC" driveOnLeft="true">
 		<variant>MO</variant>
 		<variant>MAC</variant>
 	</country>
@@ -627,16 +627,16 @@
 		<variant>MDG</variant>
 		<variant>Madagasikara</variant>
 	</country>
-	<country name="Malawi" abr="MWI">
+	<country name="Malawi" abr="MWI" driveOnLeft="true">
 		<variant>MW</variant>
 		<variant>MWI</variant>
 		<variant>Republic of Malawi</variant>
 	</country>
-	<country name="Malaysia" abr="MYS">
+	<country name="Malaysia" abr="MYS" driveOnLeft="true">
 		<variant>MY</variant>
 		<variant>MYS</variant>
 	</country>
-	<country name="Maldives" abr="MDV">
+	<country name="Maldives" abr="MDV" driveOnLeft="true">
 		<variant>MV</variant>
 		<variant>MDV</variant>
 		<variant>ދިވެހިރާއްޖޭގެ ޖުމުހޫރިއްޔާ</variant>
@@ -645,7 +645,7 @@
 		<variant>ML</variant>
 		<variant>MLI</variant>
 	</country>
-	<country name="Malta" abr="MLT">
+	<country name="Malta" abr="MLT" driveOnLeft="true">
 		<variant>MT</variant>
 		<variant>MLT</variant>
 	</country>
@@ -662,7 +662,7 @@
 		<variant>MR</variant>
 		<variant>MRT</variant>
 	</country>
-	<country name="Mauritius" abr="MUS">
+	<country name="Mauritius" abr="MUS" driveOnLeft="true">
 		<variant>MU</variant>
 		<variant>MUS</variant>
 	</country>
@@ -698,7 +698,7 @@
 		<variant>ME</variant>
 		<variant>MNE</variant>
 	</country>
-	<country name="Montserrat" abr="MSR">
+	<country name="Montserrat" abr="MSR"  driveOnLeft="true">
 		<variant>MS</variant>
 		<variant>MSR</variant>
 	</country>
@@ -706,7 +706,7 @@
 		<variant>MA</variant>
 		<variant>MAR</variant>
 	</country>
-	<country name="Mozambique" abr="MOZ">
+	<country name="Mozambique" abr="MOZ" driveOnLeft="true">
 		<variant>MZ</variant>
 		<variant>MOZ</variant>
 		<variant>Moçambique</variant>
@@ -715,16 +715,16 @@
 		<variant>MM</variant>
 		<variant>MMR</variant>
 	</country>
-	<country name="Namibia" abr="NAM">
+	<country name="Namibia" abr="NAM" driveOnLeft="true">
 		<variant>NA</variant>
 		<variant>NAM</variant>
 	</country>
-	<country name="Nauru" abr="NRU">
+	<country name="Nauru" abr="NRU" driveOnLeft="true">
 		<variant>NR</variant>
 		<variant>NRU</variant>
 		<variant>NAOERO</variant>
 	</country>
-	<country name="Nepal" abr="NPL">
+	<country name="Nepal" abr="NPL" driveOnLeft="true">
 		<variant>NP</variant>
 		<variant>NPL</variant>
 		<variant>नेपाल</variant>
@@ -739,7 +739,7 @@
 		<variant>NC</variant>
 		<variant>NCL</variant>
 	</country>
-	<country name="New Zealand" abr="NZL">
+	<country name="New Zealand" abr="NZL" driveOnLeft="true">
 		<variant>NZ</variant>
 		<variant>NZL</variant>
 		<variant>AOTEAROA NEW ZEALAND</variant>
@@ -756,11 +756,11 @@
 		<variant>NG</variant>
 		<variant>NGA</variant>
 	</country>
-	<country name="Niue" abr="NIU">
+	<country name="Niue" abr="NIU" driveOnLeft="true">
 		<variant>NU</variant>
 		<variant>NIU</variant>
 	</country>
-	<country name="Norfolk Island" abr="NFK">
+	<country name="Norfolk Island" abr="NFK" driveOnLeft="true">
 		<variant>NF</variant>
 		<variant>NFK</variant>
 	</country>
@@ -780,7 +780,7 @@
 		<variant>OMN</variant>
 		<variant>‏سلطنة عمان‎</variant>
 	</country>
-	<country name="Pakistan" abr="PAK">
+	<country name="Pakistan" abr="PAK" driveOnLeft="true">
 		<variant>PK</variant>
 		<variant>PAK</variant>
 		<variant>‏پاکستان‎</variant>
@@ -800,7 +800,7 @@
 		<variant>PAN</variant>
 		<variant>Panamá</variant>
 	</country>
-	<country name="Papua New Guinea" abr="PNG">
+	<country name="Papua New Guinea" abr="PNG" driveOnLeft="true">
 		<variant>PG</variant>
 		<variant>PNG</variant>
 		<variant>PAPUA NIUGINI</variant>
@@ -817,7 +817,7 @@
 		<variant>PH</variant>
 		<variant>PHL</variant>
 	</country>
-	<country name="Pitcairn" abr="PCN">
+	<country name="Pitcairn" abr="PCN" driveOnLeft="true">
 		<variant>PN</variant>
 		<variant>PCN</variant>
 	</country>
@@ -866,19 +866,19 @@
 		<variant>BLM</variant>
 		<variant>Saint-Barthélémy</variant>
 	</country>
-	<country name="Saint Helena" abr="SHN">
+	<country name="Saint Helena" abr="SHN" driveOnLeft="true">
 		<variant>Ascension</variant>
 		<variant>Tristan da Cunha</variant>
 		<variant>SH</variant>
 		<variant>SHN</variant>
 	</country>
-	<country name="Saint Kitts and Nevis" abr="KNA">
+	<country name="Saint Kitts and Nevis" abr="KNA" driveOnLeft="true">
 		<variant>Saint Kitts</variant>
 		<variant>Nevis</variant>
 		<variant>KN</variant>
 		<variant>KNA</variant>
 	</country>
-	<country name="Saint Lucia" abr="LCA">
+	<country name="Saint Lucia" abr="LCA" driveOnLeft="true">
 		<variant>LC</variant>
 		<variant>LCA</variant>
 	</country>
@@ -892,13 +892,13 @@
 		<variant>PM</variant>
 		<variant>SPM</variant>
 	</country>
-	<country name="Saint Vincent and the Grenadines" abr="VCT">
+	<country name="Saint Vincent and the Grenadines" abr="VCT" driveOnLeft="true">
 		<variant>Saint Vincent</variant>
 		<variant>Grenadines</variant>
 		<variant>VC</variant>
 		<variant>VCT</variant>
 	</country>
-	<country name="Samoa" abr="WSM">
+	<country name="Samoa" abr="WSM" driveOnLeft="true">
 		<variant>WS</variant>
 		<variant>WSM</variant>
 	</country>
@@ -928,7 +928,7 @@
 		<variant>Serbia</variant>
 		<variant>Republic of Serbia</variant>
 	</country>
-	<country name="Seychelles" abr="SYC">
+	<country name="Seychelles" abr="SYC" driveOnLeft="true">
 		<variant>SC</variant>
 		<variant>SYC</variant>
 		<variant>SESEL</variant>
@@ -937,7 +937,7 @@
 		<variant>SL</variant>
 		<variant>SLE</variant>
 	</country>
-	<country name="Singapore" abr="SGP">
+	<country name="Singapore" abr="SGP" driveOnLeft="true">
 		<variant>SG</variant>
 		<variant>SGP</variant>
 		<variant>SINGAPURA</variant>
@@ -956,7 +956,7 @@
 		<variant>SVN</variant>
 		<variant>Slovenia</variant>
 	</country>
-	<country name="Solomon Islands" abr="SLB">
+	<country name="Solomon Islands" abr="SLB" driveOnLeft="true">
 		<variant>SB</variant>
 		<variant>SLB</variant>
 	</country>
@@ -965,7 +965,7 @@
 		<variant>SOM</variant>
 		<variant>Soomaaliya</variant>
 	</country>
-	<country name="South Africa" abr="ZAF">
+	<country name="South Africa" abr="ZAF" driveOnLeft="true">
 		<variant>ZA</variant>
 		<variant>ZAF</variant>
 	</country>
@@ -980,7 +980,7 @@
 		<variant>ES</variant>
 		<variant>ESP</variant>
 	</country>
-	<country name="Sri Lanka" abr="LKA">
+	<country name="Sri Lanka" abr="LKA" driveOnLeft="true">
 		<variant>LK</variant>
 		<variant>LKA</variant>
 		<variant>ශ්‍රී ලංකා</variant>
@@ -995,7 +995,7 @@
 		<variant>SDN</variant>
 		<variant>جمهورية السودان</variant>
 	</country>
-	<country name="Suriname" abr="SUR">
+	<country name="Suriname" abr="SUR" driveOnLeft="true">
 		<variant>SR</variant>
 		<variant>SUR</variant>
 	</country>
@@ -1005,7 +1005,7 @@
 		<variant>SJ</variant>
 		<variant>SJM</variant>
 	</country>
-	<country name="Swaziland" abr="SWZ">
+	<country name="Swaziland" abr="SWZ" driveOnLeft="true">
 		<variant>SZ</variant>
 		<variant>SWZ</variant>
 		<variant>Swatini</variant>
@@ -1037,17 +1037,17 @@
 		<variant>TJK</variant>
 		<variant>Тоҷикистон</variant>
 	</country>
-	<country name="Tanzania" abr="TZA">
+	<country name="Tanzania" abr="TZA" driveOnLeft="true">
 		<variant>United Republic of Tanzania</variant>
 		<variant>TZ</variant>
 		<variant>TZA</variant>
 	</country>
-	<country name="Thailand" abr="THA">
+	<country name="Thailand" abr="THA" driveOnLeft="true">
 		<variant>TH</variant>
 		<variant>THA</variant>
 		<variant>ราชอาณาจักรไทย</variant>
 	</country>
-	<country name="Timor-Leste" abr="TLS">
+	<country name="Timor-Leste" abr="TLS" driveOnLeft="true">
 		<variant>TL</variant>
 		<variant>TLS</variant>
 		<variant>Timór Loro Sa'e</variant>
@@ -1058,7 +1058,7 @@
 		<variant>TGO</variant>
 		<variant>République Togolaise</variant>
 	</country>
-	<country name="Tokelau" abr="TKL">
+	<country name="Tokelau" abr="TKL" driveOnLeft="true">
 		<variant>TK</variant>
 		<variant>TKL</variant>
 	</country>
@@ -1066,7 +1066,7 @@
 		<variant>TO</variant>
 		<variant>TON</variant>
 	</country>
-	<country name="Trinidad and Tobago" abr="TTO">
+	<country name="Trinidad and Tobago" abr="TTO" driveOnLeft="true">
 		<variant>Trinidad</variant>
 		<variant>Tobago</variant>
 		<variant>TT</variant>
@@ -1086,15 +1086,15 @@
 		<variant>TKM</variant>
 		<variant>Türkmenistan</variant>
 	</country>
-	<country name="Turks and Caicos Islands" abr="TCA">
+	<country name="Turks and Caicos Islands" abr="TCA" driveOnLeft="true">
 		<variant>TC</variant>
 		<variant>TCA</variant>
 	</country>
-	<country name="Tuvalu" abr="TUV">
+	<country name="Tuvalu" abr="TUV" driveOnLeft="true">
 		<variant>TV</variant>
 		<variant>TUV</variant>
 	</country>
-	<country name="Uganda" abr="UGA">
+	<country name="Uganda" abr="UGA" driveOnLeft="true">
 		<variant>UG</variant>
 		<variant>UGA</variant>
 	</country>
@@ -1109,7 +1109,7 @@
 		<variant>ARE</variant>
 		<variant>الإمارات العربيّة المتّحدة</variant>
 	</country>
-	<country name="United Kingdom" abr="GBR">
+	<country name="United Kingdom" abr="GBR" driveOnLeft="true">
 		<variant>England</variant>
 		<variant>Scotland</variant>
 		<variant>Wales</variant>
@@ -1153,12 +1153,12 @@
 		<variant>VNM</variant>
 		<variant>Việt Nam</variant>
 	</country>
-	<country name="Virgin Islands, British" abr="VGB">
+	<country name="Virgin Islands, British" abr="VGB" driveOnLeft="true">
 		<variant>VG</variant>
 		<variant>VGB</variant>
 		<variant>British Virgin Islands</variant>
 	</country>
-	<country name="Virgin Islands, U.S." abr="VIR">
+	<country name="Virgin Islands, U.S." abr="VIR" driveOnLeft="true">
 		<variant>VI</variant>
 		<variant>VIR</variant>
 	</country>
@@ -1177,11 +1177,11 @@
 		<variant>YEM</variant>
 		<variant>‏اليمن‎</variant>
 	</country>
-	<country name="Zambia" abr="ZMB">
+	<country name="Zambia" abr="ZMB" driveOnLeft="true">
 		<variant>ZM</variant>
 		<variant>ZMB</variant>
 	</country>
-	<country name="Zimbabwe" abr="ZWE">
+	<country name="Zimbabwe" abr="ZWE" driveOnLeft="true">
 		<variant>ZW</variant>
 		<variant>ZWE</variant>
 	</country>

@@ -57,4 +57,9 @@ public class BoundaryConverter implements OsmConverter {
 	public void end() {
 	}
 
+	@Override
+	public Boolean getDriveOnLeft(){
+		return null; // unknown
+	}
+	
 }

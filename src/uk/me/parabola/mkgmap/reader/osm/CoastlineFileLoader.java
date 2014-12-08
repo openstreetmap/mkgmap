@@ -73,8 +73,6 @@ public final class CoastlineFileLoader {
 	private CoastlineFileLoader() {
 		this.coastlineFiles = new HashSet<String>();
 		this.coastConfig = new EnhancedProperties();
-		// disable drive-on-left handling
-		this.coastConfig.setProperty("ignore-drive-on-left", "true");
 	}
 
 	private static final CoastlineFileLoader loader = new CoastlineFileLoader();

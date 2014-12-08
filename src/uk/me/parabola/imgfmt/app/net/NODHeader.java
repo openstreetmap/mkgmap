@@ -47,16 +47,7 @@ public class NODHeader extends CommonHeader {
     private int align;
     private int mult1;
 	private int tableARecordLen;
-
-	/** 
-	 * The driveOnLeft flag is set via a static method. Using a ThreadLocal
-	 * ensures thread safety when using more than one thread.
-	 */
-	private static final ThreadLocal<Boolean> driveOnLeft = new ThreadLocal<Boolean>() {
-		protected Boolean initialValue() {
-			return Boolean.FALSE;
-		}
-	};
+	private boolean driveOnLeft;
 
 	public NODHeader() {
 		super(HEADER_LEN, "GARMIN NOD");
@@ -115,7 +106,7 @@ public class NODHeader extends CommonHeader {
 		assert Integer.bitCount(DISTANCE_MULT) == 1;
 		assert DISTANCE_MULT_SHIFT < 8;
 		flags |= DISTANCE_MULT_SHIFT << 5;
-		if(driveOnLeft.get())
+		if(driveOnLeft)
 			flags |= 0x0100;
 		
 		writer.putInt(flags);
@@ -191,8 +182,8 @@ public class NODHeader extends CommonHeader {
 		return classBoundaries;
 	}
 
-	public static void setDriveOnLeft(boolean dol) {
-		driveOnLeft.set(dol);
+	public void setDriveOnLeft(boolean dol) {
+		driveOnLeft = dol;
 	}
 
     public int getFlags() {
