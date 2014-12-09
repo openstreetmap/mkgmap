@@ -105,7 +105,7 @@ public class Mdr7 extends MdrMapSection {
 	 * we sort and de-duplicate here.
 	 */
 	protected void preWriteImpl() {
-		createPartials();
+		//createPartials();
 
 		Sort sort = getConfig().getSort();
 		List<SortKey<Mdr7Record>> sortedStreets = new ArrayList<SortKey<Mdr7Record>>(allStreets.size());
