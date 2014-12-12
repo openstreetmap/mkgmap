@@ -56,19 +56,6 @@ public class Mdr7 extends MdrMapSection {
 		st.setNameOffset(0);
 		allStreets.add(st);
 
-		// XXX Quick test...
-		//int nameOffset = name.indexOf(' ');
-		//if (nameOffset > 0) {
-		//	st = new Mdr7Record();
-		//	st.setMapIndex(mapId);
-		//	st.setLabelOffset(lblOffset);
-		//	st.setStringOffset(strOff);
-		//	st.setName(name);
-		//	st.setCity(mdrCity);
-		//	st.setNameOffset(nameOffset+1);
-		//	allStreets.add(st);
-		//}
-
 		int nameOffset = 0;
 		for (; nameOffset < name.length() -2; nameOffset++) {
 			if (!Character.isWhitespace(name.charAt(nameOffset)))
@@ -113,7 +100,7 @@ public class Mdr7 extends MdrMapSection {
 		Sort sort = getConfig().getSort();
 		List<SortKey<Mdr7Record>> sortedStreets = new ArrayList<SortKey<Mdr7Record>>(allStreets.size());
 		for (Mdr7Record m : allStreets) {
-			SortKey<Mdr7Record> sortKey = sort.createSortKey(m, m.getPartialName(),	m.getMapIndex());
+			SortKey<Mdr7Record> sortKey = sort.createSortKey(m, m.getPartialName(),	m.getMapIndex()<<16+m.getNameOffset());
 			sortedStreets.add(sortKey);
 		}
 		Collections.sort(sortedStreets);
@@ -124,16 +111,19 @@ public class Mdr7 extends MdrMapSection {
 		Mdr7Record last = new Mdr7Record();
 		for (SortKey<Mdr7Record> sk : sortedStreets) {
 			Mdr7Record r = sk.getObject();
-			if (r.getMapIndex() != last.getMapIndex() || !r.getPartialName().equals(last.getPartialName())) {
+			if (r.getMapIndex() == last.getMapIndex()
+					&& r.getName().equals(last.getName())
+					&& r.getPartialName().equals(last.getPartialName()))
+			{
+				// This has the same name (and map number) as the previous one. Save the pointer to that one
+				// which is going into the file.
+				r.setIndex(recordNumber);
+			} else {
 				recordNumber++;
 				last = r;
 				r.setIndex(recordNumber);
 				//System.out.println("sorted: " + r.getPartialName());
 				streets.add(r);
-			} else {
-				// This has the same name (and map number) as the previous one. Save the pointer to that one
-				// which is going into the file.
-				r.setIndex(recordNumber);
 			}
 		}
 	}
