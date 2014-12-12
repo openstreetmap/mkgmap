@@ -53,6 +53,7 @@ public class Mdr7 extends MdrMapSection {
 		st.setStringOffset(strOff);
 		st.setName(name);
 		st.setCity(mdrCity);
+		st.setNameOffset(0);
 		allStreets.add(st);
 
 		// XXX Quick test...
@@ -68,14 +69,21 @@ public class Mdr7 extends MdrMapSection {
 		//	allStreets.add(st);
 		//}
 
-		boolean start = true;
+		int nameOffset = 0;
+		for (; nameOffset < name.length() -2; nameOffset++) {
+			if (!Character.isWhitespace(name.charAt(nameOffset)))
+				break;
+		}
 
-		for (int nameOffset = 0; nameOffset < name.length(); nameOffset++) {
+		boolean start = true;
+		for (; nameOffset < name.length() -2; nameOffset++) {
 			char c = name.charAt(nameOffset);
 			if (Character.isWhitespace(c)) {
 				start = true;
 				continue;
 			}
+			if (c == '(')
+				break;
 			if (!Character.isLetterOrDigit(c)) {
 				start = true;
 				continue;
@@ -89,15 +97,10 @@ public class Mdr7 extends MdrMapSection {
 				st.setName(name);
 				st.setCity(mdrCity);
 				st.setNameOffset(nameOffset);
-				if (st.getPartialName().startsWith("CALLE"))
-					continue;
 				allStreets.add(st);
-				String part = st.getPartialName();
-				//System.out.println("adding: " + part);
 				start = false;
 			}
 		}
-
 	}
 
 	/**
@@ -110,8 +113,7 @@ public class Mdr7 extends MdrMapSection {
 		Sort sort = getConfig().getSort();
 		List<SortKey<Mdr7Record>> sortedStreets = new ArrayList<SortKey<Mdr7Record>>(allStreets.size());
 		for (Mdr7Record m : allStreets) {
-			SortKey<Mdr7Record> sortKey = sort.createSortKey(m, m.getPartialName(),
-					m.getMapIndex());
+			SortKey<Mdr7Record> sortKey = sort.createSortKey(m, m.getPartialName(),	m.getMapIndex());
 			sortedStreets.add(sortKey);
 		}
 		Collections.sort(sortedStreets);
