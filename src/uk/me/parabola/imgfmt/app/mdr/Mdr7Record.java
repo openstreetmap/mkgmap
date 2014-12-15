@@ -83,7 +83,7 @@ public class Mdr7Record extends RecordBase implements NamedRecord {
 	 * @return A substring of name, starting at the nameOffset value.
 	 */
 	public String getPartialName() {
-		return nameOffset == 0 ? name : name.substring(nameOffset);
+		return nameOffset == 0 ? name : name.substring(nameOffset + ((name.charAt(0) < ' ')? 1: 0));
 	}
 
 	public String toString() {

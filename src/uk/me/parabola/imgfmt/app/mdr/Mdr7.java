@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 
@@ -56,15 +55,15 @@ public class Mdr7 extends MdrMapSection {
 		st.setNameOffset(0);
 		allStreets.add(st);
 
-		int nameOffset = 0;
-		for (; nameOffset < name.length() -2; nameOffset++) {
-			if (!Character.isWhitespace(name.charAt(nameOffset)))
-				break;
-		}
+		boolean start = false;
+		int nameOffset = -1;
+		for (int i = 0; i < name.length() - 2; i++) {
+			char c = name.charAt(i);
+			if (c < ' ')
+				continue;
 
-		boolean start = true;
-		for (; nameOffset < name.length() -2; nameOffset++) {
-			char c = name.charAt(nameOffset);
+			nameOffset++;
+
 			if (Character.isWhitespace(c)) {
 				start = true;
 				continue;
@@ -84,6 +83,8 @@ public class Mdr7 extends MdrMapSection {
 				st.setName(name);
 				st.setCity(mdrCity);
 				st.setNameOffset(nameOffset);
+				System.out.printf("%s %d\n", st.getName(), st.getNameOffset());
+				System.out.println("add partial " + st.getPartialName());
 				allStreets.add(st);
 				start = false;
 			}
@@ -112,7 +113,7 @@ public class Mdr7 extends MdrMapSection {
 		for (SortKey<Mdr7Record> sk : sortedStreets) {
 			Mdr7Record r = sk.getObject();
 			if (r.getMapIndex() == last.getMapIndex()
-					&& r.getName().equals(last.getName())
+					&& r.getName().equals(last.getName())  // currently think equals is correct, not collator.compare()
 					&& r.getPartialName().equals(last.getPartialName()))
 			{
 				// This has the same name (and map number) as the previous one. Save the pointer to that one
@@ -122,7 +123,6 @@ public class Mdr7 extends MdrMapSection {
 				recordNumber++;
 				last = r;
 				r.setIndex(recordNumber);
-				//System.out.println("sorted: " + r.getPartialName());
 				streets.add(r);
 			}
 		}
@@ -234,6 +234,7 @@ public class Mdr7 extends MdrMapSection {
 
 	public void writeSectData(ImgFileWriter writer) {
 		String lastName = null;
+		String lastPartial = null;
 		boolean hasStrings = hasFlag(MDR7_HAS_STRING);
 		boolean hasNameOffset = hasFlag(MDR7_HAS_NAME_OFFSET);
 
@@ -242,19 +243,27 @@ public class Mdr7 extends MdrMapSection {
 
 			putMapIndex(writer, s.getMapIndex());
 			int lab = s.getLabelOffset();
-			String name = Label.stripGarminCodes(s.getName());
+			String name = s.getName();
 			int trailingFlags = 0;
 			if (!name.equals(lastName)) {
 				lab |= 0x800000;
 				lastName = name;
+				lastPartial = name;
 				trailingFlags = 1;
+			}
+			if (s.getNameOffset() > 0) {
+				String partialName = s.getPartialName();
+				if (!partialName.equals(lastPartial)) {
+					lastPartial = partialName;
+					trailingFlags |= 1;
+				}
 			}
 			writer.put3(lab);
 			if (hasStrings)
 				putStringOffset(writer, s.getStringOffset());
 
 			if (hasNameOffset)
-				writer.put((byte) s.getNameOffset());
+				writer.put((byte) (s.getNameOffset()));
 
 			putN(writer, u2size, trailingFlags);
 		}
