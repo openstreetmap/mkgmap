@@ -1,0 +1,40 @@
+
+Improving the map
+=================
+
+Once you have created a simple map, then next step is to add
+some options to improve or customise the map.
+
+Option --route::
+This option adds information to the map to enable automatically
+finding routes between two points.
+Option --drive-on-left:::
+Option --drive-on-right:::
+It is a good idea to set the correct option to indicate which
+side of the road traffic travels on. If you don't, then mkgmap
+will guess based on the direction of roundabouts which will
+often be correct, but its best to make sure.
+
+Option --code-page=1252::
+This sets the characters that can be used
++
+|=====
+| 1250 | Central and East European Latin
+| 1251 | Cyrillic
+| 1252 | West European Latin
+| 1253 | Greek
+| 1254 | Turkish
+| 1255 | Hebrew
+| 1256 | Arabic
+| 1257 | Baltic
+| 1258 | Vietnamese
+| 65001 | Unicode
+|=======
++
+There is some support for the following code page values
++
+|=======
+| 932 | Japanese | Displays fine, address search may fail.
+|======
+
+

@@ -3,21 +3,32 @@ Getting started
 ===============
 
 == Install java
-To use mkgmap you need a program called Java.
+To use mkgmap you need to install Java.
 Download it from http://www.java.com[java.com]
+and install it.
 
 ifdef::linux[]
 === Linux packages
 If you are running Linux, then you may prefer to install java from you
 systems package manager, instead of from the Java site.
 
-The package is named *java-1.7.0-openjdk* on Fedora and similar
-distributions; on Ubuntu, Debian and similar it is is named
-*openjdk-7-jre*
+The package has a name like *java-1.7.0-openjdk* on Fedora and similar
+distributions; on Ubuntu, Debian and similar it has a name
+like *openjdk-7-jre*
 
 endif::linux[]
 
-== Download 
+== Download mkgmap
 Download +mkgmap+ from the
 http://www.mkgmap.org.uk/download/mkgmap.html[mkgmap download site].
 
+Unzip the file into a folder or directory, the rest of the tutorial
+will assume that you are working within that directory.
+
+The main file is called +mkgmap.jar+ which is the main part of the
+program itself and the +lib+ folder that contains other parts
+of the program.  It is important that the +mkgmap.jar+ and the +lib+
+folder stay together: if you move one you must move the other.
+
+There will also be +doc+ folder containing the available documentation,
+and an examples folder which can be ignored.
