@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
@@ -35,6 +36,9 @@ public class Mdr7 extends MdrMapSection {
 	public static final int MDR7_PARTIAL_SHIFT = 6;
 	public static final int MDR7_U1 = 0x2;
 	public static final int MDR7_U2 = 0x4;
+	//private final Charset charset;
+	private final int codepage;
+	private final boolean isMulti;
 
 	private List<Mdr7Record> allStreets = new ArrayList<>();
 	private List<Mdr7Record> streets = new ArrayList<>();
@@ -43,6 +47,11 @@ public class Mdr7 extends MdrMapSection {
 
 	public Mdr7(MdrConfig config) {
 		setConfig(config);
+		Sort sort = config.getSort();
+		//charset = sort.getCharset();
+		codepage = sort.getCodepage();
+		isMulti = sort.isMulti();
+		System.out.println("isMult " + isMulti + ", cp=" + codepage);
 	}
 
 	public void addStreet(int mapId, String name, int lblOffset, int strOff, Mdr5Record mdrCity) {
@@ -52,30 +61,33 @@ public class Mdr7 extends MdrMapSection {
 		st.setStringOffset(strOff);
 		st.setName(name);
 		st.setCity(mdrCity);
-		st.setNameOffset(0);
 		allStreets.add(st);
 
 		boolean start = false;
-		int nameOffset = -1;
-		for (int i = 0; i < name.length() - 2; i++) {
-			char c = name.charAt(i);
+		boolean inWord = false;
+
+		int c;
+		int outOffset = 0;
+		for (int nameOffset = 0; nameOffset < name.length() - 2; nameOffset += Character.charCount(c)) {
+			c = name.codePointAt(nameOffset);
+
+			// Shield symbols do not count and do not increase outOffset
 			if (c < ' ')
 				continue;
 
-			nameOffset++;
-
-			if (Character.isWhitespace(c)) {
-				start = true;
-				continue;
-			}
+			// Don't use any word after a bracket
 			if (c == '(')
 				break;
+
 			if (!Character.isLetterOrDigit(c)) {
 				start = true;
-				continue;
+				inWord = false;
+			} else if (start && Character.isLetterOrDigit(c)) {
+				inWord = true;
 			}
+			// TODO: probably should not use a number after the first.
 
-			if (start) {
+			if (start && inWord && outOffset > 0) {
 				st = new Mdr7Record();
 				st.setMapIndex(mapId);
 				st.setLabelOffset(lblOffset);
@@ -83,11 +95,40 @@ public class Mdr7 extends MdrMapSection {
 				st.setName(name);
 				st.setCity(mdrCity);
 				st.setNameOffset(nameOffset);
-				System.out.printf("%s %d\n", st.getName(), st.getNameOffset());
-				System.out.println("add partial " + st.getPartialName());
+				st.setOutNameOffset(outOffset);
+				//System.out.println(st.getName() + ": add partial " + st.getPartialName());
 				allStreets.add(st);
 				start = false;
 			}
+
+			outOffset += outSize(c);
+		}
+	}
+
+	/**
+	 * Return the number of bytes that the given character will consume in the output encoded
+	 * format.
+	 */
+	private int outSize(int c) {
+		if (codepage == 65001) {
+			// For unicode a simple lookup gives the number of bytes.
+			if (c < 0x80) {
+				return 1;
+			} else if (c <= 0x7FF) {
+				return 2;
+			} else if (c <= 0xFFFF) {
+				return 3;
+			} else if (c <= 0x10FFFF) {
+				return 4;
+			} else {
+				throw new MapFailedException(String.format("Invalid code point: 0x%x", c));
+			}
+		} else if (!isMulti) {
+			// The traditional single byte code-pages, always one byte.
+			return 1;
+		} else {
+			// Other multi-byte code-pages (eg ms932); can't currently create index for these anyway.
+			return 0;
 		}
 	}
 
@@ -263,7 +304,7 @@ public class Mdr7 extends MdrMapSection {
 				putStringOffset(writer, s.getStringOffset());
 
 			if (hasNameOffset)
-				writer.put((byte) (s.getNameOffset()));
+				writer.put(s.getOutNameOffset());
 
 			putN(writer, u2size, trailingFlags);
 		}

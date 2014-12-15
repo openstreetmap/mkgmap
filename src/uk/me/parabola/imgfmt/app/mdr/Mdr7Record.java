@@ -24,7 +24,8 @@ public class Mdr7Record extends RecordBase implements NamedRecord {
 	private Mdr5Record city;
 
 	// For searching on partial names
-	private short nameOffset; // offset into the name where matching should start
+	private byte nameOffset; // offset into the name where matching should start
+	private byte outNameOffset; // offset into the encoded output name
 
 	public int getLabelOffset() {
 		return labelOffset;
@@ -66,12 +67,20 @@ public class Mdr7Record extends RecordBase implements NamedRecord {
 		return city;
 	}
 
-	public short getNameOffset() {
+	public byte getNameOffset() {
 		return nameOffset;
 	}
 
 	public void setNameOffset(int nameOffset) {
-		this.nameOffset = (short) nameOffset;
+		this.nameOffset = (byte) nameOffset;
+	}
+
+	public byte getOutNameOffset() {
+		return outNameOffset;
+	}
+
+	public void setOutNameOffset(int outNameOffset) {
+		this.outNameOffset = (byte) outNameOffset;
 	}
 
 	/**
@@ -83,7 +92,7 @@ public class Mdr7Record extends RecordBase implements NamedRecord {
 	 * @return A substring of name, starting at the nameOffset value.
 	 */
 	public String getPartialName() {
-		return nameOffset == 0 ? name : name.substring(nameOffset + ((name.charAt(0) < ' ')? 1: 0));
+		return nameOffset == 0 ? name : name.substring(nameOffset);
 	}
 
 	public String toString() {
