@@ -42,7 +42,6 @@ public class Utf8Decoder implements CharacterDecoder {
 	public boolean addByte(int b) {
 		if (b == 0) {
 			needreset = true;
-			out.write(0);
 			return true;
 		}
 
