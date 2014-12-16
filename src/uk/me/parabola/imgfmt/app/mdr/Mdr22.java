@@ -104,7 +104,7 @@ public class Mdr22 extends Mdr2x {
 	 */
 	public int getExtraValue() {
 		if (isForDevice())
-			return 0x600a;
+			return 0x600e;
 		else
 			return 0x11000;
 	}
