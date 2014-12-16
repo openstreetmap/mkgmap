@@ -26,6 +26,8 @@ public class Mdr7Record extends RecordBase implements NamedRecord {
 	// For searching on partial names
 	private byte nameOffset; // offset into the name where matching should start
 	private byte outNameOffset; // offset into the encoded output name
+	private byte prefixOffset;  // offset after 0x1e prefix
+	private byte suffixOffset;  // offset just before 0x1f suffix
 
 	public int getLabelOffset() {
 		return labelOffset;
@@ -71,16 +73,28 @@ public class Mdr7Record extends RecordBase implements NamedRecord {
 		return nameOffset;
 	}
 
-	public void setNameOffset(int nameOffset) {
-		this.nameOffset = (byte) nameOffset;
+	public void setNameOffset(byte nameOffset) {
+		this.nameOffset = nameOffset;
 	}
 
 	public byte getOutNameOffset() {
 		return outNameOffset;
 	}
 
-	public void setOutNameOffset(int outNameOffset) {
-		this.outNameOffset = (byte) outNameOffset;
+	public void setOutNameOffset(byte outNameOffset) {
+		this.outNameOffset = outNameOffset;
+	}
+
+	public byte getPrefixOffset() {
+		return prefixOffset;
+	}
+
+	public void setPrefixOffset(byte prefixOffset) {
+		this.prefixOffset = prefixOffset;
+	}
+
+	public void setSuffixOffset(byte suffixOffset) {
+		this.suffixOffset = suffixOffset;
 	}
 
 	/**
@@ -92,7 +106,12 @@ public class Mdr7Record extends RecordBase implements NamedRecord {
 	 * @return A substring of name, starting at the nameOffset value.
 	 */
 	public String getPartialName() {
-		return nameOffset == 0 ? name : name.substring(nameOffset);
+		if (nameOffset == 0 && prefixOffset == 0 && suffixOffset == 0)
+			return name;
+		else if (suffixOffset > 0)
+			return name.substring(nameOffset + prefixOffset, suffixOffset);
+		else
+			return name.substring(nameOffset + prefixOffset);
 	}
 
 	public String toString() {

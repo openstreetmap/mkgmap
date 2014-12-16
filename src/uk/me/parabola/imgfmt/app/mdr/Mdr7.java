@@ -14,12 +14,11 @@ package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.srt.MultiSortKey;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 
@@ -51,29 +50,44 @@ public class Mdr7 extends MdrMapSection {
 		//charset = sort.getCharset();
 		codepage = sort.getCodepage();
 		isMulti = sort.isMulti();
-		System.out.println("isMult " + isMulti + ", cp=" + codepage);
 	}
 
 	public void addStreet(int mapId, String name, int lblOffset, int strOff, Mdr5Record mdrCity) {
+		// Find a name prefix, which is either a shield or a word ending 0x1e. We are treating
+		// a shield as a prefix of length one.
+		int prefix = 0;
+		if (name.charAt(0) < 7)
+			prefix = 1;
+		int sep = name.indexOf(0x1e);
+		if (sep > 0)
+			prefix = sep + 1;
+
+		// Find a name suffix which begins with 0x1f
+		sep = name.indexOf(0x1f);
+		int suffix = 0;
+		if (sep > 0)
+			suffix = sep;
+
 		Mdr7Record st = new Mdr7Record();
 		st.setMapIndex(mapId);
 		st.setLabelOffset(lblOffset);
 		st.setStringOffset(strOff);
 		st.setName(name);
 		st.setCity(mdrCity);
+		st.setPrefixOffset((byte) prefix);
+		st.setSuffixOffset((byte) suffix);
 		allStreets.add(st);
+
+
 
 		boolean start = false;
 		boolean inWord = false;
 
 		int c;
 		int outOffset = 0;
-		for (int nameOffset = 0; nameOffset < name.length() - 2; nameOffset += Character.charCount(c)) {
-			c = name.codePointAt(nameOffset);
-
-			// Shield symbols do not count and do not increase outOffset
-			if (c < ' ')
-				continue;
+		int end = (suffix > 0) ? suffix : name.length() - prefix - 1;
+		for (int nameOffset = 0; nameOffset < end; nameOffset += Character.charCount(c)) {
+			c = name.codePointAt(prefix + nameOffset);
 
 			// Don't use any word after a bracket
 			if (c == '(')
@@ -85,7 +99,10 @@ public class Mdr7 extends MdrMapSection {
 			} else if (start && Character.isLetterOrDigit(c)) {
 				inWord = true;
 			}
-			// TODO: probably should not use a number after the first.
+
+			// Don't index numbers that are not at the beginning. (?)
+			if (nameOffset > 0 && Character.isDigit(c))
+				inWord = false;
 
 			if (start && inWord && outOffset > 0) {
 				st = new Mdr7Record();
@@ -94,8 +111,10 @@ public class Mdr7 extends MdrMapSection {
 				st.setStringOffset(strOff);
 				st.setName(name);
 				st.setCity(mdrCity);
-				st.setNameOffset(nameOffset);
-				st.setOutNameOffset(outOffset);
+				st.setNameOffset((byte) nameOffset);
+				st.setOutNameOffset((byte) outOffset);
+				st.setPrefixOffset((byte) prefix);
+				st.setSuffixOffset((byte) suffix);
 				//System.out.println(st.getName() + ": add partial " + st.getPartialName());
 				allStreets.add(st);
 				start = false;
@@ -137,12 +156,12 @@ public class Mdr7 extends MdrMapSection {
 	 * we sort and de-duplicate here.
 	 */
 	protected void preWriteImpl() {
-		//createPartials();
-
 		Sort sort = getConfig().getSort();
-		List<SortKey<Mdr7Record>> sortedStreets = new ArrayList<SortKey<Mdr7Record>>(allStreets.size());
+		List<SortKey<Mdr7Record>> sortedStreets = new ArrayList<>(allStreets.size());
 		for (Mdr7Record m : allStreets) {
-			SortKey<Mdr7Record> sortKey = sort.createSortKey(m, m.getPartialName(),	m.getMapIndex()<<16+m.getNameOffset());
+			SortKey<Mdr7Record> partialKey = sort.createSortKey(m, m.getPartialName());
+			SortKey<Mdr7Record> nameKey = sort.createSortKey(m, m.getName(), m.getMapIndex());
+			MultiSortKey<Mdr7Record> sortKey = new MultiSortKey<>(partialKey, nameKey, null);
 			sortedStreets.add(sortKey);
 		}
 		Collections.sort(sortedStreets);
@@ -169,110 +188,6 @@ public class Mdr7 extends MdrMapSection {
 		}
 	}
 
-	static class Int {
-		int value = 1;
-		void inc() { value += 1; }
-	}
-
-	// TODO: work in progress
-	private void createPartials() {
-		Map<String, Int> firstWords = new HashMap<String, Int>();
-		Map<String, Int> lastWords = new HashMap<String, Int>();
-		int nWords = 0;
-
-		for (Mdr7Record m : allStreets) {
-			String name = m.getName();
-			String[] split = name.split("\\s+");
-
-			// If just one word (or none) then nothing needs to be done
-			if (split.length < 2)
-				continue;
-
-			int first = 0;
-			String word;
-			do {
-				word = split[first];
-			} while (!Character.isLetter(word.charAt(0)) && ++first < split.length-1);
-
-			if (split.length - first < 2)
-				continue;
-
-			nWords++;
-
-			putWord(firstWords, split[first]);
-			putWord(lastWords, split[split.length - 1]);
-		}
-
-		System.out.println("=== FIRST");
-		int count = 0;
-		int t1 = 0;
-		int t3 = 0;
-		int t2 = 0;
-		int t4 = 0;
-
-		for (Map.Entry<String, Int> ent : firstWords.entrySet()) {
-			int val = ent.getValue().value;
-			if (val > nWords/50) {
-				t1++;
-				t3 += val;
-			} else {
-				t2++;
-				t4 += val;
-			}
-		}
-		int firstMainAv = t4/t2;
-		int firstTopAv = t3/t1;
-
-		t1 = t2 = t3 = t4 = 0;
-		for (Map.Entry<String, Int> ent : lastWords.entrySet()) {
-
-			int val = ent.getValue().value;
-			if (val > nWords/50) {
-				t1++;
-				t3 += val;
-			}
-			else {
-				t2++;
-				t4 += val;
-			}
-		}
-		int lastMainAv = t2==0? 0: t4/t2;
-		int lastTopAv = t1==0? 0: t3/t1;
-
-		System.out.printf("t1=%d, t2=%d\n", t1, t2);
-		System.out.printf("first av %d/%d, last %d/%d\n", firstTopAv, firstMainAv,
-				lastTopAv, lastMainAv);
-
-		int av = 350 * Math.max(firstMainAv, lastMainAv);
-
-		int factor = 200;
-		for (Map.Entry<String, Int> ent : firstWords.entrySet()) {
-			int value = ent.getValue().value;
-			if (value > nWords/ factor && value > av) {
-				System.out.printf("%s : %d\n", ent.getKey(), value);
-			}
-		}
-
-		System.out.println("=== LAST");
-		for (Map.Entry<String, Int> ent : lastWords.entrySet()) {
-			int value = ent.getValue().value;
-			if (value > nWords/ factor && value > av) {
-				System.out.printf("%s : %d\n", ent.getKey(), value);
-			}
-		}
-	}
-
-	private void putWord(Map<String, Int> words, String s) {
-		if (s.length() < 2)
-			return;
-
-		Int val = words.get(s);
-		if (val == null)
-			words.put(s, new Int());
-		else
-			val.inc();
-	}
-
 	public void writeSectData(ImgFileWriter writer) {
 		String lastName = null;
 		String lastPartial = null;
@@ -285,20 +200,19 @@ public class Mdr7 extends MdrMapSection {
 			putMapIndex(writer, s.getMapIndex());
 			int lab = s.getLabelOffset();
 			String name = s.getName();
-			int trailingFlags = 0;
 			if (!name.equals(lastName)) {
 				lab |= 0x800000;
 				lastName = name;
-				lastPartial = name;
-				trailingFlags = 1;
 			}
-			if (s.getNameOffset() > 0) {
-				String partialName = s.getPartialName();
-				if (!partialName.equals(lastPartial)) {
-					lastPartial = partialName;
-					trailingFlags |= 1;
-				}
+
+			String partialName = s.getPartialName();
+			int trailingFlags = 0;
+			if (!partialName.equals(lastPartial)) {
+				trailingFlags |= 1;
+				lab |= 0x800000;  // If it is not a partial repeat, then it is not a complete repeat either
 			}
+			lastPartial = partialName;
+
 			writer.put3(lab);
 			if (hasStrings)
 				putStringOffset(writer, s.getStringOffset());
