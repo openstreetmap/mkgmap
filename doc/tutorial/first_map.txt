@@ -1,5 +1,39 @@
 
 Create your first map
 =====================
+
+First you need to obtain an extract of map data.  You can do this by
+going to the http://www.openstreetmap.org[OSM] website, locating an area
+that you are familiar with and clicking on the +Export+ button at the
+top.
+It will not let you download a very large area, so zoom in and
+out until you find an acceptable area that is large enough to include
+a number of streets and interesting points. The tutorial
+will cover making maps of complete countries later on, this is
+just to get started.
+You will end up with a file called +map.osm+ which you should
+place in the same directory as mkgmap.jar.
+
+Alternatively you can use josm to download a familiar area of the map.
+Save it to a file called +map.osm+ in the same folder as mkgmap.jar.
+
+.Creating the map
+----
+java -jar mkgmap.jar map.osm
+----
+
+You should now see a few new files have been created.
+The important one for now is the one called 63240001.img.
+
+== Loading the map onto a GPS device
+
+TBW
+
+== Viewing the map with QLandkarteGT
+
+TBW
+
+== Displaying the map in BaseCamp
+
 TBW
 

@@ -186,4 +186,8 @@ public class NODFile extends ImgFile {
 		this.roads = roads;
 		this.boundary = boundary;
 	}
+
+	public void setDriveOnLeft(boolean dol) {
+		nodHeader.setDriveOnLeft(dol);
+	}
 }

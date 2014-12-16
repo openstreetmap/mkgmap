@@ -294,6 +294,10 @@ public class StyleTester implements OsmConverter {
 		converter.end();
 	}
 
+	@Override
+	public Boolean getDriveOnLeft() {
+		return null; // unknown
+	}
 
 	private static void printResult(String[] results) {
 		for (String s : results) {

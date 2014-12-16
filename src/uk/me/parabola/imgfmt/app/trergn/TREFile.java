@@ -361,4 +361,8 @@ public class TREFile extends ImgFile implements Configurable {
 	public void addPoiDisplayFlags(byte b) {
 		header.addPoiDisplayFlags(b);
 	}
+
+	public void setDriveOnLeft(boolean b) {
+		header.setDriveOnLeft(b);
+	}
 }

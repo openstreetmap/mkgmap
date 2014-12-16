@@ -14,10 +14,12 @@ The mkgmap team
 :frame: topbot
 :grid: rows
 
+:osm: Open Street Map
+
 // Used for conditional compiles for a unix/windows version.
 :windows: 1
 :linux: 1
-:max: 1
+:mac: 1
 
 
 Introduction
@@ -34,14 +36,10 @@ include::starting.txt[]
 
 include::first_map.txt[]
 
-// Some ideas for the sections, order to be decided 
-// I'm assuming that this will not be published before the great
-// option defaulting process is complete.
+include::second_map.txt[]
 
-// installing to device, mapsource, basecamp, qlandkartegt etc
+include::splitter.txt[]
 
-// adding sea areas
+include::publish.txt[]
 
-// using a bounds file to improve addresses
-
-// splitting large area
+include::custom.txt[]

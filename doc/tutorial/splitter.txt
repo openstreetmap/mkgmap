@@ -1,0 +1,23 @@
+
+Making a larger map
+===================
+
+So far we have just used a small sample of map data for a local area.
+If you want to create a map for a whole country or continent, then
+the data has to be split up into tiles first.
+There is no hard and fast rule about how large the tile is, because
+it depends on the numbers of map features within the tile rather than
+the area that the tile covers.
+So a large well mapped city may require several tiles, whereas a
+poorly mapped small country may only need one or two.
+
+Each tile is compiled and then the whole lot is combined into
+a single map.
+
+== Adding sea areas
+
+TBW
+
+== Adding better address information
+
+TBW

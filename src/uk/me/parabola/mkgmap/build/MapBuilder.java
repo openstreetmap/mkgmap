@@ -110,7 +110,7 @@ public class MapBuilder implements Configurable {
 	private List<String> copyrights = new ArrayList<String>();
 
 	private boolean doRoads;
-
+	private Boolean driveOnLeft;
 	private Locator locator;
 
 	private final java.util.Map<String, Highway> highways = new HashMap<String, Highway>();
@@ -180,6 +180,11 @@ public class MapBuilder implements Configurable {
 		
 		locator = new Locator(props);
 		locator.setDefaultCountry(countryName, countryAbbr);
+		String driveOn = props.getProperty("drive-on",null);
+		if ("left".equals(driveOn))
+			driveOnLeft = true;
+		if ("right".equals(driveOn))
+			driveOnLeft = false;
 	}
 
 	/**
@@ -214,6 +219,16 @@ public class MapBuilder implements Configurable {
 		processOverviews(map, src);
 		processInfo(map, src);
 		makeMapAreas(map, src);
+		 
+		if (driveOnLeft == null){
+			// check if source gives info about driving side
+			if (src instanceof MapperBasedMapDataSource){
+				driveOnLeft = ((MapperBasedMapDataSource) src).getDriveOnLeft();
+			}
+		}
+		if (driveOnLeft == null)
+			driveOnLeft = false;
+		treFile.setDriveOnLeft(driveOnLeft);
 
 		treFile.setLastRgnPos(rgnFile.position() - RGNHeader.HEADER_LEN);
 
@@ -229,6 +244,7 @@ public class MapBuilder implements Configurable {
 			NODFile nodFile = map.getNodFile();
 			if (nodFile != null) {
 				nodFile.setNetwork(network.getCenters(), network.getRoadDefs(), network.getBoundary());
+				nodFile.setDriveOnLeft(driveOnLeft);
 				nodFile.write();
 			}
 			netFile.write(lblFile.numCities(), lblFile.numZips());

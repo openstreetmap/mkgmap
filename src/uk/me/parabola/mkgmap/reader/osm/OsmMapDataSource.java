@@ -268,4 +268,9 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	public Set<String> getUsedTags() {
 		return usedTags;
 	}
+	
+	@Override
+	public Boolean getDriveOnLeft(){
+		return converter.getDriveOnLeft();
+	}
 }

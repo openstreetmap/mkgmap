@@ -1,0 +1,12 @@
+
+Customising the map
+===================
+
+This section covers how to change the kind of things that the
+map contains and how it looks.
+There are two parts to this.
+First it is possible to include or leave out any of the available
+data items that are contained in {osm}.
+Second the colours and appearence of the final map can be changed.
+These are separate operations, so that the same map can have
+the colours and icons changed, simply by using a different file.

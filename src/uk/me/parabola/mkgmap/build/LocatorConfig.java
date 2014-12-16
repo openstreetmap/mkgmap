@@ -35,13 +35,15 @@ public class LocatorConfig {
 	private static final Logger log = Logger.getLogger(LocatorConfig.class);
 
 	/** maps country name (in all variants) to the 3 letter ISO code */
-	private final Map<String,String>  isoMap = new HashMap<String,String>();
+	private final Map<String,String>  isoMap = new HashMap<>();
 	/** maps the ISO code to the offset of the region in the is_in tag */
-	private final Map<String,Integer>  regOffsetMap = new HashMap<String,Integer>();
+	private final Map<String,Integer>  regOffsetMap = new HashMap<>();
 	/** maps the ISO code to the POI display flag */
-	private final Map<String,Integer>  poiDispFlagMap = new HashMap<String,Integer>();
+	private final Map<String,Integer>  poiDispFlagMap = new HashMap<>();
+	/** maps the ISO code to the drive-on-left flag */
+	private final Map<String,Boolean>  driveOnLeftFlagMap = new HashMap<>();
 	/** contains the names of all continents */
-	private final Set<String> continents = new HashSet<String>();
+	private final Set<String> continents = new HashSet<>();
 
 	/** maps ISO => default country name */
 	private final Map<String, String> defaultCountryNames = new HashMap<String, String>();
@@ -152,6 +154,10 @@ public class LocatorConfig {
 								
 								if (poiDispTag != 0x0 && iso != null) {
 									setPoiDispTag(iso, poiDispTag);
+								}
+								Node driveOnLeft = attr.getNamedItem("driveOnLeft");
+								if (driveOnLeft != null && "true".equals(driveOnLeft.getNodeValue())){
+									driveOnLeftFlagMap.put(iso, true);
 								}
 							}
 
@@ -339,5 +345,14 @@ public class LocatorConfig {
 		String s = continent.toUpperCase().trim();
 		return continents.contains(s);
 	}		
+
+	public synchronized boolean getDriveOnLeftFlag(String iso)
+	{
+		if (iso == null)
+			return false;
+		if (driveOnLeftFlagMap.containsKey(iso))
+			return true;
+		return false;
+	}
 }
 

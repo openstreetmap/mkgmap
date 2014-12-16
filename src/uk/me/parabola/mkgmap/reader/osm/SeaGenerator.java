@@ -511,9 +511,6 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	private Collection<Way> loadPrecompTile(InputStream is, String filename) {
 		OsmMapDataSource src = createTileReader(filename);
 		EnhancedProperties props = new EnhancedProperties();
-		// set a flag that the StyledConverter which is created by the 
-		// OsmMapDataSource does not set the drive-on-left flag
-		props.setProperty("ignore-drive-on-left", "true");
 		src.config(props);
 		log.info("Started loading coastlines from", filename);
 		try{

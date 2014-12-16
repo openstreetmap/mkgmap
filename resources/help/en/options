@@ -347,13 +347,22 @@ Miscellaneous options:
 --route
 	Create maps that support routing.
 
+--drive-on=left|right|detect|detect,left|detect,right
+	Explicitly specify which side of the road vehicles are
+	expected to drive on. 
+	If the first option is detect, the program tries 
+	to find out the proper flag. If that detection
+	fails, the second value is used (or right if none is given).
+	With OSM data as input, the detection tries to find out  
+	the country each road is in and compares the number
+	of drive-on-left roads with the rest.
+	Use the --bounds option to make sure that the detection 
+	finds the correct country. 
+	
 --drive-on-left
 --drive-on-right
-	Explicitly specify which side of the road vehicles are
-	expected to drive on. If neither of these options are
-	specified, it is assumed that vehicles drive on the right
-	unless --check-roundabouts is specified and the first
-	roundabout processed is clockwise.
+	Deprecated: Use drive-on instead.
+	The options are translated to drive-on=left|right. 
 
 --check-roundabouts
 	Check that roundabouts have the expected direction (clockwise

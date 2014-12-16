@@ -1,0 +1,39 @@
+
+Preparing to distribute your map
+================================
+
+You may want to share you map with others.
+This section shows how you prepare it so that it is
+well named and doesn't clash with other maps.
+
+--family-id::
+    This is an integer that identifies a family of products.
+Range: [1..9999]
+Mkgmap default: 6324
+
+--family-name::
+If you build several maps, this option describes the family name of all
+of your maps. Garmin will display this in the map selection screen.
+Example: --family-name="OpenStreetmap mkgmap XL 2019"
+
+--product-id::
+This is an integer that identifies a product within a family.  It is
+often just 1, which is the default.
+
+--product-version::
+The version of the product.  Default value is 1.
+
+--series-name::
+This name will be displayed in MapSource in the map selection drop-down.
+The default is "OSM map".
+
+--area-name::
+Area name is displayed on Garmin units (or at least on eTrex) as the
+second part of the mapname in the list of the individual maps.
+
+--copyright-message=note::
+Specify a copyright message for files that do not contain one.
+
+--license-file=file::
+The contents of the file will be used as licence information to
+be added to the map.

@@ -108,4 +108,8 @@ public class NETHeader extends CommonHeader {
 	public int getSortedRoadsEnd() {
 		return sortedRoads.getEndPos();
 	}
+
+	public int getRoadShift() {
+		return roadShift & 0xff;
+	}
 }

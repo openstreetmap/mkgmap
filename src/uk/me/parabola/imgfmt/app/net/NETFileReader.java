@@ -229,7 +229,7 @@ public class NETFileReader extends ImgFile {
 			// entry we only need one of the offsets so pick the first one.
 			int idx = (net1 >> 22) & 0x3;
 			if (idx == 0)
-				offsets.add(net1 & 0x3fffff);
+				offsets.add((net1 & 0x3fffff) << netHeader.getRoadShift());
 		}
 
 		// Sort in address order in the hope of speeding up reading.

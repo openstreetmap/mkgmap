@@ -96,6 +96,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private int lineNo;
 
 	private boolean havePolygon4B;
+	private Boolean driveOnLeft;
 
 	// Use to decode labels if they are not in cp1252
 	private CharsetDecoder dec;
@@ -667,6 +668,12 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		} else if (name.equals("CodePage")) {
 			dec = Charset.forName("cp" + value).newDecoder();
 			dec.onUnmappableCharacter(CodingErrorAction.REPLACE);
+		} else if (name.endsWith("LeftSideTraffic")){
+			if ("Y".equals(value)){
+				setDriveOnLeft(true);
+			} else if ("N".equals(value)){ 
+				setDriveOnLeft(false);
+			}
 		}
 	}
 

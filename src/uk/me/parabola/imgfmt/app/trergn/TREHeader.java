@@ -240,9 +240,6 @@ public class TREHeader extends CommonHeader {
 
 		if (props.containsKey("transparent"))
 			poiDisplayFlags |= POI_FLAG_TRANSPARENT;
-
-		if (props.containsKey("drive-on-left"))
-			poiDisplayFlags |= POI_FLAG_DRIVE_ON_LEFT;
 	}
 	
 	/**
@@ -260,7 +257,12 @@ public class TREHeader extends CommonHeader {
 	public void setMapId(int id) {
 		mapId = id;
 	}
-	
+
+	public void setDriveOnLeft(boolean dol) {
+		if (dol)
+			this.poiDisplayFlags |= POI_FLAG_DRIVE_ON_LEFT; 
+	}
+
 	public void addPoiDisplayFlags(byte poiDisplayFlags) {
 		this.poiDisplayFlags |= poiDisplayFlags;
 	}	
