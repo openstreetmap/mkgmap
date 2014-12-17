@@ -63,14 +63,16 @@ public class Mdr7 extends MdrMapSection {
 		int sep = name.indexOf(0x1e);
 		if (sep > 0)
 			prefix = sep + 1;
-		prefix = Math.min(prefix, MAX_NAME_OFFSET);
 
 		// Find a name suffix which begins with 0x1f
 		sep = name.indexOf(0x1f);
 		int suffix = 0;
 		if (sep > 0)
 			suffix = sep;
-		suffix = Math.min(suffix, MAX_NAME_OFFSET);
+
+		// Large values can't actually work.
+		if (prefix >= MAX_NAME_OFFSET || suffix >= MAX_NAME_OFFSET)
+			return;
 
 		Mdr7Record st = new Mdr7Record();
 		st.setMapIndex(mapId);
@@ -121,6 +123,8 @@ public class Mdr7 extends MdrMapSection {
 			}
 
 			outOffset += outSize(c);
+			if (outOffset > MAX_NAME_OFFSET)
+				break;
 		}
 	}
 
