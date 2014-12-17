@@ -35,7 +35,9 @@ public class Mdr7 extends MdrMapSection {
 	public static final int MDR7_PARTIAL_SHIFT = 6;
 	public static final int MDR7_U1 = 0x2;
 	public static final int MDR7_U2 = 0x4;
-	//private final Charset charset;
+
+	private static final int MAX_NAME_OFFSET = 255;
+
 	private final int codepage;
 	private final boolean isMulti;
 
@@ -61,12 +63,14 @@ public class Mdr7 extends MdrMapSection {
 		int sep = name.indexOf(0x1e);
 		if (sep > 0)
 			prefix = sep + 1;
+		prefix = Math.min(prefix, MAX_NAME_OFFSET);
 
 		// Find a name suffix which begins with 0x1f
 		sep = name.indexOf(0x1f);
 		int suffix = 0;
 		if (sep > 0)
 			suffix = sep;
+		suffix = Math.min(suffix, MAX_NAME_OFFSET);
 
 		Mdr7Record st = new Mdr7Record();
 		st.setMapIndex(mapId);
@@ -78,14 +82,14 @@ public class Mdr7 extends MdrMapSection {
 		st.setSuffixOffset((byte) suffix);
 		allStreets.add(st);
 
-
-
 		boolean start = false;
 		boolean inWord = false;
 
 		int c;
 		int outOffset = 0;
-		int end = (suffix > 0) ? suffix : name.length() - prefix - 1;
+
+		// TODO: is the limit 255 or 127?
+		int end = Math.min((suffix > 0) ? suffix : name.length() - prefix - 1, MAX_NAME_OFFSET);
 		for (int nameOffset = 0; nameOffset < end; nameOffset += Character.charCount(c)) {
 			c = name.codePointAt(prefix + nameOffset);
 
@@ -99,10 +103,6 @@ public class Mdr7 extends MdrMapSection {
 			} else if (start && Character.isLetterOrDigit(c)) {
 				inWord = true;
 			}
-
-			// Don't index numbers that are not at the beginning. (?)
-			if (nameOffset > 0 && Character.isDigit(c))
-				inWord = false;
 
 			if (start && inWord && outOffset > 0) {
 				st = new Mdr7Record();

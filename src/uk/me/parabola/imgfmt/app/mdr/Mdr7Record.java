@@ -69,10 +69,6 @@ public class Mdr7Record extends RecordBase implements NamedRecord {
 		return city;
 	}
 
-	public byte getNameOffset() {
-		return nameOffset;
-	}
-
 	public void setNameOffset(byte nameOffset) {
 		this.nameOffset = nameOffset;
 	}
@@ -83,10 +79,6 @@ public class Mdr7Record extends RecordBase implements NamedRecord {
 
 	public void setOutNameOffset(byte outNameOffset) {
 		this.outNameOffset = outNameOffset;
-	}
-
-	public byte getPrefixOffset() {
-		return prefixOffset;
 	}
 
 	public void setPrefixOffset(byte prefixOffset) {
@@ -108,10 +100,10 @@ public class Mdr7Record extends RecordBase implements NamedRecord {
 	public String getPartialName() {
 		if (nameOffset == 0 && prefixOffset == 0 && suffixOffset == 0)
 			return name;
-		else if (suffixOffset > 0)
-			return name.substring(nameOffset + prefixOffset, suffixOffset);
+		else if ((suffixOffset & 0xff) > 0)
+			return name.substring((nameOffset & 0xff) + (prefixOffset & 0xff), (suffixOffset & 0xff));
 		else
-			return name.substring(nameOffset + prefixOffset);
+			return name.substring((nameOffset & 0xff) + (prefixOffset & 0xff));
 	}
 
 	public String toString() {
