@@ -16,8 +16,8 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
-import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.scan.SyntaxException;
 
 /**
  * Extract a substring from a value
@@ -45,19 +45,21 @@ public class SubstringFilter extends ValueFilter {
 				end = Integer.parseInt(temp[1]);
 				args = 2;
 			} else {
-				start = 0;
-				end = 0;
-				args = 0;
+				throw new SyntaxException(String.format("invalid argunemt for style substring command: '%s'", arg));
 			}
 		} catch (NumberFormatException e) {
-			throw new ExitException(String.format("Numbers not valid in style substring command: '%s'", arg));
+			throw new SyntaxException(String.format("Numbers not valid in style substring command: '%s'", arg));
+		}
+		if (args == 2 && start > end){
+			throw new SyntaxException(String.format("start > end in style substring command: '%s'", arg));
 		}
 	}
 
 	protected String doFilter(String value, Element el) {
 		if (value == null) return null;
-
-		if (args == 1) {
+		if (start > value.length())
+			return null;
+		if (args == 1 || end > value.length()) {
 			return value.substring(start);
 		}
 		if (args == 2) {
