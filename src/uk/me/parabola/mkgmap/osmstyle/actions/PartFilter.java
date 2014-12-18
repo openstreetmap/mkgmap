@@ -13,8 +13,8 @@
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import java.util.regex.Pattern;
-import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.scan.SyntaxException;
 
 /**
  * Split a value in parts and returns one or more part(s) of a value.
@@ -78,8 +78,10 @@ public class PartFilter extends ValueFilter {
 				separator = ";";
 			}
 		} catch (NumberFormatException e) {
-			throw new ExitException("Not valid numbers in style part command: " + arg);
+			throw new SyntaxException("Not valid numbers in style part command: " + arg);
 		}
+		if (partnumber == 0)
+			throw new SyntaxException("Not valid numbers in style part command: " + arg);
 	}
 
 	public String doFilter(String value, Element el) {
