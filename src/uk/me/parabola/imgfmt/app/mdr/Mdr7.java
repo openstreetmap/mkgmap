@@ -31,12 +31,11 @@ import uk.me.parabola.imgfmt.app.srt.SortKey;
 public class Mdr7 extends MdrMapSection {
 	public static final int MDR7_HAS_STRING = 0x01;
 	public static final int MDR7_HAS_NAME_OFFSET = 0x20;
-	//public static final int MDR7_PARTIAL_FIELD = 0x1c0;
 	public static final int MDR7_PARTIAL_SHIFT = 6;
 	public static final int MDR7_U1 = 0x2;
 	public static final int MDR7_U2 = 0x4;
 
-	private static final int MAX_NAME_OFFSET = 255;
+	private static final int MAX_NAME_OFFSET = 127;
 
 	private final int codepage;
 	private final boolean isMulti;
@@ -90,7 +89,6 @@ public class Mdr7 extends MdrMapSection {
 		int c;
 		int outOffset = 0;
 
-		// TODO: is the limit 255 or 127?
 		int end = Math.min((suffix > 0) ? suffix : name.length() - prefix - 1, MAX_NAME_OFFSET);
 		for (int nameOffset = 0; nameOffset < end; nameOffset += Character.charCount(c)) {
 			c = name.codePointAt(prefix + nameOffset);
