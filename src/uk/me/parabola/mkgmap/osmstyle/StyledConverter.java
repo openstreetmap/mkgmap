@@ -169,17 +169,6 @@ public class StyledConverter implements OsmConverter {
 		housenumberGenerator = new HousenumberGenerator(props);
 		
 		driveOn = props.getProperty("drive-on", null);
-		if (driveOn == null){
-			// support legacy options --drive-on-left and --drive-on-right
-			boolean dol = props.getProperty("drive-on-left", false);
-			boolean dor = props.getProperty("drive-on-right", false);
-			if (dol && dor)
-				throw new ExitException("options drive-on-left and drive-on-right and mutually exclusive");
-			if (dol)
-				driveOn = "left";
-			if (dor)
-				driveOn = "right";
-		}
 		if (driveOn == null)
 			driveOn = "detect,right";
 		switch (driveOn) {
@@ -196,7 +185,7 @@ public class StyledConverter implements OsmConverter {
 		default:
 			throw new ExitException("invalid parameters for option drive-on:"+driveOn);
 		}
-		
+			
 		checkRoundabouts = props.getProperty("check-roundabouts",false);
 		reportDeadEnds = props.getProperty("report-dead-ends", 1);  
 		
@@ -612,12 +601,6 @@ public class StyledConverter implements OsmConverter {
 		}
 		roads = null;
 
-		// at this point the check-roundabout option might have changed the driveOn value 
-//		if ("left".equals(driveOn) && !ignoreDriveOn){
-//			NODHeader.setDriveOnLeft(true);
-//			TREHeader.setDriveOnLeft(true);
-//		}
-
 		for(Relation relation : throughRouteRelations) {
 			Node node = null;
 			Way w1 = null;
@@ -697,7 +680,7 @@ public class StyledConverter implements OsmConverter {
 			}
 			log.info("detected value for driving on left flag is:",dol);			
 		} else {
-			driveOnLeft = ("left".equals(driveOn));
+			dol = ("left".equals(driveOn));
 			// warn if user given flag is obviously wrong
 			if ("left".equals(driveOn) && numDriveOnLeftRoads == 0 && numDriveOnRightRoads > 0)
 				log.warn("The drive-on-left flag is set but tile contains only drive-on-right roads");
