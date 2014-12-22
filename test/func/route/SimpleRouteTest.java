@@ -104,11 +104,11 @@ public class SimpleRouteTest extends Base {
 				break;
 			case "LBL":
 				count++;
-				assertEquals("LBL size", 989, size);
+				assertEquals("LBL size", 999, size);
 				break;
 			case "NET":
 				count++;
-				assertEquals("NET size", 1280, size);
+				assertEquals("NET size", 1301, size);
 				break;
 			case "NOD":
 				count++;

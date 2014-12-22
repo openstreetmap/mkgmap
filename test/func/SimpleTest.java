@@ -113,7 +113,7 @@ public class SimpleTest extends Base {
 				break;
 			case "LBL":
 				count++;
-				assertEquals("LBL size", 989, size);
+				assertEquals("LBL size", 999, size);
 				break;
 			}
 		}
