@@ -484,6 +484,8 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private boolean isCommonValue(MapElement elem, String name, String value) {
 		if (name.equals("Label")) {
 			elem.setName(unescape(recode(value)));
+		} else if (name.equals("Label2") || name.equals("Label3")) {
+			elem.add2Name(unescape(recode(value)));
 		} else if (name.equals("Levels") || name.equals("EndLevel") || name.equals("LevelsNumber")) {
 			try {
 				endLevel = Integer.valueOf(value);
@@ -503,7 +505,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		} else if (name.equals("Phone")) {
 		  elem.setPhone(recode(value));			
 		} else if (name.equals("CountryName")) {
-		  elem.setCountry(recode(value));
+		  elem.setCountry(unescape(recode(value)));
 		} else if (name.equals("RegionName")) {
 			//System.out.println("RegionName " + value);
 		  elem.setRegion(recode(value));				

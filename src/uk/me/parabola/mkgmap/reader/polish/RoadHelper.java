@@ -101,8 +101,8 @@ class RoadHelper {
 			roadClass = 0;
 		if (roadClass > 4)
 			roadClass = 4;
-		oneway = Integer.parseInt(f[2]) > 0;
-		toll = Integer.parseInt(f[3]) > 0;
+		oneway = (f.length > 2) ? Integer.parseInt(f[2]) > 0: false;
+		toll = (f.length > 3) ? Integer.parseInt(f[3]) > 0: false;
 		byte noAccess = 0;
 		for (int j = 0; j < f.length - 4; j++){
 			if (Integer.parseInt(f[4+j]) == 0)

@@ -78,6 +78,15 @@ public abstract class MapElement {
 		this.labels[0] = name;
 	}
 
+	public void add2Name(String name) {
+		for (int i = 1; i < 4; i++) {
+			if (this.labels[i] == null) {
+				this.labels[i] = name;
+				break;
+			}
+		}
+	}
+
 	public void setLabels(String[] labels) {
 		this.labels = Arrays.copyOf(labels, 4);
 	}
