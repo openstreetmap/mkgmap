@@ -509,12 +509,10 @@ public class HousenumberGenerator {
 	 * @return {@code true} point lies on the left side; {@code false} point lies on the right side
 	 */
 	private static boolean isLeft(Coord spoint1, Coord spoint2, Coord point) {
-		
-		boolean left =  ((spoint2.getLongitude() - spoint1.getLongitude())
-				* (point.getLatitude() - spoint1.getLatitude()) - (spoint2.getLatitude() - spoint1
-				.getLatitude()) * (point.getLongitude() - spoint1.getLongitude())) > 0;
-
-				return left;
+		return ((spoint2.getHighPrecLon() - spoint1.getHighPrecLon())
+				* (point.getHighPrecLat() - spoint1.getHighPrecLat()) - (spoint2
+				.getHighPrecLat() - spoint1.getHighPrecLat())
+				* (point.getHighPrecLon() - spoint1.getHighPrecLon())) > 0;
 	}
 	
 	/**
@@ -531,7 +529,7 @@ public class HousenumberGenerator {
 		} else if (frac >= 1) {
 			return spoint2.distance(point);
 		} else {
-			return spoint1.makeBetweenPoint(spoint2, frac).distance(point);
+			return point.distToLineSegment(spoint1, spoint2);
 		}
 
 	}
@@ -544,17 +542,27 @@ public class HousenumberGenerator {
 	 * @return the fraction
 	 */
 	private static double getFrac(Coord spoint1, Coord spoint2, Coord point) {
+		int aLon = spoint1.getHighPrecLon();
+		int bLon = spoint2.getHighPrecLon();
+		int pLon = point.getHighPrecLon();
+		int aLat = spoint1.getHighPrecLat();
+		int bLat = spoint2.getHighPrecLat();
+		int pLat = point.getHighPrecLat();
+		
+		double deltaLon = bLon - aLon;
+		double deltaLat = bLat - aLat;
 
-		double dx = spoint2.getLongitude() - spoint1.getLongitude();
-		double dy = spoint2.getLatitude() - spoint1.getLatitude();
-
-		if ((dx == 0) && (dy == 0)) {
+		if (deltaLon == 0 && deltaLat == 0) 
 			return 0;
+		else {
+			// scale for longitude deltas by cosine of average latitude  
+			double scale = Math.cos(Coord.int30ToRadians((aLat + bLat + pLat) / 3) );
+			double deltaLonAP = scale * (pLon - aLon);
+			deltaLon = scale * deltaLon;
+			if (deltaLon == 0 && deltaLat == 0)
+				return 0;
+			else 
+				return (deltaLonAP * deltaLon + (pLat - aLat) * deltaLat) / (deltaLon * deltaLon + deltaLat * deltaLat);
 		}
-
-		return ((point.getLongitude() - spoint1.getLongitude()) * dx + (point
-				.getLatitude() - spoint1.getLatitude()) * dy)
-				/ (dx * dx + dy * dy);
-
 	}
 }

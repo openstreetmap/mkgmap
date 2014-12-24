@@ -590,7 +590,7 @@ public class Coord implements Comparable<Coord> {
 	 * @param val30 a longitude/latitude value with 30 bit precision
 	 * @return an angle in radians.
 	 */
-	private static double int30ToRadians(int val30){
+	public static double int30ToRadians(int val30){
 		return BIT30_RAD_FACTOR * val30;
 	}
 
