@@ -769,10 +769,19 @@ public class Coord implements Comparable<Coord> {
 		double deltaLat = bLat - aLat;
 
 		double frac;
-		if (deltaLon == 0 && deltaLat == 0) 
-			frac = 0;
-		else 
-			frac = ((pLon - aLon) * deltaLon + (pLat - aLat) * deltaLat) / (deltaLon * deltaLon + deltaLat * deltaLat);
+		if (deltaLon == 0 && deltaLat == 0){ 
+			frac = 0; 
+		}
+		else {
+			// scale for longitude deltas by cosine of average latitude  
+			double scale = Math.cos(Coord.int30ToRadians((aLat + bLat + pLat) / 3) );
+			double deltaLonAP = scale * (pLon - aLon);
+			deltaLon = scale * deltaLon;
+			if (deltaLon == 0 && deltaLat == 0)
+				frac = 0;
+			else 
+				frac = (deltaLonAP * deltaLon + (pLat - aLat) * deltaLat) / (deltaLon * deltaLon + deltaLat * deltaLat);
+		}
 
 		double distance;
 		if (frac <= 0) {
