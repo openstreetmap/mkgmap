@@ -244,23 +244,14 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 						fbThreshold = (int)Double.parseDouble(o.substring("fbthres=".length()));
 					else if("fbdebug".equals(o)) 
 						fbDebug = true;
+					else {
+						printOptionHelpMsg(precompSea != null, o);
+					}
 				}
 				else if(o.isEmpty())
 					continue;
 				else {
-					if(!"help".equals(o))
-						System.err.println("Unknown sea generation option '" + o + "'");
-					System.err.println("Known sea generation options are:");
-					System.err.println("  multipolygon        use a multipolygon (default)");
-					System.err.println("  polygons | no-mp    use polygons rather than a multipolygon");
-					System.err.println("  no-sea-sectors      disable use of \"sea sectors\"");
-					System.err.println("  extend-sea-sectors  extend coastline to reach border");
-					System.err.println("  land-tag=TAG=VAL    tag to use for land polygons (default natural=land)");
-					System.err.println("  close-gaps=NUM      close gaps in coastline that are less than this distance (metres)");
-					System.err.println("  floodblocker        enable the floodblocker (for multipolgon only)");
-					System.err.println("  fbgap=NUM           points closer to the coastline are ignored for flood blocking (default 40)");
-					System.err.println("  fbthres=NUM         min points contained in a polygon to be flood blocked (default 20)");
-					System.err.println("  fbratio=NUM         min ratio (points/area size) for flood blocking (default 0.5)");
+					printOptionHelpMsg(precompSea != null, o);
 				}
 			}
 			
@@ -292,6 +283,31 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		return generateSea;
 	}
 	
+	/**
+	 * Show valid generate-sea options
+	 * @param forPrecompSea  set to true if --precomp-sea is used 
+	 * @param o either "help" or an option that was not recognized
+	 */
+	void printOptionHelpMsg (boolean forPrecompSea, String o){
+		
+		if(!"help".equals(o))
+			System.err.println("Unknown sea generation option '" + o + "'");
+		
+		System.err.println("Known sea generation options " + (forPrecompSea ? "with" : "without") + " --precomp-sea  are:");
+		System.err.println("  multipolygon        use a multipolygon (default)");
+		System.err.println("  polygons | no-mp    use polygons rather than a multipolygon");
+		System.err.println("  land-tag=TAG=VAL    tag to use for land polygons (default natural=land)");
+		if (forPrecompSea)
+			return;
+		System.err.println("  no-sea-sectors      disable use of \"sea sectors\"");
+		System.err.println("  extend-sea-sectors  extend coastline to reach border");
+		System.err.println("  close-gaps=NUM      close gaps in coastline that are less than this distance (metres)");
+		System.err.println("  floodblocker        enable the floodblocker (for multipolgon only)");
+		System.err.println("  fbgap=NUM           points closer to the coastline are ignored for flood blocking (default 40)");
+		System.err.println("  fbthres=NUM         min points contained in a polygon to be flood blocked (default 20)");
+		System.err.println("  fbratio=NUM         min ratio (points/area size) for flood blocking (default 0.5)");
+		
+	}
     /**
      * Read the index from stream and populate the index grid. 
      * @param fileStream already opened stream
