@@ -272,8 +272,6 @@ public class MdrBuilder implements Combiner {
 		for (Point p : list) {
 			Label label = p.getLabel();
 			if (p.getNumber() > 256) {
-				// I think we limit the number of points+ind-points, but just in case
-				System.out.println("point number too big");
 				continue;
 			}
 

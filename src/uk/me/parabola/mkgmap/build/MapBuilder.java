@@ -948,7 +948,7 @@ public class MapBuilder implements Configurable {
 			if(!point.hasExtendedType()) {
 				if(name != null && div.getZoom().getLevel() == 0) {
 					if(pointIndex > 255)
-						log.error("FIXME - too many POIs in group");
+						log.error("Too many POIs at location " + div.getCenter().toOSMURL() + " - " + name + " will be ignored"); 
 					else if(point.isExit()) {
 						Exit e = ((MapExitPoint)point).getExit();
 						if(e != null)
