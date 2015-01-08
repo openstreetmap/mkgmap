@@ -84,13 +84,6 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 			usedTags.add("cycleway:left");
 			usedTags.add("cycleway:right");
 		}
-		
-		// add addr:street and addr:housenumber if housenumber search is enabled
-		if (props.getProperty("housenumbers", false)) {
-			usedTags.add("addr:street");
-			usedTags.add("addr:housenumber");
-		}
-	
 		return true;
 	}
 

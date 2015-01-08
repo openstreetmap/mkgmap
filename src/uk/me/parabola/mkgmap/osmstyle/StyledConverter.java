@@ -1989,6 +1989,7 @@ public class StyledConverter implements OsmConverter {
 		}
 	}
 
+	@Override
 	public Boolean getDriveOnLeft(){
 		assert roads == null : "getDriveOnLeft() should be called after end()";
 		return driveOnLeft;

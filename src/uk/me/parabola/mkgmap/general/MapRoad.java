@@ -149,4 +149,7 @@ public class MapRoad extends MapLine {
 		this.segmentsFollowing = segmentsFollowing;
 	}
 
+	public String toString(){
+		return this.getRoadDef().getId() + " " + this.getName();
+	}
 }
