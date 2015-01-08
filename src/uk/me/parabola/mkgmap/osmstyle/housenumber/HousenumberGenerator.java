@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -684,7 +685,7 @@ public class HousenumberGenerator {
 		NumberStyle style = NumberStyle.NONE;
 		boolean ok = true;
 		if (housenumbers.isEmpty() == false) {
-			// get the sublist of housenumbers
+			// get the sublist of house numbers
 			int maxN = -1;
 			boolean even = false;
 			boolean odd = false;
@@ -693,12 +694,14 @@ public class HousenumberGenerator {
 			int lastDiff = 0;
 			int highestNum = 0;
 			int lowestNum = Integer.MAX_VALUE;
+			HashSet<Integer> usedNumbers = new HashSet<>();
 			for (int i = 0; i< housenumbers.size(); i++) {
 				HousenumberMatch hn = housenumbers.get(i);
 				if (hn.getSegment() >= maxSegment) {
 					break;
 				} else {
 					int num = hn.getHousenumber();
+					usedNumbers.add(num);
 					if (num > highestNum)
 						highestNum = num;
 					if (num < lowestNum)
@@ -709,8 +712,8 @@ public class HousenumberGenerator {
 							if(lastDiff * diff < 0){
 								inOrder = false;
 							}
-							lastDiff = diff;
 						}
+						lastDiff = diff;
 					}
 					lastNum = num;
 					maxN = i;
@@ -734,10 +737,29 @@ public class HousenumberGenerator {
 				
 				int start = housenumbers.get(0).getHousenumber();
 				int end = housenumbers.get(maxN).getHousenumber();
-				if (inOrder){
-					if (start < end & (end < highestNum || start < lowestNum) ||
-							start > end & (highestNum > start|| lowestNum < end)){
-						inOrder = false;
+				if (start != highestNum && start != lowestNum
+						|| end != highestNum && end != lowestNum) {
+					// interval of found numbers is larger than start..end, check what to use
+					inOrder = false;
+					int step = (even && odd) ? 1 : 2;
+					int n = lowestNum;
+					int missing = 0;
+					while (n < highestNum){
+						n += step;
+						if (usedNumbers.contains(n) == false)
+							++missing;
+					}
+					if (missing == 0){
+						// all numbers between lowest and highest are here, so we can safely change the ivl
+						if (start > end){
+							log.debug("changing interval from",start+"-"+end, "to", highestNum+"-"+lowestNum);
+							start = highestNum;
+							end = lowestNum;
+						} else {
+							log.debug("chaning interval from",start+"-"+end, "to", lowestNum+"-"+highestNum);
+							start = lowestNum;
+							end = highestNum;
+						}
 					}
 				}
 				if (left) { 
