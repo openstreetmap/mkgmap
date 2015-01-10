@@ -156,4 +156,81 @@ public class Numbers {
 	public int hashCode() {
 		return toString().hashCode();
 	}
+
+	public boolean isPlausible(){
+		if (!isPlausible(leftNumberStyle, leftStart, leftEnd))
+			return false;
+		if (!isPlausible(rightNumberStyle, rightStart, rightEnd))
+			return false;
+		if (leftNumberStyle == NumberStyle.NONE
+				|| rightNumberStyle == NumberStyle.NONE)
+			return true;
+		if (leftNumberStyle == rightNumberStyle || leftNumberStyle == NumberStyle.BOTH || rightNumberStyle==NumberStyle.BOTH){
+			// check if intervals are overlapping
+			int start1, start2,end1,end2;
+			if (leftStart < leftEnd){
+				start1 = leftStart;
+				end1 = leftEnd;
+			} else {
+				start1 = leftEnd;
+				end1 = leftStart;
+			}
+			if (rightStart < rightEnd){
+				start2 = rightStart;
+				end2 = rightEnd;
+			} else {
+				start2 = rightEnd;
+				end2 = rightStart;
+			}
+			if (start1 <= start2 && start2 <= end1)
+				return false;
+			if (start1 <= end2 && end2 <= end1)
+				return false;
+		}
+		
+		return true;
+	}
+	
+	private static boolean isPlausible(NumberStyle style, int start, int end){
+		if (Math.abs(start - end) > 1000)
+			return false;
+		if (style == NumberStyle.EVEN)
+			return start % 2 == 0 && end % 2 == 0;
+		if (style == NumberStyle.ODD)
+			return start % 2 != 0 && end % 2 != 0;
+		return true;
+	}
+	/**
+	 * @param hn a house number
+	 * @return 0 if the number is not within the intervals, 1 if it is on one side, 2 if it on both sides 
+	 */
+	public int countMatches(int hn) {
+		boolean isEven = (hn % 2 == 0);
+		int matches = 0;
+		if (leftNumberStyle == NumberStyle.BOTH
+				|| leftNumberStyle == NumberStyle.EVEN && isEven
+				|| leftNumberStyle == NumberStyle.ODD && !isEven) {
+			if (leftStart <= leftEnd) {
+				if (leftStart <= hn && hn <= leftEnd)
+					++matches;
+			}
+			else { 
+				if (leftEnd <= hn && hn <= leftStart)
+					++matches;
+			}
+		}
+		if (rightNumberStyle == NumberStyle.BOTH
+				|| rightNumberStyle == NumberStyle.EVEN && isEven
+				|| rightNumberStyle == NumberStyle.ODD && !isEven) {
+			if (rightStart <= rightEnd) {
+				if (rightStart <= hn && hn <= rightEnd)
+					++matches;
+			}
+			else { 
+				if (rightEnd <= hn && hn <= rightStart)
+					++matches;
+			}
+		}
+		return matches;
+	}
 }
