@@ -37,6 +37,7 @@ public class CoordNode extends Coord {
 		super(latitude, longitude);
 		this.id = id;
 		setOnBoundary(boundary);
+		setNumberNode(true);
 		preserved(true);
 	}
 
@@ -44,6 +45,7 @@ public class CoordNode extends Coord {
 		super(other);
 		this.id = id;
 		setOnBoundary(boundary);
+		setNumberNode(true);
 		preserved(true);
 		
 	}

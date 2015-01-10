@@ -243,15 +243,15 @@ public class LinePreparer {
 
 			/*
 			 * Current thought is that the node indicator is set when
-			 * the point is a node. There's a separate first extra bit
+			 * the point is a routing node or a house number node. 
+			 * There's a separate first extra bit
 			 * that always appears to be false. The last points' extra bit
 			 * is set if the point is a node and this is not the last
 			 * polyline making up the road.
-			 * Todo: special case the last bit
 			 */
 			if (extraBit) {
 				boolean extra = false;
-				if (co.getId() != 0) {
+				if (co.isNumberNode()) {
 					if (i < nodes.length - 1)
 						// inner node of polyline
 						extra = true;

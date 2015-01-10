@@ -48,6 +48,7 @@ public class Coord implements Comparable<Coord> {
 	private final static short PART_OF_BAD_ANGLE = 0x0080; // bit in flags is true if point should be treated as a node
 	private final static short PART_OF_SHAPE2 = 0x0100; // use only in ShapeMerger
 	private final static short END_OF_WAY = 0x0200; // use only in WrongAngleFixer
+	private final static short HOUSENUMBER_NODE = 0x0400; // start/end of house number interval
 	
 	public final static int HIGH_PREC_BITS = 30;
 	public final static int DELTA_SHIFT = 6;
@@ -331,6 +332,24 @@ public class Coord implements Comparable<Coord> {
 			this.flags &= ~END_OF_WAY; 
 	}
 
+	/**
+	 * @return if this is the beginning/end of a house number interval 
+	 */
+	public boolean isNumberNode(){
+		return (flags & HOUSENUMBER_NODE) != 0;
+	}
+	
+	/**
+	 * Set or unset flag for {@link WrongAngleFixer} 
+	 * @param b true or false
+	 */
+	public void setNumberNode(boolean b) {
+		if (b) 
+			this.flags |= HOUSENUMBER_NODE;
+		else 
+			this.flags &= ~HOUSENUMBER_NODE; 
+	}
+	
 	public int hashCode() {
 		// Use a factor for latitude to span over the whole integer range:
 		// max lat: 4194304

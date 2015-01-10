@@ -640,7 +640,7 @@ public class HousenumberGenerator {
 				}
 
 				// An ordinary point in the road.
-				if (p.getId() == 0) {
+				if (p.isNumberNode() == false) {
 					n++;
 					continue;
 				}
