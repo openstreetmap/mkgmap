@@ -150,6 +150,6 @@ public class MapRoad extends MapLine {
 	}
 
 	public String toString(){
-		return this.getRoadDef().getId() + " " + this.getName();
+		return "id="+this.getRoadDef().getId() + ", " + this.getName();
 	}
 }
