@@ -28,7 +28,7 @@ amenity=school [0x0a resolution 22]
 amenity=supermarket [0x08 resolution 22]
 amenity=university [0x0a resolution 21]
 
-healthcare=hospital | amenity=hospital [0x0b resolution 22]
+healthcare=hospital | amenity=hospital | amenity=clinic [0x0b resolution 22]
 healthcare=* | amenity=dentist | amenity=doctors | amenity=nursing_home
 [0x0b resolution 23]
 
