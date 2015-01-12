@@ -540,8 +540,7 @@ public class HousenumberGenerator {
 		MultiHashMap<MapRoad, HousenumberMatch> roadNumbers = new MultiHashMap<MapRoad, HousenumberMatch>(); 
 		
 		for (HousenumberMatch n : numbersList) {
-			HousenumberMatch lastSameDist = null;
-			List<HousenumberMatch> lastSameDists = new ArrayList<>();
+			List<HousenumberMatch> sameDistMatches = new ArrayList<>();
 
 			for (MapRoad r : roads) {
 				int node = -1;
@@ -556,14 +555,14 @@ public class HousenumberGenerator {
 							n.setSegmentFrac(frac);
 							n.setRoad(r);
 							n.setSegment(node);
-							lastSameDists.clear();
+							sameDistMatches.clear();
 						} else if (dist == n.getDistance() && n.getRoad() != r){
-							lastSameDist = new HousenumberMatch(n.getElement());
-							lastSameDist.setDistance(dist);
-							lastSameDist.setSegmentFrac(frac);
-							lastSameDist.setRoad(r);
-							lastSameDist.setSegment(node);
-							lastSameDists.add(lastSameDist);
+							HousenumberMatch sameDist = new HousenumberMatch(n.getElement());
+							sameDist.setDistance(dist);
+							sameDist.setSegmentFrac(frac);
+							sameDist.setRoad(r);
+							sameDist.setSegment(node);
+							sameDistMatches.add(sameDist);
 						}
 					}
 					c1 = c2;
@@ -572,35 +571,9 @@ public class HousenumberGenerator {
 			}
 			
 			if (n.getRoad() != null) {
+				n = checkAngle(n, sameDistMatches);
 				Coord c1 = n.getRoad().getPoints().get(n.getSegment());
 				Coord c2 = n.getRoad().getPoints().get(n.getSegment()+1);
-				Coord cx = n.getLocation();
-				double dist = n.getDistance();
-				if (lastSameDist != null && lastSameDist.getDistance() == n.getDistance()){
-					// a house has the same distance to different road objects
-					// if this happens at a T-junction, make sure not to use the end of the wrong road 
-					for (HousenumberMatch alternative : lastSameDists){
-						double dist1 = cx.distance(c1);
-						double angle, altAngle;
-						if (dist1 == dist)
-							angle = Utils.getAngle(c2, c1, cx);
-						else 
-							angle = Utils.getAngle(c1, c2, cx);
-						Coord c3 = alternative.getRoad().getPoints().get(alternative.getSegment());
-						Coord c4 = alternative.getRoad().getPoints().get(alternative.getSegment()+1);
-						double dist3 = cx.distance(c3);
-						if (dist3 == dist)
-							altAngle = Utils.getAngle(c4, c3, cx);
-						else 
-							altAngle = Utils.getAngle(c3, c4, cx);
-						double delta = 90 - Math.abs(angle);
-						double deltaAlt = 90 - Math.abs(altAngle);
-						if (delta > deltaAlt){
-							log.debug("preferring road",alternative.getRoad(),"for house number element",alternative.getElement().getId(),n,angle, altAngle);
-							n = alternative;
-						} 
-					}
-				}
 				n.setLeft(isLeft(c1, c2, n.getLocation()));
 				roadNumbers.add(n.getRoad(), n);
 			}
@@ -674,6 +647,55 @@ public class HousenumberGenerator {
 		}
 	}
 	
+
+	/**
+	 * If the closest point to a road is a junction, try to find the road
+	 * segment that forms a right angle with the house 
+	 * @param currentMatch one match that is closest to the node
+	 * @param sameDistMatches  the other matches with the same distance
+	 * @return the best match
+	 */
+	private static HousenumberMatch checkAngle(HousenumberMatch currentMatch,
+			List<HousenumberMatch> sameDistMatches) {
+		
+		if (sameDistMatches.isEmpty())
+			return currentMatch;
+		// a house has the same distance to different road objects
+		// if this happens at a T-junction, make sure not to use the end of the wrong road 
+		Coord c1 = currentMatch.getRoad().getPoints().get(currentMatch.getSegment());
+		Coord c2 = currentMatch.getRoad().getPoints().get(currentMatch.getSegment()+1);
+		Coord cx = currentMatch.getLocation();
+		double dist = currentMatch.getDistance();
+		HousenumberMatch bestMatch = currentMatch;
+		for (HousenumberMatch alternative : sameDistMatches){
+			double dist1 = cx.distance(c1);
+			double angle, altAngle;
+			if (dist1 == dist)
+				angle = Utils.getAngle(c2, c1, cx);
+			else 
+				angle = Utils.getAngle(c1, c2, cx);
+			Coord c3 = alternative.getRoad().getPoints().get(alternative.getSegment());
+			Coord c4 = alternative.getRoad().getPoints().get(alternative.getSegment()+1);
+			
+			double dist3 = cx.distance(c3);
+			if (dist3 == dist)
+				altAngle = Utils.getAngle(c4, c3, cx);
+			else 
+				altAngle = Utils.getAngle(c3, c4, cx);
+			double delta = 90 - Math.abs(angle);
+			double deltaAlt = 90 - Math.abs(altAngle);
+			if (delta > deltaAlt){
+				bestMatch = alternative;
+				c1 = c3;
+				c2 = c4;
+			} 
+		}
+		if (currentMatch != bestMatch){
+			log.debug("preferring road",bestMatch.getRoad(),"for house number element",bestMatch.getElement().getId(),"instead of", currentMatch.getRoad());
+		}
+		return bestMatch;
+	}
+
 	/**
 	 * Apply the given house numbers to the numbers object.
 	 * @param numbers the numbers object to be configured
