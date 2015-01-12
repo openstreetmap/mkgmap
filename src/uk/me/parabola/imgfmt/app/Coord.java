@@ -178,7 +178,7 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	public boolean preserved() {
-		return (flags & PRESERVED_MASK) != 0;
+		return (flags & PRESERVED_MASK) != 0 || (flags & HOUSENUMBER_NODE) != 0;
 	}
 
 	public void preserved(boolean preserved) {
