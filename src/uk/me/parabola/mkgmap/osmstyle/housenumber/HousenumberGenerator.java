@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.TreeSet;
+
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
@@ -452,16 +454,22 @@ public class HousenumberGenerator {
 	
 	public void generate(LineAdder adder) {
 		if (numbersEnabled) {
+			
+			TreeSet<String> sortedStreetNames = new TreeSet<>();
 			for (Entry<String, List<Element>> numbers : houseNumbers.entrySet()) {
-				List<MapRoad> possibleRoads = roadByNames.get(numbers.getKey());
-
+				sortedStreetNames.add(numbers.getKey());
+			}
+			
+			// process the roads in alphabetical order. This is not needed
+			// but helps when comparing results in the log.
+			for (String streetName: sortedStreetNames){
+				List<MapRoad> possibleRoads = roadByNames.get(streetName);
 				if (possibleRoads.isEmpty()) {
 					continue;
 				}
-
-				match(numbers.getKey(), numbers.getValue(), possibleRoads);
-			}
-		}
+				List<Element> numbers = houseNumbers.get(streetName);
+				match(streetName, numbers, possibleRoads);
+			} 		}
 		
 		for (MapRoad r : roads) {
 			adder.add(r);
