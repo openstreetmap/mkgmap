@@ -498,6 +498,10 @@ public class RoadDef {
 			netFlags |= NET_FLAG_ADDRINFO;
 		}
 	}
+	public List<Numbers> getNumbersList() {
+		return numbersList;
+	}
+
 
 	/**
 	 * Write this road's NOD2 entry.

@@ -116,6 +116,9 @@ public class MapRoad extends MapLine {
 	public void setNumbers(List<Numbers> numbers) {
 		roadDef.setNumbersList(numbers);
 	}
+	public List<Numbers> getNumbers() {
+		return roadDef.getNumbersList();
+	}
 
 	public RoadDef getRoadDef() {
 		return roadDef;

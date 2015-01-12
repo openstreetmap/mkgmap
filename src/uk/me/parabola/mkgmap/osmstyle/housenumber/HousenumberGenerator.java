@@ -13,11 +13,13 @@
 
 package uk.me.parabola.mkgmap.osmstyle.housenumber;
 
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -25,6 +27,7 @@ import java.util.Properties;
 import java.util.TreeSet;
 
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.net.NumberStyle;
@@ -590,114 +593,245 @@ public class HousenumberGenerator {
 			}
 		}
 		
+		// find roads which are very close to each other
+		MultiHashMap<Integer, MapRoad> clusters = new MultiHashMap<>();
+		List<MapRoad> remaining = new ArrayList<>(roads);
+		
+		for (int i = 0; i < remaining.size(); i++){
+			MapRoad r = remaining.get(i);
+			Rectangle bbox = r.getRect();
+			clusters.add(i, r);
+			while (true){
+				boolean changed = false;
+				for (int j = remaining.size() - 1; j > i; --j){
+					MapRoad r2 = remaining.get(j);
+					Rectangle bbox2 = r2.getRect();
+					if (bbox.intersects(bbox2)){
+						clusters.add(i, r2);
+						bbox.add(bbox2);
+						remaining.remove(j);
+						changed = true;
+					}
+				}
+				if (!changed)
+					break;
+			} 
+		}
+		
 		// go through all roads and apply the house numbers
-		for (MapRoad r : roads){
-			List<HousenumberMatch> potentialumbersThisRoad = roadNumbers.get(r);
-			if (potentialumbersThisRoad.isEmpty()) 
-				continue;
-						
-			List<HousenumberMatch> leftNumbers = new ArrayList<HousenumberMatch>();
-			List<HousenumberMatch> rightNumbers = new ArrayList<HousenumberMatch>();
-			for (HousenumberMatch hr : potentialumbersThisRoad) {
-				if (hr.isLeft()) {
-					leftNumbers.add(hr);
-				} else {
-					rightNumbers.add(hr);
-				}
-			}
-			
-			Collections.sort(leftNumbers, new HousenumberMatchComparator());
-			Collections.sort(rightNumbers, new HousenumberMatchComparator());
-			
-			List<Numbers> numbersListing = new ArrayList<Numbers>();
-			
-			log.info("Housenumbers for",r.getName(),r.getCity());
-			log.info("Numbers:",potentialumbersThisRoad);
-			
-			int n = 0;
-			int nodeIndex = 0;
-			int lastRoutableNodeIndex = 0;
-			int lastSegment = r.getPoints().size() - 2; 
-			for (Coord p : r.getPoints()) {
-				if (n == 0) {
-					assert p instanceof CoordNode; 
-				}
-
-				// An ordinary point in the road.
-				if (p.isNumberNode() == false) {
-					n++;
+		for (int cluster = 0; cluster < clusters.size(); cluster++){
+			List<MapRoad> clusteredRoads = clusters.get(cluster);
+			for (MapRoad r : roads){
+				if (clusteredRoads.contains(r) == false)
 					continue;
+				List<HousenumberMatch> potentialNumbersThisRoad = roadNumbers.get(r);
+				if (potentialNumbersThisRoad.isEmpty()) 
+					continue;
+
+				List<HousenumberMatch> leftNumbers = new ArrayList<HousenumberMatch>();
+				List<HousenumberMatch> rightNumbers = new ArrayList<HousenumberMatch>();
+				for (HousenumberMatch hr : potentialNumbersThisRoad) {
+					if (hr.isLeft()) {
+						leftNumbers.add(hr);
+					} else {
+						rightNumbers.add(hr);
+					}
 				}
 
-				// The first time round, this is guaranteed to be a CoordNode
-				if (n == 0) {
+				Collections.sort(leftNumbers, new HousenumberMatchComparator());
+				Collections.sort(rightNumbers, new HousenumberMatchComparator());
+
+				List<Numbers> numbersListing = new ArrayList<Numbers>();
+
+				log.info("Housenumbers for",r.getName(),r.getCity());
+				log.info("Numbers:",potentialNumbersThisRoad);
+
+				int n = 0;
+				int nodeIndex = 0;
+				int lastRoutableNodeIndex = 0;
+				int lastSegment = r.getPoints().size() - 2; 
+				for (Coord p : r.getPoints()) {
+					if (n == 0) {
+						assert p instanceof CoordNode; 
+					}
+
+					// An ordinary point in the road.
+					if (p.isNumberNode() == false) {
+						n++;
+						continue;
+					}
+
+					// The first time round, this is guaranteed to be a CoordNode
+					if (n == 0) {
+						nodeIndex++;
+						n++;
+						continue;
+					}
+
+					// Now we have a CoordNode and it is not the first one.
+					int leftUsed = 0, rightUsed = 0;
+					Numbers numbers = null;
+
+					for (int count = 0; count < 3; count++){ // max. number of tries to correct something 
+						numbers = new Numbers();
+						numbers.setRnodNumber(lastRoutableNodeIndex);
+						leftUsed = applyNumbers(numbers,leftNumbers,n,true);
+						rightUsed = applyNumbers(numbers,rightNumbers,n,false);
+						if (numbers.isPlausible())
+							break; // the normal case
+						// try to correct something
+						boolean changed = false;
+						if (r.getRoadDef().getId() == 10049262){
+							long dd = 4;
+						}
+						if (numbers.getLeftNumberStyle() != numbers.getRightNumberStyle()
+								&& (numbers.getLeftNumberStyle() == NumberStyle.BOTH || numbers.getRightNumberStyle() == NumberStyle.BOTH)) {
+							if (numbers.getLeftNumberStyle() == NumberStyle.BOTH)
+								changed = tryToFindCorrection(leftNumbers, leftUsed, rightNumbers, numbers.getRightNumberStyle(), lastSegment);
+							else if (numbers.getRightNumberStyle() == NumberStyle.BOTH)
+								changed = tryToFindCorrection(rightNumbers,rightUsed, leftNumbers, numbers.getLeftNumberStyle(), lastSegment);
+						}
+						if (!changed){
+							int chgPos = -1;
+							if (n > lastSegment && r.getPoints().get(lastSegment).isNumberNode() == false){
+								chgPos = lastSegment; // add number node before end of road 
+							} else if (lastRoutableNodeIndex == 0 && r.getPoints().get(1).isNumberNode() == false){
+								chgPos = 1; // add number node at start of road
+							}
+							if (chgPos > 0){
+								Coord toChange = r.getPoints().get(chgPos);
+								log.debug("adding house number node to", r, "at" + toChange.toDegreeString(),"to fix unplausibile house number interval");
+								toChange.setNumberNode(true);
+								match(depth+1,streetname, elements, roads);
+								return;
+
+							}
+							log.error("numbers not (yet) plausible:",r,numbers,"left:",leftNumbers.subList(0, leftUsed),"right:",rightNumbers.subList(0, rightUsed));
+							break;
+						}
+					} 
+
+					leftNumbers.subList(0, leftUsed).clear();
+					rightNumbers.subList(0, rightUsed).clear(); 				
+					if (log.isInfoEnabled()) {
+						log.info("Left: ",numbers.getLeftNumberStyle(),numbers.getRnodNumber(),"Start:",numbers.getLeftStart(),"End:",numbers.getLeftEnd(), "Remaining: "+leftNumbers);
+						log.info("Right:",numbers.getRightNumberStyle(),numbers.getRnodNumber(),"Start:",numbers.getRightStart(),"End:",numbers.getRightEnd(), "Remaining: "+rightNumbers);
+					}
+
+					numbersListing.add(numbers);
+
+					lastRoutableNodeIndex = nodeIndex;
 					nodeIndex++;
 					n++;
-					continue;
 				}
 
-				// Now we have a CoordNode and it is not the first one.
-				int leftUsed = 0, rightUsed = 0;
-				Numbers numbers = null;
-
-				for (int count = 0; count < 3; count++){ // max. number of tries to correct something 
-					numbers = new Numbers();
-					numbers.setRnodNumber(lastRoutableNodeIndex);
-					leftUsed = applyNumbers(numbers,leftNumbers,n,true);
-					rightUsed = applyNumbers(numbers,rightNumbers,n,false);
-					if (numbers.isPlausible())
-						break; // the normal case
-					// try to correct something
-					boolean changed = false;
-					if (r.getRoadDef().getId() == 10049262){
-						long dd = 4;
-					}
-					if (numbers.getLeftNumberStyle() != numbers.getRightNumberStyle()
-							&& (numbers.getLeftNumberStyle() == NumberStyle.BOTH || numbers.getRightNumberStyle() == NumberStyle.BOTH)) {
-						if (numbers.getLeftNumberStyle() == NumberStyle.BOTH)
-							changed = tryToFindCorrection(leftNumbers, leftUsed, rightNumbers, numbers.getRightNumberStyle(), lastSegment);
-						else if (numbers.getRightNumberStyle() == NumberStyle.BOTH)
-							changed = tryToFindCorrection(rightNumbers,rightUsed, leftNumbers, numbers.getLeftNumberStyle(), lastSegment);
-					}
-					if (!changed){
-						int chgPos = -1;
-						if (n > lastSegment && r.getPoints().get(lastSegment).isNumberNode() == false){
-							chgPos = lastSegment; // add number node before end of road 
-						} else if (lastRoutableNodeIndex == 0 && r.getPoints().get(1).isNumberNode() == false){
-							chgPos = 1; // add number node at start of road
-						}
-						if (chgPos > 0){
-							Coord toChange = r.getPoints().get(chgPos);
-							log.debug("adding house number node to", r, "at" + toChange.toDegreeString(),"to fix unplausibile house number interval");
-							toChange.setNumberNode(true);
-							match(depth+1,streetname, elements, roads);
-							return;
-							
-						}
-						log.error("numbers not (yet) plausible:",r,numbers,"left:",leftNumbers.subList(0, leftUsed),"right:",rightNumbers.subList(0, rightUsed));
-						break;
-					}
-				} 
-				
-				leftNumbers.subList(0, leftUsed).clear();
-				rightNumbers.subList(0, rightUsed).clear(); 				
-				if (log.isInfoEnabled()) {
-					log.info("Left: ",numbers.getLeftNumberStyle(),numbers.getRnodNumber(),"Start:",numbers.getLeftStart(),"End:",numbers.getLeftEnd(), "Remaining: "+leftNumbers);
-					log.info("Right:",numbers.getRightNumberStyle(),numbers.getRnodNumber(),"Start:",numbers.getRightStart(),"End:",numbers.getRightEnd(), "Remaining: "+rightNumbers);
-				}
-				
-				numbersListing.add(numbers);
-				
-				lastRoutableNodeIndex = nodeIndex;
-				nodeIndex++;
-				n++;
+				r.setNumbers(numbersListing);
 			}
-			
-			r.setNumbers(numbersListing);
+			int errors = checkPlausibility(clusteredRoads, roadNumbers);
 		}
 	}
 	
 
+	private static int checkPlausibility(List<MapRoad> clusteredRoads,
+			MultiHashMap<MapRoad, HousenumberMatch> roadNumbers) {
+		int countErrors = 0;
+		for (int i = 0; i < clusteredRoads.size(); i++){
+			MapRoad r = clusteredRoads.get(i);
+			for (int j = i; j < clusteredRoads.size(); j++){
+				MapRoad r2 = clusteredRoads.get(j);
+				List<HousenumberMatch> houses = roadNumbers.get(r2);
+				if (houses.isEmpty()) 
+					continue;
+				int errors = checkPlausibility(r, houses, r.getNumbers(), r == r2);
+				countErrors += errors;
+			}
+		}
+		return countErrors;
+	}
+
+	/**
+	 * Check if the existing numbers are found at the right places. 
+	 * @param r
+	 * @param houses
+	 * @param numbersListing
+	 * @param badMatches 
+	 */
+	private static int checkPlausibility(MapRoad r, List<HousenumberMatch> houses, List<Numbers> numbersListing, boolean shouldExist) {
+		if (numbersListing == null || numbersListing.isEmpty()){
+			if (shouldExist)
+				return houses.size();
+			return 0;
+		}
+		boolean nodeAdded = false;
+		System.out.println("checking road " + r + " in "  + r.getCity() + " " + numbersListing);
+		//		BitSet tested = new BitSet();
+		int countErrors = 0;
+		for (HousenumberMatch house :houses ){
+//			if (house.getRoad() != r)
+//				continue;
+			int hn = house.getHousenumber();
+			int matches = 0;
+			if (house.getElement().getId() == 133976941){
+				long dd = 4;
+			}
+			//			if (tested.get(hn))
+			//				continue;
+			//			tested.set(hn);
+			Numbers last = null;
+			Numbers firstMatch = null;
+			for (Numbers numbers : numbersListing){
+				int n = numbers.countMatches(hn);
+				if (hn == 10 && r.getRoadDef().getId() == 9800057 && n > 0){
+					long dd = 4;
+				}
+				if (n > 0 && firstMatch == null)
+					firstMatch = numbers;
+				if (n == 1 && matches > 0){
+					if (last.getLeftEnd() == numbers.getLeftStart() && last.getLeftEnd() == hn || 
+							last.getRightEnd() == numbers.getRightStart() && last.getRightEnd() == hn ||
+							last.getLeftStart() == numbers.getLeftEnd() && last.getLeftStart() == hn||
+							last.getRightStart() == numbers.getRightEnd() && last.getRightStart() == hn){
+						n = 0; // intervals are overlapping, probably two houses (e.g. 2a,2b) at a T junction
+					}
+				}
+				matches += n;
+				if (numbers.getLeftNumberStyle() != NumberStyle.NONE || numbers.getRightNumberStyle() != NumberStyle.NONE)
+					last = numbers;
+			}
+			if (shouldExist){
+				if (matches == 0){
+					++countErrors;
+					if (house.getDistance() < MAX_DISTANCE_TO_ROAD / 2){
+						// try to add node so that this is found 
+
+						for (int i = 0; i < 2; i++){
+							Coord c = r.getPoints().get(house.getSegment() + i);
+							if (c.isNumberNode() == false){
+								c.setNumberNode(true);
+								nodeAdded = true;
+							}
+						}
+
+					}
+					log.error(r.getName(),hn,house.getElement().toBrowseURL(),"will not be found" );
+				}
+				else if (matches > 1){
+					++countErrors;
+					log.error(r.getName(),hn,house.getElement().toBrowseURL(),"is coded in",matches,"different road segments");
+				}
+				
+			} else {
+				if (matches > 0){
+					++countErrors;
+					log.error("housenumber", hn,house.getElement().toBrowseURL(),"is found in other road",r);
+				}
+			}
+		}
+		if (shouldExist){
+			return (nodeAdded) ? countErrors : -countErrors;
+		} else 
+			return -countErrors;
+	}
 	/**
 	 * If the closest point to a road is a junction, try to find the road
 	 * segment that forms a right angle with the house 
