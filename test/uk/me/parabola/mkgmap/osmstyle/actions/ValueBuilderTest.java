@@ -204,4 +204,24 @@ public class ValueBuilderTest {
 		exp.add("name");
 		assertEquals(exp, vb.getUsedTags());
 	}
+
+	@Test
+	public void testTranslitAscii() {
+		ValueBuilder vb = new ValueBuilder("${name|ascii}");
+
+		Element el = new Way(1);
+		el.addTag("name", "frêd");
+		String s = vb.build(el, null);
+		assertEquals("fred", s);
+	}
+
+	@Test
+	public void testTranslitLatin1() {
+		ValueBuilder vb = new ValueBuilder("${name|latin1}");
+
+		Element el = new Way(1);
+		el.addTag("name", "frêdş");
+		String s = vb.build(el, null);
+		assertEquals("frêds", s);
+	}
 }

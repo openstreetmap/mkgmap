@@ -39,11 +39,14 @@ public class ValueBuilder {
 
 			// This must be last
 			Pattern.compile("[ \t]*([^: \\t|]+:[^|]*)"),
+			Pattern.compile("[ \t]*([^: \\t|]+)"),
 	};
+
+	private static final Pattern NAME_ARG_SPLIT = Pattern.compile("([^:]+)(?::[\"']?(.*?)[\"']?)?", Pattern.DOTALL);
 
 	private final List<ValueItem> items = new ArrayList<>();
 	private final boolean completeCheck;
-	
+
 	public ValueBuilder(String pattern) {
 		this (pattern, true);
 	}
@@ -190,9 +193,8 @@ public class ValueBuilder {
 	}
 
 	private void addFilter(ValueItem item, String expr) {
-		Pattern pattern = Pattern.compile("([^:]+):[\"']?(.*?)[\"']?", Pattern.DOTALL);
+		Matcher matcher = NAME_ARG_SPLIT.matcher(expr);
 
-		Matcher matcher = pattern.matcher(expr);
 		matcher.matches();
 		String cmd = matcher.group(1);
 		String arg = matcher.group(2);
@@ -224,6 +226,12 @@ public class ValueBuilder {
 			break;
 		case "part":
 			item.addFilter(new PartFilter(arg));
+			break;
+		case "ascii":
+			item.addFilter(new TransliterateFilter("ascii"));
+			break;
+		case "latin1":
+			item.addFilter(new TransliterateFilter("latin1"));
 			break;
 		case "country-ISO":
 			item.addFilter(new CountryISOFilter());
