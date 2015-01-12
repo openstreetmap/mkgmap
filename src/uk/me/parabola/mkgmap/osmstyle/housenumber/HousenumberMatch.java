@@ -30,7 +30,7 @@ import uk.me.parabola.mkgmap.reader.osm.Way;
 public class HousenumberMatch {
 
 	private final Element element;
-	
+	private Coord location;
 	private MapRoad road;
 	
 	private double distance = Double.POSITIVE_INFINITY;
@@ -56,7 +56,9 @@ public class HousenumberMatch {
 	 * @return location of housenumber
 	 */
 	public Coord getLocation() {
-		return (element instanceof Node ? ((Node)element).getLocation() : ((Way)element).getCofG());
+		if (location == null)
+		  location = (element instanceof Node ? ((Node)element).getLocation() : ((Way)element).getCofG());
+		return location;
 	}
 	
 	/**
