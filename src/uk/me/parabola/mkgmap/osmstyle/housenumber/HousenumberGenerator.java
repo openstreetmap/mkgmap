@@ -588,15 +588,14 @@ public class HousenumberGenerator {
 		}
 		
 		// go through all roads and apply the house numbers
-		for (Entry<MapRoad, List<HousenumberMatch>> roadX : roadNumbers.entrySet()) {
-			MapRoad r = roadX.getKey();
-			if (roadX.getValue().isEmpty()) {
+		for (MapRoad r : roads){
+			List<HousenumberMatch> potentialumbersThisRoad = roadNumbers.get(r);
+			if (potentialumbersThisRoad.isEmpty()) 
 				continue;
-			}
 			
 			List<HousenumberMatch> leftNumbers = new ArrayList<HousenumberMatch>();
 			List<HousenumberMatch> rightNumbers = new ArrayList<HousenumberMatch>();
-			for (HousenumberMatch hr : roadX.getValue()) {
+			for (HousenumberMatch hr : potentialumbersThisRoad) {
 				if (hr.isLeft()) {
 					leftNumbers.add(hr);
 				} else {
@@ -610,7 +609,7 @@ public class HousenumberGenerator {
 			List<Numbers> numbersListing = new ArrayList<Numbers>();
 			
 			log.info("Housenumbers for",r.getName(),r.getCity());
-			log.info("Numbers:",roadX.getValue());
+			log.info("Numbers:",potentialumbersThisRoad);
 			
 			int n = 0;
 			int nodeIndex = 0;
