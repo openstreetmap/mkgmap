@@ -184,7 +184,7 @@ public class Numbers {
 			}
 			if (start2 > end1 || end2 < start1)
 				return true;
-			if (leftStart == leftEnd && rightStart == rightEnd)
+			if (leftStart == leftEnd && rightStart == rightEnd && leftStart == rightStart)
 				return true; // single number on both sides of the road 
 			
 			return false;

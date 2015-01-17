@@ -88,6 +88,36 @@ public class NumbersTest {
 		Numbers numbers = new Numbers(spec);
 		assertTrue(numbers.isPlausible());
 	}
+	@Test
+	public void testSingleNumOneSideEqualStartOrEndOtherSide1() {
+		String spec = "0,O,13,15,O,15,15";
+		Numbers numbers = new Numbers(spec);
+		assertFalse(numbers.isPlausible());
+	}
+	@Test
+	public void testSingleNumOneSideEqualStartOrEndOtherSide2() {
+		String spec = "0,O,15,15,O,13,15";
+		Numbers numbers = new Numbers(spec);
+		assertFalse(numbers.isPlausible());
+	}
+	@Test
+	public void testSingleNumOneSideEqualStartOrEndOtherSide3() {
+		String spec = "0,O,15,13,O,15,15";
+		Numbers numbers = new Numbers(spec);
+		assertFalse(numbers.isPlausible());
+	}
+	@Test
+	public void testSingleNumOneSideEqualStartOrEndOtherSide4() {
+		String spec = "0,O,15,15,O,15,13";
+		Numbers numbers = new Numbers(spec);
+		assertFalse(numbers.isPlausible());
+	}
+	@Test
+	public void testSingleDifferentNumEachSide() {
+		String spec = "0,O,15,15,O,13,13";
+		Numbers numbers = new Numbers(spec);
+		assertTrue(numbers.isPlausible());
+	}
 	
 	@Test
 	public void testCountMatchesValid() {
