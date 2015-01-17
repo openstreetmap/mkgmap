@@ -182,10 +182,12 @@ public class Numbers {
 				start2 = rightEnd;
 				end2 = rightStart;
 			}
-			if (start1 <= start2 && start2 <= end1)
-				return false;
-			if (start1 <= end2 && end2 <= end1)
-				return false;
+			if (start2 > end1 || end2 < start1)
+				return true;
+			if (leftStart == leftEnd && rightStart == rightEnd)
+				return true; // single number on both sides of the road 
+			
+			return false;
 		}
 		
 		return true;
@@ -230,6 +232,10 @@ public class Numbers {
 				if (rightEnd <= hn && hn <= rightStart)
 					++matches;
 			}
+		}
+		if (matches > 1){
+			if (leftStart == leftEnd && rightStart == rightEnd)
+				matches = 1; // single number on both sides of the road 
 		}
 		return matches;
 	}

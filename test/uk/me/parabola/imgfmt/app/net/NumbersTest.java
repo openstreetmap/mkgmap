@@ -70,7 +70,25 @@ public class NumbersTest {
 		Numbers numbers = new Numbers(spec);
 		assertFalse(numbers.isPlausible());
 	}
-
+	@Test
+	public void testNotOK1() {
+		String spec = "0,B,10,23,O,15,15";
+		Numbers numbers = new Numbers(spec);
+		assertFalse(numbers.isPlausible());
+	}
+	@Test
+	public void testNotOK2() {
+		String spec = "0,O,15,15,B,10,23";
+		Numbers numbers = new Numbers(spec);
+		assertFalse(numbers.isPlausible());
+	}
+	@Test
+	public void testSingleNumBothSides() {
+		String spec = "0,O,15,15,O,15,15";
+		Numbers numbers = new Numbers(spec);
+		assertTrue(numbers.isPlausible());
+	}
+	
 	@Test
 	public void testCountMatchesValid() {
 		String spec = "0,O,1,7,E,2,12";
@@ -87,6 +105,5 @@ public class NumbersTest {
 		assertEquals(0,numbers.countMatches(8));
 		assertEquals(0,numbers.countMatches(13));
 	}
-
 	
 }
