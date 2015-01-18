@@ -201,6 +201,8 @@ public class RoadDef {
 
 		NumberPreparer numbers = null;
 		if (numbersList != null) {
+			if (numbersList.size() > nodeCount)
+				nodeCount = numbersList.size();
 			numbers = new NumberPreparer(numbersList);
 			numbers.fetchBitStream();
 			if (!numbers.isValid()){
