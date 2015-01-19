@@ -1105,7 +1105,8 @@ public class MultiPolygonRelation extends Relation {
 		// This enables the style file to decide if the polygon information or
 		// the simple line information should be used.
 		for (Way orgOuterWay : outerWaysForLineTagging) {
-			Way lineTagWay =  new Way(FakeIdGenerator.makeFakeId(), orgOuterWay.getPoints());
+			Way lineTagWay =  new Way(getOriginalId(), orgOuterWay.getPoints());
+			lineTagWay.setFakeId();
 			lineTagWay.addTag(STYLE_FILTER_TAG, STYLE_FILTER_LINE);
 			lineTagWay.addTag(MP_CREATED_TAG, "true");
 			for (Entry<String,String> tag : outerTags.entrySet()) {
@@ -1555,8 +1556,9 @@ public class MultiPolygonRelation extends Relation {
 		List<Way> cuttedOuterPolygon = new ArrayList<Way>(finishedAreas.size());
 		Long2ObjectOpenHashMap<Coord> commonCoordMap = new Long2ObjectOpenHashMap<>();
 		for (Area area : finishedAreas) {
-			Way w = singularAreaToWay(area, FakeIdGenerator.makeFakeId());
+			Way w = singularAreaToWay(area, getOriginalId());
 			if (w != null) {
+				w.setFakeId();
 				// make sure that equal coords are changed to identical coord instances
 				// this allows merging in the ShapeMerger
 				// TODO: maybe better merge here?
@@ -2201,7 +2203,8 @@ public class MultiPolygonRelation extends Relation {
 		// This enables the style file to decide if the polygon information or
 		// the simple line information should be used.
 		for (Way orgOuterWay : outerWaysForLineTagging) {
-			Way lineTagWay =  new Way(FakeIdGenerator.makeFakeId(), orgOuterWay.getPoints());
+			Way lineTagWay =  new Way(getOriginalId(), orgOuterWay.getPoints());
+			lineTagWay.setFakeId();
 			lineTagWay.addTag(STYLE_FILTER_TAG, STYLE_FILTER_LINE);
 			lineTagWay.addTag(MP_CREATED_TAG, "true");
 			for (Entry<String,String> tag : tags.entrySet()) {
@@ -2369,8 +2372,9 @@ public class MultiPolygonRelation extends Relation {
 		private Rectangle bounds;
 
 		public JoinedWay(Way originalWay) {
-			super(FakeIdGenerator.makeFakeId(), originalWay.getPoints());
-			this.originalWays = new ArrayList<Way>();
+			super(originalWay.getOriginalId(), originalWay.getPoints());
+			setFakeId();
+			originalWays = new ArrayList<Way>();
 			addWay(originalWay);
 
 			// we have to initialize the min/max values

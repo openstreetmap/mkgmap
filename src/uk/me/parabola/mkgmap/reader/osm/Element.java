@@ -25,6 +25,7 @@ import java.util.Map;
 public abstract class Element {
 	private Tags tags;
 	private long id;
+	private long OriginalId;
 
 	public int getTagCount() {
 		return (tags == null ? 0 : tags.size());
@@ -170,10 +171,19 @@ public abstract class Element {
 		return id;
 	}
 
-	protected void setId(long id) {
-		this.id = id;
+	public long getOriginalId() {
+		return OriginalId;
 	}
 
+	protected void setId(long id) {
+		this.id = id;
+		OriginalId = id;
+	}
+
+	public void setFakeId() {
+		id = FakeIdGenerator.makeFakeId();
+	}
+	
 	public String toTagString() {
 		if (tags == null)
 			return "[]";

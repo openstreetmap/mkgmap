@@ -16,6 +16,7 @@
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 
 /**
  * Sends a message to the console.
@@ -31,7 +32,7 @@ public class EchoAction implements Action {
 
 	public boolean perform(Element el) {
 		String e = value.build(el, el);
-		System.err.println(el.getId() + ": " + e);
+		System.err.println(el.getId() + (FakeIdGenerator.isFakeId(el.getId()) ? " (" + el.getOriginalId() + ")" : "") + ": " + e);
 		return false;
 	}
 }
