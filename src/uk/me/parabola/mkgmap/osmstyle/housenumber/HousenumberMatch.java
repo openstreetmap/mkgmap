@@ -40,6 +40,9 @@ public class HousenumberMatch {
 	private double segmentFrac;
 	
 	private int housenumber;
+	private String sign; 
+	private boolean hasAlternativeRoad;
+	private int dubious; // increased when this element might be wrong
 	
 	/**
 	 * Instantiates a new housenumber match element.
@@ -117,7 +120,7 @@ public class HousenumberMatch {
 	 */
 	private void parseHousenumber() {
 		String housenumberString = getHousenumber(element);
-		
+		sign = housenumberString;
 		if (housenumberString == null) {
 			throw new IllegalArgumentException("No housenumber found in "+element.toBrowseURL());
 		}
@@ -233,6 +236,28 @@ public class HousenumberMatch {
 	 */
 	public Element getElement() {
 		return element;
+	}
+
+	/** 
+	 * @return the house number as coded in the tag
+	 */
+	public String getSign(){
+		return sign;
+	}
+	
+	public boolean hasAlternativeRoad() {
+		return hasAlternativeRoad;
+	}
+
+	public void setHasAlternativeRoad(boolean hasAlternativeRoad) {
+		this.hasAlternativeRoad = hasAlternativeRoad;
+	}
+
+	public void incDubious(){
+		dubious++;
+	}
+	public int getDubious(){
+		return dubious;
 	}
 	
 	public String toString() {
