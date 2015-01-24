@@ -238,6 +238,9 @@ public class LinePreparer {
 			lastLong = lon;
 			lastLat = lat;
 
+			if (dx == 0 && dy == 0 && co.isNumberNode() && co.getId() == 0){
+				// TODO: extra bit or not
+			}
 			if (dx != 0 || dy != 0 || (extraBit && co.getId() != 0))
 				firstsame = i;
 

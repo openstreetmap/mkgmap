@@ -42,6 +42,7 @@ public class HousenumberMatch {
 	private int housenumber;
 	private String sign; 
 	private boolean hasAlternativeRoad;
+	private boolean ignored;
 	private int dubious; // increased when this element might be wrong
 	
 	/**
@@ -54,6 +55,12 @@ public class HousenumberMatch {
 		parseHousenumber();
 	}
 	
+	public HousenumberMatch(Element element, int hn, String sign){
+		this.element = element;
+		this.housenumber = hn;
+		this.sign = sign;
+	}
+
 	/**
 	 * Retrieves the location of the housenumber.
 	 * @return location of housenumber
@@ -253,14 +260,27 @@ public class HousenumberMatch {
 		this.hasAlternativeRoad = hasAlternativeRoad;
 	}
 
-	public void incDubious(){
-		dubious++;
+	public void incDubious(int inc){
+		dubious += inc;
 	}
+	
 	public int getDubious(){
 		return dubious;
 	}
 	
+	
+	public boolean isIgnored() {
+		return ignored;
+	}
+
+	public void setIgnored(boolean ignored) {
+		this.ignored = ignored;
+	}
+
 	public String toString() {
-		return String.valueOf(housenumber)+"("+segment+")";
+		String s1 = String.valueOf(housenumber);
+		if (sign.length() > 2 + s1.length())
+			return s1 + "("+segment+")";
+		return sign + "("+segment+")";
 	}
 }
