@@ -90,6 +90,7 @@ public class ExtNumbers {
 	 */
 	public int setNumbers(List<HousenumberMatch> housenumbers, int startSegment, int endSegment, boolean left) {
 		int assignedNumbers = 0;
+		
 		if (housenumbers.isEmpty() == false) {
 			// get the sublist of house numbers
 			int maxN = -1;
@@ -111,6 +112,7 @@ public class ExtNumbers {
 				
 				startInRoad = startSegment;
 				endInRoad = endSegment;
+				assert startSegment < endSegment;
 				if (r.getPoints().get(startInRoad).isNumberNode() == false || r.getPoints().get(endInRoad).isNumberNode() == false){
 					log.error("internal error: start or end is not a number node");
 				}
@@ -134,22 +136,26 @@ public class ExtNumbers {
 			boolean inOrder = true;
 			int lastNum = -1;
 			int lastDiff = 0;
-			int highestNum = 0;
-			int lowestNum = Integer.MAX_VALUE;
+			HousenumberMatch highest, lowest;
+			lowest = highest = housenumbers.get(0);
+//			int highestNum = 0;
+//			int lowestNum = Integer.MAX_VALUE;
 			int numHouses = housenumbers.size();
 			for (int i = 0; i< numHouses; i++) {
 				HousenumberMatch hnm = housenumbers.get(i);
 				int num = hnm.getHousenumber();
 				addToSorted(hnm);
-				if (num > highestNum)
-					highestNum = num;
-				if (num < lowestNum)
-					lowestNum = num;
+				if (num > highest.getHousenumber())
+					highest = hnm;
+				if (num < lowest.getHousenumber())
+					lowest = hnm;
 				if (lastNum > 0){
 					int diff = num - lastNum;
 					if (diff != 0 && lastDiff != 0){
 						if(lastDiff * diff < 0){
 							inOrder = false; // sign changed
+							if (hnm.getAltSegments() != null)
+								hnm.incDubious(1);
 						}
 					}
 					lastDiff = diff;
@@ -169,6 +175,8 @@ public class ExtNumbers {
 			} else {
 				style = NumberStyle.ODD;
 			}
+			int highestNum = highest.getHousenumber();
+			int lowestNum = lowest.getHousenumber();
 			int start = housenumbers.get(0).getHousenumber();
 			int end = housenumbers.get(numHouses-1).getHousenumber();
 			boolean increasing = false; // from low to high
@@ -187,15 +195,12 @@ public class ExtNumbers {
 			}
 			else if (start != highestNum && start != lowestNum
 					|| end != highestNum && end != lowestNum) {
-
 				inOrder = false;
-
 				if (start <= end)
 					increasing = true;
-				end = highestNum;
-			} else if (start < end)
+			} else if (start < end){
 				increasing = true;
-				
+			}
 			if (increasing){
 				start = lowestNum;
 				end = highestNum;
@@ -298,7 +303,6 @@ public class ExtNumbers {
 	 * @return
 	 */
 	private ExtNumbers tryAddNumberNode() {
-		final double MIN_SEGMENT_LENGTH = 6.0;
 		String action;
 		if (endInRoad - startInRoad > 1)
 			action = "change";
@@ -441,6 +445,8 @@ public class ExtNumbers {
 
 	private ExtNumbers combineSides() {
 		boolean left = false;
+		if (leftHouses.isEmpty() || rightHouses.isEmpty())
+			return this;
 		if (leftHouses.size() > rightHouses.size())
 			left = true;
 		
@@ -476,8 +482,16 @@ public class ExtNumbers {
 					if (hnm.getSegmentFrac() > fraction)
 						hnm.setSegment(s+1);
 				}
+				if (hnm.getAltSegments() == null)
+					continue;
+				for (int i = 0; i < hnm.getAltSegments().size(); i++){
+					int n = hnm.getAltSegments().get(i) ;
+					if (n > startPos)
+						hnm.getAltSegments().set(i, n+1);
+				}
 			}
 		}
+		
 	}
 	
 	
@@ -642,9 +656,13 @@ public class ExtNumbers {
 		return numErrors;
 	}
 	
-	public ExtNumbers checkChainPlausibility(String streetName, MultiHashMap<HousenumberMatch, MapRoad> badMatches){
+	public ExtNumbers checkChainPlausibility(int depth,
+			String streetName,
+			MultiHashMap<HousenumberMatch, MapRoad> badMatches) {
 		ExtNumbers curr = this;
-		
+		if (depth > 10){
+			// TODO should we stop here ?
+		}
 		for (int i = 0; i < 2; i++){
 			curr = this;
 			boolean left = (i == 0);
@@ -674,11 +692,14 @@ public class ExtNumbers {
 									
 									List<HousenumberMatch> cHhouses = left ? curr.leftHouses : curr.rightHouses;
 									List<HousenumberMatch> wHhouses = left ? work.leftHouses : work.rightHouses;
-									log.error("check",r, (left ? "left:" : "right"),cn,wn,cHhouses, wHhouses);
+									log.error("checking unplausible combination of intervals",r, (left ? "left:" : "right"),cn,wn,cHhouses, wHhouses);
 									
 //									int oldBad = badMatches.size();
 									ArrayList<HousenumberMatch> toIgnore = new ArrayList<>();
 									for (HousenumberMatch hnm : cHhouses){
+										if (hnm.getAltSegments() != null){
+											log.error("special case L-shape ?", streetName,hnm,hnm.getElement().toBrowseURL(), hnm.getAltSegments());
+										}
 										int n = hnm.getHousenumber();
 										if (hnm.getDubious() > 0 || hnm.hasAlternativeRoad()){
 											if (n == cs || n == ce) {
@@ -687,14 +708,15 @@ public class ExtNumbers {
 												int ce2 = left ? modNumbers.getLeftEnd() : modNumbers.getRightEnd();
 												boolean ok2 = checkIntervalBoundaries(cs2, ce2, ws, we);	
 												if (ok2){
-//													badMatches.add(hnm, hnm.getRoad());
-//													return this;
 													toIgnore.add(hnm);
 												}
 											}
 										}
 									}
 									for (HousenumberMatch hnm : wHhouses){
+										if (hnm.getAltSegments() != null){
+											log.error("special case L-shape ?", streetName,hnm,hnm.getElement().toBrowseURL(), hnm.getAltSegments());
+										}
 										int n = hnm.getHousenumber();
 										if (hnm.getDubious() > 0 || hnm.hasAlternativeRoad()){
 											if (n == ws || n == we) {
@@ -704,15 +726,44 @@ public class ExtNumbers {
 												boolean ok2 = checkIntervalBoundaries(cs, ce, ws2, we2);	
 												if (ok2){
 													toIgnore.add(hnm);
-//													badMatches.add(hnm, hnm.getRoad());
-//													return this;
 												}
 											}
 										}
 									}
 									if (toIgnore.size() == 1){
+										HousenumberMatch hnm = toIgnore.get(0);
+										log.error("adding to exclude list: combination of",streetName,hnm,hnm.getElement().toBrowseURL(),"and road",hnm.getRoad());
 										badMatches.add(toIgnore.get(0), toIgnore.get(0).getRoad());
 									} else {
+										if (work != curr.next){
+											// TODO next is empty, better move number to next instead of splitting work or curr ?
+											return this;
+										}
+										ExtNumbers toSplit = null;
+										if(toIgnore.size() > 1){
+											if (curr.endInRoad - curr.startInRoad > work.endInRoad - work.startInRoad)
+												toSplit = curr;
+											else 
+												toSplit = work;
+										}
+										else if (Math.abs(ce-cs) > Math.abs(we-ws)){
+											toSplit = curr;
+
+										} else {
+											toSplit = work;
+										}
+										if (toSplit != null){
+											ExtNumbers test = toSplit.tryAddNumberNode();
+											if (test != toSplit){
+												if (test.prev == null)
+													return test.checkChainPlausibility(depth+1,streetName, badMatches);
+												else 
+													return this.checkChainPlausibility(depth+1,streetName, badMatches);
+											} else {
+												long dd = 4;
+											}
+											
+										}
 									}
 									return this; // no need to continue;
 								}

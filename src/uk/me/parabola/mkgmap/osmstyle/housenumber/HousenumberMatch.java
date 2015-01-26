@@ -13,6 +13,8 @@
 
 package uk.me.parabola.mkgmap.osmstyle.housenumber;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,6 +44,7 @@ public class HousenumberMatch {
 	private int housenumber;
 	private String sign; 
 	private boolean hasAlternativeRoad;
+	private IntArrayList altSegments;
 	private boolean ignored;
 	private int dubious; // increased when this element might be wrong
 	
@@ -283,4 +286,13 @@ public class HousenumberMatch {
 			return s1 + "("+segment+")";
 		return sign + "("+segment+")";
 	}
+
+	public void setAltSegments(IntArrayList goodSegments) {
+		altSegments = goodSegments;
+	}
+	
+	public IntArrayList getAltSegments() {
+		return altSegments;
+	}
+
 }
