@@ -281,10 +281,17 @@ public class Polyline extends MapObject {
 	public int getNodeCount() {
 		int idx = 0;
 		int count = 0;
+		boolean countNumberNodes = roaddef.hasHouseNumbers();
 		for (Coord co : points) {
-			if (idx++ > 0 && co.getId() > 0)
+			if (idx++ > 0 && (co.getId() > 0 || countNumberNodes && co.isNumberNode()))
 				count++;
 		}
 		return count;
+	}
+
+	public boolean hasHouseNumbers() {
+		if (!isRoad())
+			return false;
+		return roaddef.hasHouseNumbers();
 	}
 }

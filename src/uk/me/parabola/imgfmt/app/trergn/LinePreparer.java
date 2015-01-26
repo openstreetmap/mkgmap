@@ -47,6 +47,8 @@ public class LinePreparer {
 	private int[] deltas;
 	private boolean[] nodes;
 
+	private boolean ignoreNumberOnlyNodes;
+
 	LinePreparer(Polyline line) {
 		if (line.isRoad() && 
 			line.getSubdiv().getZoom().getLevel() == 0 &&
@@ -55,6 +57,8 @@ public class LinePreparer {
 			// but who knows
 			extraBit = true;
 		}
+		if (!line.hasHouseNumbers())
+			ignoreNumberOnlyNodes = true;
 
 		extTypeLine = line.hasExtendedType();
 
@@ -239,7 +243,8 @@ public class LinePreparer {
 			lastLat = lat;
 
 			if (dx == 0 && dy == 0 && co.isNumberNode() && co.getId() == 0){
-				// TODO: extra bit or not
+				// TODO: extra bit or not ?
+				long dd = 4;
 			}
 			if (dx != 0 || dy != 0 || (extraBit && co.getId() != 0))
 				firstsame = i;
@@ -254,7 +259,7 @@ public class LinePreparer {
 			 */
 			if (extraBit) {
 				boolean extra = false;
-				if (co.isNumberNode()) {
+				if (co.getId() > 0 || (co.isNumberNode() && ignoreNumberOnlyNodes == false)) {
 					if (i < nodes.length - 1)
 						// inner node of polyline
 						extra = true;
