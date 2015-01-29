@@ -862,13 +862,14 @@ public class MapBuilder implements Configurable {
 			map.addInfo(info);
 		if (copyrights.isEmpty()){
 			// There has to be (at least) two copyright messages or else the map
-			// does not show up.  The second one will be displayed at startup,
-			// although the conditions where that happens are not known.
-			map.addCopyright("program licenced under GPL v2");
+			// does not show up.  The second and subsequent ones will be displayed
+			// at startup, although the conditions where that happens are not known.
+			// All copyright messages are displayed in BaseCamp.
+			String[] copyrightMessages = src.copyrightMessages();
+			if (copyrightMessages.length < 2)
+				map.addCopyright("program licenced under GPL v2");
 
-			// This one gets shown when you switch on, so put the actual
-			// map copyright here.
-			for (String cm : src.copyrightMessages())
+			for (String cm : copyrightMessages)
 				map.addCopyright(cm);
 		} else {
 			for (String cm : copyrights)
