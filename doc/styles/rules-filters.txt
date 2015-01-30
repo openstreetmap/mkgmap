@@ -129,6 +129,28 @@ are counted starting from zero and the end position is not included.
 `${name\|substring:2:5}`
 If the "name" was "Dorset Lane", then the result is "rse".  If there is just the one number,
 then the substring starts from that character until the end of the string.
+
+| not-contained | `separator tag` |
+Used to check for duplicate values. If the value of this tag is contained in the list being
+the value of the tag named as the argument to +not-contained+, then value
+of this tag is set to undefined.
+
+....
+type=route & route=bus & ref=* {
+   apply {
+      set route_ref='$(route_ref),${ref|not-contained:,:route_ref}' | '$(route_ref)' | '${ref}';
+   }
+}
+....
+
+Here, +ref+ value is only added to +route_ref+ when it is not already contained in that list
+(with separator ','). Otherwise, the value of +route_ref+ is unchanged.
+This helps to get correct labeling (no duplicates) for public transport lines where there can be multiple relations
+with the same +ref+ attribute (e.g. one for the forward and one for the backward direction).
+
+For example, if +route_ref+ was already "1,2,150" and +ref+ would again be "150",
+this value would not be added to the list as it is already there.
+In contrast, +ref+ equal to "229" would be added, so after that +route_ref+ would have the value "1,2,150,229"
 |=====
 
 === Symbol codes

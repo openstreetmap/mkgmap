@@ -236,6 +236,9 @@ public class ValueBuilder {
 		case "country-ISO":
 			item.addFilter(new CountryISOFilter());
 			break;
+		case "not-contained":
+			item.addFilter(new NotContainedFilter(arg));
+			break;
 		default:
 			throw new SyntaxException(String.format("Unknown filter '%s'", cmd));
 		}
