@@ -138,7 +138,7 @@ of this tag is set to undefined.
 ....
 type=route & route=bus & ref=* {
    apply {
-      set route_ref='$(route_ref),${ref|not-contained:,:route_ref}' | '$(route_ref)' | '${ref}';
+      set route_ref='$(route_ref),${ref\|not-contained:,:route_ref}' \| '$(route_ref)' \| '${ref}';
    }
 }
 ....
