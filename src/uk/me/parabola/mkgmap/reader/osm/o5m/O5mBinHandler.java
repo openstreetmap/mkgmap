@@ -314,7 +314,7 @@ public class O5mBinHandler extends OsmHandler{
 		while (bytesToRead > 0){
 			readStringPair();
 			String key = stringPair[0];
-			String val = stringPair[1];
+			String val = stringPair[1].trim();
 			// the type tag is required for relations - all other tags are filtered
 			if (elem instanceof Relation && "type".equals(key))
 				// intern the string
