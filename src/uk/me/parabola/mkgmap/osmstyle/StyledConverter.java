@@ -138,7 +138,7 @@ public class StyledConverter implements OsmConverter {
 	private int reportDeadEnds; 
 	private final boolean linkPOIsToWays;
 	private final boolean mergeRoads;
-	private WrongAngleFixer wrongAngleFixer;
+	
 
 	private LineAdder lineAdder = new LineAdder() {
 		public void add(MapLine element) {
@@ -197,7 +197,7 @@ public class StyledConverter implements OsmConverter {
 		// undocumented option - usually used for debugging only
 		mergeRoads = props.getProperty("no-mergeroads", false) == false;
 
-		wrongAngleFixer = new WrongAngleFixer(bbox);
+		
 	}
 
 	/** One type result for ways to avoid recreating one for each way. */ 
@@ -540,7 +540,7 @@ public class StyledConverter implements OsmConverter {
 		findUnconnectedRoads();
 		rotateClosedWaysToFirstNode();
 		filterCoordPOI();
-
+		WrongAngleFixer wrongAngleFixer = new WrongAngleFixer(bbox);
 		wrongAngleFixer.optimizeWays(roads, lines, modifiedRoads, deletedRoads, restrictions);
 
 		// make sure that copies of modified roads have equal points 
