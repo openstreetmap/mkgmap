@@ -295,4 +295,10 @@ public class HousenumberMatch {
 		return altSegments;
 	}
 
+	public double getBearing(){
+		Coord c1 = getRoad().getPoints().get(getSegment());
+		Coord c2 = getRoad().getPoints().get(getSegment()+1);
+		return c1.bearingTo(c2);
+	}
+	
 }

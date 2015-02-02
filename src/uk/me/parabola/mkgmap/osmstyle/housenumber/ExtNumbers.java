@@ -13,6 +13,8 @@
 
 package uk.me.parabola.mkgmap.osmstyle.housenumber;
 
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -30,6 +32,7 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.osmstyle.housenumber.HousenumberGenerator.HousenumberMatchComparator;
+import uk.me.parabola.util.GpxCreator;
 import uk.me.parabola.util.MultiHashMap;
 
 /**
@@ -230,8 +233,11 @@ public class ExtNumbers {
 	public List<Numbers> getNumberList() {
 		List<Numbers> list = new ArrayList<>();
 		ExtNumbers curr = this;
+		boolean hasNumbers = false;
 		while (curr != null){
 			list.add(curr.getNumbers());
+			if (curr.getNumbers().getLeftNumberStyle() != NumberStyle.NONE || curr.getNumbers().getRightNumberStyle() != NumberStyle.NONE)
+				hasNumbers = true;
 			if (log.isInfoEnabled()) {
 				Numbers cn = curr.getNumbers();
 				log.info("Left: ",cn.getLeftNumberStyle(),cn.getRnodNumber(),"Start:",cn.getLeftStart(),"End:",cn.getLeftEnd(), "numbers "+curr.leftHouses);
@@ -240,16 +246,49 @@ public class ExtNumbers {
 			
 			curr = curr.next;
 		}
-		return list;
+		if (hasNumbers)
+			return list;
+		return null;
 	}
 	
 
-	public ExtNumbers checkChainSegments(MultiHashMap<HousenumberMatch, MapRoad> badMatches) {
+	public ExtNumbers checkChainSegmentLengths(MultiHashMap<HousenumberMatch, MapRoad> badMatches) {
+		ExtNumbers curr = this;
+		while (curr != null){
+			boolean isOK = true;
+			if (curr.getNumbers().getLeftNumberStyle() == NumberStyle.BOTH){
+				int oddEven[] = new int[2];
+				int numDistinct = countDistinctOddEven(curr.leftHouses, oddEven);
+				if (Math.abs(oddEven[0] - oddEven[1]) > 1)
+					isOK = false;	
+			}
+			if (isOK && curr.getNumbers().getRightNumberStyle() == NumberStyle.BOTH){
+				int oddEven[] = new int[2];
+				int numDistinct = countDistinctOddEven(curr.rightHouses, oddEven);
+				if (Math.abs(oddEven[0] - oddEven[1]) > 1)
+					isOK = false;	
+			}
+			if (!isOK){
+				double len = curr.getRoadPartLength();
+				ExtNumbers test = curr.tryAddNumberNode();
+				if (test != curr){
+					if (curr.prev == null)
+						return test.checkChainSegmentLengths(badMatches);
+					curr = test;
+				}
+				
+			}
+			curr = curr.next;
+		}
+		return this;
+	}
+
+	public ExtNumbers checkChainSegments(MultiHashMap<HousenumberMatch, MapRoad> badMatches, Int2IntOpenHashMap usedNumbers) {
 		ExtNumbers curr = this;
 		boolean changed = false;
 		while (curr != null){
 			boolean checkCounts = true;
-			
+
 			while (curr.getNumbers().isPlausible() == false){
 				// this happens in the following cases:
 				// 1. correct OSM data, multiple houses build a block. Standing on the road
@@ -266,7 +305,7 @@ public class ExtNumbers {
 					ExtNumbers test = curr.tryAddNumberNode();
 					if (test != curr){
 						if (curr.prev == null)
-							return test.checkChainSegments(badMatches);
+							return test.checkChainSegments(badMatches, usedNumbers);
 						curr = test;
 					}
 					else {
@@ -276,6 +315,20 @@ public class ExtNumbers {
 					}
 				}
 			}
+			while (curr.checkBadMatches(usedNumbers) == false){
+				ExtNumbers test = curr.tryAddNumberNode();
+				if (test != curr){
+					if (curr.prev == null)
+						return test.checkChainSegments(badMatches, usedNumbers);
+					curr = test;
+				}
+				else {
+					log.error("can't fix unplausible numbers interaval for road",curr.r, curr.getNumbers(),"left",curr.leftHouses,"right",curr.rightHouses);
+					checkCounts = false;
+					break;
+				}
+			}
+			
 			if (checkCounts && curr.sortedNumbers != null){
 				for (Integer n : curr.sortedNumbers.keySet()){
 					int matchesThis = curr.getNumbers().countMatches(n);
@@ -288,6 +341,7 @@ public class ExtNumbers {
 						long dd = 4; // TODO: store error
 					}
 				}
+				
 			}
 			curr = curr.next;
 		}
@@ -296,6 +350,22 @@ public class ExtNumbers {
 	}
 
 	
+	private boolean checkBadMatches(Int2IntOpenHashMap usedNumbers) {
+		if (sortedNumbers == null || sortedNumbers.isEmpty())
+			return true;
+		for (int num : usedNumbers.keySet()){
+			if (sortedNumbers.containsKey(num))
+				continue;
+			int matchesThis = getNumbers().countMatches(num);
+			if (matchesThis != 0){
+				log.error("bad match",this.r,getNumbers(),num);
+				return false;
+			}
+		}
+		return true;
+	}
+
+
 	/**
 	 * Try to add a number node
 	 * near the middle. This helps when numbers like 1,3,5,8,10,12 appear
@@ -352,9 +422,14 @@ public class ExtNumbers {
 			double bestFraction = -1;
 			HashSet<Coord> tested = new HashSet<>();
 			int n = 10;
+			// try to find a good split point between the houses
+			double midFraction = (minFraction0To1 + maxFraction0To1) / 2;
+			double startFraction = Math.max(midFraction - 6.0 / segmentLength, minFraction0To1);
+			double endFraction = Math.min(midFraction + 6.0 / segmentLength, maxFraction0To1);
+			
 			for (int i = 1; i < n; i++){
 				double workFraction;
-				workFraction = minFraction0To1 + (double) i / n * (maxFraction0To1 - minFraction0To1);
+				workFraction = startFraction + (double) i / n * (endFraction - startFraction);
 				Coord test = c1.makeBetweenPoint(c2, workFraction);
 				
 				if (tested.add(test) == false)
@@ -364,12 +439,14 @@ public class ExtNumbers {
 					bestFraction = workFraction;
 					bestAngle = angle;
 					toAdd = test;
-					if (angle < 0.1)
+					if (angle < 0.1 && i > n / 2)
 						break;
 				}
 			}
 			double usedFraction = bestFraction;
-//			GpxCreator.createGpx("e:/ld/s"+r.getRoadDef().getId() + "_"+startInRoad, Arrays.asList(c1,toAdd,c2), new ArrayList<>(tested));
+			
+			if (segmentLength > 100 && Math.abs(midFraction - usedFraction) > 0.05)
+				GpxCreator.createGpx("e:/ld/s"+r.getRoadDef().getId() + "_"+startInRoad, Arrays.asList(c1,toAdd,c2), new ArrayList<>(tested));
 			if (c1.equals(toAdd) || c2.equals(toAdd))
 				return combineSides();
 			if (bestAngle > 3){
@@ -595,6 +672,20 @@ public class ExtNumbers {
 		return odd;
 	}
 
+	private static int countDistinctOddEven(List<HousenumberMatch> houses, int [] counters) {
+		Int2IntOpenHashMap tested = new Int2IntOpenHashMap();
+		for (HousenumberMatch hnm : houses){
+			int num = hnm.getHousenumber();
+			if (tested.put(num,1) == 1)
+				continue;
+			if (hnm.getHousenumber() % 2 == 0)
+				++counters[1];
+			else 
+				++counters[0];
+		}
+		return tested.size();
+	}
+
 
 	/**
 	 * Test if each number that was used to build the intervals is 
@@ -615,6 +706,7 @@ public class ExtNumbers {
 			List<ExtNumbers> segments = new ArrayList<>();	
 			int n = hnm.getHousenumber();
 			ExtNumbers curr = this;
+			
 			if (lastCheckedNum == n)
 				countMmatches = lastCheckRes;
 			else {
@@ -822,5 +914,12 @@ public class ExtNumbers {
 		help.setNumbers(left ? rightHouses : leftHouses, startInRoad, endInRoad, !left);
 		return help.getNumbers();
 	}
-	
+
+	double getRoadPartLength(){
+		double len = 0;
+		for (int i = startInRoad; i < endInRoad; i++){
+			len += r.getPoints().get(i).distance(r.getPoints().get(i+1));
+		}
+		return len ;
+	}
 }

@@ -17,6 +17,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
@@ -45,6 +46,7 @@ import uk.me.parabola.mkgmap.reader.osm.POIGeneratorHook;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.TagDict;
 import uk.me.parabola.mkgmap.reader.osm.Way;
+import uk.me.parabola.util.GpxCreator;
 import uk.me.parabola.util.MultiHashMap;
 
 /**
@@ -554,7 +556,7 @@ public class HousenumberGenerator {
 		
 		if (housesNearCluster.isEmpty())
 			return true;
-		
+		log.error("current cluster",streetName,roadsInCluster);
 		MultiHashMap<MapRoad, HousenumberMatch> roadNumbers = new MultiHashMap<MapRoad, HousenumberMatch>(); 
 		Collections.sort(housesNearCluster, new Comparator<HousenumberMatch>() {
 			public int compare(HousenumberMatch o1, HousenumberMatch o2) {
@@ -566,14 +568,14 @@ public class HousenumberGenerator {
 				return o1.getSign().compareTo(o2.getSign());
 			}
 		}); 
+		
 		HousenumberMatch prev = null;
 		for (HousenumberMatch hnm : housesNearCluster) {
-			
 			List<MapRoad> excludedRoads = badRoadMatches.get(hnm);
-			
 			hnm.setDistance(Double.POSITIVE_INFINITY); // make sure that we don't use an old match
 			hnm.setRoad(null);
 			List<HousenumberMatch> matchingRoads = new ArrayList<>();
+			
 			for (MapRoad r : roadsInCluster){
 				if (excludedRoads.contains(r)){
 					continue;
@@ -586,6 +588,7 @@ public class HousenumberGenerator {
 			}
 			if (matchingRoads.isEmpty())
 				continue;
+			
 			HousenumberMatch closest, best; 
 			best = closest  = matchingRoads.get(0);
 			
@@ -612,8 +615,9 @@ public class HousenumberGenerator {
 			hnm.setSegment(best.getSegment());
 			hnm.setHasAlternativeRoad(matchingRoads.size() > 1);
 			hnm.setAltSegments(best.getAltSegments());
-			
-			if (hnm.getRoad() != null) {
+			if (hnm.getRoad() == null) {
+				hnm.setIgnored(true);
+			} else {
 				Coord c1 = hnm.getRoad().getPoints().get(hnm.getSegment());
 				Coord c2 = hnm.getRoad().getPoints().get(hnm.getSegment()+1);
 				double segmentLength = c1.distance(c2);
@@ -623,6 +627,7 @@ public class HousenumberGenerator {
 				hnm.setLeft(isLeft(c1, c2, hnm.getLocation()));
 			}
 			
+			// plausibility check for duplicate house numbers
 			if (prev != null && prev.getHousenumber() == hnm.getHousenumber()){
 				HousenumberMatch bad = null;
 				if (prev.getSign().equals(hnm.getSign())){
@@ -663,22 +668,23 @@ public class HousenumberGenerator {
 				if (bad != null){
 					bad.setIgnored(true);
 					String msgType = prev.getSign().equals(hnm.getSign()) ? "duplicate" : "repeated";
-					log.error("ignoring",msgType,"housenumber",streetName,prev.getSign(),"from",bad.getElement().toBrowseURL() );
+					log.error("ignoring",msgType,"housenumber",streetName,bad.getSign(),"from",bad.getElement().toBrowseURL() );
 				}
 			}
-			if (!hnm.isIgnored())
-				prev = hnm;
 			if (hnm.getRoad() != null) {
 				roadNumbers.add(hnm.getRoad(), hnm);
 			} else {
 				if (hnm.isIgnored() == false)
 					log.error("found no plausible road for house number element",hnm.getElement().toBrowseURL(),"(",streetName,hnm.getSign(),")");
 			}
-			
+			if (!hnm.isIgnored())
+				prev = hnm;
+		}
+		// we have now a first guess for the road and segment of each plausible house number element
+		if (roadsInCluster.size() > 1){
+			checkDubiousRoadMatches(streetName, housesNearCluster, roadNumbers);
 		}
 		int oldBad = badRoadMatches.size();
-		
-//		checkDubiousMatches(streetName, housesNearCluster, badRoadMatches);
 		buildNumberIntervals(streetName, roadsInCluster, roadNumbers,badRoadMatches);
 		if (oldBad != badRoadMatches.size())
 			return false;
@@ -690,85 +696,119 @@ public class HousenumberGenerator {
 	}
 
 
-	private static void checkDubiousMatches(
-			String streetName, List<HousenumberMatch> housesNearCluster,
-			MultiHashMap<HousenumberMatch, MapRoad> badMatches) {
-
-		if ("Am Schwarzen Berg".equals(streetName)){
-			long dd = 4;
-		}
-
-		boolean lookAtleft = false;
-		for (int side = 0; side < 2; side++){
-			HousenumberMatch prev = null;
-			lookAtleft = !lookAtleft;
-			for (int i = 0; i < housesNearCluster.size(); i++){
-				HousenumberMatch curr = housesNearCluster.get(i);
-				if (curr.isLeft() != lookAtleft)
+	/**
+	 * If we find a sequence of house numbers like 1,3,5 or 1,2,3
+	 * where the house in the middle is assigned to a different road,
+	 * it is likely that this match is wrong.
+	 * This typically happens when a house is rather far away from two 
+	 * possible roads, but a bit closer to the wrong match. The two roads
+	 * typically form an L, U, or O shape. 
+	 * @param streetName common name tag (for debugging) 
+	 * @param sortedHouses house number elements sorted by number
+	 * @param roadNumbers the existing map which should be corrected
+	 */
+	private static void checkDubiousRoadMatches(String streetName,
+			List<HousenumberMatch> sortedHouses,
+			MultiHashMap<MapRoad, HousenumberMatch> roadNumbers) {
+		
+		int n = sortedHouses.size();
+		
+		for (int pos1 = 0; pos1 < n; pos1++){
+			HousenumberMatch hnm1 = sortedHouses.get(pos1);
+			if (hnm1.getElement().getId() == 182176493){
+				long dd = 4;
+			}
+			if (hnm1.isIgnored() || hnm1.hasAlternativeRoad() == false)
+				continue;
+			int confirmed = 0;
+			int falsified = 0;
+			int pos2 = pos1;
+			HousenumberMatch bestAlternative = null;
+			double bestAlternativeDist = Double.POSITIVE_INFINITY;
+			
+			
+			while (pos2 > 0){
+				HousenumberMatch hnm2 = sortedHouses.get(pos2);
+				if (hnm1.getHousenumber() - hnm2.getHousenumber() > 2)
+					break;
+					--pos2;
+			}
+			for (; pos2 < n; pos2++){
+				if (confirmed > 0)
+					break;
+				if (pos2 == pos1)
 					continue;
-				if (curr.getRoad() == null)
+				HousenumberMatch hnm2 = sortedHouses.get(pos2);
+				if (hnm2.isIgnored() || hnm2.getRoad() == null)
 					continue;
-				if (prev != null){
-					if (prev.getRoad() != curr.getRoad()){
-						if (prev.getRoad() != curr.getRoad()){
-							HousenumberMatch next = null;
-							for (int j = i+1; j  < housesNearCluster.size(); j++){
-								if (housesNearCluster.get(j).isLeft() == lookAtleft){
-									next = housesNearCluster.get(j);
-									break;
-								}
-							}
-							if (next != null){
-								if (next.getRoad() == prev.getRoad()){
-									log.error("check assignment",streetName,curr,prev,next,curr.getRoad());
-								}
-							}
-						}
-					} else {
-						int deltaSegmentsPrevCurr = prev.getSegment() - curr.getSegment();
-						if (deltaSegmentsPrevCurr != 0){
-							HousenumberMatch next = null;
-							for (int j = i+1; j  < housesNearCluster.size(); j++){
-								if (housesNearCluster.get(j).isLeft() == lookAtleft){
-									next = housesNearCluster.get(j);
-									break;
-								}
-							}
-							if (next != null){
-								int deltaSegmentsCurrNext = curr.getSegment() - next.getSegment();
-								if (next.getRoad() == prev.getRoad() ){
-									if (deltaSegmentsPrevCurr * deltaSegmentsCurrNext < 0){
-										if (prev.getHousenumber() != curr.getHousenumber() && next.getHousenumber() != curr.getHousenumber()){
-											// deltas have different signs, this is a jump within the road
-											if (curr.getAltSegments() != null){
-												log.error("check order in potential L-shape",streetName,prev,"->",curr,"->",next,curr.getRoad());
-												
-											}
-											else if (next.getAltSegments() != null){
-												log.error("check order in potential L-shape",streetName,prev,"->",curr,"->",next,curr.getRoad());
-											}
-											else 
-												log.error("check order ",streetName,prev,"->",curr,"->",next,curr.getRoad());
-										}
-									}
-								}
-							}
-						}
+				int deltaNum = hnm2.getHousenumber() - hnm1.getHousenumber();
+				if (deltaNum > 2)
+					break;
+				if (deltaNum < -2)
+					continue;
+				double distHouses = hnm1.getLocation().distance(hnm2.getLocation());
+				if (hnm2.getRoad() == hnm1.getRoad()){
+					if (Math.abs(hnm1.getSegment() - hnm2.getSegment()) < 2){
+						if (distHouses < 1.5 * bestAlternativeDist)
+							confirmed++;
 					}
+					continue;
 				}
-				prev = curr;
+				
+				Coord c1 = hnm2.getRoad().getPoints().get(hnm2.getSegment());
+				Coord c2 = hnm2.getRoad().getPoints().get(hnm2.getSegment()+1);
+				double frac2 = getFrac(c1,c2, hnm1.getLocation());
+				double dist2 = distanceToSegment(c1,c2,hnm1.getLocation(),frac2);
+				if (distHouses > dist2)
+					continue;
+				if (distHouses > hnm1.getDistance())
+					continue;
+				Coord c3 = hnm1.getRoad().getPoints().get(hnm1.getSegment());
+				Coord c4 = hnm1.getRoad().getPoints().get(hnm1.getSegment()+1);
+				if (c1 == c3 && Math.abs(Utils.getAngle(c2, c1, c4)) < 10 ||
+						c1 == c4 && Math.abs(Utils.getAngle(c2, c1, c3)) < 10 ||
+						c2 == c3 && Math.abs(Utils.getAngle(c1, c2, c4)) < 10 ||
+						c2 == c4 && Math.abs(Utils.getAngle(c1, c2, c3)) < 10){
+					confirmed++;
+					continue;
+				}
+				++falsified;
+				if (bestAlternative == null || dist2 < bestAlternativeDist){
+					bestAlternative = hnm2;
+					bestAlternativeDist = dist2;
+				}
+				log.error("road check hnm1:",hnm1.getRoad(),hnm1,hnm1.getDistance(),",hnm2:", hnm2.getRoad(),hnm2,hnm2.getDistance(),distHouses,dist2,frac2,"hnm1 is falsified");
+			}
+			if (confirmed == 0 && falsified > 0){
+				log.error("house number element assigned to road",hnm1.getRoad(),hnm1,hnm1.getElement().toBrowseURL(),"is closer to more plausible houses at road",bestAlternative.getRoad());
+				roadNumbers.removeMapping(hnm1.getRoad(), hnm1);
+				hnm1.setRoad(bestAlternative.getRoad());
+				hnm1.setSegment(bestAlternative.getSegment());
+				hnm1.setAltSegments(null);
+				Coord c1 = bestAlternative.getRoad().getPoints().get(bestAlternative.getSegment());
+				Coord c2 = bestAlternative.getRoad().getPoints().get(bestAlternative.getSegment()+1);
+				double frac2 = getFrac(c1,c2, hnm1.getLocation());
+				double dist2 = distanceToSegment(c1,c2,hnm1.getLocation(),frac2);
+				hnm1.setSegmentFrac(frac2);
+				hnm1.setDistance(dist2);
+				hnm1.setLeft(isLeft(c1, c2, hnm1.getLocation()));
+				roadNumbers.add(hnm1.getRoad(), hnm1);
 			}
 		}
 	}
 
-	private static void findClosestRoadSegment(HousenumberMatch hnm, MapRoad r, IntArrayList segmentsToTest) {
+	private static void findClosestRoadSegment(HousenumberMatch hnm, MapRoad r, BitSet toTest) {
 		List<HousenumberMatch> sameDistMatches = new ArrayList<>();
 		Coord cx = hnm.getLocation();
+		if (hnm.getElement().getId() == 242481062){
+			long dd = 4;
+		}
+
 		hnm.setRoad(null);
 		hnm.setDistance(Double.POSITIVE_INFINITY);
 		IntArrayList goodSegments = new IntArrayList();
 		for (int node = 0; node + 1 < r.getPoints().size(); node++){
-			if (segmentsToTest != null && segmentsToTest.contains(node) == false)
+			if (toTest != null && toTest.get(node) == false)
 					continue;
 			Coord c1 = r.getPoints().get(node);
 			Coord c2 = r.getPoints().get(node + 1);
@@ -794,7 +834,6 @@ public class HousenumberGenerator {
 				}
 			}
 		}
-		
 		if (goodSegments.size() > 1){
 			// we get here when the road segments forms an L or U around the house
 			// the angle of the L is < 180, but maybe close to 180 
@@ -821,7 +860,14 @@ public class HousenumberGenerator {
 						d = o1.getSegment() - o2.getSegment();
 					return d;
 				}
-			}); 
+			});
+			Int2IntOpenHashMap usedNumbers = new Int2IntOpenHashMap();
+			for (HousenumberMatch hnm : potentialNumbersThisRoad){
+				int num = hnm.getHousenumber();
+				int count = usedNumbers.get(num);
+				usedNumbers.put(num, count + 1);
+			}
+			
 //			int oddLeft = 0, oddRight = 0, evenLeft = 0, evenRight = 0;
 //			for (HousenumberMatch  hnm: potentialNumbersThisRoad){
 //				if (hnm.isLeft()){
@@ -862,8 +908,8 @@ public class HousenumberGenerator {
 					rightNumbers.add(hr);
 				}
 			}
-			checkLShapes(streetName, leftNumbers);
-			checkLShapes(streetName, rightNumbers);
+//			checkLShapes(streetName, leftNumbers);
+//			checkLShapes(streetName, rightNumbers);
 
 			Collections.sort(leftNumbers, new HousenumberMatchComparator());
 			Collections.sort(rightNumbers, new HousenumberMatchComparator());
@@ -923,7 +969,11 @@ public class HousenumberGenerator {
 			if (numbersHead == null)
 				return;
 			int oldBad = badMatches.size();
-			numbersHead = numbersHead.checkChainSegments(badMatches);
+			
+			numbersHead = numbersHead.checkChainSegments(badMatches, usedNumbers);
+			if (oldBad != badMatches.size())
+				return;
+			numbersHead = numbersHead.checkChainSegmentLengths(badMatches);
 			if (oldBad != badMatches.size())
 				return;
 			numbersHead = numbersHead.checkChainPlausibility(0, streetName, badMatches);
@@ -934,6 +984,9 @@ public class HousenumberGenerator {
 				return;
 			if (errors > 0){
 				
+			}
+			if (r.getRoadDef().getId() == 35966747){
+				long dd = 4;
 			}
 			r.setNumbers(numbersHead.getNumberList());
 //			if (oddLeft * evenLeft  != 0 || oddRight * evenRight != 0 && potentialNumbersThisRoad.size() > 2){
@@ -947,12 +1000,11 @@ public class HousenumberGenerator {
 	}
 
 	
-
 	/**
 	 * Detect parts of roads without house numbers and change start
 	 * and end of the part to house number nodes (if not already)
 	 * This increases the precision of the address search
-	 * and costs only a few bits. 
+	 * and costs only a few bytes. 
 	 * @param streetName 
 	 * @param r
 	 * @param potentialNumbersThisRoad
@@ -962,7 +1014,7 @@ public class HousenumberGenerator {
 		int numPoints = r.getPoints().size();
 		boolean optimizeStart = false;
 		boolean optimizeEnd = false;
-		if ("Neuer Markt".equals(streetName)){
+		if ("Amtmannsweg".equals(streetName)){
 			long dd = 4;
 		}
 		BitSet segmentsWithNumbers = new BitSet();
@@ -996,7 +1048,7 @@ public class HousenumberGenerator {
 	private static void changePointToNumberNode(MapRoad r, int i) {
 		Coord co = r.getPoints().get(i);
 		if (co.isNumberNode() == false){
-			log.error("road",r,"changing point",i,"to number node at",co.toDegreeString(),"to increase precision for house number search");
+			log.info("road",r,"changing point",i,"to number node at",co.toDegreeString(),"to increase precision for house number search");
 			co.setNumberNode(true);
 			r.setInternalNodes(true);
 		}
@@ -1004,36 +1056,55 @@ public class HousenumberGenerator {
 
 	private static void checkLShapes(String streetName,
 			List<HousenumberMatch> sortedHouseNumbers) {
+		if (sortedHouseNumbers.size() < 2)
+			return;
 		int n = sortedHouseNumbers.size();
+		int lastRoadSeg =  sortedHouseNumbers.get(0).getRoad().getPoints().size() - 2;
 		for (int i = 1; i+1 < n; i++){
 			HousenumberMatch prev = sortedHouseNumbers.get(i-1);
 			HousenumberMatch curr = sortedHouseNumbers.get(i);
 			HousenumberMatch next = sortedHouseNumbers.get(i+1);
-			if (curr.getAltSegments() == null && next.getAltSegments() == null)
+			if (curr.getHousenumber() == prev.getHousenumber() || curr.getHousenumber() == next.getHousenumber())
 				continue;
 			int deltaSegmentPrevCurr = prev.getSegment() - curr.getSegment();
 			int deltaSegmentCurrNext = curr.getSegment() - next.getSegment();
 			if (deltaSegmentCurrNext * deltaSegmentPrevCurr < 0){
-				log.debug("check obscure order in potential L-shape",streetName,prev,"->",curr,"->",next,curr.getRoad());
-				if (curr.getAltSegments() != null){
-					IntArrayList toTest = new IntArrayList();
-					for (int s : curr.getAltSegments()){
-						if (s != curr.getSegment())
-							toTest.add(s);
-					}
-					HousenumberMatch hnm2 = new HousenumberMatch(curr.getElement(), curr.getHousenumber(), curr.getSign());
-					findClosestRoadSegment(hnm2, curr.getRoad(), toTest);
-					// TODO: don't use segment if on other side of road, may happen in small U-shaped street
-					// For now, use simple comparison of distance instead
-					if (hnm2.getDistance() > 1.5 * curr.getDistance())
-						continue;
-					if ((prev.getSegment() - hnm2.getSegment()) * (hnm2.getSegment() - next.getSegment()) >= 0){
-						log.debug("assigning house to a different segment with higher distance", hnm2.getDistance(),">",curr.getDistance());
-						curr.setDistance(hnm2.getDistance());
-						curr.setSegment(hnm2.getSegment());
-						curr.setSegmentFrac(hnm2.getSegmentFrac());
-						log.debug("          new order in potential L-shape",streetName,prev,"->",curr,"->",next,curr.getRoad());
-					}
+				log.error("check obscure order in potential L-shape",streetName,prev,"->",curr,"->",next,curr.getRoad());
+				if (prev.getSegment() == next.getSegment()){
+					log.error(prev.getSegmentFrac(),curr.getSegmentFrac(),next.getSegmentFrac());
+				}
+				GpxCreator.createGpx("e:/ld/"+curr.getRoad().getRoadDef().getId(), curr.getRoad().getPoints(), Arrays.asList(prev.getLocation(),curr.getLocation(),next.getLocation()));
+				BitSet toTest = new BitSet(curr.getRoad().getPoints().size());
+				if (prev.getSegment() < next.getSegment()) {
+					for (int k = prev.getSegment(); k <= next.getSegment(); k++)
+						toTest.set(k);
+				} else {
+					for (int k = next.getSegment(); k <= prev.getSegment(); k++)
+						toTest.set(k);
+				}
+				if (toTest.get(curr.getSegment()))
+					continue;
+				HousenumberMatch hnm2 = new HousenumberMatch(curr.getElement(), curr.getHousenumber(), curr.getSign());
+				findClosestRoadSegment(hnm2, curr.getRoad(), toTest);
+				if (hnm2.getDistance() > 1.5 * curr.getDistance())
+					continue;
+				double distPrevCurr = curr.getLocation().distance(prev.getLocation());
+				double distNextCurr = curr.getLocation().distance(next.getLocation());
+				if (distPrevCurr > MAX_DISTANCE_TO_ROAD || distNextCurr > MAX_DISTANCE_TO_ROAD)
+					continue;
+				boolean prevAtRoadEnd = prev.getSegment() == 0 || prev.getSegment() == lastRoadSeg;
+				boolean nextAtRoadEnd = next.getSegment() == 0 || next.getSegment() == lastRoadSeg;
+				
+				// TODO: don't use segment if on other side of road, may happen in small U-shaped street
+				// For now, use simple comparison of distance instead
+				if ((prev.getSegment() - hnm2.getSegment()) * (hnm2.getSegment() - next.getSegment()) >= 0){
+					log.error("move ?",distPrevCurr, distNextCurr,curr,hnm2,curr.getDistance(), hnm2.getDistance(),curr.getSegmentFrac(),hnm2.getSegmentFrac());
+					long dd = 4;
+//					log.debug("assigning house to a different segment with higher distance", hnm2.getDistance(),">",curr.getDistance());
+//					curr.setDistance(hnm2.getDistance());
+//					curr.setSegment(hnm2.getSegment());
+//					curr.setSegmentFrac(hnm2.getSegmentFrac());
+//					log.debug("          new order in potential L-shape",streetName,prev,"->",curr,"->",next,curr.getRoad());
 				}
 			}
 		}
@@ -1336,7 +1407,7 @@ public class HousenumberGenerator {
 	 * @param point point
 	 * @return the distance in meter
 	 */
-	private static double distanceToSegment(Coord spoint1, Coord spoint2, Coord point, double frac) {
+	public static double distanceToSegment(Coord spoint1, Coord spoint2, Coord point, double frac) {
 
 		if (frac <= 0) {
 			return spoint1.distance(point);
@@ -1349,13 +1420,15 @@ public class HousenumberGenerator {
 	}
 	
 	/**
-	 * Calculates the fraction at which the given point is closest to the line segment.
+	 * Calculates the fraction at which the given point is closest to 
+	 * the infinite line going through both points.
 	 * @param spoint1 segment point 1
 	 * @param spoint2 segment point 2
 	 * @param point point
-	 * @return the fraction
+	 * @return the fraction (can be <= 0 or >= 1 if the perpendicular is not on
+	 * the line segment between spoint1 and spoint2) 
 	 */
-	private static double getFrac(Coord spoint1, Coord spoint2, Coord point) {
+	public static double getFrac(Coord spoint1, Coord spoint2, Coord point) {
 		int aLon = spoint1.getHighPrecLon();
 		int bLon = spoint2.getHighPrecLon();
 		int pLon = point.getHighPrecLon();
