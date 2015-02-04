@@ -70,7 +70,7 @@ public class OsmBinHandler extends OsmHandler {
 					Node node = new Node(id, co);
 					for (int tid = 0; tid < tagCount; tid++) {
 						String key = getStringById(binNode.getKeys(tid));
-						String val = getStringById(binNode.getVals(tid));
+						String val = getStringById(binNode.getVals(tid)).trim();
 						key = keepTag(key, val);
 						if (key != null)
 							node.addTag(key, val.intern());
@@ -105,7 +105,7 @@ public class OsmBinHandler extends OsmHandler {
 						int keyid = nodes.getKeysVals(kvid++);
 						int valid = nodes.getKeysVals(kvid++);
 						String key = getStringById(keyid);
-						String val = getStringById(valid);
+						String val = getStringById(valid).trim();
 						key = keepTag(key, val);
 						if (key != null) {
 							if (node == null)
@@ -132,7 +132,7 @@ public class OsmBinHandler extends OsmHandler {
 				for (int j = 0; j < binWay.getKeysCount(); j++) {
 
 					String key = getStringById(binWay.getKeys(j));
-					String val = getStringById(binWay.getVals(j));
+					String val = getStringById(binWay.getVals(j)).trim();
 					key = keepTag(key, val);
 					if (key != null)
 						way.addTag(key, val.intern());
@@ -157,7 +157,7 @@ public class OsmBinHandler extends OsmHandler {
 				boolean tagsIncomplete = false;
 				for (int j = 0; j < binRel.getKeysCount(); j++) {
 					String key = getStringById(binRel.getKeys(j));
-					String val = getStringById(binRel.getVals(j));
+					String val = getStringById(binRel.getVals(j)).trim();
 					// type is required for relations - all other tags are filtered
 					if ("type".equals(key))
 						// intern the string

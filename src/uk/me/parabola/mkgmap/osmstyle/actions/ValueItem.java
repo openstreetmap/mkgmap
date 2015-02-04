@@ -47,7 +47,7 @@ public class ValueItem {
 			Element e = tagname_is_local ? local_el : el;
 			String tagval = e.getTag(tagKey);
 			if (filter != null)
-				value = filter.filter(tagval,el);
+				value = filter.filter(tagval, local_el);
 			else
 				value = tagval;
 		}

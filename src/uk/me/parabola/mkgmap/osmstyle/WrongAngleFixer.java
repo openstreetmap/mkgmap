@@ -63,6 +63,17 @@ public class WrongAngleFixer {
 	
 	public WrongAngleFixer(Area bbox) {
 		this.bbox = bbox;
+		if (gpxPath != null && bbox != null){
+			if (bbox.getWidth() * bbox.getHeight() < 100000){
+				List<Coord> grid = new ArrayList<>();
+				for (int lat = bbox.getMinLat(); lat < bbox.getMaxLat(); lat++){
+					for (int lon = bbox.getMinLong(); lon < bbox.getMaxLong(); lon++){
+						grid.add(new Coord(lat,lon));
+					}
+				}
+				GpxCreator.createGpx("e:/ld/grid", bbox.toCoords(), grid);
+			}
+		}
 	}
 
 	/**

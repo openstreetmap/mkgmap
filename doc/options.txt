@@ -286,9 +286,14 @@ part of the mapname in the list of the individual maps.
 ;--copyright-message=note
 : 	Specify a copyright message for files that do not contain one.
 
+;--copyright-file=file
+: 	Specify copyright messages from a file.
+Note that the first copyright message is not displayed on a device, but is 
+shown in BaseCamp.
+
 ;--license-file=file
 : 	Specify a file which content will be added as license. 
-All entrys of all maps will be merged in the overview map.
+All entries of all maps will be merged in the overview map.
 
 === Optimization options ===
 

@@ -25,6 +25,7 @@ import java.util.Map;
 public abstract class Element {
 	private Tags tags;
 	private long id;
+	private long originalId;
 
 	public int getTagCount() {
 		return (tags == null ? 0 : tags.size());
@@ -170,10 +171,25 @@ public abstract class Element {
 		return id;
 	}
 
-	protected void setId(long id) {
-		this.id = id;
+	/**
+	 * Returns the Id of the original OSM element on which this element was based.
+	 * <p>
+	 * The Id of the original element will be different from the Id of this
+	 * element if this element uses a faked Id.
+	 */
+	public long getOriginalId() {
+		return originalId;
 	}
 
+	protected void setId(long id) {
+		this.id = id;
+		originalId = id;
+	}
+
+	public void setFakeId() {
+		id = FakeIdGenerator.makeFakeId();
+	}
+	
 	public String toTagString() {
 		if (tags == null)
 			return "[]";

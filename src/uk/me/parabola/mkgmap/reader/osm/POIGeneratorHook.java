@@ -325,7 +325,8 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 	}
 
 	private static Node createPOI(Element source, Coord poiCoord, short poiTypeTagKey) {
-		Node poi = new Node(FakeIdGenerator.makeFakeId(), poiCoord);
+		Node poi = new Node(source.getOriginalId(), poiCoord);
+		poi.setFakeId();
 		poi.copyTags(source);
 		poi.deleteTag(MultiPolygonRelation.STYLE_FILTER_TAG);
 		poi.addTag(poiTypeTagKey, "true");

@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.log.Logger;
@@ -136,6 +138,28 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	 * @return A list of copyright messages as a String array.
 	 */
 	public String[] copyrightMessages() {
+		String copyrightFileName = getConfig().getProperty("copyright-file", null);
+		if (copyrightFileName != null)
+		{
+			File file = new File(copyrightFileName);
+			List<String> copyrightArray = new ArrayList<String>();
+			try {
+				BufferedReader reader = new BufferedReader(new FileReader(file));
+				String text;
+				while ((text = reader.readLine()) != null) {
+					copyrightArray.add(text);
+				}
+
+				reader.close();
+			} catch (FileNotFoundException e) {
+				throw new ExitException("Could not open copyright file " + copyrightFileName);
+			} catch (IOException e) {
+				throw new ExitException("Error reading copyright file " + copyrightFileName);
+			}
+			String[] copyright = new String[copyrightArray.size()];
+			copyrightArray.toArray(copyright);
+			return copyright;
+		}
 		String note = getConfig().getProperty("copyright-message", 
 				"OpenStreetMap.org contributors. See: http://wiki.openstreetmap.org/index.php/Attribution");
 		return new String[] { note };

@@ -33,6 +33,15 @@ second part of the mapname in the list of the individual maps.
 
 --copyright-message=note::
 Specify a copyright message for files that do not contain one.
+A fixed copyright message that is visible in BaseCamp, but not on a
+device, is also included.
+
+--copyright-file=file::
+Specify copyright messages from a file. Used if you need to display more
+than one copyright message or do not want the fixed copyright message to
+be included. Note that the first copyright message is not displayed on a
+device, but is shown in BaseCamp. You can make the first line of the
+copyright file blank to work around this.
 
 --license-file=file::
 The contents of the file will be used as licence information to

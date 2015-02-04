@@ -480,7 +480,8 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			return;
 		if (way.hasIdenticalEndPoints()){
 			// add a copy of this way to be able to draw it as a shape
-			Way shapeWay = new Way(FakeIdGenerator.makeFakeId(), way.getPoints());
+			Way shapeWay = new Way(way.getOriginalId(), way.getPoints());
+			shapeWay.setFakeId();
 			// change the tag so that only special rules looking for it are firing
 			shapeWay.deleteTag("natural"); 
 			shapeWay.addTag("mkgmap:removed_natural",naturalVal); 
@@ -676,7 +677,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 						for (Way w : seaPrecompWays) {
 							// set a new id to be sure that the precompiled ids do not
 							// interfere with the ids of this run
-							w.setId(FakeIdGenerator.makeFakeId());
+							w.setFakeId();
 
 							if ("land".equals(w.getTag("natural"))) {
 								landWays.add(w);
@@ -831,7 +832,8 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 					if (FakeIdGenerator.isFakeId(w1.getId())) {
 						wm = w1;
 					} else {
-						wm = new Way(FakeIdGenerator.makeFakeId());
+						wm = new Way(w1.getOriginalId());
+						wm.setFakeId();
 						wm.getPoints().addAll(points1);
 						beginMap.put(points1.get(0), wm);
 					}
@@ -1048,8 +1050,8 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				log.info("clipping", segment);
 				toBeRemoved.add(segment);
 				for (List<Coord> pts : clipped) {
-					long id = FakeIdGenerator.makeFakeId();
-					Way shore = new Way(id, pts);
+					Way shore = new Way(segment.getOriginalId(), pts);
+					shore.setFakeId();
 					toBeAdded.add(shore);
 				}
 			}
@@ -1170,7 +1172,8 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		for (Way w : islands) {
 
 			if (!FakeIdGenerator.isFakeId(w.getId())) {
-				Way w1 = new Way(FakeIdGenerator.makeFakeId());
+				Way w1 = new Way(w.getOriginalId());
+				w1.setFakeId();
 				w1.getPoints().addAll(w.getPoints());
 				// only copy the name tags
 				for (Entry<String, String> tagEntry : w.getTagEntryIterator()){
@@ -1249,7 +1252,8 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 					points.add(pStart);
 					
 					if(!FakeIdGenerator.isFakeId(w.getId())) {
-						Way w1 = new Way(FakeIdGenerator.makeFakeId());
+						Way w1 = new Way(w.getOriginalId());
+						w1.setFakeId();
 						w1.getPoints().addAll(w.getPoints());
 						// only copy the name tags
 						for (Entry<String, String> tagEntry : w.getTagEntryIterator()){
@@ -1265,8 +1269,13 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 						seaRelation.addElement("inner", w);
 					}
 				} else if(allowSeaSectors) {
-					long seaId = FakeIdGenerator.makeFakeId();
-					Way sea = new Way(seaId);
+					Way sea;
+					if (seaRelation != null) {
+						sea = new Way(seaRelation.getOriginalId());
+						sea.setFakeId();
+					}
+					else
+						sea = new Way(FakeIdGenerator.makeFakeId());
 					sea.getPoints().addAll(points);
 					sea.addPoint(new Coord(pEnd.getLatitude(), pStart.getLongitude()));
 					sea.addPoint(pStart);
@@ -1473,7 +1482,8 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 						if (FakeIdGenerator.isFakeId(w1.getId())) {
 							wm = w1;
 						} else {
-							wm = new Way(FakeIdGenerator.makeFakeId());
+							wm = new Way(w1.getOriginalId());
+							wm.setFakeId();
 							ways.remove(w1);
 							ways.add(wm);
 							wm.getPoints().addAll(points1);
