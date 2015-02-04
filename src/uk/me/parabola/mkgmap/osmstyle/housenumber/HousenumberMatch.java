@@ -15,6 +15,7 @@ package uk.me.parabola.mkgmap.osmstyle.housenumber;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,9 +45,9 @@ public class HousenumberMatch {
 	private int housenumber;
 	private String sign; 
 	private boolean hasAlternativeRoad;
-	private IntArrayList altSegments;
 	private boolean ignored;
 	private int dubious; // increased when this element might be wrong
+	private boolean isDuplicate;
 	
 	/**
 	 * Instantiates a new housenumber match element.
@@ -280,6 +281,14 @@ public class HousenumberMatch {
 		this.ignored = ignored;
 	}
 
+	public boolean isDuplicate() {
+		return isDuplicate;
+	}
+
+	public void setDuplicate(boolean isDuplicate) {
+		this.isDuplicate = isDuplicate;
+	}
+
 	public String toString() {
 		String s1 = String.valueOf(housenumber);
 		if (sign.length() > 2 + s1.length())
@@ -287,18 +296,19 @@ public class HousenumberMatch {
 		return sign + "("+segment+")";
 	}
 
-	public void setAltSegments(IntArrayList goodSegments) {
-		altSegments = goodSegments;
-	}
-	
-	public IntArrayList getAltSegments() {
-		return altSegments;
-	}
-
 	public double getBearing(){
 		Coord c1 = getRoad().getPoints().get(getSegment());
 		Coord c2 = getRoad().getPoints().get(getSegment()+1);
 		return c1.bearingTo(c2);
 	}
-	
+
+	double getAverageDistToOtherHouses(List<HousenumberMatch> houses){
+		double sumDist = 0;
+		if (houses.isEmpty())
+			return 0;
+		for (HousenumberMatch hnm : houses){
+			sumDist = this.getLocation().distance(getLocation());
+		}
+		return sumDist / houses.size();
+	}
 }
