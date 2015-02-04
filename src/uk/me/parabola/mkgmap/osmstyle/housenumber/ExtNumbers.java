@@ -19,11 +19,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import uk.me.parabola.imgfmt.Utils;
@@ -34,7 +32,7 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.osmstyle.housenumber.HousenumberGenerator.HousenumberMatchComparator;
-import uk.me.parabola.util.GpxCreator;
+//import uk.me.parabola.util.GpxCreator;
 import uk.me.parabola.util.MultiHashMap;
 
 /**
@@ -414,8 +412,8 @@ public class ExtNumbers {
 			}
 			double usedFraction = bestFraction;
 			
-			if (segmentLength > 100 && Math.abs(midFraction - usedFraction) > 0.05)
-				GpxCreator.createGpx("e:/ld/s"+r.getRoadDef().getId() + "_"+startInRoad, Arrays.asList(c1,toAdd,c2), new ArrayList<>(tested));
+//			if (segmentLength > 100 && Math.abs(midFraction - usedFraction) > 0.05)
+//				GpxCreator.createGpx("e:/ld/s"+r.getRoadDef().getId() + "_"+startInRoad, Arrays.asList(c1,toAdd,c2), new ArrayList<>(tested));
 			if (c1.equals(toAdd) || c2.equals(toAdd))
 				return combineSides();
 			if (bestAngle > 3){
@@ -699,9 +697,9 @@ public class ExtNumbers {
 			if (countMmatches != 1){
 				numErrors++;
 				if (countMmatches == 0){
-					log.error("number not found in road",r,n,hnm.getElement().toBrowseURL());
+					log.error("number not found in road",r,hnm,hnm.getElement().toBrowseURL());
 				} else {
-					log.error("number found at different places in same road, device will show first hit for road",r,n,hnm.getElement().toBrowseURL());
+					log.error("number found at different places in same road, device will show first hit for road",r,hnm,hnm.getElement().toBrowseURL());
 					for (ExtNumbers en : segments){
 						log.error(en.getNumbers(), en.sortedNumbers);
 					}

@@ -14,8 +14,6 @@
 package uk.me.parabola.mkgmap.osmstyle.housenumber;
 
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -46,7 +44,6 @@ import uk.me.parabola.mkgmap.reader.osm.POIGeneratorHook;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.TagDict;
 import uk.me.parabola.mkgmap.reader.osm.Way;
-import uk.me.parabola.util.GpxCreator;
 import uk.me.parabola.util.MultiHashMap;
 
 /**
@@ -694,6 +691,7 @@ public class HousenumberGenerator {
 			return false;
 
 		List<HousenumberMatch> failed = checkPlausibility(streetName, roadsInCluster, housesNearCluster);
+		// TODO: implement algo to assign random numbers, maybe using multiple number nodes with the same position 
 		if (failed.isEmpty())
 			return true;
 		return false;
@@ -1072,7 +1070,7 @@ public class HousenumberGenerator {
 				if (prev.getSegment() == next.getSegment()){
 					log.error(prev.getSegmentFrac(),curr.getSegmentFrac(),next.getSegmentFrac());
 				}
-				GpxCreator.createGpx("e:/ld/"+curr.getRoad().getRoadDef().getId(), curr.getRoad().getPoints(), Arrays.asList(prev.getLocation(),curr.getLocation(),next.getLocation()));
+//				GpxCreator.createGpx("e:/ld/"+curr.getRoad().getRoadDef().getId(), curr.getRoad().getPoints(), Arrays.asList(prev.getLocation(),curr.getLocation(),next.getLocation()));
 				BitSet toTest = new BitSet(curr.getRoad().getPoints().size());
 				if (prev.getSegment() < next.getSegment()) {
 					for (int k = prev.getSegment(); k <= next.getSegment(); k++)
@@ -1120,32 +1118,57 @@ public class HousenumberGenerator {
 			String streetName, List<HousenumberMatch> sortedHouseNumbers, MultiHashMap<HousenumberMatch, MapRoad> badMatches) {
 		List<HousenumberMatch> toIgnore = new ArrayList<>();
 		HashMap<String,HousenumberMatch> signs = new HashMap<>();
-		Iterator<HousenumberMatch> iter = sortedHouseNumbers.iterator();
 		final int TO_SEARCH = 6;
-		if ("Am Radberg".equals(streetName)){
+		if ("Am Damm".equals(streetName)){
 			long dd = 4;
 		}
-		while (iter.hasNext()){
-			HousenumberMatch hnm = iter.next();
+		for (HousenumberMatch hnm : sortedHouseNumbers){
+			if (hnm.isDuplicate() == false)
+				continue;
 			HousenumberMatch old = signs.put(hnm.getSign(),hnm);
 			if (old != null){
 				// found a duplicate house number
+				boolean sameSide = (hnm.isLeft() == old.isLeft());
+				int pos1 = Math.min(old.getSegment(), hnm.getSegment());
+				int pos2 = Math.max(old.getSegment(), hnm.getSegment());
 				double dist1 = old.getLocation().distance(hnm.getLocation());
-				if (dist1 > 100 || Math.abs(old.getSegment() -hnm.getSegment()) > 0){
-					old.incDubious(1);
-					hnm.incDubious(1);
-					int oldPos = sortedHouseNumbers.indexOf(old);
-					int currPos = sortedHouseNumbers.indexOf(hnm);
-					double sumDistOld = 0, sumDistCurr = 0;
-					double sumDistSameSideOld = 0, sumDistSameSideCurr = 0;
-					int foundOld = 0, foundCurr = 0;
-					
-					
-					for (int i = 0; i < 2; i++){
-						double sumDist = 0, sumDistSameSide = 0;
-						HousenumberMatch other = (i == 0) ? hnm : old;
-						HousenumberMatch curr = (i == 0) ? old : hnm;
-						int pos = (i == 0) ? oldPos : currPos;
+				if (dist1 < 25 && sameSide && pos1 != pos2){
+					useMidPos(streetName, hnm,old);
+					continue;
+				}
+				if (dist1 > 100 || pos2 - pos1 > 0){
+					List<HousenumberMatch> betweeen = new ArrayList<>();
+					for (HousenumberMatch hnm2 : sortedHouseNumbers){
+						if (hnm2.getSegment() < pos1 || hnm2.getSegment() > pos2 || hnm2 == old || hnm2 == hnm)
+							continue;
+						if (!sameSide || sameSide && hnm2.isLeft() == hnm.isLeft())
+							betweeen.add(hnm2);
+					}
+					if (betweeen.isEmpty()){
+						if (sameSide)
+							useMidPos(streetName, hnm,old);
+						continue;
+					}
+//					int oldPos = sortedHouseNumbers.indexOf(old);
+//					int currPos = sortedHouseNumbers.indexOf(hnm);
+//					int foundOld = 0, foundCurr = 0;
+					double[] sumDist = new double[2];
+					double[] sumDistSameSide = new double[2];
+					int[] confirmed = new int[2];
+					int[] falsified = new int[2];
+					int[] found = new int[2];
+					List<HousenumberMatch> dups = Arrays.asList(hnm, old);
+					for (int i = 0; i < dups.size(); i++){
+						HousenumberMatch other, curr;
+						if (i == 0){
+							curr = dups.get(0);
+							other = dups.get(1);
+						} else {
+							curr = dups.get(1);
+							other = dups.get(0);
+						}
+						int pos = sortedHouseNumbers.indexOf(curr);
+						
 						int left = pos - 1;
 						int right = pos + 1;
 						HousenumberMatch hnm2;
@@ -1156,10 +1179,17 @@ public class HousenumberGenerator {
 								hnm2 = sortedHouseNumbers.get(left);
 								if (hnm2 != other){
 									double dist = curr.getLocation().distance(hnm2.getLocation());
-									sumDist += dist;
+									sumDist[i] += dist;
 									if (hnm2.isLeft() == curr.isLeft()){
-										sumDistSameSide += dist;
-									} 
+										sumDistSameSide[i] += dist;
+									}
+									if (curr.getHousenumber() == hnm2.getHousenumber()){
+										if (dist < 20)
+											confirmed[i]++;
+									} else {
+										if (dist < 10 )
+											falsified[i]++;
+									}
 								}
 								--left;
 								stillToFind--;
@@ -1170,9 +1200,16 @@ public class HousenumberGenerator {
 								hnm2 = sortedHouseNumbers.get(right);
 								if (hnm2 != other){
 									double dist = curr.getLocation().distance(hnm2.getLocation());
-									sumDist += dist;
+									sumDist[i] += dist;
 									if (hnm2.isLeft() == curr.isLeft()){
-										sumDistSameSide += dist;
+										sumDistSameSide[i] += dist;
+									}
+									if (curr.getHousenumber() == hnm2.getHousenumber()){
+										if (dist < 20)
+											confirmed[i]++;
+									} else {
+										if (dist < 10 )
+											falsified[i]++;
 									}
 								}
 								stillToFind--;
@@ -1181,40 +1218,26 @@ public class HousenumberGenerator {
 							if (oldDone == stillToFind)
 								break;
 						}
-						if (i == 0){
-							sumDistOld = sumDist;
-							sumDistSameSideOld = sumDistSameSide;
-							foundOld = TO_SEARCH - 1 - stillToFind;
-						} else {
-							sumDistCurr = sumDist;
-							sumDistSameSideCurr = sumDistSameSide;
-							foundCurr = TO_SEARCH - 1 - stillToFind;
-						}
+						found[i] = TO_SEARCH - 1 - stillToFind; 
 					}
-					log.error("dup check old ", streetName, old, old.getElement().toBrowseURL(), foundOld, sumDistOld, sumDistSameSideOld);
-					log.error("dup check curr", streetName, hnm, hnm.getElement().toBrowseURL(), foundCurr, sumDistCurr, sumDistSameSideCurr);
+					log.error("dup check 1:", streetName, old, old.getElement().toBrowseURL());
+					log.error("dup check 2:", streetName, hnm, hnm.getElement().toBrowseURL());
+					log.error("confirmed",Arrays.toString(confirmed),"falsified",Arrays.toString(falsified),"sum-dist",Arrays.toString(sumDist),"sum-dist-same-side",Arrays.toString(sumDistSameSide));
 					HousenumberMatch bad = null;
-					if (foundCurr > 3 && sumDistCurr > sumDistOld && sumDistSameSideCurr > sumDistSameSideOld){
-						bad = hnm;
-					} 
-					if (foundOld > 3 && sumDistOld > sumDistCurr && sumDistSameSideOld > sumDistSameSideCurr){
-						bad = old;
-					} 
+					if (confirmed[1] > 0 && confirmed[0] == 0  && falsified[1] == 0)
+						bad = dups.get(0);
+					else if (confirmed[0] > 0 && confirmed[1] == 0  && falsified[0] == 0)
+						bad = dups.get(1);
+					else if (found[0] > 3 && sumDist[0] > sumDist[1] && sumDistSameSide[0] > sumDistSameSide[1])
+						bad = dups.get(0);
+					else if (found[1] > 3 && sumDist[1] > sumDist[0] && sumDistSameSide[1] > sumDistSameSide[0])
+						bad = dups.get(1);
 					if (bad != null){
 						toIgnore.add(bad);
 					} else {
 						// TODO: can't say that one is wrong, combine them?
 						if (old.isLeft() == hnm.isLeft()){
-							int avgSegment = (old.getSegment() + hnm.getSegment()) / 2;
-							BitSet toTest = new BitSet();
-							toTest.set(avgSegment);
-							if (avgSegment != old.getSegment()){
-								findClosestRoadSegment(old, old.getRoad(), toTest);
-							} 							
-							if (avgSegment != hnm.getSegment()){
-								findClosestRoadSegment(hnm, hnm.getRoad(), toTest);
-							}
-							log.error("using same segment for duplicate housenumbers", streetName, old, hnm);
+							useMidPos(streetName, hnm, old);
 						}
 						else {
 							log.error("don't know which one to use, ignoring both");
@@ -1231,6 +1254,20 @@ public class HousenumberGenerator {
 			log.warn("duplicate housenumber",streetName,hnm.getSign(),"is ignored for road with id",hnm.getRoad().getRoadDef().getId(),",house:",hnm.getElement().toBrowseURL());
 			sortedHouseNumbers.remove(hnm);
 		}
+	}
+
+
+	private static void useMidPos(String streetName, HousenumberMatch hnm1, HousenumberMatch hnm2) {
+		int avgSegment = (hnm1.getSegment() + hnm2.getSegment()) / 2;
+		BitSet toTest = new BitSet();
+		toTest.set(avgSegment);
+		if (avgSegment != hnm1.getSegment()){
+			findClosestRoadSegment(hnm1, hnm1.getRoad(), toTest);
+		}
+		if (avgSegment != hnm2.getSegment()){
+			findClosestRoadSegment(hnm2, hnm2.getRoad(), toTest);
+		} 							
+		log.error("using same segment for duplicate housenumbers", streetName, hnm2, hnm2.getElement().toBrowseURL(), hnm1.getElement().toBrowseURL());
 	}
 
 

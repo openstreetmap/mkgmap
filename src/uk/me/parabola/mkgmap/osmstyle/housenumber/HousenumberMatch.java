@@ -13,8 +13,6 @@
 
 package uk.me.parabola.mkgmap.osmstyle.housenumber;
 
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
