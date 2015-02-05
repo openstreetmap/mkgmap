@@ -13,7 +13,6 @@
 
 package uk.me.parabola.mkgmap.osmstyle.housenumber;
 
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,7 +43,6 @@ public class HousenumberMatch {
 	private String sign; 
 	private boolean hasAlternativeRoad;
 	private boolean ignored;
-	private int dubious; // increased when this element might be wrong
 	private boolean isDuplicate;
 	
 	/**
@@ -262,15 +260,6 @@ public class HousenumberMatch {
 		this.hasAlternativeRoad = hasAlternativeRoad;
 	}
 
-	public void incDubious(int inc){
-		dubious += inc;
-	}
-	
-	public int getDubious(){
-		return dubious;
-	}
-	
-	
 	public boolean isIgnored() {
 		return ignored;
 	}
@@ -293,20 +282,5 @@ public class HousenumberMatch {
 			return s1 + "("+segment+")";
 		return sign + "("+segment+")";
 	}
-
-	public double getBearing(){
-		Coord c1 = getRoad().getPoints().get(getSegment());
-		Coord c2 = getRoad().getPoints().get(getSegment()+1);
-		return c1.bearingTo(c2);
-	}
-
-	double getAverageDistToOtherHouses(List<HousenumberMatch> houses){
-		double sumDist = 0;
-		if (houses.isEmpty())
-			return 0;
-		for (HousenumberMatch hnm : houses){
-			sumDist = this.getLocation().distance(getLocation());
-		}
-		return sumDist / houses.size();
-	}
 }
+

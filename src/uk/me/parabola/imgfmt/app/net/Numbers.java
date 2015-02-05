@@ -239,4 +239,9 @@ public class Numbers {
 		}
 		return matches;
 	}
+
+	public double calcPos(int housenumber) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }
