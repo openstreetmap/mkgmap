@@ -241,12 +241,10 @@ public class LinePreparer {
 			assert (dy == 0 && lat != lastLat) == false: ("delta lat too large: " +  (lat - lastLat));
 			lastLong = lon;
 			lastLat = lat;
-
-			if (dx == 0 && dy == 0 && co.isNumberNode() && co.getId() == 0){
-				// TODO: extra bit or not ?
-				long dd = 4;
-			}
-			if (dx != 0 || dy != 0 || (extraBit && co.getId() != 0))
+			boolean isSpecialNode = false;
+			if (co.getId() > 0 || (co.isNumberNode() && ignoreNumberOnlyNodes == false))
+				isSpecialNode = true;
+			if (dx != 0 || dy != 0 || extraBit && isSpecialNode)
 				firstsame = i;
 
 			/*
@@ -259,7 +257,7 @@ public class LinePreparer {
 			 */
 			if (extraBit) {
 				boolean extra = false;
-				if (co.getId() > 0 || (co.isNumberNode() && ignoreNumberOnlyNodes == false)) {
+				if (isSpecialNode) {
 					if (i < nodes.length - 1)
 						// inner node of polyline
 						extra = true;

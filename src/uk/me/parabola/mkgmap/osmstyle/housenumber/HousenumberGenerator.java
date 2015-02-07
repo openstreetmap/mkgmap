@@ -14,12 +14,15 @@
 package uk.me.parabola.mkgmap.osmstyle.housenumber;
 
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -566,6 +569,7 @@ public class HousenumberGenerator {
 		}); 
 		
 		HousenumberMatch prev = null;
+
 		for (HousenumberMatch hnm : housesNearCluster) {
 			List<MapRoad> excludedRoads = badRoadMatches.get(hnm);
 			hnm.setDistance(Double.POSITIVE_INFINITY); // make sure that we don't use an old match
@@ -615,50 +619,50 @@ public class HousenumberGenerator {
 			} else {
 				Coord c1 = hnm.getRoad().getPoints().get(hnm.getSegment());
 				Coord c2 = hnm.getRoad().getPoints().get(hnm.getSegment()+1);
-				double segmentLength = c1.distance(c2);
-				if (segmentLength < 0.5){
-					// problem ?
-				}
+//				double segmentLength = c1.distance(c2);
+//				if (segmentLength < 0.5){
+//					// TODO: problem ?
+//				}
 				hnm.setLeft(isLeft(c1, c2, hnm.getLocation()));
 			}
 			// plausibility check for duplicate house numbers
 			if (prev != null && prev.getHousenumber() == hnm.getHousenumber()){
 				// duplicate number (e.g. 10 and 10 or 10 and 10A or 10A and 10B)
-				HousenumberMatch bad = null;
+//				HousenumberMatch bad = null;
 				if (prev.getSign().equals(hnm.getSign())){
 					prev.setDuplicate(true);
 					hnm.setDuplicate(true);
 				}
 				
-				if (prev.getRoad() != hnm.getRoad()){
-					Coord c1 = prev.getRoad().getPoints().get(prev.getSegment());
-					Coord c2 = prev.getRoad().getPoints().get(prev.getSegment()+1);
-					double dist1 = hnm.getLocation().shortestDistToLineSegment(c1, c2);
-					if (dist1 < MAX_DISTANCE_TO_ROAD){
-						hnm.setRoad(null); // ignore
-						bad = hnm;
-					}
-				} else if (Math.abs(prev.getSegment() - hnm.getSegment()) > 1){
-					double dist = prev.getLocation().distance(hnm.getLocation());
-					if (dist > 100){
-						int compareDist = Double.compare(prev.getDistance(), hnm.getDistance());
-
-						if (compareDist > 0){
-							roadNumbers.removeMapping(prev.getRoad(), prev);
-							bad = prev;
-						} else if (compareDist <= 0) {
-							hnm.setRoad(null); // ignore
-							bad = hnm;
-						}
-					}
-				} else if (prev.isLeft() != hnm.isLeft()){
-					//difficult case. Which side is correct ?
-				}
-				if (bad != null){
-					bad.setIgnored(true);
-					String msgType = prev.getSign().equals(hnm.getSign()) ? "duplicate" : "repeated";
-					log.error("ignoring",msgType,"housenumber",streetName,bad.getSign(),"from",bad.getElement().toBrowseURL() );
-				}
+//				if (prev.getRoad() != hnm.getRoad()){
+//					Coord c1 = prev.getRoad().getPoints().get(prev.getSegment());
+//					Coord c2 = prev.getRoad().getPoints().get(prev.getSegment()+1);
+//					double dist1 = hnm.getLocation().shortestDistToLineSegment(c1, c2);
+//					if (dist1 < MAX_DISTANCE_TO_ROAD){
+//						hnm.setRoad(null); // ignore
+//						bad = hnm;
+//					}
+//				} else if (Math.abs(prev.getSegment() - hnm.getSegment()) > 1){
+//					double dist = prev.getLocation().distance(hnm.getLocation());
+//					if (dist > 100){
+//						int compareDist = Double.compare(prev.getDistance(), hnm.getDistance());
+//
+//						if (compareDist > 0){
+//							roadNumbers.removeMapping(prev.getRoad(), prev);
+//							bad = prev;
+//						} else if (compareDist <= 0) {
+//							hnm.setRoad(null); // ignore
+//							bad = hnm;
+//						}
+//					}
+//				} else if (prev.isLeft() != hnm.isLeft()){
+//					//difficult case. Which side is correct ?
+//				}
+//				if (bad != null){
+//					bad.setIgnored(true);
+//					String msgType = prev.getSign().equals(hnm.getSign()) ? "duplicate" : "repeated";
+//					log.error("ignoring",msgType,"housenumber",streetName,bad.getSign(),"from",bad.getElement().toBrowseURL() );
+//				}
 			}
 			if (hnm.getRoad() != null) {
 				roadNumbers.add(hnm.getRoad(), hnm);
@@ -669,10 +673,13 @@ public class HousenumberGenerator {
 			if (!hnm.isIgnored())
 				prev = hnm;
 		}
+		
+
 		// we have now a first guess for the road and segment of each plausible house number element
 		if (roadsInCluster.size() > 1){
 			checkDubiousRoadMatches(streetName, housesNearCluster, roadNumbers);
 		}
+		
 		int oldBad = badRoadMatches.size();
 		buildNumberIntervals(streetName, roadsInCluster, roadNumbers,badRoadMatches);
 		if (oldBad != badRoadMatches.size())
@@ -705,6 +712,9 @@ public class HousenumberGenerator {
 		
 		for (int pos1 = 0; pos1 < n; pos1++){
 			HousenumberMatch hnm1 = sortedHouses.get(pos1);
+			if (hnm1.isDuplicate()){
+				long dd = 4;
+			}
 			if (hnm1.isIgnored() || hnm1.hasAlternativeRoad() == false)
 				continue;
 			int confirmed = 0;
@@ -738,7 +748,7 @@ public class HousenumberGenerator {
 					if (Math.abs(hnm1.getSegment() - hnm2.getSegment()) < 2){
 						if (distHouses < 1.5 * bestAlternativeDist)
 							confirmed++;
-					}
+					} 
 					continue;
 				}
 				
@@ -779,6 +789,11 @@ public class HousenumberGenerator {
 				hnm1.setDistance(dist2);
 				hnm1.setLeft(isLeft(c1, c2, hnm1.getLocation()));
 				roadNumbers.add(hnm1.getRoad(), hnm1);
+			} else if (confirmed == 0 && hnm1.isDuplicate()){
+//				log.error("ignoring duplicate housenumber element",streetName,hnm1.getSign(),hnm1.getElement().toBrowseURL());
+//				roadNumbers.removeMapping(hnm1.getRoad(), hnm1);
+//				hnm1.setIgnored(true);
+//				hnm1.setRoad(null);
 			}
 		}
 	}
@@ -836,8 +851,15 @@ public class HousenumberGenerator {
 					if (o1 == o2)
 						return 0;
 					int d = o1.getHousenumber() - o2.getHousenumber();
-					if (d == 0)
-						d = o1.getSegment() - o2.getSegment();
+					if (d != 0)
+						return d;
+					d = o1.getSegment() - o2.getSegment();
+					if (d != 0)
+						return d;
+					d = o1.getSign().compareTo(o2.getSign());
+					if (d != 0){
+						long dd = 4;
+					}
 					return d;
 				}
 			});
@@ -879,7 +901,9 @@ public class HousenumberGenerator {
 			filterWrongDuplicates(streetName, potentialNumbersThisRoad,badMatches);
 			if (oldBad != badMatches.size())
 				return;
-			
+			if (r.getRoadDef().getId() == 240622549){
+				long dd = 4;
+			}
 			List<HousenumberMatch> leftNumbers = new ArrayList<HousenumberMatch>();
 			List<HousenumberMatch> rightNumbers = new ArrayList<HousenumberMatch>();
 			
@@ -954,10 +978,10 @@ public class HousenumberGenerator {
 			numbersHead = numbersHead.checkChainSegments(badMatches, usedNumbers);
 			if (oldBad != badMatches.size())
 				return;
-			numbersHead = numbersHead.checkChainSegmentLengths(badMatches);
+			numbersHead = numbersHead.checkChainPlausibility(streetName, potentialNumbersThisRoad, badMatches);
 			if (oldBad != badMatches.size())
 				return;
-			numbersHead = numbersHead.checkChainPlausibility(streetName, potentialNumbersThisRoad, badMatches);
+			numbersHead = numbersHead.checkChainSegmentLengths(streetName, potentialNumbersThisRoad, badMatches);
 			if (oldBad != badMatches.size())
 				return;
 //			numbersHead = numbersHead.checkChainAsRoad(streetName, potentialNumbersThisRoad, badMatches);
@@ -1156,7 +1180,7 @@ public class HousenumberGenerator {
 										sumDistSameSide[i] += dist;
 									}
 									if (curr.getHousenumber() == hnm2.getHousenumber()){
-										if (dist < 20)
+										if (dist < 40)
 											confirmed[i]++;
 									} else {
 										if (dist < 10 )
@@ -1194,7 +1218,8 @@ public class HousenumberGenerator {
 							log.error("don't know which one to use, ignoring both");
 							toIgnore.add(old);
 							toIgnore.add(hnm);
-							
+							hnm.setIgnored(true);
+							old.setIgnored(true);
 						}
 					}
 				}
@@ -1272,6 +1297,7 @@ public class HousenumberGenerator {
 			int prevRes = tested.get(num);
 			if (prevRes == 0)
 				continue;
+			boolean reported = false;
 			for (MapRoad r : clusteredRoads){
 				int countMatches = checkRoad(r, hnm);
 				if (countMatches == 0)
@@ -1280,6 +1306,7 @@ public class HousenumberGenerator {
 				if (countMatches > 1){
 					// TODO: verify how Garmin handles this when number is found in two consecutive number intervals
 					log.error(streetName,num,hnm.getElement().toBrowseURL(),"is coded in",countMatches,"different road segments");
+					reported = true;
 				}
 				countPlaces += countMatches;
 			}
@@ -1289,11 +1316,17 @@ public class HousenumberGenerator {
 			}
 			failed.add(hnm);
 			++countError;
-			if (countPlaces == 0 && hnm.getRoad() != null){
+			
+			if (countPlaces == 0 && hnm.getRoad() != null) {
 				log.error(streetName, num, hnm.getElement().toBrowseURL(), "is not found in expected road", hnm.getRoad());
+				reported = true;
 			}
-			if (countRoads > 1)
+			if (countRoads > 1){
 				log.error(streetName, num, hnm.getElement().toBrowseURL(), "is coded in", countRoads, "different roads");
+				reported = true;
+			}
+			if (!reported)
+				log.error(streetName, num, hnm.getElement().toBrowseURL(), "counters",countRoads, countPlaces);
 		}
 		if (countError > 0){
 			log.error("plausibility check for road cluster failed with", countError, "errors:", clusteredRoads);
