@@ -406,6 +406,7 @@ public class RuleFileReaderTest {
 		type = getFirstType(rs, el);
 		assertNotNull(type);
 
+		el = el.copy();  // Copy for LinkedOp which remembers the last matched element
 		el.addTag("cycleway", "opposite_lane");
 		type = getFirstType(rs, el);
 		assertNotNull(type);

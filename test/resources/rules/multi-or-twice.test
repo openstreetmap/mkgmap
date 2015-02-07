@@ -1,0 +1,18 @@
+
+WAY
+highway=primary
+name=b
+a=2
+b=5
+
+<<<lines>>>
+
+(highway=secondary | a=2 | b=5) & (highway=service | a=0 | b=5) { set name='a${name}' }
+
+highway=* [0x2]
+
+<finalize>
+highway=* {name '${name}' }
+
+<<<results>>>
+WAY 1: Line 0x2, labels=[ab, null, null, null], res=24-24 (1/1),(2/2),
