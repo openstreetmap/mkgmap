@@ -50,6 +50,7 @@ public class ExtNumbers {
 	private Numbers numbers = null;
 	private int startInRoad, endInRoad;
 	private int rnodNumber;
+	private boolean needsSplit;
 	
 	public ExtNumbers(MapRoad road) {
 		super();
@@ -57,10 +58,18 @@ public class ExtNumbers {
 		reset();
 	}
 
+	private void setNeedsSplit(boolean b) {
+		needsSplit = true;
+	}
+
+	public boolean needsSplit() {
+		return needsSplit;
+	}
 
 	private void reset() {
 		numbers = null;
 		sortedNumbers = null;
+		needsSplit = false;
 	}
 	
 	
@@ -337,7 +346,7 @@ public class ExtNumbers {
 	 * on one side of the road.  
 	 * @return
 	 */
-	private ExtNumbers tryAddNumberNode() {
+	public ExtNumbers tryAddNumberNode() {
 		String action;
 		if (endInRoad - startInRoad > 1)
 			action = "change";
@@ -367,8 +376,17 @@ public class ExtNumbers {
 				}
 			}
 			if (countBetween == 0){
-				if (countAfterEnd == 0 || countBeforeStart == 0)
-					return combineSides();
+				if (countAfterEnd == 0 || countBeforeStart == 0){
+					if (leftHouses.isEmpty() == false && rightHouses.isEmpty() == false)
+						return combineSides();
+					else {
+						if (countAfterEnd > 0)
+							return dupNode(1);
+						else 
+							return dupNode(0);
+						
+					}
+				} 
 			} 
 			
 			// find a good place to split
@@ -781,28 +799,43 @@ public class ExtNumbers {
 			List<HousenumberMatch> potentialNumbersThisRoad, MultiHashMap<HousenumberMatch, MapRoad> badMatches) {
 		// we try to repair up to 10 times
 		for (int loop = 0; loop < 10; loop++){
-			ExtNumbers en1 = this;
 			boolean anyChanges = false;
-			while (en1 != null){
-				if (en1.hasNumbers()){
-					ExtNumbers en2 = en1.next;
-					while (en2 != null){
-						if (en2.hasNumbers()){
-//							if ("Am Hexendeich".equals(streetName)){
-//								log.error("checking",streetName,en1.getNumbers(), en2.getNumbers());
-//							}
-							boolean changed = checkIntervals(streetName, en1, en2, badMatches);
-							if (changed){
-								anyChanges = true;
-								break;
-							}
-						}
-						en2 = en2.next;
-					}
+			for (ExtNumbers en1 = this; en1 != null; en1 = en1.next){
+				if (anyChanges)
+					break;
+				if (en1.hasNumbers() == false)
+					continue;
+				for (ExtNumbers en2 = en1.next; en2 != null; en2 = en2.next){
 					if (anyChanges)
 						break;
+					if (en2.hasNumbers() == false)
+						continue;
+					int res = checkIntervals(streetName, en1, en2, badMatches);
+					switch (res) {
+					case OK_NO_CHANGES:
+					case NOT_OK_KEEP:
+						break;
+					case OK_AFTER_CHANGES:
+						anyChanges = true;
+						break;
+					case NOT_OK_TRY_SPLIT:
+						if (en1.needsSplit){
+							ExtNumbers test = en1.tryAddNumberNode();
+							if (test != en1){
+								anyChanges = true;
+								if (test.prev == null)
+									return test.checkChainPlausibility(streetName, potentialNumbersThisRoad, badMatches);
+							}
+						}
+						if (en2.needsSplit){
+							ExtNumbers test = en2.tryAddNumberNode();
+							if (test != en2)
+								anyChanges = true;
+						}
+					default:
+						break;
+					}
 				}
-				en1 = en1.next;
 			}
 			if (!anyChanges)
 				break;
@@ -810,6 +843,10 @@ public class ExtNumbers {
 		return this;
 	}
 	
+	public static final int OK_NO_CHANGES = 0;
+	public static final int OK_AFTER_CHANGES = 1;
+	public static final int NOT_OK_TRY_SPLIT= 2;
+	public static final int NOT_OK_KEEP= 3;
 	/**
 	 * Check if two intervals are overlapping  (all combinations of left + right)
 	 * @param streetName
@@ -818,11 +855,22 @@ public class ExtNumbers {
 	 * @param badMatches
 	 * @return true if something was changed
 	 */
-	public static boolean checkIntervals(String streetName, ExtNumbers en1,
+	public static int checkIntervals(String streetName, ExtNumbers en1,
 			ExtNumbers en2, MultiHashMap<HousenumberMatch, MapRoad> badMatches) {
 		Numbers ivl1 = en1.getNumbers();
 		Numbers ivl2 = en2.getNumbers();
 		
+		if (en1.road != en2.road){
+			Coord cs1 = en1.road.getPoints().get(en1.startInRoad);
+			Coord ce1 = en1.road.getPoints().get(en1.endInRoad);
+			Coord ce2 = en2.road.getPoints().get(en2.endInRoad);
+			if (ce2 == cs1 || ce2 == ce1){
+				ExtNumbers help = en1;
+				en2 = en1;
+				en1 = help;
+			}
+				
+		}
 		for (int i = 0; i < 2; i++){
 			boolean left1 = i == 0;
 			NumberStyle style1 = left1 ? ivl1.getLeftNumberStyle() : ivl1.getRightNumberStyle();
@@ -845,7 +893,13 @@ public class ExtNumbers {
 					continue;
 				List<HousenumberMatch> houses1 = left1 ? en1.leftHouses : en1.rightHouses;
 				List<HousenumberMatch> houses2 = left2 ? en2.leftHouses : en2.rightHouses;
-				log.error("trying to fix unplausible combination of intervals in road",en1.road, (left1 ? "left:" : "right"),ivl1,(left2 ? "left:" : "right"),ivl2,houses1, houses2);
+				if (en1.road == en2.road)
+					log.error("trying to fix unplausible combination of intervals in road",
+							en1.road, (left1 ? "left:" : "right"), ivl1, houses1, (left2 ? "left:" : "right"),ivl2, houses2);
+				else 
+					log.error("trying to fix unplausible combination of intervals in road",
+							en1.road, (left1 ? "left:" : "right"), ivl1, houses1, 
+							en2.road, (left2 ? "left:" : "right"), ivl2, houses2);
 				double smallestDelta = Double.POSITIVE_INFINITY;
 				HousenumberMatch bestMoveOrig = null;
 				HousenumberMatch bestMoveMod = null;
@@ -915,6 +969,9 @@ public class ExtNumbers {
 						}
 					}
 				}
+				if ("Brookweg".equals(streetName)){
+					long dd = 4;
+				}
 				if (bestMoveMod != null){
 					if (bestMoveOrig.isDuplicate()){
 						log.error("duplicate number",streetName,bestMoveOrig.getSign(),bestMoveOrig.getElement().toBrowseURL() );
@@ -950,18 +1007,29 @@ public class ExtNumbers {
 					en2.reset();
 					en1.setNumbers(houses1, en1.startInRoad, en1.endInRoad, left1);
 					en2.setNumbers(houses2, en2.startInRoad, en2.endInRoad, left2);
-					return true;
+					return OK_AFTER_CHANGES;
 				} else {
-					// TODO: maybe split one of the intervals?
-					log.error("found no correction");
+					int delta1 = Math.abs(e1-s1);
+					int delta2 = Math.abs(e2-s2);
+					if (delta1 == 0 && delta2 == 0 ||
+							delta1 == 0 && (s1 == s2 || s1 == e2) ||
+							delta2 == 0 && (s2 == s1 || s2 == e1))
+						return NOT_OK_KEEP; // keep as is	
+
+					if (delta1 > delta2)
+						en1.setNeedsSplit(true);
+					else if (delta2 >= delta1)
+						en2.setNeedsSplit(true);
+					else 
+						return NOT_OK_KEEP; // keep as is 
+					return NOT_OK_TRY_SPLIT;
+					
 				}
 			}
 		}
-
-		
-
-		return false;
+		return OK_NO_CHANGES;
 	}
+
 
 	/**
 	 * Check the start and end values of two consecutive number intervals
@@ -974,9 +1042,6 @@ public class ExtNumbers {
 	 */
 	private static boolean checkIntervalBoundaries(int s1, int e1, int s2,int e2, boolean sameSide){
 		boolean ok = false;
-		if (s1 == 31 && e1 == 33 && s2 == 27 && e2 == 39){
-			long dd = 4;
-		}
 		// many cases, maybe someone finds simpler code?
 		if (sameSide){
 			// allow equal numbers at boundaries
@@ -1044,4 +1109,10 @@ public class ExtNumbers {
 		getNumbers();
 		return sortedNumbers != null && sortedNumbers.isEmpty() == false;
 	}
+	
+	public String toString(){
+		return road.toString() + leftHouses.toString() + rightHouses.toString();
+	}
+
+
 }
