@@ -125,6 +125,16 @@ Address search options:
   same code page and sorting options (eg. --code-page, --latin1 etc) must
   be used as were used to compile the individual map tiles.
 
+--x-split-name-index
+    A temporary option to enable indexing each part of a street name separately.
+    So for example if the street is "Aleksandra Gryglewskiego" then you will be able to
+    search for it as both "Aleksandra" and "Gryglewskiego".  It will also increase the
+    size of the index.  Useful in countries where searching for the first word in name
+    is not the right thing to do.
+
+    Note that this option is still experimental and there may be problems. If you find
+    any let us know!
+
 --bounds=directory|zipfile
     A directory or a zipfile containing the preprocessed bounds files. 
     Bounds files in a zipfile must be located in the zipfiles root directory.

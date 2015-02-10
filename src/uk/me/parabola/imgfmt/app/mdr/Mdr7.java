@@ -39,6 +39,7 @@ public class Mdr7 extends MdrMapSection {
 
 	private final int codepage;
 	private final boolean isMulti;
+	private final boolean splitName;
 
 	private List<Mdr7Record> allStreets = new ArrayList<>();
 	private List<Mdr7Record> streets = new ArrayList<>();
@@ -48,7 +49,7 @@ public class Mdr7 extends MdrMapSection {
 	public Mdr7(MdrConfig config) {
 		setConfig(config);
 		Sort sort = config.getSort();
-		//charset = sort.getCharset();
+		splitName = config.isSplitName();
 		codepage = sort.getCodepage();
 		isMulti = sort.isMulti();
 	}
@@ -82,6 +83,9 @@ public class Mdr7 extends MdrMapSection {
 		st.setPrefixOffset((byte) prefix);
 		st.setSuffixOffset((byte) suffix);
 		allStreets.add(st);
+
+		if (!splitName)
+			return;
 
 		boolean start = false;
 		boolean inWord = false;
