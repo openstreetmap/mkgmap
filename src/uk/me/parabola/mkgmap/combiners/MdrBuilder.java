@@ -111,6 +111,7 @@ public class MdrBuilder implements Combiner {
 		config.setForDevice(false);
 		config.setOutputDir(outputDir);
 		config.setSort(sort);
+		config.setSplitName(args.get("split-name-index", false));
 
 		// Wrap the MDR channel with the MDRFile object
 		mdrFile = new MDRFile(mdrChan, config);
@@ -128,13 +129,14 @@ public class MdrBuilder implements Combiner {
 		}
 	}
 
-	void initForDevice(Sort sort, String outputDir) {
+	void initForDevice(Sort sort, String outputDir, boolean splitName) {
 		// Set the options that we are using for the mdr.
 		MdrConfig config = new MdrConfig();
 		config.setHeaderLen(568);
 		config.setWritable(true);
 		config.setForDevice(true);
 		config.setSort(sort);
+		config.setSplitName(splitName);
 
 		// Wrap the MDR channel with the MDRFile object
 		try {
