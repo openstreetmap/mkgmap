@@ -44,6 +44,7 @@ public class HousenumberMatch {
 	private boolean hasAlternativeRoad;
 	private boolean ignored;
 	private boolean isDuplicate;
+	private int moved;
 	
 	/**
 	 * Instantiates a new housenumber match element.
@@ -274,6 +275,14 @@ public class HousenumberMatch {
 
 	public void setDuplicate(boolean isDuplicate) {
 		this.isDuplicate = isDuplicate;
+	}
+
+	public int getMoved() {
+		return moved;
+	}
+
+	public void incMoved() {
+		this.moved++;
 	}
 
 	public String toString() {

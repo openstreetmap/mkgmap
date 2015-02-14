@@ -556,7 +556,7 @@ public class HousenumberGenerator {
 		}); 
 		
 		HousenumberMatch prev = null;
-
+		
 		for (HousenumberMatch hnm : housesNearCluster) {
 			if (hnm.isIgnored())
 				continue;
@@ -623,6 +623,7 @@ public class HousenumberGenerator {
 				}
 				
 			}
+			
 			if (hnm.getRoad() != null) {
 				roadNumbers.add(hnm.getRoad(), hnm);
 			} else {
@@ -650,7 +651,6 @@ public class HousenumberGenerator {
 			return true;
 		return false;
 	}
-
 
 	/**
 	 * If we find a sequence of house numbers like 1,3,5 or 1,2,3
@@ -808,17 +808,27 @@ public class HousenumberGenerator {
 			MultiHashMap<MapRoad, HousenumberMatch> roadNumbers, MultiHashMap<HousenumberMatch, MapRoad> badMatches) {
 		// go through all roads and apply the house numbers
 		ArrayList<HousenumberRoad> housenumberRoads = new ArrayList<>();
+		int oldBad = badMatches.size();
 		for (MapRoad r : roadsInCluster){
 			List<HousenumberMatch> potentialNumbersThisRoad = roadNumbers.get(r);
 			if (potentialNumbersThisRoad.isEmpty()) 
 				continue;
 			HousenumberRoad hnr = new HousenumberRoad(streetName, r, potentialNumbersThisRoad);
 			hnr.buildIntervals(badMatches);
+			if (oldBad != badMatches.size())
+				return;
+			hnr.checkIntervals(badMatches);
+			if (oldBad != badMatches.size())
+				return;
 			housenumberRoads.add(hnr);
 		}
 		if (housenumberRoads.size() > 1){
 			checkWrongRoadAssignmments(housenumberRoads, badMatches);
 		}
+		
+		if (oldBad != badMatches.size())
+			return;
+		
 		for (HousenumberRoad hnr : housenumberRoads){
 			hnr.setNumbers();
 		}
@@ -832,18 +842,30 @@ public class HousenumberGenerator {
 	 */
 	private static void checkWrongRoadAssignmments(ArrayList<HousenumberRoad> housenumberRoads,
 			MultiHashMap<HousenumberMatch, MapRoad> badMatches) {
+		int oldBad = badMatches.size();
 		for (int loop = 0; loop < 10; loop++){
-			boolean ok = true;
+			boolean changed = false;
 			for (int i = 0; i+1 < housenumberRoads.size(); i++){
 				HousenumberRoad hnr1 = housenumberRoads.get(i);
+				hnr1.setChanged(false);
 				for (int j = i+1; j < housenumberRoads.size(); j++){
 					HousenumberRoad hnr2 = housenumberRoads.get(j);
+					hnr2.setChanged(false);
 					hnr1.checkWrongRoadAssignmments(hnr2, badMatches);
+					if (oldBad != badMatches.size())
+						return;
+					if (hnr1.isChanged()){
+						changed = true;
+						hnr1.checkIntervals(badMatches);
+					}
+					if (hnr2.isChanged()){
+						changed = true;
+						hnr2.checkIntervals(badMatches);
+					}
 				}
-				//TODO: set ok to false if a change was done 
 			}
-			if (ok)
-				break;
+			if (!changed)
+				return;
 		}
 	}
 

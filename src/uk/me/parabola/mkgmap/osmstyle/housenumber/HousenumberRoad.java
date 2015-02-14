@@ -13,8 +13,6 @@
 
 package uk.me.parabola.mkgmap.osmstyle.housenumber;
 
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -42,7 +40,7 @@ public class HousenumberRoad {
 	private final MapRoad road;
 	private ExtNumbers extNumbersHead;
 	private final List<HousenumberMatch> houseNumbers;
-	
+	private boolean changed;
 
 	public HousenumberRoad(String streetName, MapRoad r, List<HousenumberMatch> potentialNumbersThisRoad) {
 		this.streetName = streetName;
@@ -65,12 +63,6 @@ public class HousenumberRoad {
 				return d;
 			}
 		});
-		Int2IntOpenHashMap usedNumbers = new Int2IntOpenHashMap();
-		for (HousenumberMatch hnm : houseNumbers){
-			int num = hnm.getHousenumber();
-			int count = usedNumbers.get(num);
-			usedNumbers.put(num, count + 1);
-		}
 		
 //		int oddLeft = 0, oddRight = 0, evenLeft = 0, evenRight = 0;
 //		for (HousenumberMatch  hnm: potentialNumbersThisRoad){
@@ -151,7 +143,7 @@ public class HousenumberRoad {
 			}
 
 			// Now we have a CoordNode and it is not the first one.
-			ExtNumbers numbers = new ExtNumbers(road);
+			ExtNumbers numbers = new ExtNumbers(this);
 			numbers.setRnodNumber(prevNumberNodeIndex);
 			int leftUsed = numbers.setNumbers(leftNumbers, prevNodePos, currNodePos, true);
 			int rightUsed = numbers.setNumbers(rightNumbers, prevNodePos, currNodePos, false);
@@ -171,24 +163,32 @@ public class HousenumberRoad {
 			nodeIndex++;
 			currNodePos++;
 		}
-		if (extNumbersHead == null)
-			return;
-		
-		extNumbersHead = extNumbersHead.checkChainSegments(badMatches, usedNumbers);
-		if (oldBad != badMatches.size())
-			return;
-		extNumbersHead = extNumbersHead.checkChainPlausibility(streetName, houseNumbers, badMatches);
-		if (oldBad != badMatches.size())
-			return;
-		extNumbersHead = extNumbersHead.checkChainSegmentLengths(streetName, houseNumbers, badMatches);
-		if (oldBad != badMatches.size())
-			return;
-//		numbersHead = numbersHead.checkChainAsRoad(streetName, potentialNumbersThisRoad, badMatches);
-//		if (oldBad != badMatches.size())
-//			return;
-		
 	}
 
+	/**
+	 * @param badMatches
+	 */
+	public void checkIntervals(MultiHashMap<HousenumberMatch, MapRoad> badMatches){
+		int oldBad = badMatches.size();
+		if (extNumbersHead == null)
+			return;
+		for (int loop = 0; loop < 10; loop++){
+			setChanged(false);
+			extNumbersHead = extNumbersHead.checkSingleChainSegments(badMatches);
+			if (oldBad != badMatches.size())
+				return;
+			extNumbersHead = extNumbersHead.checkChainPlausibility(streetName, houseNumbers, badMatches);
+			if (oldBad != badMatches.size())
+				return;
+			extNumbersHead = extNumbersHead.checkChainSegmentLengths(streetName, houseNumbers, badMatches);
+			if (oldBad != badMatches.size())
+				return;
+			if (isChanged() == false)
+				break;
+		}
+	}
+	
+	
 	/**
 	 * Identify duplicate numbers and remove those which are very far from
 	 * other houses with same or near numbers.
@@ -352,46 +352,28 @@ public class HousenumberRoad {
 	 * and end of the part to house number nodes (if not already)
 	 * This increases the precision of the address search
 	 * and costs only a few bytes. 
-	 * @param streetName 
-	 * @param r
-	 * @param potentialNumbersThisRoad
 	 */
 	private void optimizeNumberIntervalLengths() {
-		int numPoints = road.getPoints().size();
-		boolean optimizeStart = false;
-		boolean optimizeEnd = false;
 		BitSet segmentsWithNumbers = new BitSet();
 		for (HousenumberMatch  hnm: houseNumbers){
 			segmentsWithNumbers.set(hnm.getSegment());
-			if (hnm.getSegment() == 0  && hnm.getSegmentFrac() < 0){
-				optimizeStart = true;
-			}
-			if (hnm.getSegment() == numPoints-2 && hnm.getSegmentFrac() > 1){
-				optimizeEnd = true;
-			}
 		}
 		
 		boolean searched = false;
-		
+		int numPoints = road.getPoints().size();
 		for (int i = 0; i < numPoints; i++){
 			if (segmentsWithNumbers.get(i) == searched){
 				changePointToNumberNode(road,i);
 				searched = !searched;
 			}
 		}
-		if (optimizeStart){
-			changePointToNumberNode(road,1);
-		}
-		if (optimizeEnd){
-			changePointToNumberNode(road,numPoints-2);
-		}
 	}
 
 	
-	private static void changePointToNumberNode(MapRoad r, int i) {
-		Coord co = r.getPoints().get(i);
+	private static void changePointToNumberNode(MapRoad r, int pos) {
+		Coord co = r.getPoints().get(pos);
 		if (co.isNumberNode() == false){
-			log.info("road",r,"changing point",i,"to number node at",co.toDegreeString(),"to increase precision for house number search");
+			log.info("road",r,"changing point",pos,"to number node at",co.toDegreeString(),"to increase precision for house number search");
 			co.setNumberNode(true);
 			r.setInternalNodes(true);
 		}
@@ -401,6 +383,7 @@ public class HousenumberRoad {
 			MultiHashMap<HousenumberMatch, MapRoad> badMatches) {
 		if (this.extNumbersHead == null || other.extNumbersHead == null)
 			return;
+		
 		for (int loop = 0; loop < 10; loop++){
 			boolean changed = false;
 			ExtNumbers head1 = this.extNumbersHead;
@@ -422,10 +405,12 @@ public class HousenumberRoad {
 						break;
 					case ExtNumbers.OK_AFTER_CHANGES:
 						changed = true;
+						this.setChanged(true);
+						other.setChanged(true);
 						break;
 					case ExtNumbers.NOT_OK_TRY_SPLIT:
 						if (en1.needsSplit()){
-							ExtNumbers test = en1.tryAddNumberNode();
+							ExtNumbers test = en1.tryAddNumberNode("error");
 							if (test != en1){
 								changed = true;
 								if (test.prev == null){
@@ -434,7 +419,7 @@ public class HousenumberRoad {
 							}
 						}
 						if (en2.needsSplit()){
-							ExtNumbers test = en2.tryAddNumberNode();
+							ExtNumbers test = en2.tryAddNumberNode("error");
 							if (test != en1){
 								changed = true;
 								if (test.prev == null){
@@ -443,6 +428,8 @@ public class HousenumberRoad {
 							}
 						}
 						break;
+					case ExtNumbers.NOT_OK_STOP:
+						return;
 					default:
 						log.error("can't fix",en1,en2);
 					}
@@ -458,6 +445,18 @@ public class HousenumberRoad {
 			return;
 		log.debug("numbers for road",road);		
 		road.setNumbers(extNumbersHead.getNumberList());
+	}
+	
+	public MapRoad getRoad(){
+		return road;
+	}
+
+	public boolean isChanged() {
+		return changed;
+	}
+
+	public void setChanged(boolean changed) {
+		this.changed = changed;
 	}
 }
 
