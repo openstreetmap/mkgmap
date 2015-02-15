@@ -432,7 +432,7 @@ public class HousenumberRoad {
 						}
 						if (en2.needsSplit()){
 							ExtNumbers test = en2.tryAddNumberNode(ExtNumbers.SR_FIX_ERROR);
-							if (test != en1){
+							if (test != en2){
 								changed = true;
 								if (test.prev == null){
 									other.extNumbersHead = test;
