@@ -173,9 +173,6 @@ public class HousenumberRoad {
 	 */
 	public void checkIntervals(MultiHashMap<HousenumberMatch, MapRoad> badMatches){
 		int oldBad = badMatches.size();
-		if (getRoad().getRoadDef().getId() == 26068052){
-			long dd = 4;
-		}
 		if (extNumbersHead == null)
 			return;
 		boolean anyChanges = false;
@@ -382,9 +379,6 @@ public class HousenumberRoad {
 	private static void changePointToNumberNode(MapRoad r, int pos) {
 		Coord co = r.getPoints().get(pos);
 		if (co.isNumberNode() == false){
-			if (r.getRoadDef().getId() == 247984952){
-				long dd = 4;
-			}
 			log.info("road",r,"changing point",pos,"to number node at",co.toDegreeString(),"to increase precision for house number search");
 			co.setNumberNode(true);
 			r.setInternalNodes(true);

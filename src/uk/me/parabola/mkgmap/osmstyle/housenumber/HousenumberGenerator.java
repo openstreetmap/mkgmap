@@ -142,9 +142,6 @@ public class HousenumberGenerator {
 		
 		if (HousenumberMatch.getHousenumber(w) != null) {
 			String streetname = getStreetname(w);
-			if (w.getId() == 26068052){
-				long dd = 4;
-			}
 			if (streetname != null) {
 				houseNumbers.add(streetname, w);
 			} else {

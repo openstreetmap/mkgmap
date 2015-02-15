@@ -31,7 +31,6 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.osmstyle.housenumber.HousenumberGenerator.HousenumberMatchComparator;
-//import uk.me.parabola.util.GpxCreator;
 import uk.me.parabola.util.MultiHashMap;
 
 /**
@@ -357,9 +356,6 @@ public class ExtNumbers {
 	 * @return
 	 */
 	public ExtNumbers tryAddNumberNode(int reason) {
-		if (getRoad().getRoadDef().getId() == 26234895){
-			long dd = 4;
-		}
 		String action;
 		if (endInRoad - startInRoad > 1)
 			action = "change";
@@ -390,7 +386,7 @@ public class ExtNumbers {
 					}
 				}
 			}
-			if (segmentLength > MAX_LOCATE_ERROR){
+			if (segmentLength > MAX_LOCATE_ERROR || reason == SR_FIX_ERROR){
 				if (countBeforeStart > 0 && countAfterEnd + countBetween > 0)
 					return dupNode(0, SR_SPLIT_ROAD_END);
 				if (countAfterEnd > 0 && countBeforeStart + countBetween > 0)
@@ -474,6 +470,8 @@ public class ExtNumbers {
 							return this;
 						return dupNode(wantedFraction, SR_OPT_LEN);
 					}
+					if (leftHouses.size() > 1 || rightHouses.size() > 1)
+						return dupNode(wantedFraction, SR_FIX_ERROR);
 					return this;
 				}
 			}
@@ -607,10 +605,13 @@ public class ExtNumbers {
 	private void setSegment(int segment, List<HousenumberMatch> houses) {
 		BitSet toTest = new BitSet();
 		toTest.set(segment);
+		 
 		for (HousenumberMatch hnm : houses){
 			HousenumberGenerator.findClosestRoadSegment(hnm, getRoad(), toTest);
 			if (hnm.getRoad() == null || hnm.getSegment() != segment){
-				long dd = 4;
+				// should not happen
+				log.error("internal error, house too far from forced segment in road",getRoad(),hnm,hnm.getElement().toBrowseURL());
+				hnm.setIgnored(true);
 			}
 		}
 		
@@ -1081,21 +1082,20 @@ public class ExtNumbers {
 					en2.setNumbers(houses2, en2.startInRoad, en2.endInRoad, left2);
 					return OK_AFTER_CHANGES;
 				} else {
+					ExtNumbers toSplit = null;
 					int delta1 = Math.abs(e1-s1);
 					int delta2 = Math.abs(e2-s2);
-					if (delta1 == 0 && delta2 == 0 ||
-							delta1 == 0 && (s1 == s2 || s1 == e2) ||
-							delta2 == 0 && (s2 == s1 || s2 == e1))
-						return NOT_OK_KEEP; // keep as is	
-
-					if (delta1 > delta2)
-						en1.setNeedsSplit(true);
-					else if (delta2 >= delta1)
-						en2.setNeedsSplit(true);
-					else 
-						return NOT_OK_KEEP; // keep as is 
-					return NOT_OK_TRY_SPLIT;
-					
+					if (delta1 > 0 && delta2 > 0)
+						toSplit = (delta1 > delta2) ? en1 : en2;
+					else if (delta1 == 0 && delta2 > 0 && en2.sortedNumbers.containsKey(s1) == false)
+						toSplit = en2;
+					else if (delta2 == 0 && delta1 > 0 && en1.sortedNumbers.containsKey(s2) == false) 
+						toSplit = en1;
+					if (toSplit != null){
+						toSplit.setNeedsSplit(true);
+						return NOT_OK_TRY_SPLIT;
+					}
+					return NOT_OK_KEEP;
 				}
 			}
 		}
