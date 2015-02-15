@@ -26,6 +26,7 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.TreeSet;
 
+import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -141,6 +142,9 @@ public class HousenumberGenerator {
 		
 		if (HousenumberMatch.getHousenumber(w) != null) {
 			String streetname = getStreetname(w);
+			if (w.getId() == 26068052){
+				long dd = 4;
+			}
 			if (streetname != null) {
 				houseNumbers.add(streetname, w);
 			} else {
@@ -479,7 +483,7 @@ public class HousenumberGenerator {
 					matchCluster(streetName, houses, cluster);
 				}
 				for (HousenumberMatch house : houses){
-					log.error("found no street for house number element",streetName,house.getHousenumber(),house.getElement().toBrowseURL(),", distance to next possible road:",Math.round(house.getDistance()),"m");
+					log.warn("found no street for house number element",streetName,house.getHousenumber(),house.getElement().toBrowseURL(),", distance to next possible road:",Math.round(house.getDistance()),"m");
 				}
 			} 		
 		}
@@ -532,7 +536,7 @@ public class HousenumberGenerator {
 			boolean isOK = assignHouseNumbersToRoads(0, streetName, housesNearCluster, roadsInCluster, badRoadMatches);
 			if (isOK || oldBad ==  badRoadMatches.size())
 				break;
-			log.error("repeating cluster for",streetName);
+			log.info("repeating cluster for",streetName);
 		}
 	}
 
@@ -542,7 +546,7 @@ public class HousenumberGenerator {
 			MultiHashMap<HousenumberMatch, MapRoad> badRoadMatches) {
 		if (housesNearCluster.isEmpty())
 			return true;
-		log.error("current cluster",streetName,roadsInCluster);
+		log.debug("current cluster",streetName,roadsInCluster);
 		MultiHashMap<MapRoad, HousenumberMatch> roadNumbers = new MultiHashMap<MapRoad, HousenumberMatch>(); 
 		Collections.sort(housesNearCluster, new Comparator<HousenumberMatch>() {
 			public int compare(HousenumberMatch o1, HousenumberMatch o2) {
@@ -628,7 +632,7 @@ public class HousenumberGenerator {
 				roadNumbers.add(hnm.getRoad(), hnm);
 			} else {
 				if (hnm.isIgnored() == false)
-					log.error("found no plausible road for house number element",hnm.getElement().toBrowseURL(),"(",streetName,hnm.getSign(),")");
+					log.warn("found no plausible road for house number element",hnm.getElement().toBrowseURL(),"(",streetName,hnm.getSign(),")");
 			}
 			if (!hnm.isIgnored())
 				prev = hnm;
@@ -671,9 +675,6 @@ public class HousenumberGenerator {
 		
 		for (int pos1 = 0; pos1 < n; pos1++){
 			HousenumberMatch hnm1 = sortedHouses.get(pos1);
-			if (hnm1.isDuplicate()){
-				long dd = 4;
-			}
 			if (hnm1.isIgnored() || hnm1.hasAlternativeRoad() == false)
 				continue;
 			int confirmed = 0;
@@ -733,10 +734,10 @@ public class HousenumberGenerator {
 					bestAlternative = hnm2;
 					bestAlternativeDist = dist2;
 				}
-				log.error("road check hnm1:",hnm1.getRoad(),hnm1,hnm1.getDistance(),",hnm2:", hnm2.getRoad(),hnm2,hnm2.getDistance(),distHouses,dist2,frac2,"hnm1 is falsified");
+				log.debug("road check hnm1:",hnm1.getRoad(),hnm1,hnm1.getDistance(),",hnm2:", hnm2.getRoad(),hnm2,hnm2.getDistance(),distHouses,dist2,frac2,"hnm1 is falsified");
 			}
 			if (confirmed == 0 && falsified > 0){
-				log.error("house number element assigned to road",hnm1.getRoad(),hnm1,hnm1.getElement().toBrowseURL(),"is closer to more plausible houses at road",bestAlternative.getRoad());
+				log.info("house number element assigned to road",hnm1.getRoad(),hnm1,hnm1.getElement().toBrowseURL(),"is closer to more plausible houses at road",bestAlternative.getRoad());
 				roadNumbers.removeMapping(hnm1.getRoad(), hnm1);
 				hnm1.setRoad(bestAlternative.getRoad());
 				hnm1.setSegment(bestAlternative.getSegment());
@@ -817,18 +818,28 @@ public class HousenumberGenerator {
 			hnr.buildIntervals(badMatches);
 			if (oldBad != badMatches.size())
 				return;
-			hnr.checkIntervals(badMatches);
-			if (oldBad != badMatches.size())
-				return;
 			housenumberRoads.add(hnr);
 		}
-		if (housenumberRoads.size() > 1){
+		for (int loop = 0; loop < 10; loop++){
+			for (HousenumberRoad hnr : housenumberRoads){
+				hnr.checkIntervals(badMatches);
+				if (oldBad != badMatches.size())
+					return;
+			}
 			checkWrongRoadAssignmments(housenumberRoads, badMatches);
+			if (oldBad != badMatches.size())
+				return;
+//			improveSearchResults(housenumberRoads, badMatches);
+//			if (oldBad != badMatches.size())
+//				return;
+			boolean changed = false;
+			for (HousenumberRoad hnr : housenumberRoads){
+				if (hnr.isChanged())
+					changed = true;
+			}
+			if (!changed)
+				break;
 		}
-		
-		if (oldBad != badMatches.size())
-			return;
-		
 		for (HousenumberRoad hnr : housenumberRoads){
 			hnr.setNumbers();
 		}
@@ -842,6 +853,8 @@ public class HousenumberGenerator {
 	 */
 	private static void checkWrongRoadAssignmments(ArrayList<HousenumberRoad> housenumberRoads,
 			MultiHashMap<HousenumberMatch, MapRoad> badMatches) {
+		if (housenumberRoads.size() < 2)
+			return;
 		int oldBad = badMatches.size();
 		for (int loop = 0; loop < 10; loop++){
 			boolean changed = false;
@@ -870,6 +883,22 @@ public class HousenumberGenerator {
 	}
 
 	/**
+	 * 
+	 * @param streetName
+	 * @param housenumberRoads
+	 * @param badMatches
+	 */
+	private static void improveSearchResults(ArrayList<HousenumberRoad> housenumberRoads,
+			MultiHashMap<HousenumberMatch, MapRoad> badMatches) {
+		int oldBad = badMatches.size();
+		for (HousenumberRoad hnr : housenumberRoads){
+			hnr.improveSearchResults(badMatches);
+			if (oldBad != badMatches.size())
+				return;
+		}
+	}
+
+	/**
 	 * Sorts house numbers by roads, road segments and position of the house number.
 	 * @author WanMil
 	 */
@@ -879,7 +908,10 @@ public class HousenumberGenerator {
 			if (o1 == o2) {
 				return 0;
 			}
-			
+			if (o1.getRoad() == null || o2.getRoad() == null){
+				log.error("road is null in sort comparator",o1,o2);
+				throw new MapFailedException("internal error in housenumber processing"); 
+			}
 			if (o1.getRoad() != o2.getRoad()) {
 				return o1.getRoad().hashCode() - o2.getRoad().hashCode();
 			} 
@@ -927,7 +959,7 @@ public class HousenumberGenerator {
 				countRoads++;
 				if (countMatches > 1){
 					// TODO: verify how Garmin handles this when number is found in two consecutive number intervals
-					log.error(streetName,hnm.getSign(),hnm.getElement().toBrowseURL(),"is coded in",countMatches,"different road segments");
+					log.warn(streetName,hnm.getSign(),hnm.getElement().toBrowseURL(),"is coded in",countMatches,"different road segments");
 					reported = true;
 				}
 				countPlaces += countMatches;
@@ -940,18 +972,18 @@ public class HousenumberGenerator {
 			++countError;
 			
 			if (countPlaces == 0 && hnm.getRoad() != null) {
-				log.error(streetName, num, hnm.getElement().toBrowseURL(), "is not found in expected road", hnm.getRoad());
+				log.warn(streetName, hnm.getSign(), hnm.getElement().toBrowseURL(), "is not found in expected road", hnm.getRoad());
 				reported = true;
 			}
 			if (countRoads > 1){
-				log.error(streetName, num, hnm.getElement().toBrowseURL(), "is coded in", countRoads, "different roads");
+				log.warn(streetName, hnm.getSign(), hnm.getElement().toBrowseURL(), "is coded in", countRoads, "different roads");
 				reported = true;
 			}
 			if (!reported)
-				log.error(streetName, num, hnm.getElement().toBrowseURL(), "counters",countRoads, countPlaces);
+				log.error(streetName, hnm.getSign(), hnm.getElement().toBrowseURL(), "unexpected problem with counters",countRoads, countPlaces);
 		}
 		if (countError > 0){
-			log.error("plausibility check for road cluster failed with", countError, "errors:", clusteredRoads);
+			log.warn("plausibility check for road cluster failed with", countError, "errors:", clusteredRoads);
 		}
 		return failed; 
 	}
@@ -1056,7 +1088,7 @@ public class HousenumberGenerator {
 	 */
 	public static boolean isLeft(Coord spoint1, Coord spoint2, Coord point) {
 		if (spoint1.distance(spoint2) == 0){
-			log.error("road segment length is 0");
+			log.warn("road segment length is 0 in left/right evaluation");
 		}
 
 		return ((spoint2.getHighPrecLon() - spoint1.getHighPrecLon())

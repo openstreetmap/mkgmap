@@ -99,6 +99,9 @@ public class HousenumberRoad {
 		List<HousenumberMatch> rightNumbers = new ArrayList<HousenumberMatch>();
 		
 		for (HousenumberMatch hr : houseNumbers) {
+			if (hr.getRoad() == null || hr.isIgnored()){
+				continue;
+			}
 			if (hr.isLeft()) {
 				leftNumbers.add(hr);
 			} else {
@@ -170,22 +173,26 @@ public class HousenumberRoad {
 	 */
 	public void checkIntervals(MultiHashMap<HousenumberMatch, MapRoad> badMatches){
 		int oldBad = badMatches.size();
+		if (getRoad().getRoadDef().getId() == 26068052){
+			long dd = 4;
+		}
 		if (extNumbersHead == null)
 			return;
+		boolean anyChanges = false;
 		for (int loop = 0; loop < 10; loop++){
 			setChanged(false);
-			extNumbersHead = extNumbersHead.checkSingleChainSegments(badMatches);
+			extNumbersHead = extNumbersHead.checkSingleChainSegments(streetName, badMatches);
 			if (oldBad != badMatches.size())
 				return;
 			extNumbersHead = extNumbersHead.checkChainPlausibility(streetName, houseNumbers, badMatches);
 			if (oldBad != badMatches.size())
 				return;
-			extNumbersHead = extNumbersHead.checkChainSegmentLengths(streetName, houseNumbers, badMatches);
-			if (oldBad != badMatches.size())
-				return;
-			if (isChanged() == false)
+			if (isChanged())
+				anyChanges = true;
+			else 
 				break;
 		}
+		setChanged(anyChanges);
 	}
 	
 	
@@ -209,20 +216,22 @@ public class HousenumberRoad {
 				boolean sameSide = (hnm.isLeft() == old.isLeft());
 				int pos1 = Math.min(old.getSegment(), hnm.getSegment());
 				int pos2 = Math.max(old.getSegment(), hnm.getSegment());
-				double dist1 = old.getLocation().distance(hnm.getLocation());
-				if (dist1 < 25 && sameSide && pos1 != pos2){
+				double distBetweenHouses = old.getLocation().distance(hnm.getLocation());
+				if (distBetweenHouses < 25 && sameSide && pos1 != pos2){
 					useMidPos(streetName, hnm,old);
 					continue;
 				}
-				if (dist1 > 100 || pos2 - pos1 > 0){
+				if (distBetweenHouses > 100 || pos2 - pos1 > 0){
 					List<HousenumberMatch> betweeen = new ArrayList<>();
 					for (HousenumberMatch hnm2 : houseNumbers){
+						if (hnm.getHousenumber() == hnm.getHousenumber())
+							continue;
 						if (hnm2.getSegment() < pos1 || hnm2.getSegment() > pos2 || hnm2 == old || hnm2 == hnm)
 							continue;
 						if (!sameSide || sameSide && hnm2.isLeft() == hnm.isLeft())
 							betweeen.add(hnm2);
 					}
-					if (betweeen.isEmpty()){
+					if (betweeen.isEmpty() && distBetweenHouses < 100){
 						if (sameSide)
 							useMidPos(streetName, hnm,old);
 						continue;
@@ -298,9 +307,9 @@ public class HousenumberRoad {
 						}
 						found[i] = TO_SEARCH - 1 - stillToFind; 
 					}
-					log.error("dup check 1:", streetName, old, old.getElement().toBrowseURL());
-					log.error("dup check 2:", streetName, hnm, hnm.getElement().toBrowseURL());
-					log.error("confirmed",Arrays.toString(confirmed),"falsified",Arrays.toString(falsified),"sum-dist",Arrays.toString(sumDist),"sum-dist-same-side",Arrays.toString(sumDistSameSide));
+					log.debug("dup check 1:", streetName, old, old.getElement().toBrowseURL());
+					log.debug("dup check 2:", streetName, hnm, hnm.getElement().toBrowseURL());
+					log.debug("confirmed",Arrays.toString(confirmed),"falsified",Arrays.toString(falsified),"sum-dist",Arrays.toString(sumDist),"sum-dist-same-side",Arrays.toString(sumDistSameSide));
 					HousenumberMatch bad = null;
 					if (confirmed[1] > 0 && confirmed[0] == 0  && falsified[1] == 0)
 						bad = dups.get(0);
@@ -313,11 +322,11 @@ public class HousenumberRoad {
 					if (bad != null){
 						toIgnore.add(bad);
 					} else {
-						if (old.isLeft() == hnm.isLeft()){
+						if (old.isLeft() == hnm.isLeft() && distBetweenHouses < 100){
 							useMidPos(streetName, hnm, old);
 						}
 						else {
-							log.error("don't know which one to use, ignoring both");
+							log.debug("duplicate house number, don't know which one to use, ignoring both");
 							toIgnore.add(old);
 							toIgnore.add(hnm);
 							hnm.setIgnored(true);
@@ -343,8 +352,8 @@ public class HousenumberRoad {
 		}
 		if (avgSegment != hnm2.getSegment()){
 			HousenumberGenerator.findClosestRoadSegment(hnm2, hnm2.getRoad(), toTest);
-		} 							
-		log.error("using same segment for duplicate housenumbers", streetName, hnm2, hnm2.getElement().toBrowseURL(), hnm1.getElement().toBrowseURL());
+		} 						
+		log.info("using same segment for duplicate housenumbers", streetName, hnm2, hnm2.getElement().toBrowseURL(), hnm1.getElement().toBrowseURL());
 	}
 
 	/**
@@ -359,10 +368,10 @@ public class HousenumberRoad {
 			segmentsWithNumbers.set(hnm.getSegment());
 		}
 		
-		boolean searched = false;
+		boolean searched = segmentsWithNumbers.get(0);
 		int numPoints = road.getPoints().size();
 		for (int i = 0; i < numPoints; i++){
-			if (segmentsWithNumbers.get(i) == searched){
+			if (segmentsWithNumbers.get(i) != searched){
 				changePointToNumberNode(road,i);
 				searched = !searched;
 			}
@@ -373,6 +382,9 @@ public class HousenumberRoad {
 	private static void changePointToNumberNode(MapRoad r, int pos) {
 		Coord co = r.getPoints().get(pos);
 		if (co.isNumberNode() == false){
+			if (r.getRoadDef().getId() == 247984952){
+				long dd = 4;
+			}
 			log.info("road",r,"changing point",pos,"to number node at",co.toDegreeString(),"to increase precision for house number search");
 			co.setNumberNode(true);
 			r.setInternalNodes(true);
@@ -410,7 +422,7 @@ public class HousenumberRoad {
 						break;
 					case ExtNumbers.NOT_OK_TRY_SPLIT:
 						if (en1.needsSplit()){
-							ExtNumbers test = en1.tryAddNumberNode("error");
+							ExtNumbers test = en1.tryAddNumberNode(ExtNumbers.SR_FIX_ERROR);
 							if (test != en1){
 								changed = true;
 								if (test.prev == null){
@@ -419,7 +431,7 @@ public class HousenumberRoad {
 							}
 						}
 						if (en2.needsSplit()){
-							ExtNumbers test = en2.tryAddNumberNode("error");
+							ExtNumbers test = en2.tryAddNumberNode(ExtNumbers.SR_FIX_ERROR);
 							if (test != en1){
 								changed = true;
 								if (test.prev == null){
@@ -457,6 +469,12 @@ public class HousenumberRoad {
 
 	public void setChanged(boolean changed) {
 		this.changed = changed;
+	}
+
+	public void improveSearchResults(
+			MultiHashMap<HousenumberMatch, MapRoad> badMatches) {
+		extNumbersHead = extNumbersHead.improveDistances(badMatches);
+		
 	}
 }
 

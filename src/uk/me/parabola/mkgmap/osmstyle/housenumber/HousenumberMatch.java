@@ -45,6 +45,8 @@ public class HousenumberMatch {
 	private boolean ignored;
 	private boolean isDuplicate;
 	private int moved;
+	// distance in m between closest point on road and the point that is found in the address search
+	private double searchDist = Double.NaN;   
 	
 	/**
 	 * Instantiates a new housenumber match element.
@@ -283,6 +285,14 @@ public class HousenumberMatch {
 
 	public void incMoved() {
 		this.moved++;
+	}
+
+	public double getSearchDist() {
+		return searchDist;
+	}
+
+	public void setSearchDist(double searchDist) {
+		this.searchDist = searchDist;
 	}
 
 	public String toString() {
