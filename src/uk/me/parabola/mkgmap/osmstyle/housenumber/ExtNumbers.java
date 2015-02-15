@@ -472,8 +472,9 @@ public class ExtNumbers {
 							return this;
 						if (wantedFraction < 0.5 && len1 > MAX_LOCATE_ERROR)
 							return this;
+						return dupNode(wantedFraction, SR_OPT_LEN);
 					}
-					return dupNode(wantedFraction, SR_OPT_LEN);
+					return this;
 				}
 			}
 			
