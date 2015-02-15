@@ -221,7 +221,8 @@ public class StyledConverter implements OsmConverter {
 					el = way.copy();
 			}
 			postConvertRules(el, type);
-			housenumberGenerator.addWay((Way)el);
+			if (type.isRoad() == false)
+				housenumberGenerator.addWay((Way)el);
 			addConvertedWay((Way) el, type);
 		}
 
