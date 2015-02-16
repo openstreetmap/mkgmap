@@ -13,8 +13,6 @@
 
 package uk.me.parabola.mkgmap.osmstyle.housenumber;
 
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -47,10 +45,10 @@ public class ExtNumbers {
 	public ExtNumbers prev,next;
 	private List<HousenumberMatch> leftHouses = Collections.emptyList();
 	private List<HousenumberMatch> rightHouses = Collections.emptyList();
-	private TreeMap<Integer,List<HousenumberMatch>> sortedNumbers; 
 	private Numbers numbers = null;
 	private int startInRoad, endInRoad;
 	private int rnodNumber;
+	
 	private boolean needsSplit;
 	private boolean leftNotInOrder;
 	private boolean rightNotInOrder;
@@ -80,7 +78,6 @@ public class ExtNumbers {
 	}
 	private void reset() {
 		numbers = null;
-		sortedNumbers = null;
 		needsSplit = false;
 	}
 	
@@ -167,7 +164,6 @@ public class ExtNumbers {
 			for (int i = 0; i< numHouses; i++) {
 				HousenumberMatch hnm = housenumbers.get(i);
 				int num = hnm.getHousenumber();
-				addToSorted(hnm);
 				if (num > highest.getHousenumber())
 					highest = hnm;
 				if (num < lowest.getHousenumber())
@@ -726,17 +722,6 @@ public class ExtNumbers {
 	}
 	
 	
-	private void addToSorted(HousenumberMatch hnm){
-		if (sortedNumbers == null)
-			sortedNumbers = new TreeMap<>();
-		List<HousenumberMatch> list = sortedNumbers.get(hnm.getHousenumber());
-		if (list == null){
-			list = new ArrayList<>();
-			sortedNumbers.put(hnm.getHousenumber(), list);
-		}
-		list.add(hnm);
-	}
-	
 	/**
 	 * 
 	 * @return true if a change was done
@@ -831,20 +816,6 @@ public class ExtNumbers {
 				++odd;
 		}
 		return odd;
-	}
-
-	private static int countDistinctOddEven(List<HousenumberMatch> houses, int [] counters) {
-		Int2IntOpenHashMap tested = new Int2IntOpenHashMap();
-		for (HousenumberMatch hnm : houses){
-			int num = hnm.getHousenumber();
-			if (tested.put(num,1) == 1)
-				continue;
-			if (hnm.getHousenumber() % 2 == 0)
-				++counters[1];
-			else 
-				++counters[0];
-		}
-		return tested.size();
 	}
 
 	public ExtNumbers checkChainPlausibility(String streetName,
@@ -964,9 +935,6 @@ public class ExtNumbers {
 							(en1.getRoad() == en2.getRoad() ? "in road " + en1.getRoad() :  
 							"road id(s):" + en1.getRoad().getRoadDef().getId() + ", " + en2.getRoad().getRoadDef().getId()));
 				}
-				if (en1.getRoad().getRoadDef().getId() ==  26068052){
-					long dd = 4;
-				}
 
 				double smallestDelta = Double.POSITIVE_INFINITY;
 				HousenumberMatch bestMoveOrig = null;
@@ -975,8 +943,9 @@ public class ExtNumbers {
 				// check if we can move a house from en1 to en2
 				for (HousenumberMatch hnm : houses1){
 					int n = hnm.getHousenumber();
-					if (en1.sortedNumbers.get(n).size() > 1)
+					if (countOccurence(houses1, n) > 1)
 						continue;
+					
 					if (n == s1 || n == e1) {
 						Numbers modNumbers = en1.removeHouseNumber(n, left1);
 						int s1Mod = left1 ? modNumbers.getLeftStart() : modNumbers.getRightStart();
@@ -1007,8 +976,9 @@ public class ExtNumbers {
 				}
 				for (HousenumberMatch hnm : houses2){
 					int n = hnm.getHousenumber();
-					if (en2.sortedNumbers.get(n).size() > 1)
+					if (countOccurence(houses2, n) > 1)
 						continue;
+					
 					if (n == s2 || n == e2) {
 						Numbers modNumbers = en2.removeHouseNumber(n, left2);
 						int s2Mod = left2 ? modNumbers.getLeftStart() : modNumbers.getRightStart();
@@ -1087,9 +1057,9 @@ public class ExtNumbers {
 					int delta2 = Math.abs(e2-s2);
 					if (delta1 > 0 && delta2 > 0)
 						toSplit = (delta1 > delta2) ? en1 : en2;
-					else if (delta1 == 0 && delta2 > 0 && en2.sortedNumbers.containsKey(s1) == false)
+					else if (delta1 == 0 && delta2 > 0 && countOccurence(houses2, s1) == 0)
 						toSplit = en2;
-					else if (delta2 == 0 && delta1 > 0 && en1.sortedNumbers.containsKey(s2) == false) 
+					else if (delta2 == 0 && delta1 > 0 && countOccurence(houses1, s1) == 0) 
 						toSplit = en1;
 					if (toSplit != null){
 						toSplit.setNeedsSplit(true);
@@ -1170,8 +1140,8 @@ public class ExtNumbers {
 	}
 
 	public boolean hasNumbers(){
-		getNumbers();
-		return sortedNumbers != null && sortedNumbers.isEmpty() == false;
+		return getNumbers().getLeftNumberStyle() != NumberStyle.NONE || getNumbers().getRightNumberStyle() != NumberStyle.NONE;
+		
 	}
 	
 	public String toString(){
@@ -1323,5 +1293,14 @@ public class ExtNumbers {
 		Coord best = new Coord(bestY, bestX);
 //		GpxCreator.createGpx("e:/ld/raster", Arrays.asList(c1,c2,best,c1), nearLinePoints);
 		return best;
-	}	
+	}
+
+	private static int countOccurence(List<HousenumberMatch> houses, int num){
+		int count = 0;
+		for (HousenumberMatch hnm : houses){
+			if (hnm.getHousenumber() == num)
+				count++;
+		}
+		return count;
+	}
 }

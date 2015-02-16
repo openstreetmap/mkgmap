@@ -527,9 +527,9 @@ public class HousenumberGenerator {
 		}
 		// we now have a list of houses and a list of roads that are in one area
 		MultiHashMap<HousenumberMatch, MapRoad> badRoadMatches = new MultiHashMap<>();
-		for (;;){
+		for (int loop = 0; loop < 10; loop++){
 			int oldBad = badRoadMatches.size();
-//			log.debug(streetName, roadsInCluster);
+			
 			boolean isOK = assignHouseNumbersToRoads(0, streetName, housesNearCluster, roadsInCluster, badRoadMatches);
 			if (isOK || oldBad ==  badRoadMatches.size())
 				break;
@@ -543,7 +543,10 @@ public class HousenumberGenerator {
 			MultiHashMap<HousenumberMatch, MapRoad> badRoadMatches) {
 		if (housesNearCluster.isEmpty())
 			return true;
-		log.debug("current cluster",streetName,roadsInCluster);
+		log.debug("processing cluster",streetName,"with roads", roadsInCluster);
+		if ("Zum Berg".equals(streetName)){
+			long dd = 4;
+		}
 		MultiHashMap<MapRoad, HousenumberMatch> roadNumbers = new MultiHashMap<MapRoad, HousenumberMatch>(); 
 		Collections.sort(housesNearCluster, new Comparator<HousenumberMatch>() {
 			public int compare(HousenumberMatch o1, HousenumberMatch o2) {
@@ -570,10 +573,10 @@ public class HousenumberGenerator {
 				if (excludedRoads.contains(r)){
 					continue;
 				}
-				HousenumberMatch hnm2 = new HousenumberMatch(hnm.getElement(), hnm.getHousenumber(), hnm.getSign());
-				findClosestRoadSegment(hnm2, r, null);
-				if (hnm2.getRoad() != null){
-					matchingRoads.add(hnm2);
+				HousenumberMatch test = new HousenumberMatch(hnm.getElement(), hnm.getHousenumber(), hnm.getSign());
+				findClosestRoadSegment(test, r, null);
+				if (test.getRoad() != null){
+					matchingRoads.add(test);
 				}
 			}
 			if (matchingRoads.isEmpty())

@@ -13,12 +13,15 @@
 
 package uk.me.parabola.mkgmap.osmstyle.housenumber;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Coord;
@@ -46,6 +49,7 @@ public class HousenumberRoad {
 		this.streetName = streetName;
 		this.road = r;
 		this.houseNumbers = new ArrayList<>(potentialNumbersThisRoad);
+		
 	}
 
 	public void buildIntervals(MultiHashMap<HousenumberMatch, MapRoad> badMatches) {
@@ -64,37 +68,10 @@ public class HousenumberRoad {
 			}
 		});
 		
-//		int oddLeft = 0, oddRight = 0, evenLeft = 0, evenRight = 0;
-//		for (HousenumberMatch  hnm: potentialNumbersThisRoad){
-//			if (hnm.isLeft()){
-//				if (hnm.getHousenumber() % 2 == 0) 
-//					evenLeft++;
-//				else 
-//					oddLeft++;
-//			} else {
-//				if (hnm.getHousenumber() % 2 == 0)
-//					evenRight++;
-//				else
-//					oddRight++;
-//			}
-//		}
-//		NumberStyle expectedLeftStyle = NumberStyle.BOTH, expectedRightStyle = NumberStyle.BOTH;
-//		if (evenLeft + oddLeft == 0)
-//			expectedLeftStyle = NumberStyle.NONE;
-//		else if (evenLeft == 0 && oddLeft > 0 || evenLeft + oddLeft > 3 && evenLeft <= 1)
-//			expectedLeftStyle = NumberStyle.ODD;
-//		else if (evenLeft > 0 && oddLeft == 0 || evenLeft + oddLeft > 3 && oddLeft <= 1)
-//			expectedLeftStyle = NumberStyle.EVEN;
-//		if (evenRight + oddRight == 0)
-//			expectedRightStyle = NumberStyle.NONE;
-//		else if (evenRight == 0 && oddRight > 0 || evenRight + oddRight > 3 && evenRight <= 1)
-//			expectedRightStyle = NumberStyle.ODD;
-//		else if (evenRight > 0 && oddRight == 0 || evenRight + oddRight > 3 && oddRight <= 1)
-//			expectedRightStyle = NumberStyle.EVEN;
-		int oldBad = badMatches.size();
-		filterWrongDuplicates(badMatches);
-		if (oldBad != badMatches.size())
-			return;
+		log.info("Initial housenumbers for",road,road.getCity(),houseNumbers);
+		
+		filterRealDuplicates();
+		
 		List<HousenumberMatch> leftNumbers = new ArrayList<HousenumberMatch>();
 		List<HousenumberMatch> rightNumbers = new ArrayList<HousenumberMatch>();
 		
@@ -113,12 +90,6 @@ public class HousenumberRoad {
 
 		Collections.sort(leftNumbers, new HousenumberMatchComparator());
 		Collections.sort(rightNumbers, new HousenumberMatchComparator());
-//		System.out.println(r + " sorted " + potentialNumbersThisRoad);
-//		System.out.println(r + " left   " + expectedLeftStyle + leftNumbers);
-//		System.out.println(r + " right  " + expectedRightStyle + rightNumbers);
-//		System.out.println(r + " " + oddLeft + " " + oddRight + " " + evenLeft +" " +  evenRight);
-		log.info("Initial housenumbers for",road,road.getCity());
-		log.info("Numbers:",houseNumbers);
 		
 		optimizeNumberIntervalLengths();
 		int currNodePos = 0;
@@ -194,165 +165,189 @@ public class HousenumberRoad {
 	
 	
 	/**
-	 * Identify duplicate numbers and remove those which are very far from
-	 * other houses with same or near numbers.
-	 * @param streetName
-	 * @param sortedHouseNumbers
-	 * @param badMatches
+	 * Identify duplicate numbers and ignore those which are close together
+	 * and those which are probably wrong. 
 	 */
-	private void filterWrongDuplicates(MultiHashMap<HousenumberMatch, MapRoad> badMatches) {
+	private void filterRealDuplicates() {
 		List<HousenumberMatch> toIgnore = new ArrayList<>();
-		HashMap<String,HousenumberMatch> signs = new HashMap<>();
 		final int TO_SEARCH = 6;
-		for (HousenumberMatch hnm : houseNumbers){
-			if (hnm.isDuplicate() == false)
+		int oddLeft = 0, oddRight = 0, evenLeft = 0, evenRight = 0;
+		for (HousenumberMatch  hnm: houseNumbers){
+			if (hnm.isIgnored())
 				continue;
-			HousenumberMatch old = signs.put(hnm.getSign(),hnm);
-			if (old != null){
-				// found a duplicate house number
-				boolean sameSide = (hnm.isLeft() == old.isLeft());
-				int pos1 = Math.min(old.getSegment(), hnm.getSegment());
-				int pos2 = Math.max(old.getSegment(), hnm.getSegment());
-				double distBetweenHouses = old.getLocation().distance(hnm.getLocation());
-				if (distBetweenHouses < 25 && sameSide && pos1 != pos2){
-					useMidPos(streetName, hnm,old);
+			if (hnm.isLeft()){
+				if (hnm.getHousenumber() % 2 == 0) 
+					evenLeft++;
+				else 
+					oddLeft++;
+			} else {
+				if (hnm.getHousenumber() % 2 == 0)
+					evenRight++;
+				else
+					oddRight++;
+			}
+		}
+		HousenumberMatch firstWithEqualSign = null, usedForCalc = null;
+		for (int i = 1; i < houseNumbers.size(); i++){
+			HousenumberMatch hnm1 = houseNumbers.get(i - 1);
+			HousenumberMatch hnm2 = houseNumbers.get(i);
+			if (hnm1.getSign().equals(hnm2.getSign()) == false){
+				firstWithEqualSign = null;
+				usedForCalc = null;
+			} else {
+				// found a duplicate house number (e.g. 2 and 2 or 1b and 1b)
+				double distBetweenHouses = hnm2.getLocation().distance(hnm1.getLocation());
+				double distToUsed = (usedForCalc == null) ? distBetweenHouses : hnm2.getLocation().distance(usedForCalc.getLocation()); 
+				if (firstWithEqualSign == null)
+					firstWithEqualSign = hnm1;
+				else {
+					hnm1 = firstWithEqualSign;
+				}
+				boolean sameSide = (hnm2.isLeft() == hnm1.isLeft());
+				
+				log.debug("analysing duplicate address",streetName,hnm1.getSign(),"for road with id",getRoad().getRoadDef().getId());
+				if (sameSide && (distBetweenHouses < 100 || distToUsed < 100)){
+					if (usedForCalc == null)
+					  usedForCalc = (hnm1.getDistance() < hnm2.getDistance()) ? hnm1 : hnm2;
+					HousenumberMatch obsolete = hnm1 == usedForCalc ? hnm2 : hnm1;
+					log.debug("house",obsolete,obsolete.getElement().toBrowseURL(),"is close to other element and on the same road side, is ignored");
+					toIgnore.add(obsolete);
 					continue;
 				}
-				if (distBetweenHouses > 100 || pos2 - pos1 > 0){
-					List<HousenumberMatch> betweeen = new ArrayList<>();
-					for (HousenumberMatch hnm2 : houseNumbers){
-						if (hnm.getHousenumber() == hnm.getHousenumber())
-							continue;
-						if (hnm2.getSegment() < pos1 || hnm2.getSegment() > pos2 || hnm2 == old || hnm2 == hnm)
-							continue;
-						if (!sameSide || sameSide && hnm2.isLeft() == hnm.isLeft())
-							betweeen.add(hnm2);
+				
+				if (!sameSide){
+					log.debug("oddLeft, oddRight, evenLeft, evenRight:",oddLeft, oddRight, evenLeft, evenRight);
+					HousenumberMatch wrongSide = null;
+					if (hnm2.getHousenumber() % 2 == 0){
+						if (evenLeft == 1 && (oddLeft > 1 || evenRight > 0 && oddRight == 0)){
+							wrongSide = hnm2.isLeft() ? hnm2: hnm1;
+						}
+						if (evenRight == 1 && (oddRight > 1 || evenLeft > 0 && oddLeft == 0)){
+							wrongSide = !hnm2.isLeft() ? hnm2: hnm1;
+						}
+					} else {
+						if (oddLeft == 1 && (evenLeft > 1 || oddRight > 0 && evenRight == 0)){
+							wrongSide = hnm2.isLeft() ? hnm2: hnm1;
+						}
+						if (oddRight == 1 && (evenRight > 1 || oddLeft > 0 && evenLeft == 0)){
+							wrongSide = !hnm2.isLeft() ? hnm2: hnm1;
+						}
 					}
-					if (betweeen.isEmpty() && distBetweenHouses < 100){
-						if (sameSide)
-							useMidPos(streetName, hnm,old);
+					if (wrongSide != null){
+						log.debug("house",streetName,wrongSide.getSign(),"from",wrongSide.getElement().toBrowseURL(),"seems to be wrong, is ignored");
+						toIgnore.add(wrongSide);
 						continue;
 					}
-//					int oldPos = sortedHouseNumbers.indexOf(old);
-//					int currPos = sortedHouseNumbers.indexOf(hnm);
-//					int foundOld = 0, foundCurr = 0;
-					double[] sumDist = new double[2];
-					double[] sumDistSameSide = new double[2];
-					int[] confirmed = new int[2];
-					int[] falsified = new int[2];
-					int[] found = new int[2];
-					List<HousenumberMatch> dups = Arrays.asList(hnm, old);
-					for (int i = 0; i < dups.size(); i++){
-						HousenumberMatch other, curr;
-						if (i == 0){
-							curr = dups.get(0);
-							other = dups.get(1);
-						} else {
-							curr = dups.get(1);
-							other = dups.get(0);
-						}
-						int pos = houseNumbers.indexOf(curr);
-						
-						int left = pos - 1;
-						int right = pos + 1;
-						HousenumberMatch hnm2;
-						int stillToFind = TO_SEARCH;
-						while (stillToFind > 0){
-							int oldDone = stillToFind;
-							if (left >= 0){
-								hnm2 = houseNumbers.get(left);
-								if (hnm2 != other){
-									double dist = curr.getLocation().distance(hnm2.getLocation());
-									sumDist[i] += dist;
-									if (hnm2.isLeft() == curr.isLeft()){
-										sumDistSameSide[i] += dist;
-									}
-									if (curr.getHousenumber() == hnm2.getHousenumber()){
-										if (dist < 20)
-											confirmed[i]++;
-									} else {
-										if (dist < 10 )
-											falsified[i]++;
-									}
-								}
-								--left;
-								stillToFind--;
-								if (stillToFind == 0)
-									break;
-							}
-							if (right < houseNumbers.size()){
-								hnm2 = houseNumbers.get(right);
-								if (hnm2 != other){
-									double dist = curr.getLocation().distance(hnm2.getLocation());
-									sumDist[i] += dist;
-									if (hnm2.isLeft() == curr.isLeft()){
-										sumDistSameSide[i] += dist;
-									}
-									if (curr.getHousenumber() == hnm2.getHousenumber()){
-										if (dist < 40)
-											confirmed[i]++;
-									} else {
-										if (dist < 10 )
-											falsified[i]++;
-									}
-								}
-								stillToFind--;
-								right++;
-							}
-							if (oldDone == stillToFind)
-								break;
-						}
-						found[i] = TO_SEARCH - 1 - stillToFind; 
-					}
-					log.debug("dup check 1:", streetName, old, old.getElement().toBrowseURL());
-					log.debug("dup check 2:", streetName, hnm, hnm.getElement().toBrowseURL());
-					log.debug("confirmed",Arrays.toString(confirmed),"falsified",Arrays.toString(falsified),"sum-dist",Arrays.toString(sumDist),"sum-dist-same-side",Arrays.toString(sumDistSameSide));
-					HousenumberMatch bad = null;
-					if (confirmed[1] > 0 && confirmed[0] == 0  && falsified[1] == 0)
-						bad = dups.get(0);
-					else if (confirmed[0] > 0 && confirmed[1] == 0  && falsified[0] == 0)
-						bad = dups.get(1);
-					else if (found[0] > 3 && sumDist[0] > sumDist[1] && sumDistSameSide[0] > sumDistSameSide[1])
-						bad = dups.get(0);
-					else if (found[1] > 3 && sumDist[1] > sumDist[0] && sumDistSameSide[1] > sumDistSameSide[0])
-						bad = dups.get(1);
-					if (bad != null){
-						toIgnore.add(bad);
-					} else {
-						if (old.isLeft() == hnm.isLeft() && distBetweenHouses < 100){
-							useMidPos(streetName, hnm, old);
-						}
-						else {
-							log.debug("duplicate house number, don't know which one to use, ignoring both");
-							toIgnore.add(old);
-							toIgnore.add(hnm);
-							hnm.setIgnored(true);
-							old.setIgnored(true);
-						}
+				}
+				
+				String[] locTags = {"mkgmap:postal_code", "mkgmap:city"};
+
+				for (String locTag : locTags){
+
+					String loc1 = hnm1.getElement().getTag(locTag);
+					String loc2 = hnm2.getElement().getTag(locTag);
+					if (loc1 != null && loc2 != null && loc1.equals(loc2) == false){
+						log.debug("different",locTag,"values:",loc1,loc2);
 					}
 				}
-			} 
-		}
+				double[] sumDist = new double[2];
+				double[] sumDistSameSide = new double[2];
+				int[] confirmed = new int[2];
+				int[] falsified = new int[2];
+				int[] found = new int[2];
+				List<HousenumberMatch> dups = Arrays.asList(hnm2, hnm1);
+				for (int k = 0; k < dups.size(); k++){
+					HousenumberMatch other, curr;
+					if (k == 0){
+						curr = dups.get(0);
+						other = dups.get(1);
+					} else {
+						curr = dups.get(1);
+						other = dups.get(0);
+					}
+					int pos = houseNumbers.indexOf(curr);
+
+					int left = pos - 1;
+					int right = pos + 1;
+					HousenumberMatch nearHouse;
+					int stillToFind = TO_SEARCH;
+					while (stillToFind > 0){
+						int oldDone = stillToFind;
+						if (left >= 0){
+							nearHouse = houseNumbers.get(left);
+							if (nearHouse != other){
+								double dist = curr.getLocation().distance(nearHouse.getLocation());
+								sumDist[k] += dist;
+								if (nearHouse.isLeft() == curr.isLeft()){
+									sumDistSameSide[k] += dist;
+								}
+								if (curr.getHousenumber() == nearHouse.getHousenumber()){
+									if (dist < 20)
+										confirmed[k]++;
+								} else {
+									if (dist < 10 )
+										falsified[k]++;
+								}
+							}
+							--left;
+							stillToFind--;
+							if (stillToFind == 0)
+								break;
+						}
+						if (right < houseNumbers.size()){
+							nearHouse = houseNumbers.get(right);
+							if (nearHouse != other){
+								double dist = curr.getLocation().distance(nearHouse.getLocation());
+								sumDist[k] += dist;
+								if (nearHouse.isLeft() == curr.isLeft()){
+									sumDistSameSide[k] += dist;
+								}
+								if (curr.getHousenumber() == nearHouse.getHousenumber()){
+									if (dist < 40)
+										confirmed[k]++;
+								} else {
+									if (dist < 10 )
+										falsified[k]++;
+								}
+							}
+							stillToFind--;
+							right++;
+						}
+						if (oldDone == stillToFind)
+							break;
+					}
+					found[k] = TO_SEARCH - 1 - stillToFind; 
+				}
+				log.debug("dup check 1:", streetName, hnm1, hnm1.getElement().toBrowseURL());
+				log.debug("dup check 2:", streetName, hnm2, hnm2.getElement().toBrowseURL());
+				log.debug("confirmed",Arrays.toString(confirmed),"falsified",Arrays.toString(falsified),"sum-dist",Arrays.toString(sumDist),"sum-dist-same-side",Arrays.toString(sumDistSameSide));
+				HousenumberMatch bad = null;
+				if (confirmed[1] > 0 && confirmed[0] == 0  && falsified[1] == 0)
+					bad = dups.get(0);
+				else if (confirmed[0] > 0 && confirmed[1] == 0  && falsified[0] == 0)
+					bad = dups.get(1);
+				else if (found[0] > 3 && sumDist[0] > sumDist[1] && sumDistSameSide[0] > sumDistSameSide[1])
+					bad = dups.get(0);
+				else if (found[1] > 3 && sumDist[1] > sumDist[0] && sumDistSameSide[1] > sumDistSameSide[0])
+					bad = dups.get(1);
+				if (bad != null){
+					toIgnore.add(bad);
+				} else {
+					log.debug("duplicate house number, don't know which one to use, ignoring both");
+					toIgnore.add(hnm1);
+					toIgnore.add(hnm2);
+					hnm2.setIgnored(true);
+					hnm1.setIgnored(true);
+				}
+			}
+		} 
 		for (HousenumberMatch hnm : toIgnore){
-			badMatches.add(hnm, hnm.getRoad());
-			log.warn("duplicate housenumber",streetName,hnm.getSign(),"is ignored for road with id",hnm.getRoad().getRoadDef().getId(),",house:",hnm.getElement().toBrowseURL());
+//			badMatches.add(hnm, hnm.getRoad());
+			log.info("duplicate housenumber",streetName,hnm.getSign(),"is ignored for road with id",hnm.getRoad().getRoadDef().getId(),",house:",hnm.getElement().toBrowseURL());
 			houseNumbers.remove(hnm);
 		}
 	}
 	
-	private static void useMidPos(String streetName, HousenumberMatch hnm1, HousenumberMatch hnm2) {
-		int avgSegment = (hnm1.getSegment() + hnm2.getSegment()) / 2;
-		BitSet toTest = new BitSet();
-		toTest.set(avgSegment);
-		if (avgSegment != hnm1.getSegment()){
-			HousenumberGenerator.findClosestRoadSegment(hnm1, hnm1.getRoad(), toTest);
-		}
-		if (avgSegment != hnm2.getSegment()){
-			HousenumberGenerator.findClosestRoadSegment(hnm2, hnm2.getRoad(), toTest);
-		} 						
-		log.info("using same segment for duplicate housenumbers", streetName, hnm2, hnm2.getElement().toBrowseURL(), hnm1.getElement().toBrowseURL());
-	}
-
 	/**
 	 * Detect parts of roads without house numbers and change start
 	 * and end of the part to house number nodes (if not already)
@@ -470,6 +465,7 @@ public class HousenumberRoad {
 		extNumbersHead = extNumbersHead.improveDistances(badMatches);
 		
 	}
+	
 }
 
 
