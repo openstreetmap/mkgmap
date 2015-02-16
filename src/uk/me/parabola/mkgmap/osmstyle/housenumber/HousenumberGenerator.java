@@ -227,15 +227,18 @@ public class HousenumberGenerator {
 						usedStep = - step;
 					}
 					if (steps <= 0){
-						log.info(w.toBrowseURL(),"addr:interpolation way segment ignored, no number between",start,"and",end);
+						if (log.isInfoEnabled())
+							log.info(w.toBrowseURL(),"addr:interpolation way segment ignored, no number between",start,"and",end);
 						continue;
 					}
 					if ("even".equals(addrInterpolationMethod) && (start % 2 != 0 || end % 2 != 0)){
-						log.info(w.toBrowseURL(),"addr:interpolation=even is used with odd housenumber(s)",start,end);
+						if (log.isInfoEnabled())
+							log.info(w.toBrowseURL(),"addr:interpolation=even is used with odd housenumber(s)",start,end);
 						continue;
 					}
 					if ("odd".equals(addrInterpolationMethod) && (start % 2 == 0 || end % 2 == 0)){
-						log.info(w.toBrowseURL(),"addr:interpolation=odd is used with even housenumber(s)",start,end);
+						if (log.isInfoEnabled())
+							log.info(w.toBrowseURL(),"addr:interpolation=odd is used with even housenumber(s)",start,end);
 						continue;
 					}
 					List<Coord> interpolated = getPointsOnWay(w, pos1, pos2, steps);
@@ -289,7 +292,8 @@ public class HousenumberGenerator {
 		}
 		double ivlLen = wayLen / (num+1);
 		if (ivlLen < 0.1){
-			log.info("addr:interpolation",w.toBrowseURL(),"segment ignored, would generate",num,"houses with distance of",ivlLen,"m");
+			if (log.isInfoEnabled())
+				log.info("addr:interpolation",w.toBrowseURL(),"segment ignored, would generate",num,"houses with distance of",ivlLen,"m");
 			return interpolated;
 		}
 		int pos = 0;
@@ -426,10 +430,12 @@ public class HousenumberGenerator {
 						countOK++;
 				}
 			}
-			if (countOK > 0)
-				log.info("Relation",r.toBrowseURL(),": added tag mkgmap:street=",streetName,"to",countOK,"of",houses.size(),"house members");
-			else 
-				log.info("Relation",r.toBrowseURL(),": ignored, the house members all have a addr:street or mkgmap:street tag");
+			if (log.isInfoEnabled()){
+				if (countOK > 0)
+					log.info("Relation",r.toBrowseURL(),": added tag mkgmap:street=",streetName,"to",countOK,"of",houses.size(),"house members");
+				else 
+					log.info("Relation",r.toBrowseURL(),": ignored, the house members all have a addr:street or mkgmap:street tag");
+			}
 		}
 	}
 	
@@ -533,7 +539,8 @@ public class HousenumberGenerator {
 			boolean isOK = assignHouseNumbersToRoads(0, streetName, housesNearCluster, roadsInCluster, badRoadMatches);
 			if (isOK || oldBad ==  badRoadMatches.size())
 				break;
-			log.info("repeating cluster for",streetName);
+			if (log.isInfoEnabled())
+				log.info("repeating cluster for",streetName);
 		}
 	}
 
@@ -543,10 +550,9 @@ public class HousenumberGenerator {
 			MultiHashMap<HousenumberMatch, MapRoad> badRoadMatches) {
 		if (housesNearCluster.isEmpty())
 			return true;
-		log.debug("processing cluster",streetName,"with roads", roadsInCluster);
-		if ("Zum Berg".equals(streetName)){
-			long dd = 4;
-		}
+		if (log.isDebugEnabled())
+			log.debug("processing cluster",streetName,"with roads", roadsInCluster);
+
 		MultiHashMap<MapRoad, HousenumberMatch> roadNumbers = new MultiHashMap<MapRoad, HousenumberMatch>(); 
 		Collections.sort(housesNearCluster, new Comparator<HousenumberMatch>() {
 			public int compare(HousenumberMatch o1, HousenumberMatch o2) {
@@ -734,10 +740,12 @@ public class HousenumberGenerator {
 					bestAlternative = hnm2;
 					bestAlternativeDist = dist2;
 				}
-				log.debug("road check hnm1:",hnm1.getRoad(),hnm1,hnm1.getDistance(),",hnm2:", hnm2.getRoad(),hnm2,hnm2.getDistance(),distHouses,dist2,frac2,"hnm1 is falsified");
+				if (log.isDebugEnabled())
+					log.debug("road check hnm1:",hnm1.getRoad(),hnm1,hnm1.getDistance(),",hnm2:", hnm2.getRoad(),hnm2,hnm2.getDistance(),distHouses,dist2,frac2,"hnm1 is falsified");
 			}
 			if (confirmed == 0 && falsified > 0){
-				log.info("house number element assigned to road",hnm1.getRoad(),hnm1,hnm1.getElement().toBrowseURL(),"is closer to more plausible houses at road",bestAlternative.getRoad());
+				if (log.isInfoEnabled())
+					log.info("house number element assigned to road",hnm1.getRoad(),hnm1,hnm1.getElement().toBrowseURL(),"is closer to more plausible houses at road",bestAlternative.getRoad());
 				roadNumbers.removeMapping(hnm1.getRoad(), hnm1);
 				hnm1.setRoad(bestAlternative.getRoad());
 				hnm1.setSegment(bestAlternative.getSegment());
@@ -1071,10 +1079,12 @@ public class HousenumberGenerator {
 				c2 = c4;
 			} 
 		}
-		if (closestMatch.getRoad() != bestMatch.getRoad()){
-			log.info("check angle: using road",bestMatch.getRoad().getRoadDef().getId(),"instead of",closestMatch.getRoad().getRoadDef().getId(),"for house number",bestMatch.getSign(),bestMatch.getElement().toBrowseURL());
-		} else if (closestMatch != bestMatch){
-			log.info("check angle: using road segment",bestMatch.getSegment(),"instead of",closestMatch.getSegment(),"for house number element",bestMatch.getElement().toBrowseURL());
+		if (log.isInfoEnabled()){
+			if (closestMatch.getRoad() != bestMatch.getRoad()){
+				log.info("check angle: using road",bestMatch.getRoad().getRoadDef().getId(),"instead of",closestMatch.getRoad().getRoadDef().getId(),"for house number",bestMatch.getSign(),bestMatch.getElement().toBrowseURL());
+			} else if (closestMatch != bestMatch){
+				log.info("check angle: using road segment",bestMatch.getSegment(),"instead of",closestMatch.getSegment(),"for house number element",bestMatch.getElement().toBrowseURL());
+			}
 		}
 		return bestMatch;
 	}

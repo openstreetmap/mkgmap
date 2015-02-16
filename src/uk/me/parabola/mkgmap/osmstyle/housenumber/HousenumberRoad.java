@@ -13,15 +13,11 @@
 
 package uk.me.parabola.mkgmap.osmstyle.housenumber;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Coord;
@@ -60,17 +56,18 @@ public class HousenumberRoad {
 				int d = o1.getHousenumber() - o2.getHousenumber();
 				if (d != 0)
 					return d;
-				d = o1.getSegment() - o2.getSegment();
+				d = o1.getSign().compareTo(o2.getSign());
 				if (d != 0)
 					return d;
-				d = o1.getSign().compareTo(o2.getSign());
+				d = o1.getSegment() - o2.getSegment();
 				return d;
 			}
 		});
-		
-		log.info("Initial housenumbers for",road,road.getCity(),houseNumbers);
+		if (log.isInfoEnabled())
+			log.info("Initial housenumbers for",road,road.getCity(),houseNumbers);
 		
 		filterRealDuplicates();
+		filterGroups();
 		
 		List<HousenumberMatch> leftNumbers = new ArrayList<HousenumberMatch>();
 		List<HousenumberMatch> rightNumbers = new ArrayList<HousenumberMatch>();
@@ -204,19 +201,21 @@ public class HousenumberRoad {
 					hnm1 = firstWithEqualSign;
 				}
 				boolean sameSide = (hnm2.isLeft() == hnm1.isLeft());
-				
-				log.debug("analysing duplicate address",streetName,hnm1.getSign(),"for road with id",getRoad().getRoadDef().getId());
+				if (log.isDebugEnabled())
+					log.debug("analysing duplicate address",streetName,hnm1.getSign(),"for road with id",getRoad().getRoadDef().getId());
 				if (sameSide && (distBetweenHouses < 100 || distToUsed < 100)){
 					if (usedForCalc == null)
 					  usedForCalc = (hnm1.getDistance() < hnm2.getDistance()) ? hnm1 : hnm2;
 					HousenumberMatch obsolete = hnm1 == usedForCalc ? hnm2 : hnm1;
-					log.debug("house",obsolete,obsolete.getElement().toBrowseURL(),"is close to other element and on the same road side, is ignored");
+					if (log.isDebugEnabled())
+						log.debug("house",obsolete,obsolete.getElement().toBrowseURL(),"is close to other element and on the same road side, is ignored");
 					toIgnore.add(obsolete);
 					continue;
 				}
 				
 				if (!sameSide){
-					log.debug("oddLeft, oddRight, evenLeft, evenRight:",oddLeft, oddRight, evenLeft, evenRight);
+					if (log.isDebugEnabled())
+						log.debug("oddLeft, oddRight, evenLeft, evenRight:",oddLeft, oddRight, evenLeft, evenRight);
 					HousenumberMatch wrongSide = null;
 					if (hnm2.getHousenumber() % 2 == 0){
 						if (evenLeft == 1 && (oddLeft > 1 || evenRight > 0 && oddRight == 0)){
@@ -234,22 +233,22 @@ public class HousenumberRoad {
 						}
 					}
 					if (wrongSide != null){
-						log.debug("house",streetName,wrongSide.getSign(),"from",wrongSide.getElement().toBrowseURL(),"seems to be wrong, is ignored");
+						if (log.isDebugEnabled())
+							log.debug("house",streetName,wrongSide.getSign(),"from",wrongSide.getElement().toBrowseURL(),"seems to be wrong, is ignored");
 						toIgnore.add(wrongSide);
 						continue;
 					}
 				}
 				
-				String[] locTags = {"mkgmap:postal_code", "mkgmap:city"};
-
-				for (String locTag : locTags){
-
-					String loc1 = hnm1.getElement().getTag(locTag);
-					String loc2 = hnm2.getElement().getTag(locTag);
-					if (loc1 != null && loc2 != null && loc1.equals(loc2) == false){
-						log.debug("different",locTag,"values:",loc1,loc2);
-					}
-				}
+//				String[] locTags = {"mkgmap:postal_code", "mkgmap:city"};
+//				for (String locTag : locTags){
+//					String loc1 = hnm1.getElement().getTag(locTag);
+//					String loc2 = hnm2.getElement().getTag(locTag);
+//					if (loc1 != null && loc2 != null && loc1.equals(loc2) == false){
+//						if (log.isDebugEnabled())
+//							log.debug("different",locTag,"values:",loc1,loc2);
+//					}
+//				}
 				double[] sumDist = new double[2];
 				double[] sumDistSameSide = new double[2];
 				int[] confirmed = new int[2];
@@ -318,9 +317,11 @@ public class HousenumberRoad {
 					}
 					found[k] = TO_SEARCH - 1 - stillToFind; 
 				}
-				log.debug("dup check 1:", streetName, hnm1, hnm1.getElement().toBrowseURL());
-				log.debug("dup check 2:", streetName, hnm2, hnm2.getElement().toBrowseURL());
-				log.debug("confirmed",Arrays.toString(confirmed),"falsified",Arrays.toString(falsified),"sum-dist",Arrays.toString(sumDist),"sum-dist-same-side",Arrays.toString(sumDistSameSide));
+				if (log.isDebugEnabled()){
+					log.debug("dup check 1:", streetName, hnm1, hnm1.getElement().toBrowseURL());
+					log.debug("dup check 2:", streetName, hnm2, hnm2.getElement().toBrowseURL());
+					log.debug("confirmed",Arrays.toString(confirmed),"falsified",Arrays.toString(falsified),"sum-dist",Arrays.toString(sumDist),"sum-dist-same-side",Arrays.toString(sumDistSameSide));
+				}
 				HousenumberMatch bad = null;
 				if (confirmed[1] > 0 && confirmed[0] == 0  && falsified[1] == 0)
 					bad = dups.get(0);
@@ -333,7 +334,8 @@ public class HousenumberRoad {
 				if (bad != null){
 					toIgnore.add(bad);
 				} else {
-					log.debug("duplicate house number, don't know which one to use, ignoring both");
+					if (log.isDebugEnabled())
+						log.debug("duplicate house number, don't know which one to use, ignoring both");
 					toIgnore.add(hnm1);
 					toIgnore.add(hnm2);
 					hnm2.setIgnored(true);
@@ -342,12 +344,39 @@ public class HousenumberRoad {
 			}
 		} 
 		for (HousenumberMatch hnm : toIgnore){
-//			badMatches.add(hnm, hnm.getRoad());
-			log.info("duplicate housenumber",streetName,hnm.getSign(),"is ignored for road with id",hnm.getRoad().getRoadDef().getId(),",house:",hnm.getElement().toBrowseURL());
+			if (log.isInfoEnabled())
+				log.info("duplicate housenumber",streetName,hnm.getSign(),"is ignored for road with id",hnm.getRoad().getRoadDef().getId(),",house:",hnm.getElement().toBrowseURL());
 			houseNumbers.remove(hnm);
 		}
 	}
+
+	/**
+	 * Identify groups of buildings with numbers like 1a,1b,1c.
+	 * The list in housenumbers is sorted so that 2 appears before 2a and
+	 * 2b appears before 2c. 
+	 * XXX This is quite aggressive, maybe we have to add more logic here.  
+	 */
+	private void filterGroups() {
+		if (houseNumbers.isEmpty())
+			return;
+		HousenumberMatch prev = houseNumbers.get(0);
+		HousenumberMatch used = null;
+		for (int i = 1; i < houseNumbers.size(); i++){
+			HousenumberMatch hnm = houseNumbers.get(i);
+			if (hnm.getHousenumber() != prev.getHousenumber())
+				used = null;
+			else {
+				if (used == null)
+					used = prev;
+				hnm.setIgnored(true);
+				if (log.isInfoEnabled())
+					log.info("using",streetName,used.getSign(), "in favor of",hnm.getSign(),"as target for address search");
+			}
+			prev = hnm;
+		}
+	}
 	
+
 	/**
 	 * Detect parts of roads without house numbers and change start
 	 * and end of the part to house number nodes (if not already)
@@ -374,7 +403,8 @@ public class HousenumberRoad {
 	private static void changePointToNumberNode(MapRoad r, int pos) {
 		Coord co = r.getPoints().get(pos);
 		if (co.isNumberNode() == false){
-			log.info("road",r,"changing point",pos,"to number node at",co.toDegreeString(),"to increase precision for house number search");
+			if (log.isInfoEnabled())
+				log.info("road",r,"changing point",pos,"to number node at",co.toDegreeString(),"to increase precision for house number search");
 			co.setNumberNode(true);
 			r.setInternalNodes(true);
 		}
