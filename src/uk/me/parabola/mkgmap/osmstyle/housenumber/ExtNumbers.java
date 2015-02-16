@@ -935,7 +935,6 @@ public class ExtNumbers {
 							(en1.getRoad() == en2.getRoad() ? "in road " + en1.getRoad() :  
 							"road id(s):" + en1.getRoad().getRoadDef().getId() + ", " + en2.getRoad().getRoadDef().getId()));
 				}
-
 				double smallestDelta = Double.POSITIVE_INFINITY;
 				HousenumberMatch bestMoveOrig = null;
 				HousenumberMatch bestMoveMod = null;
@@ -1059,11 +1058,12 @@ public class ExtNumbers {
 						toSplit = (delta1 > delta2) ? en1 : en2;
 					else if (delta1 == 0 && delta2 > 0 && countOccurence(houses2, s1) == 0)
 						toSplit = en2;
-					else if (delta2 == 0 && delta1 > 0 && countOccurence(houses1, s1) == 0) 
+					else if (delta2 == 0 && delta1 > 0 && countOccurence(houses1, s2) == 0) 
 						toSplit = en1;
 					if (toSplit != null){
 						toSplit.setNeedsSplit(true);
 						return NOT_OK_TRY_SPLIT;
+						
 					}
 					return NOT_OK_KEEP;
 				}
