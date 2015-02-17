@@ -17,6 +17,7 @@
 package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -534,10 +535,18 @@ public class RoadDef {
 			nbits++;
 		writer.putChar((char) nbits);
 		boolean[] bits = new boolean[nbits];
-		for (int i = 0; i < bits.length; i++)
-			bits[i] = true;
-		if (!startsWithNode)
-			bits[0] = false;
+		if (hasHouseNumbers()){
+			int off = startsWithNode ? 0 :1;
+			for (int i = 0; i < bits.length; i++){
+				if (nod2BitSet.get(i))
+					bits[i+off] = true;
+			}
+		} else { 
+			for (int i = 0; i < bits.length; i++)
+				bits[i] = true;
+			if (!startsWithNode)
+				bits[0] = false;
+		}
 		for (int i = 0; i < bits.length; i += 8) {
 			int b = 0;
             for (int j = 0; j < 8 && j < bits.length - i; j++)
@@ -639,6 +648,8 @@ public class RoadDef {
 	 */
 
 	private int roadClass = -1;
+
+	private BitSet nod2BitSet;
 
 	// road class that goes in various places (really?)
 	public void setRoadClass(int roadClass) {
@@ -751,6 +762,11 @@ public class RoadDef {
 		boolean previouslyIssued = messageIssued.contains(key);
 		messageIssued.add(key);
 		return previouslyIssued;
+	}
+
+	public void setNod2BitSet(BitSet bs) {
+		nod2BitSet = bs;
+		
 	}
 
 }

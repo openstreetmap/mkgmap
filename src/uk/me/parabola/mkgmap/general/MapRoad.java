@@ -16,8 +16,10 @@
  */
 package uk.me.parabola.mkgmap.general;
 
+import java.util.BitSet;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Zip;
 import uk.me.parabola.imgfmt.app.net.Numbers;
@@ -115,6 +117,20 @@ public class MapRoad extends MapLine {
 
 	public void setNumbers(List<Numbers> numbers) {
 		roadDef.setNumbersList(numbers);
+		if (roadDef.hasHouseNumbers()) {
+			BitSet bs = new BitSet();
+
+			int numNodes = 0;
+			for (int i = 0; i < getPoints().size(); i++){
+				Coord co = getPoints().get(i);
+				if (co.getId() != 0)
+					bs.set(numNodes);
+				if (co.isNumberNode())
+					numNodes++;
+			}
+			roadDef.setNumNodes(numNodes);
+			roadDef.setNod2BitSet(bs);
+		}
 	}
 	public List<Numbers> getNumbers() {
 		return roadDef.getNumbersList();
