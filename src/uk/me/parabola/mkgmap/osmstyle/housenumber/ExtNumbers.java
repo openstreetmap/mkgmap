@@ -635,7 +635,14 @@ public class ExtNumbers {
 		toTest.set(startInRoad, endInRoad);  
 		for (List<HousenumberMatch> list : Arrays.asList(leftHouses, rightHouses)){
 			for (HousenumberMatch hnm : list){
+				double oldDist = hnm.getDistance() ;
 				HousenumberGenerator.findClosestRoadSegment(hnm, getRoad(), toTest);
+				if (hnm.getDistance() > HousenumberGenerator.MAX_DISTANCE_TO_ROAD){
+					if (oldDist +1 > HousenumberGenerator.MAX_DISTANCE_TO_ROAD)
+						hnm.setDistance(HousenumberGenerator.MAX_DISTANCE_TO_ROAD);
+					else 
+						log.error("internal error: house is too far away after recalculation",getRoad(),hnm.getElement().toBrowseURL());
+				}
 			}
 		}
 		Collections.sort(leftHouses, new HousenumberMatchComparator());
