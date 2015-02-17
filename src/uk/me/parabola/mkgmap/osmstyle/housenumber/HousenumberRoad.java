@@ -82,8 +82,6 @@ public class HousenumberRoad {
 				rightNumbers.add(hr);
 			}
 		}
-//		checkLShapes(streetName, leftNumbers);
-//		checkLShapes(streetName, rightNumbers);
 
 		Collections.sort(leftNumbers, new HousenumberMatchComparator());
 		Collections.sort(rightNumbers, new HousenumberMatchComparator());
@@ -184,28 +182,25 @@ public class HousenumberRoad {
 					oddRight++;
 			}
 		}
-		HousenumberMatch firstWithEqualSign = null, usedForCalc = null;
+		HousenumberMatch usedForCalc = null;
 		for (int i = 1; i < houseNumbers.size(); i++){
 			HousenumberMatch hnm1 = houseNumbers.get(i - 1);
 			HousenumberMatch hnm2 = houseNumbers.get(i);
 			if (hnm1.getSign().equals(hnm2.getSign()) == false){
-				firstWithEqualSign = null;
 				usedForCalc = null;
 			} else {
 				// found a duplicate house number (e.g. 2 and 2 or 1b and 1b)
 				double distBetweenHouses = hnm2.getLocation().distance(hnm1.getLocation());
 				double distToUsed = (usedForCalc == null) ? distBetweenHouses : hnm2.getLocation().distance(usedForCalc.getLocation()); 
-				if (firstWithEqualSign == null)
-					firstWithEqualSign = hnm1;
+				if (usedForCalc == null)
+					usedForCalc = (hnm1.getDistance() < hnm2.getDistance()) ? hnm1 : hnm2;
 				else {
-					hnm1 = firstWithEqualSign;
+					hnm1 = usedForCalc;
 				}
 				boolean sameSide = (hnm2.isLeft() == hnm1.isLeft());
 				if (log.isDebugEnabled())
 					log.debug("analysing duplicate address",streetName,hnm1.getSign(),"for road with id",getRoad().getRoadDef().getId());
 				if (sameSide && (distBetweenHouses < 100 || distToUsed < 100)){
-					if (usedForCalc == null)
-					  usedForCalc = (hnm1.getDistance() < hnm2.getDistance()) ? hnm1 : hnm2;
 					HousenumberMatch obsolete = hnm1 == usedForCalc ? hnm2 : hnm1;
 					if (log.isDebugEnabled())
 						log.debug("house",obsolete,obsolete.getElement().toBrowseURL(),"is close to other element and on the same road side, is ignored");
@@ -357,7 +352,7 @@ public class HousenumberRoad {
 	 * XXX This is quite aggressive, maybe we have to add more logic here.  
 	 */
 	private void filterGroups() {
-		if (houseNumbers.isEmpty())
+		if (houseNumbers.size() <= 1)
 			return;
 		HousenumberMatch prev = houseNumbers.get(0);
 		HousenumberMatch used = null;
@@ -490,9 +485,22 @@ public class HousenumberRoad {
 		this.changed = changed;
 	}
 
-	public void improveSearchResults(
-			MultiHashMap<HousenumberMatch, MapRoad> badMatches) {
-		extNumbersHead = extNumbersHead.improveDistances(badMatches);
+	/**
+	 * 
+	 */
+	public void improveSearchResults() {
+		ExtNumbers curr = extNumbersHead;
+		while (curr != null) {
+			ExtNumbers test = curr.splitLargeGaps();
+			if (test != curr) {
+				setChanged(true);
+				if (curr.prev == null)
+					extNumbersHead = test;
+				curr = test;
+				continue;
+			}
+			curr = curr.next;
+		}
 		
 	}
 	

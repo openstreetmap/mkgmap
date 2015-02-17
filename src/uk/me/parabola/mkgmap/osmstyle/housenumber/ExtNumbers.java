@@ -264,30 +264,6 @@ public class ExtNumbers {
 		return null;
 	}
 	
-
-	/**
-	 * 
-	 * @param badMatches
-	 * @return
-	 */
-	public ExtNumbers improveDistances(MultiHashMap<HousenumberMatch, MapRoad> badMatches) {
-		ExtNumbers curr = this;
-		ExtNumbers head = this;
-		while (curr != null) {
-			ExtNumbers test = curr.splitLargeGaps(badMatches);
-			if (test != curr) {
-				housenumberRoad.setChanged(true);
-				if (curr.prev == null)
-					head = test;
-				curr = test;
-				continue;
-			}
-			curr = curr.next;
-		}
-		return head;
-
-	}
-	
 	public ExtNumbers checkSingleChainSegments(String streetName, MultiHashMap<HousenumberMatch, MapRoad> badMatches) {
 		ExtNumbers curr = this;
 		boolean changed = false;
@@ -340,6 +316,9 @@ public class ExtNumbers {
 				if (hnm.getSegment() < startInRoad || hnm.getSegment() >= endInRoad){
 					assert false : "internal error " + getRoad() + " " + getNumbers() + " " + leftHouses + " " + rightHouses; 
 				}
+				if (hnm.getDistance() == Double.NaN || hnm.getDistance() > HousenumberGenerator.MAX_DISTANCE_TO_ROAD){
+					assert false : "internal error " + getRoad() + " " + getNumbers() + " " + leftHouses + " " + rightHouses;
+				}
 			}
 		}
 	}
@@ -382,10 +361,24 @@ public class ExtNumbers {
 					}
 				}
 			}
-			if (segmentLength > MAX_LOCATE_ERROR || reason == SR_FIX_ERROR){
-				if (countBeforeStart > 0 && countAfterEnd + countBetween > 0)
+			if (reason == SR_FIX_ERROR){
+				if (countBeforeStart > 0){
+					if (countAfterEnd + countBetween > 0)
+						return dupNode(0, SR_SPLIT_ROAD_END);
+					else 
+						return dupNode(0, SR_FIX_ERROR);
+				}
+				if (countAfterEnd > 0){
+					if (countBeforeStart + countBetween > 0)
+						return dupNode(1, SR_SPLIT_ROAD_END);
+					else 
+						return dupNode(1, SR_FIX_ERROR);
+				}
+			} 
+			if (segmentLength > MAX_LOCATE_ERROR || reason == SR_OPT_LEN){
+				if (countBeforeStart > 0)
 					return dupNode(0, SR_SPLIT_ROAD_END);
-				if (countAfterEnd > 0 && countBeforeStart + countBetween > 0)
+				if (countAfterEnd > 0)
 					return dupNode(1, SR_SPLIT_ROAD_END);
 			}
 			if (countBetween == 0){
@@ -404,13 +397,19 @@ public class ExtNumbers {
 			else if (countAfterEnd == 0 && countBeforeStart > 0)
 				minFraction0To1 = 0.001;
 			// try to find a good split point depending on the split reason
-			double wantedFraction;
-			double testIvlLen = 10.0 / segmentLength; // used to find place where line is near garmin unit
-			wantedFraction = (minFraction0To1 + maxFraction0To1) / 2;
+			double wantedFraction, midFraction;
+			wantedFraction = midFraction = (minFraction0To1 + maxFraction0To1) / 2;
 			Coord toAdd = null;  
 
 			if (reason == SR_OPT_LEN){
-				log.debug("trying to find good split point, houses are between",minFraction0To1,maxFraction0To1,segmentLength);
+				if (log.isDebugEnabled()){
+					double len1 = segmentLength * minFraction0To1;
+					if (maxFraction0To1 != minFraction0To1){
+						double len2 = segmentLength * maxFraction0To1;
+						log.debug("trying to find good split point, houses are between",formatLen(len1),"and",formatLen(len2),"in segment with",formatLen(segmentLength));
+					} else 
+						log.debug("trying to find good split point, houses are at",formatLen(len1),"in segment with",formatLen(segmentLength));
+				}
 				double deltaFrac = maxFraction0To1 - minFraction0To1;
 				if (deltaFrac * segmentLength < MAX_LOCATE_ERROR && leftHouses.size() <= 1 && rightHouses.size() <= 1){
 					// one house or two opposite houses  
@@ -423,15 +422,15 @@ public class ExtNumbers {
 				} else {
 					if (minFraction0To1 > 0.333){
 						// create empty segment at start
-						wantedFraction = minFraction0To1 - testIvlLen;
+						wantedFraction = minFraction0To1 * 0.9999999;
 					} 
-					if (maxFraction0To1 < 0.666){
+					if (maxFraction0To1 < 0.666 && 1d - maxFraction0To1 > minFraction0To1){
 						// create empty segment at end
-						wantedFraction = maxFraction0To1 + testIvlLen;
+						wantedFraction = maxFraction0To1 * 1.0000001;
 					}
 				}
 				double partLen = wantedFraction * segmentLength ;
-				double shorterLen = (wantedFraction < 0.5) ? partLen : segmentLength - partLen;
+				double shorterLen = (wantedFraction <= 0.5) ? partLen : segmentLength - partLen;
 				if (shorterLen < 10){
 					return dupNode(wantedFraction, reason);
 				}
@@ -451,7 +450,9 @@ public class ExtNumbers {
 			
 			usedFraction = HousenumberGenerator.getFrac(c1, c2, toAdd);
 			bestDist = toAdd.getDisplayedCoord().distToLineSegment(c1, c2);
-			log.debug("using fraction", usedFraction, "to split, dist between added point and straight line is", String.format("%.2f", bestDist),"m, reason:",reason);
+			if (log.isDebugEnabled()){
+				log.debug("trying to split road segment at",formatLen(usedFraction * segmentLength));
+			}
 			if (c1.equals(toAdd) || c2.equals(toAdd))
 				return combineSides();
 			if (bestDist > 0.2){
@@ -459,19 +460,24 @@ public class ExtNumbers {
 				if (Math.abs(angle) > 3){
 					log.debug("segment too short to split without creating zig-zagging line");
 					if (reason == SR_OPT_LEN){
-						double len1 = wantedFraction * segmentLength;
-						if (wantedFraction > 0.5 && segmentLength - len1 > MAX_LOCATE_ERROR)
-							return this;
-						if (wantedFraction < 0.5 && len1 > MAX_LOCATE_ERROR)
-							return this;
-						return dupNode(wantedFraction, SR_OPT_LEN);
+						double len1 = minFraction0To1 * segmentLength;
+						double len2 = (1-maxFraction0To1) * segmentLength;
+						if (Math.min(len1, len2) < MAX_LOCATE_ERROR ){
+							if (minFraction0To1 != maxFraction0To1)
+								return dupNode(midFraction, SR_OPT_LEN);
+							else 
+								return dupNode(minFraction0To1, SR_OPT_LEN);
+						}
+						log.debug("can't improve search result");
 					}
-					if (leftHouses.size() > 1 || rightHouses.size() > 1)
-						return dupNode(wantedFraction, SR_FIX_ERROR);
+					if (leftHouses.size() > 1 || rightHouses.size() > 1){
+						return dupNode(minFraction0To1, SR_FIX_ERROR);
+					}
 					return this;
 				}
 			}
-			
+			if (log.isInfoEnabled())
+				log.info("adding number node at",toAdd.toDegreeString(),"to split, dist to line is",formatLen(bestDist));
 			action = "add";
 			this.endInRoad = addAsNumberNode(startInRoad + 1, toAdd);
 			this.recalcHousePositions();
@@ -525,7 +531,7 @@ public class ExtNumbers {
 	 */
 	private ExtNumbers dupNode(double fraction, int reason) {
 		log.info("duplicating number node in road",getRoad(),getNumbers(),leftHouses,rightHouses);
-		boolean atStart = (fraction < 0.5);
+		boolean atStart = (fraction <= 0.5);
 		// add a copy of an existing node 
 		int index = (atStart) ? startInRoad : endInRoad;
 		int splitSegment = (atStart) ? startInRoad + 1: endInRoad;
@@ -541,18 +547,24 @@ public class ExtNumbers {
 		List<HousenumberMatch> left2 = new ArrayList<>();
 		List<HousenumberMatch> right1= new ArrayList<>();
 		List<HousenumberMatch> right2= new ArrayList<>();
+		List<HousenumberMatch> target;
 		if (reason == SR_SPLIT_ROAD_END || reason == SR_OPT_LEN){
+			
 			for (HousenumberMatch hnm : leftHouses){
 				if (hnm.getSegmentFrac() < fraction)
-					left1.add(hnm);
-				else 
-					left2.add(hnm);
+					target = left1;
+				else if (hnm.getSegmentFrac() > fraction)
+					target = left2;
+				else target = (atStart) ? left1: left2;
+				target.add(hnm);
 			}
 			for (HousenumberMatch hnm : rightHouses){
 				if (hnm.getSegmentFrac() < fraction)
-					right1.add(hnm);
-				else 
-					right2.add(hnm);
+					target = right1;
+				else if (hnm.getSegmentFrac() > fraction)
+					target = right2;
+				else target = (atStart) ? right1:right2;
+				target.add(hnm);
 			}
 		} else if (reason == SR_SEP_ODD_EVEN){
 			for (HousenumberMatch hnm : leftHouses){
@@ -1151,10 +1163,9 @@ public class ExtNumbers {
 	/**
 	 * Try to add node(s) to decrease the distance of the calculated
 	 * position of an address.
-	 * @param badMatches 
 	 * @return
 	 */
-	public ExtNumbers splitLargeGaps(MultiHashMap<HousenumberMatch, MapRoad> badMatches){
+	public ExtNumbers splitLargeGaps(){
 		if (hasNumbers() == false)
 			return this;
 
@@ -1202,7 +1213,7 @@ public class ExtNumbers {
 			}
 		}
 		if (worstDelta > MAX_LOCATE_ERROR){
-			log.info("trying to optimize address search for house number in road",getRoad(),worstHouse,"error before opt is",worstDelta,"m");
+			log.info("trying to optimize address search for house number in road",getRoad(),worstHouse,"error before opt is",formatLen(worstDelta));
 			ExtNumbers test;
 			test = tryAddNumberNode(SR_OPT_LEN);
 			return test;
@@ -1302,5 +1313,13 @@ public class ExtNumbers {
 				count++;
 		}
 		return count;
+	}
+	
+	/**
+	 * @param length
+	 * @return string with length, e.g. "0.23 m" or "116.12 m"
+	 */
+	private String formatLen(double length){
+		return String.format("%.2f m", length);
 	}
 }
