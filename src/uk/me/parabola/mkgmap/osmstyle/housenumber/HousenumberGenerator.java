@@ -279,7 +279,7 @@ public class HousenumberGenerator {
 	 * @return a list with the number of points or the empty list in 
 	 * case of errors
 	 */
-	private List<Coord> getPointsOnWay(Way w, int i1, int i2, int num){
+	private static List<Coord> getPointsOnWay(Way w, int i1, int i2, int num){
 		List<Coord> interpolated = new ArrayList<>(num);
 		if (i2 >= w.getPoints().size())
 			return interpolated;
@@ -450,7 +450,7 @@ public class HousenumberGenerator {
 	 * Add the tag mkgmap:street=streetName to the element of the 
 	 * relation if it does not already have a street name tag.
 	 */
-	private boolean addStreetTagFromRel(Relation r, Element house, String streetName){
+	private static boolean addStreetTagFromRel(Relation r, Element house, String streetName){
 		String addrStreet = getStreetname(house);
 		if (addrStreet == null){
 			house.addTag(streetTagKey, streetName);
@@ -507,7 +507,7 @@ public class HousenumberGenerator {
 		roads.clear();
 	}
 	
-	private void matchCluster(String streetName, List<HousenumberMatch> houses,
+	private static void matchCluster(String streetName, List<HousenumberMatch> houses,
 			List<MapRoad> roadsInCluster) {
 		
 		List<HousenumberMatch> housesNearCluster = new ArrayList<>();
@@ -1025,9 +1025,9 @@ public class HousenumberGenerator {
 		Numbers last = null;
 		Numbers firstMatch = null;
 		for (Numbers numbers : r.getNumbers()){
-			int n = numbers.countMatches(hn);
 			if (numbers.getLeftNumberStyle() == NumberStyle.NONE && numbers.getRightNumberStyle() == NumberStyle.NONE)
 				continue;
+			int n = numbers.countMatches(hn);
 			if (n > 0 && firstMatch == null)
 				firstMatch = numbers;
 			
@@ -1041,8 +1041,7 @@ public class HousenumberGenerator {
 			}
 			
 			matches += n;
-			if (numbers.getLeftNumberStyle() != NumberStyle.NONE || numbers.getRightNumberStyle() != NumberStyle.NONE)
-				last = numbers;
+			last = numbers;
 		}
 		return matches;
 	}

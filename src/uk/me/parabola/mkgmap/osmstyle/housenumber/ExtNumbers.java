@@ -29,6 +29,7 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.osmstyle.housenumber.HousenumberGenerator.HousenumberMatchComparator;
+//import uk.me.parabola.util.GpxCreator;
 import uk.me.parabola.util.MultiHashMap;
 
 /**
@@ -337,8 +338,8 @@ public class ExtNumbers {
 		else {
 			if (getRoad().getPoints().size() + 1 > LineSplitterFilter.MAX_POINTS_IN_LINE)
 				return this; // can't add a node
-			Coord c1 = getRoad().getPoints().get(startInRoad).getDisplayedCoord();
-			Coord c2 = getRoad().getPoints().get(startInRoad+1).getDisplayedCoord();
+			Coord c1 = getRoad().getPoints().get(startInRoad);
+			Coord c2 = getRoad().getPoints().get(startInRoad+1);
 			if (c1.equals(c2)){
 				return dupNode(0, SR_FIX_ERROR);
 			} 
@@ -435,28 +436,39 @@ public class ExtNumbers {
 					return dupNode(wantedFraction, reason);
 				}
 			}
-			
-			double usedFraction = wantedFraction;
+			double usedFraction = 0;
 			double bestDist = Double.MAX_VALUE;
-			Coord wanted = c1.makeBetweenPoint(c2, wantedFraction);
-			if (wanted.equals(c1) || wanted.equals(c2))
-				return dupNode(wantedFraction, reason);
-			toAdd = rasterLineNearPoint(c1, c2, wanted);
+			for (;;){
+				Coord wanted = c1.makeBetweenPoint(c2, wantedFraction);
+				if (wanted.equals(c1) || wanted.equals(c2))
+					return dupNode(wantedFraction, reason);
+				toAdd = rasterLineNearPoint(c1, c2, wanted);
+				if (toAdd == null){
+					wantedFraction = 0.5;
+					continue;
+				}
+				double foundDist = toAdd.distance(wanted);
+				usedFraction = HousenumberGenerator.getFrac(c1, c2, toAdd);
+				if (wantedFraction == 0.5)
+					break;
+				if (foundDist > 10 || usedFraction > minFraction0To1 && wantedFraction < minFraction0To1 || usedFraction < maxFraction0To1 && wantedFraction > maxFraction0To1){
+					wantedFraction = 0.5;
+				}
+				else break;
+			}
 			if (toAdd == null){
 				log.error("can't split",this);
 				return this;
 			}
 			toAdd.incHighwayCount();
-			
-			usedFraction = HousenumberGenerator.getFrac(c1, c2, toAdd);
-			bestDist = toAdd.getDisplayedCoord().distToLineSegment(c1, c2);
+			bestDist = toAdd.getDisplayedCoord().distToLineSegment(c1.getDisplayedCoord(), c2.getDisplayedCoord());
 			if (log.isDebugEnabled()){
 				log.debug("trying to split road segment at",formatLen(usedFraction * segmentLength));
 			}
 			if (c1.equals(toAdd) || c2.equals(toAdd))
 				return combineSides();
 			if (bestDist > 0.2){
-				double angle = Utils.getAngle(c1, toAdd.getDisplayedCoord(), c2);
+				double angle = Utils.getDisplayedAngle(c1, toAdd, c2);
 				if (Math.abs(angle) > 3){
 					log.debug("segment too short to split without creating zig-zagging line");
 					if (reason == SR_OPT_LEN){
@@ -1177,7 +1189,6 @@ public class ExtNumbers {
 	public ExtNumbers splitLargeGaps(){
 		if (hasNumbers() == false)
 			return this;
-
 		// calculate the length of each road segment and 
 		// the overall length covered by this interval
 		int numSegments = endInRoad - startInRoad;
@@ -1293,13 +1304,16 @@ public class ExtNumbers {
 		for(;;){  /* loop */
 			if (x==x1 && y==y1) break;
 			if (x != x0 || y != y0){
-				if (Math.abs(y - p.getLatitude()) == 0 || Math.abs(x - p.getLongitude()) == 0){
+				if (Math.abs(y - p.getLatitude()) <= 1  || Math.abs(x - p.getLongitude()) <= 1){
 					Coord t = new Coord(y, x);
-					double dist = t.distToLineSegment(c1Dspl, c2Dspl);
-					if (dist < minDist){
-						bestX = x;
-						bestY = y;
-						minDist = dist;
+					double distToTarget = t.distance(p);
+					if (distToTarget < 10){ 
+						double distLine = t.distToLineSegment(c1Dspl, c2Dspl);
+						if (distLine < minDist){
+							bestX = x;
+							bestY = y;
+							minDist = distLine;
+						}
 					}
 //					nearLinePoints.add(t);
 				}
