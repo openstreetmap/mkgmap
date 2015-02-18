@@ -32,6 +32,7 @@ public class MdrConfig {
 	private int headerLen = DEFAULT_HEADER_LEN;
 	private Sort sort;
 	private File outputDir;
+	private boolean splitName;
 
 	/**
 	 * True if we are creating the file, rather than reading it.
@@ -86,5 +87,13 @@ public class MdrConfig {
 	public void setOutputDir(String outputDir) {
 		if (outputDir != null)
 			this.outputDir = new File(outputDir);
+	}
+
+	public void setSplitName(boolean splitName) {
+		this.splitName = splitName;
+	}
+
+	public boolean isSplitName() {
+		return splitName;
 	}
 }

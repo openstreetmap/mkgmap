@@ -352,28 +352,34 @@ public class RuleFileReader {
 			// Transform ((first | second) & topSecond)
 			// into (first & topSecond) | (second & topSecond)
 
-			Op first = op1.getFirst();
-			OrOp orOp = new OrOp();
-
-			Op topSecond = top.getSecond();
-
-			AndOp and1 = new AndOp();
-			and1.setFirst(first);
-			and1.setSecond(topSecond);
-
-			AndOp and2 = new AndOp();
-			Op second = rearrangeExpression(op1.getSecond());
-			and2.setFirst(second);
-			and2.setSecond(topSecond);
-
-			orOp.setFirst(and1);
-			orOp.setSecond(and2);
-			return orOp;
+			return distrubute(op1, top.getSecond());
 		} else {
 			// This shouldn't happen
 			throw new SyntaxException("X3:" + op1.getType());
 		}
 		return top;
+	}
+
+	private static OrOp distrubute(Op op1, Op topSecond) {
+		Op first = op1.getFirst();
+		OrOp orOp = new OrOp();
+
+		BinaryOp and1 = new AndOp();
+		and1.setFirst(first);
+		and1.setSecond(topSecond);
+
+		BinaryOp and2 = new AndOp();
+		Op second = rearrangeExpression(op1.getSecond());
+		if (second.isType(OR)) {
+			and2 = distrubute(second, topSecond);
+		} else {
+			and2.setFirst(second);
+			and2.setSecond(topSecond);
+		}
+		orOp.setFirst(and1);
+		orOp.setSecond(and2);
+
+		return orOp;
 	}
 
 	/**

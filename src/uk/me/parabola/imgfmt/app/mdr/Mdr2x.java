@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.imgfmt.app.Label;
 
 /**
  * Common code for 20, 21, 22 which are all lists of streets ordered in
@@ -39,30 +38,45 @@ public abstract class Mdr2x extends MdrMapSection implements HasHeaderFlags {
 		int size = getSizes().getStreetSizeFlagged();
 
 		boolean hasLabel = hasFlag(0x2);
+
+		String lastPartial = null;
 		int recordNumber = 0;
 		for (Mdr7Record street : streets) {
 			assert street.getMapIndex() == street.getCity().getMapIndex() : street.getMapIndex() + "/" + street.getCity().getMapIndex();
 			addIndexPointer(street.getMapIndex(), ++recordNumber);
 
 			int index = street.getIndex();
-			String name = Label.stripGarminCodes(street.getName());
-			
-			int flag = 1;
+
+			String name = street.getName();
+
+			int repeat = 1;
 			if (name.equals(lastName) && sameGroup(street, prev))
-				flag = 0;
-			lastName = name;
-			prev = street;
+				repeat = 0;
 
 			if (hasLabel) {
 				putMapIndex(writer, street.getMapIndex());
 				int offset = street.getLabelOffset();
-				if (flag != 0)
+				if (repeat != 0)
 					offset |= 0x800000;
+
+				int trailing = 0;
+				String partialName = street.getPartialName();
+				if (!partialName.equals(lastPartial)) {
+					trailing |= 1;
+					offset |= 0x800000;
+				}
+
 				writer.put3(offset);
-				writer.put((byte) flag);
-			}
-			else
-				putN(writer, size, (index << 1) | flag);
+				writer.put(street.getOutNameOffset());
+
+				writer.put((byte) trailing);
+
+				lastPartial = partialName;
+			} else
+				putN(writer, size, (index << 1) | repeat);
+
+			lastName = name;
+			prev = street;
 		}
 	}
 
@@ -78,7 +92,8 @@ public abstract class Mdr2x extends MdrMapSection implements HasHeaderFlags {
 	public int getItemSize() {
 		int size;
 		if (isForDevice()) {
-			size = getSizes().getMapSize() + 3 + 1;
+			// map-index, label, name-offset, 1byte flag
+			size = getSizes().getMapSize() + 3 + 1 + 1;
 		} else {
 			size = getSizes().getStreetSizeFlagged();
 		}

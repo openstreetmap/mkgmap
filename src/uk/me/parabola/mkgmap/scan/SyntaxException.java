@@ -47,7 +47,7 @@ public class SyntaxException extends RuntimeException {
 		if (fileName != null)
 			fmt.format("(%s:%d): ", fileName, lineNumber);
 
-		fmt.format(super.getMessage());
+		fmt.format("%s", super.getMessage());
 		return fmt.toString();
 	}
 }

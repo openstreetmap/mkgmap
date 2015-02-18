@@ -16,8 +16,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.srt.MultiSortKey;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 
 /**
@@ -27,21 +29,132 @@ import uk.me.parabola.imgfmt.app.srt.SortKey;
  * @author Steve Ratcliffe
  */
 public class Mdr7 extends MdrMapSection {
+	public static final int MDR7_HAS_STRING = 0x01;
+	public static final int MDR7_HAS_NAME_OFFSET = 0x20;
+	public static final int MDR7_PARTIAL_SHIFT = 6;
+	public static final int MDR7_U1 = 0x2;
+	public static final int MDR7_U2 = 0x4;
+
+	private static final int MAX_NAME_OFFSET = 127;
+
+	private final int codepage;
+	private final boolean isMulti;
+	private final boolean splitName;
+
 	private List<Mdr7Record> allStreets = new ArrayList<>();
 	private List<Mdr7Record> streets = new ArrayList<>();
 
+	private final int u2size = 1;
+
 	public Mdr7(MdrConfig config) {
 		setConfig(config);
+		Sort sort = config.getSort();
+		splitName = config.isSplitName();
+		codepage = sort.getCodepage();
+		isMulti = sort.isMulti();
 	}
 
 	public void addStreet(int mapId, String name, int lblOffset, int strOff, Mdr5Record mdrCity) {
+		// Find a name prefix, which is either a shield or a word ending 0x1e. We are treating
+		// a shield as a prefix of length one.
+		int prefix = 0;
+		if (name.charAt(0) < 7)
+			prefix = 1;
+		int sep = name.indexOf(0x1e);
+		if (sep > 0)
+			prefix = sep + 1;
+
+		// Find a name suffix which begins with 0x1f
+		sep = name.indexOf(0x1f);
+		int suffix = 0;
+		if (sep > 0)
+			suffix = sep;
+
+		// Large values can't actually work.
+		if (prefix >= MAX_NAME_OFFSET || suffix >= MAX_NAME_OFFSET)
+			return;
+
 		Mdr7Record st = new Mdr7Record();
 		st.setMapIndex(mapId);
 		st.setLabelOffset(lblOffset);
 		st.setStringOffset(strOff);
 		st.setName(name);
 		st.setCity(mdrCity);
+		st.setPrefixOffset((byte) prefix);
+		st.setSuffixOffset((byte) suffix);
 		allStreets.add(st);
+
+		if (!splitName)
+			return;
+
+		boolean start = false;
+		boolean inWord = false;
+
+		int c;
+		int outOffset = 0;
+
+		int end = Math.min((suffix > 0) ? suffix : name.length() - prefix - 1, MAX_NAME_OFFSET);
+		for (int nameOffset = 0; nameOffset < end; nameOffset += Character.charCount(c)) {
+			c = name.codePointAt(prefix + nameOffset);
+
+			// Don't use any word after a bracket
+			if (c == '(')
+				break;
+
+			if (!Character.isLetterOrDigit(c)) {
+				start = true;
+				inWord = false;
+			} else if (start && Character.isLetterOrDigit(c)) {
+				inWord = true;
+			}
+
+			if (start && inWord && outOffset > 0) {
+				st = new Mdr7Record();
+				st.setMapIndex(mapId);
+				st.setLabelOffset(lblOffset);
+				st.setStringOffset(strOff);
+				st.setName(name);
+				st.setCity(mdrCity);
+				st.setNameOffset((byte) nameOffset);
+				st.setOutNameOffset((byte) outOffset);
+				st.setPrefixOffset((byte) prefix);
+				st.setSuffixOffset((byte) suffix);
+				//System.out.println(st.getName() + ": add partial " + st.getPartialName());
+				allStreets.add(st);
+				start = false;
+			}
+
+			outOffset += outSize(c);
+			if (outOffset > MAX_NAME_OFFSET)
+				break;
+		}
+	}
+
+	/**
+	 * Return the number of bytes that the given character will consume in the output encoded
+	 * format.
+	 */
+	private int outSize(int c) {
+		if (codepage == 65001) {
+			// For unicode a simple lookup gives the number of bytes.
+			if (c < 0x80) {
+				return 1;
+			} else if (c <= 0x7FF) {
+				return 2;
+			} else if (c <= 0xFFFF) {
+				return 3;
+			} else if (c <= 0x10FFFF) {
+				return 4;
+			} else {
+				throw new MapFailedException(String.format("Invalid code point: 0x%x", c));
+			}
+		} else if (!isMulti) {
+			// The traditional single byte code-pages, always one byte.
+			return 1;
+		} else {
+			// Other multi-byte code-pages (eg ms932); can't currently create index for these anyway.
+			return 0;
+		}
 	}
 
 	/**
@@ -49,7 +162,15 @@ public class Mdr7 extends MdrMapSection {
 	 * we sort and de-duplicate here.
 	 */
 	protected void preWriteImpl() {
-		List<SortKey<Mdr7Record>> sortedStreets = MdrUtils.sortList(getConfig().getSort(), allStreets);
+		Sort sort = getConfig().getSort();
+		List<SortKey<Mdr7Record>> sortedStreets = new ArrayList<>(allStreets.size());
+		for (Mdr7Record m : allStreets) {
+			SortKey<Mdr7Record> partialKey = sort.createSortKey(m, m.getPartialName());
+			SortKey<Mdr7Record> nameKey = sort.createSortKey(m, m.getName(), m.getMapIndex());
+			MultiSortKey<Mdr7Record> sortKey = new MultiSortKey<>(partialKey, nameKey, null);
+			sortedStreets.add(sortKey);
+		}
+		Collections.sort(sortedStreets);
 
 		// De-duplicate the street names so that there is only one entry
 		// per map for the same name.
@@ -57,39 +178,55 @@ public class Mdr7 extends MdrMapSection {
 		Mdr7Record last = new Mdr7Record();
 		for (SortKey<Mdr7Record> sk : sortedStreets) {
 			Mdr7Record r = sk.getObject();
-			if (r.getMapIndex() != last.getMapIndex() || !r.getName().equals(last.getName())) {
+			if (r.getMapIndex() == last.getMapIndex()
+					&& r.getName().equals(last.getName())  // currently think equals is correct, not collator.compare()
+					&& r.getPartialName().equals(last.getPartialName()))
+			{
+				// This has the same name (and map number) as the previous one. Save the pointer to that one
+				// which is going into the file.
+				r.setIndex(recordNumber);
+			} else {
 				recordNumber++;
 				last = r;
 				r.setIndex(recordNumber);
 				streets.add(r);
-			} else {
-				// This has the same name (and map number) as the previous one. Save the pointer to that one
-				// which is going into the file.
-				r.setIndex(recordNumber);
 			}
 		}
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
 		String lastName = null;
-		boolean hasStrings = hasFlag(0x1);
+		String lastPartial = null;
+		boolean hasStrings = hasFlag(MDR7_HAS_STRING);
+		boolean hasNameOffset = hasFlag(MDR7_HAS_NAME_OFFSET);
+
 		for (Mdr7Record s : streets) {
 			addIndexPointer(s.getMapIndex(), s.getIndex());
 
 			putMapIndex(writer, s.getMapIndex());
 			int lab = s.getLabelOffset();
-			String name = Label.stripGarminCodes(s.getName());
-			int trailingFlags = 0;
+			String name = s.getName();
 			if (!name.equals(lastName)) {
 				lab |= 0x800000;
 				lastName = name;
-				trailingFlags = 1;
 			}
+
+			String partialName = s.getPartialName();
+			int trailingFlags = 0;
+			if (!partialName.equals(lastPartial)) {
+				trailingFlags |= 1;
+				lab |= 0x800000;  // If it is not a partial repeat, then it is not a complete repeat either
+			}
+			lastPartial = partialName;
+
 			writer.put3(lab);
 			if (hasStrings)
 				putStringOffset(writer, s.getStringOffset());
-			
-			writer.put((byte) trailingFlags);
+
+			if (hasNameOffset)
+				writer.put(s.getOutNameOffset());
+
+			putN(writer, u2size, trailingFlags);
 		}
 	}
 
@@ -99,9 +236,11 @@ public class Mdr7 extends MdrMapSection {
 	 */
 	public int getItemSize() {
 		PointerSizes sizes = getSizes();
-		int size = sizes.getMapSize() + 3 + 1;
+		int size = sizes.getMapSize() + 3 + u2size;
 		if (!isForDevice())
 			size += sizes.getStrOffSize();
+		if ((getExtraValue() & MDR7_HAS_NAME_OFFSET) != 0)
+			size += 1;
 		return size;
 	}
 
@@ -113,11 +252,12 @@ public class Mdr7 extends MdrMapSection {
 	 * Value of 3 possibly the existence of the lbl field.
 	 */
 	public int getExtraValue() {
-		int magic = 0x42;
+		int magic = MDR7_U1 | MDR7_HAS_NAME_OFFSET | (u2size << MDR7_PARTIAL_SHIFT);
+
 		if (isForDevice()) {
-			magic |= 0x4;
+			magic |= MDR7_U2;
 		} else {
-			magic |= 0x1; //strings
+			magic |= MDR7_HAS_STRING;
 		}
 
 		return magic;

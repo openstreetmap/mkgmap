@@ -83,6 +83,7 @@ public class GmapsuppBuilder implements Combiner {
 	// There is a separate MDR and SRT file for each family id in the gmapsupp
 	private final Map<Integer, MdrBuilder> mdrBuilderMap = new LinkedHashMap<Integer, MdrBuilder>();
 	private final Map<Integer, Sort> sortMap = new LinkedHashMap<Integer, Sort>();
+	private boolean splitName;
 
 
 	public void init(CommandArgs args) {
@@ -90,6 +91,7 @@ public class GmapsuppBuilder implements Combiner {
 		mapsetName = args.get("mapset-name", "OSM map set");
 		overallDescription = args.getDescription();
 		outputDir = args.getOutputDir();
+		splitName = args.get("split-name-index", false);
 	}
 
 	/**
@@ -106,7 +108,7 @@ public class GmapsuppBuilder implements Combiner {
 			return mdrBuilder;
 
 		mdrBuilder = new MdrBuilder();
-		mdrBuilder.initForDevice(sort, outputDir);
+		mdrBuilder.initForDevice(sort, outputDir, splitName);
 		mdrBuilderMap.put(familyId, mdrBuilder);
 		return mdrBuilder;
 	}

@@ -163,7 +163,8 @@ power=line [0x29 resolution 21]
 
 railway=abandoned [0x0a road_class=0 road_speed=1 resolution 22]
 railway=platform [0x16 road_class=0 road_speed=0 resolution 23]
-railway=* & !(tunnel=yes) [0x14 resolution 22]
+# Railway lines, note that many devices display type 0x14 only at resolution 24 
+(railway=rail | railway=tram | railway=disused | railway=subway | railway=narrow_gauge | railway=light_rail | railway=preserved) & !(tunnel=yes) [0x14 resolution 22]
 
 (man_made=cable|(man_made=* & man_made ~ '.*pipe.*')) & area!=yes &
 tunnel!=yes & location != underground
