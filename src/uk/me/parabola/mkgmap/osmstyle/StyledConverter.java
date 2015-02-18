@@ -272,7 +272,7 @@ public class StyledConverter implements OsmConverter {
 			else
 				rules = wayRules;
 		}
-
+		int roadsSize = roads.size(); 
 		Way cycleWay = null;
 		String cycleWayTag = way.getTag(makeCycleWayTagKey);
 		if ("yes".equals(cycleWayTag)){
@@ -318,6 +318,10 @@ public class StyledConverter implements OsmConverter {
 					break;
 			}
 		}
+		// if style adds multiple routable ways for one OSM way, mark all 
+		// subsequent ConvertedWay instances as such. 
+		for (int i = roadsSize+1; i < roads.size(); i++)
+			roads.get(i).setNotFirstRoutableWay(true); 
 	}
 
 	private int lineIndex = 0;
@@ -1555,7 +1559,10 @@ public class StyledConverter implements OsmConverter {
 		elementSetup(line, cw.getGType(), way);
 		line.setPoints(points);
 		MapRoad road = new MapRoad(way.getId(), line);
-
+		if (cw.isNotFirstRoutableWay()){
+			road.setSkipHousenumberProcessing(true);
+		}
+		
 		boolean doFlareCheck = true;
 		
 		if (cw.isRoundabout()){

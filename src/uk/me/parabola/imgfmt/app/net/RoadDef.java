@@ -121,6 +121,8 @@ public class RoadDef {
 	private Set<String> messageIssued;
 
 	private final List<Offset> rgnOffsets = new ArrayList<>();
+	// for the NOD2 bit stream   
+	private BitSet nod2BitSet;
 
 	/*
 	 * Everything that's relevant for writing out Nod 2.
@@ -526,15 +528,15 @@ public class RoadDef {
 		// this is related to the number of nodes, but there
 		// is more to it...
 		// For now, shift by one if the first node is not a
-		// routing node. Supposedly, other holes are also
-		// possible.
-		// This might be unnecessary if we just make sure
-		// that every road starts with a node.
+		// routing node.
+		// If the road has house numbers, we count also
+		// the number nodes, and these get a 0 in the bit stream. 
 		int nbits = nnodes;
 		if (!startsWithNode)
 			nbits++;
 		writer.putChar((char) nbits);
 		boolean[] bits = new boolean[nbits];
+		
 		if (hasHouseNumbers()){
 			int off = startsWithNode ? 0 :1;
 			for (int i = 0; i < bits.length; i++){
@@ -649,7 +651,6 @@ public class RoadDef {
 
 	private int roadClass = -1;
 
-	private BitSet nod2BitSet;
 
 	// road class that goes in various places (really?)
 	public void setRoadClass(int roadClass) {
@@ -766,7 +767,5 @@ public class RoadDef {
 
 	public void setNod2BitSet(BitSet bs) {
 		nod2BitSet = bs;
-		
 	}
-
 }

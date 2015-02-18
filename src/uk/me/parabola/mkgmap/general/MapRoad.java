@@ -42,6 +42,7 @@ public class MapRoad extends MapLine {
 
 	private final RoadDef roadDef;
 	private boolean segmentsFollowing;
+	private boolean skipHousenumberProcessing;
 	
 	public MapRoad(long id, MapLine line) {
 		super(line);
@@ -119,7 +120,6 @@ public class MapRoad extends MapLine {
 		roadDef.setNumbersList(numbers);
 		if (roadDef.hasHouseNumbers()) {
 			BitSet bs = new BitSet();
-
 			int numNodes = 0;
 			for (int i = 0; i < getPoints().size(); i++){
 				Coord co = getPoints().get(i);
@@ -166,6 +166,14 @@ public class MapRoad extends MapLine {
 
 	public void setSegmentsFollowing(boolean segmentsFollowing) {
 		this.segmentsFollowing = segmentsFollowing;
+	}
+
+	public boolean isSkipHousenumberProcessing() {
+		return skipHousenumberProcessing;
+	}
+
+	public void setSkipHousenumberProcessing(boolean skipHousenumberProcessing) {
+		this.skipHousenumberProcessing = skipHousenumberProcessing;
 	}
 
 	public String toString(){

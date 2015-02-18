@@ -332,11 +332,18 @@ public class HousenumberGenerator {
 	public void addRoad(Way osmRoad, MapRoad road) {
 		roads.add(road);
 		if (numbersEnabled) {
-			String name = getStreetname(osmRoad); 
-			if (name != null) {
-				if (log.isDebugEnabled())
-					log.debug("Housenumber - Streetname:", name, "Way:",osmRoad.getId(),osmRoad.toTagString());
-				roadByNames.add(name, road);
+			/*
+			 * If the style adds the same OSM way as two or more routable ways, we use
+			 * only the first. This ensures that we don't try to assign numbers from bad
+			 * matches to these copies.
+			 */
+			if(!road.isSkipHousenumberProcessing()){
+				String name = getStreetname(osmRoad); 
+				if (name != null) {
+					if (log.isDebugEnabled())
+						log.debug("Housenumber - Streetname:", name, "Way:",osmRoad.getId(),osmRoad.toTagString());
+					roadByNames.add(name, road);
+				}
 			}
 		} 
 	}
@@ -643,7 +650,6 @@ public class HousenumberGenerator {
 			if (!hnm.isIgnored())
 				prev = hnm;
 		}
-		
 
 		// we have now a first guess for the road and segment of each plausible house number element
 		if (roadsInCluster.size() > 1){
