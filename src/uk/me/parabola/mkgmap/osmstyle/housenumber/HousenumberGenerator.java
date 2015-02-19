@@ -782,16 +782,13 @@ public class HousenumberGenerator {
 	}
 	/**
 	 * Fill the fields in hnm.  
-	 * @param hnm
-	 * @param r
-	 * @param toTest
 	 */
 	public static void findClosestRoadSegment(HousenumberMatch hnm, MapRoad r, int firstSeg, int stopSeg) {
 		List<HousenumberMatch> sameDistMatches = new ArrayList<>();
 		Coord cx = hnm.getLocation();
 
 		MapRoad oldRoad = hnm.getRoad();
-		double tolerance = (oldRoad == r && hnm.getDistance() < MAX_DISTANCE_TO_ROAD) ? 1.5 : 0;
+		double tolerance = (oldRoad == r && hnm.getDistance() <= MAX_DISTANCE_TO_ROAD) ? 2 : 0;
 		hnm.setRoad(null);
 		hnm.setDistance(Double.POSITIVE_INFINITY);
 		double bestDist = Double.POSITIVE_INFINITY;
@@ -825,9 +822,12 @@ public class HousenumberGenerator {
 			return;
 		if (hnm.getDistance() > MAX_DISTANCE_TO_ROAD){
 			// tolerate values little above threshold because of added points  
-			if (bestDist < MAX_DISTANCE_TO_ROAD + 1.5){
+			if (bestDist < MAX_DISTANCE_TO_ROAD + tolerance){
 				hnm.setDistance(MAX_DISTANCE_TO_ROAD);
-			} 
+			} else {
+				hnm.setIgnored(true);
+				log.warn(hnm.getRoad(),"house number element",hnm,hnm.getElement().toBrowseURL(),"looks wrong after split");
+			}
 		}
 	}
 

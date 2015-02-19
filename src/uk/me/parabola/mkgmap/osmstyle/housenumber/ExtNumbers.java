@@ -119,6 +119,8 @@ public class ExtNumbers {
 			int maxN = -1;
 			for (int i = 0; i< housenumbers.size(); i++) {
 				HousenumberMatch hnm = housenumbers.get(i);
+				if (hnm.isIgnored())
+					continue;
 				if (hnm.getSegment() >= endSegment) {
 					break;
 				} 
@@ -314,6 +316,8 @@ public class ExtNumbers {
 			return;
 		for (List<HousenumberMatch> list : Arrays.asList(leftHouses, rightHouses)){
 			for (HousenumberMatch hnm : list){
+				if (hnm.isIgnored())
+					continue;
 				if (hnm.getSegment() < startInRoad || hnm.getSegment() >= endInRoad){
 					assert false : "internal error " + getRoad() + " " + getNumbers() + " " + leftHouses + " " + rightHouses; 
 				}
@@ -473,15 +477,15 @@ public class ExtNumbers {
 				if (bestDist > 0.2){
 					double angle = Utils.getDisplayedAngle(c1, toAdd, c2);
 					if (Math.abs(angle) > 3){
-						log.debug("segment too short to split without creating zig-zagging line");
+						log.debug("segment too short to split without creating visible angle");
 						addOK = false;
 					}
 				}
 			}
 			if (!addOK){
+				double len1 = minFraction0To1 * segmentLength;
+				double len2 = (1-maxFraction0To1) * segmentLength;
 				if (reason == SR_OPT_LEN){
-					double len1 = minFraction0To1 * segmentLength;
-					double len2 = (1-maxFraction0To1) * segmentLength;
 					if (Math.min(len1, len2) < MAX_LOCATE_ERROR ){
 						if (minFraction0To1 != maxFraction0To1)
 							return dupNode(midFraction, SR_OPT_LEN);
@@ -491,7 +495,8 @@ public class ExtNumbers {
 					log.debug("can't improve search result");
 				}
 				if (leftHouses.size() > 1 || rightHouses.size() > 1){
-					return dupNode(minFraction0To1, SR_FIX_ERROR);
+					if (minFraction0To1 != -maxFraction0To1)
+						return dupNode(midFraction, reason);
 				} 
 				return this;
 			}
@@ -499,6 +504,9 @@ public class ExtNumbers {
 				log.info("adding number node at",toAdd.toDegreeString(),"to split, dist to line is",formatLen(bestDist));
 			action = "add";
 			this.endInRoad = addAsNumberNode(startInRoad + 1, toAdd);
+			if (toAdd.distance(new Coord(53.526485,10.091093)) < 10){
+				long dd = 4;
+			}
 			this.recalcHousePositions();
 		} 
 
@@ -568,7 +576,6 @@ public class ExtNumbers {
 		List<HousenumberMatch> right2= new ArrayList<>();
 		List<HousenumberMatch> target;
 		if (reason == SR_SPLIT_ROAD_END || reason == SR_OPT_LEN){
-			
 			for (HousenumberMatch hnm : leftHouses){
 				if (hnm.getSegmentFrac() < fraction)
 					target = left1;
@@ -753,6 +760,31 @@ public class ExtNumbers {
 	 * @return true if a change was done
 	 */
 	private boolean tryToFindSimpleCorrection() {
+		for (List<HousenumberMatch> list : Arrays.asList(leftHouses, rightHouses)){
+			for (HousenumberMatch hnm : list){
+				if (hnm.getDistance() > HousenumberGenerator.MAX_DISTANCE_TO_ROAD * 0.9){
+					Numbers test = removeHouseNumber(hnm.getHousenumber(), list == leftHouses);
+					if (test.isPlausible()){
+						double nextHouseDist = Double.MAX_VALUE;
+						for (HousenumberMatch hnm2 : list){
+							if (hnm == hnm2)
+								continue;
+							double distToHouse = hnm.getLocation().distance(hnm2.getLocation());
+							if (distToHouse < nextHouseDist)
+								nextHouseDist = distToHouse;
+						}
+						if (nextHouseDist > 50){
+							log.warn(hnm.getRoad(),"house number element",hnm,hnm.getElement().toBrowseURL(),"is far from road and looks wrong in",getNumbers(),list,",is ignored");
+							hnm.setIgnored(true);
+							list.remove(hnm);
+							reset();
+							setNumbers(list, startInRoad, endInRoad, list == leftHouses);
+							return true;
+						}
+					}
+				}
+			}
+		}
 		boolean leftIsWrong = false;
 		if (next != null && prev != null)
 			return false; 
