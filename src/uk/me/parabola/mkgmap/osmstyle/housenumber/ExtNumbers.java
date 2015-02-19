@@ -444,8 +444,11 @@ public class ExtNumbers {
 					return dupNode(wantedFraction, reason);
 				toAdd = rasterLineNearPoint(c1, c2, wanted);
 				if (toAdd == null){
-					wantedFraction = 0.5;
-					continue;
+					if (wantedFraction != 0.5){
+						wantedFraction = 0.5;
+						continue;
+					}
+					break;
 				}
 				double foundDist = toAdd.distance(wanted);
 				usedFraction = HousenumberGenerator.getFrac(c1, c2, toAdd);
@@ -456,37 +459,41 @@ public class ExtNumbers {
 				}
 				else break;
 			}
-			if (toAdd == null){
-				log.error("can't split",this);
-				return this;
-			}
-			toAdd.incHighwayCount();
-			bestDist = toAdd.getDisplayedCoord().distToLineSegment(c1.getDisplayedCoord(), c2.getDisplayedCoord());
-			if (log.isDebugEnabled()){
-				log.debug("trying to split road segment at",formatLen(usedFraction * segmentLength));
-			}
-			if (c1.equals(toAdd) || c2.equals(toAdd))
-				return combineSides();
-			if (bestDist > 0.2){
-				double angle = Utils.getDisplayedAngle(c1, toAdd, c2);
-				if (Math.abs(angle) > 3){
-					log.debug("segment too short to split without creating zig-zagging line");
-					if (reason == SR_OPT_LEN){
-						double len1 = minFraction0To1 * segmentLength;
-						double len2 = (1-maxFraction0To1) * segmentLength;
-						if (Math.min(len1, len2) < MAX_LOCATE_ERROR ){
-							if (minFraction0To1 != maxFraction0To1)
-								return dupNode(midFraction, SR_OPT_LEN);
-							else 
-								return dupNode(minFraction0To1, SR_OPT_LEN);
-						}
-						log.debug("can't improve search result");
-					}
-					if (leftHouses.size() > 1 || rightHouses.size() > 1){
-						return dupNode(minFraction0To1, SR_FIX_ERROR);
-					}
-					return this;
+			boolean addOK = true;
+			if (toAdd == null)
+				addOK = false;
+			else {
+				toAdd.incHighwayCount();
+				bestDist = toAdd.getDisplayedCoord().distToLineSegment(c1.getDisplayedCoord(), c2.getDisplayedCoord());
+				if (log.isDebugEnabled()){
+					log.debug("trying to split road segment at",formatLen(usedFraction * segmentLength));
 				}
+				if (c1.equals(toAdd) || c2.equals(toAdd))
+					return combineSides();
+				if (bestDist > 0.2){
+					double angle = Utils.getDisplayedAngle(c1, toAdd, c2);
+					if (Math.abs(angle) > 3){
+						log.debug("segment too short to split without creating zig-zagging line");
+						addOK = false;
+					}
+				}
+			}
+			if (!addOK){
+				if (reason == SR_OPT_LEN){
+					double len1 = minFraction0To1 * segmentLength;
+					double len2 = (1-maxFraction0To1) * segmentLength;
+					if (Math.min(len1, len2) < MAX_LOCATE_ERROR ){
+						if (minFraction0To1 != maxFraction0To1)
+							return dupNode(midFraction, SR_OPT_LEN);
+						else 
+							return dupNode(minFraction0To1, SR_OPT_LEN);
+					}
+					log.debug("can't improve search result");
+				}
+				if (leftHouses.size() > 1 || rightHouses.size() > 1){
+					return dupNode(minFraction0To1, SR_FIX_ERROR);
+				} 
+				return this;
 			}
 			if (log.isInfoEnabled())
 				log.info("adding number node at",toAdd.toDegreeString(),"to split, dist to line is",formatLen(bestDist));
