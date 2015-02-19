@@ -630,11 +630,8 @@ public class ExtNumbers {
 	}
 
 	private void setSegment(int segment, List<HousenumberMatch> houses) {
-		BitSet toTest = new BitSet();
-		toTest.set(segment);
-		 
 		for (HousenumberMatch hnm : houses){
-			HousenumberGenerator.findClosestRoadSegment(hnm, getRoad(), toTest);
+			HousenumberGenerator.findClosestRoadSegment(hnm, getRoad(), segment,segment+1);
 			if (hnm.getRoad() == null || hnm.getSegment() != segment){
 				// should not happen
 				log.error("internal error, house too far from forced segment in road",getRoad(),hnm,hnm.getElement().toBrowseURL());
@@ -650,20 +647,9 @@ public class ExtNumbers {
 	 * and fraction values.
 	 */
 	private void recalcHousePositions(){
-		BitSet toTest = new BitSet();
-		toTest.set(startInRoad, endInRoad);  
 		for (List<HousenumberMatch> list : Arrays.asList(leftHouses, rightHouses)){
 			for (HousenumberMatch hnm : list){
-				double oldDist = hnm.getDistance() ;
-				HousenumberGenerator.findClosestRoadSegment(hnm, getRoad(), toTest);
-				if (hnm.getDistance() > HousenumberGenerator.MAX_DISTANCE_TO_ROAD){
-					if (oldDist +1 > HousenumberGenerator.MAX_DISTANCE_TO_ROAD){
-						hnm.setDistance(HousenumberGenerator.MAX_DISTANCE_TO_ROAD);
-						hnm.setRoad(getRoad());
-					}
-					else 
-						log.error("internal error: house is too far away after recalculation",getRoad(),hnm.getElement().toBrowseURL());
-				}
+				HousenumberGenerator.findClosestRoadSegment(hnm, getRoad(), startInRoad, endInRoad);
 			}
 		}
 		Collections.sort(leftHouses, new HousenumberMatchComparator());
@@ -993,11 +979,9 @@ public class ExtNumbers {
 						if (ok2){
 							// the modified intervals don't overlap if hnm is removed from en1
 							// check if it fits into en2
-							BitSet toTest = new BitSet();
-							toTest.set(en2.startInRoad, en2.endInRoad);
 							HousenumberMatch test = new HousenumberMatch(hnm.getElement(), hnm.getHousenumber(), hnm.getSign());
-							HousenumberGenerator.findClosestRoadSegment(test, en2.getRoad(), toTest);
-							if (test.getDistance() < HousenumberGenerator.MAX_DISTANCE_TO_ROAD){
+							HousenumberGenerator.findClosestRoadSegment(test, en2.getRoad(), en2.startInRoad, en2.endInRoad);
+							if (test.getDistance() <= HousenumberGenerator.MAX_DISTANCE_TO_ROAD){
 								double deltaDist = test.getDistance() - hnm.getDistance(); 
 								if (deltaDist < smallestDelta){
 									Coord c1 = en2.getRoad().getPoints().get(test.getSegment());
@@ -1026,10 +1010,8 @@ public class ExtNumbers {
 						if (ok2){
 							// the intervals don't overlap if hnm is removed from en2
 							// check if it fits into en1
-							BitSet toTest = new BitSet();
-							toTest.set(en1.startInRoad, en1.endInRoad);
 							HousenumberMatch test = new HousenumberMatch(hnm.getElement(), hnm.getHousenumber(), hnm.getSign());
-							HousenumberGenerator.findClosestRoadSegment(test, en1.getRoad(), toTest);
+							HousenumberGenerator.findClosestRoadSegment(test, en1.getRoad(), en1.startInRoad, en1.endInRoad);
 							if (test.getDistance() < HousenumberGenerator.MAX_DISTANCE_TO_ROAD){
 								double deltaDist = test.getDistance() - hnm.getDistance(); 
 								if (deltaDist < smallestDelta){

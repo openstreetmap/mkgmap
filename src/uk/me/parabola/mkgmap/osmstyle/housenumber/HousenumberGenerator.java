@@ -587,7 +587,7 @@ public class HousenumberGenerator {
 					continue;
 				}
 				HousenumberMatch test = new HousenumberMatch(hnm.getElement(), hnm.getHousenumber(), hnm.getSign());
-				findClosestRoadSegment(test, r, null);
+				findClosestRoadSegment(test, r);
 				if (test.getRoad() != null){
 					matchingRoads.add(test);
 				}
@@ -776,26 +776,34 @@ public class HousenumberGenerator {
 		}
 	}
 
+	public static void findClosestRoadSegment(HousenumberMatch hnm, MapRoad r) {
+		hnm.setRoad(null);
+		findClosestRoadSegment(hnm, r, 0, r.getPoints().size());
+	}
 	/**
 	 * Fill the fields in hnm.  
 	 * @param hnm
 	 * @param r
 	 * @param toTest
 	 */
-	public static void findClosestRoadSegment(HousenumberMatch hnm, MapRoad r, BitSet toTest) {
+	public static void findClosestRoadSegment(HousenumberMatch hnm, MapRoad r, int firstSeg, int stopSeg) {
 		List<HousenumberMatch> sameDistMatches = new ArrayList<>();
 		Coord cx = hnm.getLocation();
 
+		MapRoad oldRoad = hnm.getRoad();
+		double tolerance = (oldRoad == r && hnm.getDistance() < MAX_DISTANCE_TO_ROAD) ? 1.5 : 0;
 		hnm.setRoad(null);
 		hnm.setDistance(Double.POSITIVE_INFINITY);
-		for (int node = 0; node + 1 < r.getPoints().size(); node++){
-			if (toTest != null && toTest.get(node) == false)
-					continue;
+		double bestDist = Double.POSITIVE_INFINITY;
+		int end = Math.min(r.getPoints().size(), stopSeg+1);
+		for (int node = firstSeg; node + 1 < end; node++){
 			Coord c1 = r.getPoints().get(node);
 			Coord c2 = r.getPoints().get(node + 1);
 			double frac = getFrac(c1, c2, cx);
 			double dist = distanceToSegment(c1,c2,cx,frac);
-			if (dist <= MAX_DISTANCE_TO_ROAD) {
+			if (dist < bestDist)
+				bestDist = dist;
+			if (dist <= MAX_DISTANCE_TO_ROAD + tolerance) {
 				if (dist < hnm.getDistance()) {
 					hnm.setDistance(dist);
 					hnm.setSegmentFrac(frac);
@@ -813,6 +821,14 @@ public class HousenumberGenerator {
 			}
 		}
 		checkAngle(hnm, sameDistMatches);
+		if (hnm.getRoad() == null)
+			return;
+		if (hnm.getDistance() > MAX_DISTANCE_TO_ROAD){
+			// tolerate values little above threshold because of added points  
+			if (bestDist < MAX_DISTANCE_TO_ROAD + 1.5){
+				hnm.setDistance(MAX_DISTANCE_TO_ROAD);
+			} 
+		}
 	}
 
 	/**
