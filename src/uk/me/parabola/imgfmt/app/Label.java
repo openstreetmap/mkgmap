@@ -94,7 +94,7 @@ public class Label {
 	public static String squashSpaces(String s) {
 		if(s == null || s.isEmpty())
 			return null;
-		return SQUASH_SPACES.matcher(s.trim()).replaceAll(" "); // replace with single space
+		return SQUASH_SPACES.matcher(s).replaceAll(" "); // replace with single space
 	}
 
 	/**
