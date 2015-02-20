@@ -250,6 +250,7 @@ public class ExtNumbers {
 		List<Numbers> list = new ArrayList<>();
 		ExtNumbers curr = this;
 		boolean hasNumbers = false;
+		log.debug("final numbers for",getRoad(),getRoad().getCity());
 		while (curr != null){
 			list.add(curr.getNumbers());
 			if (curr.getNumbers().getLeftNumberStyle() != NumberStyle.NONE || curr.getNumbers().getRightNumberStyle() != NumberStyle.NONE)
@@ -504,9 +505,6 @@ public class ExtNumbers {
 				log.info("adding number node at",toAdd.toDegreeString(),"to split, dist to line is",formatLen(bestDist));
 			action = "add";
 			this.endInRoad = addAsNumberNode(startInRoad + 1, toAdd);
-			if (toAdd.distance(new Coord(53.526485,10.091093)) < 10){
-				long dd = 4;
-			}
 			this.recalcHousePositions();
 		} 
 

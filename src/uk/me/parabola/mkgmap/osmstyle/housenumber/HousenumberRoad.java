@@ -469,7 +469,6 @@ public class HousenumberRoad {
 	public void setNumbers() {
 		if (extNumbersHead == null)
 			return;
-		log.debug("numbers for road",road);		
 		road.setNumbers(extNumbersHead.getNumberList());
 	}
 	

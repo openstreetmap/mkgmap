@@ -15,7 +15,6 @@ package uk.me.parabola.mkgmap.osmstyle.housenumber;
 
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -387,7 +386,8 @@ public class HousenumberGenerator {
 							log.warn("Relation",r.toBrowseURL(),": role of member",w.toBrowseURL(),"unclear");
 						break;
 					default:
-						log.warn("Relation",r.toBrowseURL(),": don't know how to handle member with role",role);
+						if ("associatedStreet".equals(relType)) 
+							log.warn("Relation",r.toBrowseURL(),": don't know how to handle member with role",role);
 						break;
 					}
 				}
