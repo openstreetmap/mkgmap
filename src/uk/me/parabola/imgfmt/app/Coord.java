@@ -566,7 +566,7 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	public String toDegreeString() {
-		return String.format(Locale.ENGLISH, "%.6f/%.6f",
+		return String.format(Locale.ENGLISH, "%.6f,%.6f",
 			getLatDegrees(),
 			getLonDegrees());
 	}
