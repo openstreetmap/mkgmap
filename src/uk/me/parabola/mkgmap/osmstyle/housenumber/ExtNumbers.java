@@ -628,7 +628,7 @@ public class ExtNumbers {
 		en2.setNumbers(right2, splitSegment, endInRoad, false);
 		log.info("zero length interval added in street",getRoad(),getNumbers(),"==>",en1.getNumbers(),"+",en2.getNumbers());
 		if (atStart && !en1.hasNumbers() ||  !atStart && !en2.hasNumbers()){
-			log.error("zero length interval has no numbers");
+			log.error("zero length interval has no numbers in road",getRoad());
 		}
 		return en1;	
 		
