@@ -320,10 +320,12 @@ public class ExtNumbers {
 				if (hnm.isIgnored())
 					continue;
 				if (hnm.getSegment() < startInRoad || hnm.getSegment() >= endInRoad){
-					assert false : "internal error " + getRoad() + " " + getNumbers() + " " + leftHouses + " " + rightHouses; 
+					log.error("internal error, house has wrong segment",getRoad(),"house",hnm,hnm.getElement().toBrowseURL());
+					//assert false : "internal error " + getRoad() + " " + getNumbers() + " " + leftHouses + " " + rightHouses; 
 				}
-				if (hnm.getDistance() == Double.NaN || hnm.getDistance() > HousenumberGenerator.MAX_DISTANCE_TO_ROAD){
-					assert false : "internal error " + getRoad() + " " + getNumbers() + " " + leftHouses + " " + rightHouses;
+				if (hnm.getDistance() == Double.NaN || hnm.getDistance() > HousenumberGenerator.MAX_DISTANCE_TO_ROAD + 10){
+					log.error("distance to road too large, road",getRoad(),"house",hnm,hnm.getElement().toBrowseURL());
+					//assert false : "internal error " + getRoad() + " " + getNumbers() + " " + leftHouses + " " + rightHouses;
 				}
 			}
 		}
@@ -1042,7 +1044,7 @@ public class ExtNumbers {
 							// check if it fits into en1
 							HousenumberMatch test = new HousenumberMatch(hnm.getElement(), hnm.getHousenumber(), hnm.getSign());
 							HousenumberGenerator.findClosestRoadSegment(test, en1.getRoad(), en1.startInRoad, en1.endInRoad);
-							if (test.getDistance() < HousenumberGenerator.MAX_DISTANCE_TO_ROAD){
+							if (test.getDistance() <= HousenumberGenerator.MAX_DISTANCE_TO_ROAD){
 								double deltaDist = test.getDistance() - hnm.getDistance(); 
 								if (deltaDist < smallestDelta){
 									Coord c1 = en1.getRoad().getPoints().get(test.getSegment());
@@ -1361,7 +1363,7 @@ public class ExtNumbers {
 	 * @param length
 	 * @return string with length, e.g. "0.23 m" or "116.12 m"
 	 */
-	private String formatLen(double length){
+	private static String formatLen(double length){
 		return String.format("%.2f m", length);
 	}
 }

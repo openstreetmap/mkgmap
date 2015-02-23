@@ -592,8 +592,10 @@ public class HousenumberGenerator {
 					matchingRoads.add(test);
 				}
 			}
-			if (matchingRoads.isEmpty())
+			if (matchingRoads.isEmpty()){
+				hnm.setIgnored(true);
 				continue;
+			}
 			
 			HousenumberMatch closest, best; 
 			best = closest  = matchingRoads.get(0);
@@ -683,7 +685,6 @@ public class HousenumberGenerator {
 			MultiHashMap<MapRoad, HousenumberMatch> roadNumbers) {
 		
 		int n = sortedHouses.size();
-		
 		for (int pos1 = 0; pos1 < n; pos1++){
 			HousenumberMatch hnm1 = sortedHouses.get(pos1);
 			if (hnm1.isIgnored() || hnm1.hasAlternativeRoad() == false)
@@ -780,53 +781,45 @@ public class HousenumberGenerator {
 		hnm.setRoad(null);
 		findClosestRoadSegment(hnm, r, 0, r.getPoints().size());
 	}
+	
 	/**
-	 * Fill the fields in hnm.  
+	 * Fill/overwrite the fields in hnm which depend on the assigned road.  
 	 */
 	public static void findClosestRoadSegment(HousenumberMatch hnm, MapRoad r, int firstSeg, int stopSeg) {
 		List<HousenumberMatch> sameDistMatches = new ArrayList<>();
 		Coord cx = hnm.getLocation();
 
+		double oldDist = hnm.getDistance();
 		MapRoad oldRoad = hnm.getRoad();
-		double tolerance = (oldRoad == r && hnm.getDistance() <= MAX_DISTANCE_TO_ROAD) ? 2 : 0;
 		hnm.setRoad(null);
 		hnm.setDistance(Double.POSITIVE_INFINITY);
-		double bestDist = Double.POSITIVE_INFINITY;
+		
 		int end = Math.min(r.getPoints().size(), stopSeg+1);
 		for (int node = firstSeg; node + 1 < end; node++){
 			Coord c1 = r.getPoints().get(node);
 			Coord c2 = r.getPoints().get(node + 1);
 			double frac = getFrac(c1, c2, cx);
 			double dist = distanceToSegment(c1,c2,cx,frac);
-			if (dist < bestDist)
-				bestDist = dist;
-			if (dist <= MAX_DISTANCE_TO_ROAD + tolerance) {
-				if (dist < hnm.getDistance()) {
-					hnm.setDistance(dist);
-					hnm.setSegmentFrac(frac);
-					hnm.setRoad(r);
-					hnm.setSegment(node);
-					sameDistMatches.clear();
-				} else if (dist == hnm.getDistance() && hnm.getRoad() != r){
-					HousenumberMatch sameDist = new HousenumberMatch(hnm.getElement());
-					sameDist.setDistance(dist);
-					sameDist.setSegmentFrac(frac);
-					sameDist.setRoad(r);
-					sameDist.setSegment(node);
-					sameDistMatches.add(sameDist);
-				}
+			if (dist < hnm.getDistance()) {
+				hnm.setDistance(dist);
+				hnm.setSegmentFrac(frac);
+				hnm.setRoad(r);
+				hnm.setSegment(node);
+				sameDistMatches.clear();
+			} else if (dist == hnm.getDistance() && hnm.getRoad() != r){
+				HousenumberMatch sameDist = new HousenumberMatch(hnm.getElement());
+				sameDist.setDistance(dist);
+				sameDist.setSegmentFrac(frac);
+				sameDist.setRoad(r);
+				sameDist.setSegment(node);
+				sameDistMatches.add(sameDist);
 			}
 		}
 		checkAngle(hnm, sameDistMatches);
-		if (hnm.getRoad() == null)
-			return;
-		if (hnm.getDistance() > MAX_DISTANCE_TO_ROAD){
-			// tolerate values little above threshold because of added points  
-			if (bestDist < MAX_DISTANCE_TO_ROAD + tolerance){
-				hnm.setDistance(MAX_DISTANCE_TO_ROAD);
-			} else {
-				hnm.setIgnored(true);
-				log.warn(hnm.getRoad(),"house number element",hnm,hnm.getElement().toBrowseURL(),"looks wrong after split");
+		if (oldRoad == r){
+			if (hnm.getDistance() > MAX_DISTANCE_TO_ROAD + 2.5 && oldDist <= MAX_DISTANCE_TO_ROAD ){
+				log.warn("line distorted? Road segment was moved by more than",
+						String.format("%.2f m", 2.5), ", from address", r, hnm.getSign());
 			}
 		}
 	}
