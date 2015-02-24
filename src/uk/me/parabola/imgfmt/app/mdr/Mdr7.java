@@ -165,8 +165,11 @@ public class Mdr7 extends MdrMapSection {
 		Sort sort = getConfig().getSort();
 		List<SortKey<Mdr7Record>> sortedStreets = new ArrayList<>(allStreets.size());
 		for (Mdr7Record m : allStreets) {
-			SortKey<Mdr7Record> partialKey = sort.createSortKey(m, m.getPartialName());
+			String partialName = m.getPartialName();
+			String name = m.getName();
 			SortKey<Mdr7Record> nameKey = sort.createSortKey(m, m.getName(), m.getMapIndex());
+			//SortKey<Mdr7Record> partialKey = name.equals(partialName) ? nameKey : sort.createSortKey(m, partialName);
+			SortKey<Mdr7Record> partialKey = sort.createSortKey(m, partialName);
 			MultiSortKey<Mdr7Record> sortKey = new MultiSortKey<>(partialKey, nameKey, null);
 			sortedStreets.add(sortKey);
 		}
@@ -175,8 +178,10 @@ public class Mdr7 extends MdrMapSection {
 		// De-duplicate the street names so that there is only one entry
 		// per map for the same name.
 		int recordNumber = 0;
+		
 		Mdr7Record last = new Mdr7Record();
-		for (SortKey<Mdr7Record> sk : sortedStreets) {
+		for (int i = 0; i < sortedStreets.size(); i++){ 
+			SortKey<Mdr7Record> sk = sortedStreets.get(i);
 			Mdr7Record r = sk.getObject();
 			if (r.getMapIndex() == last.getMapIndex()
 					&& r.getName().equals(last.getName())  // currently think equals is correct, not collator.compare()
@@ -191,7 +196,9 @@ public class Mdr7 extends MdrMapSection {
 				r.setIndex(recordNumber);
 				streets.add(r);
 			}
+			sortedStreets.set(i, null);
 		}
+		return;
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
