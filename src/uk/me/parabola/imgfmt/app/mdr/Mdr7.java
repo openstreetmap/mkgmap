@@ -160,13 +160,17 @@ public class Mdr7 extends MdrMapSection {
 	/**
 	 * Since we change the number of records by removing some after sorting,
 	 * we sort and de-duplicate here.
+	 * This is a performance critical part of the index creation process
+	 * as it requires a lot of heap to store the sort keys. 	  	 
 	 */
 	protected void preWriteImpl() {
 		Sort sort = getConfig().getSort();
 		List<SortKey<Mdr7Record>> sortedStreets = new ArrayList<>(allStreets.size());
 		for (Mdr7Record m : allStreets) {
-			SortKey<Mdr7Record> partialKey = sort.createSortKey(m, m.getPartialName());
+			String partialName = m.getPartialName();
+			String name = m.getName();
 			SortKey<Mdr7Record> nameKey = sort.createSortKey(m, m.getName(), m.getMapIndex());
+			SortKey<Mdr7Record> partialKey = name.equals(partialName) ? nameKey : sort.createSortKey(m, partialName);
 			MultiSortKey<Mdr7Record> sortKey = new MultiSortKey<>(partialKey, nameKey, null);
 			sortedStreets.add(sortKey);
 		}
@@ -176,7 +180,8 @@ public class Mdr7 extends MdrMapSection {
 		// per map for the same name.
 		int recordNumber = 0;
 		Mdr7Record last = new Mdr7Record();
-		for (SortKey<Mdr7Record> sk : sortedStreets) {
+		for (int i = 0; i < sortedStreets.size(); i++){ 
+			SortKey<Mdr7Record> sk = sortedStreets.get(i);
 			Mdr7Record r = sk.getObject();
 			if (r.getMapIndex() == last.getMapIndex()
 					&& r.getName().equals(last.getName())  // currently think equals is correct, not collator.compare()
@@ -191,6 +196,8 @@ public class Mdr7 extends MdrMapSection {
 				r.setIndex(recordNumber);
 				streets.add(r);
 			}
+			// release memory 
+			sortedStreets.set(i, null);
 		}
 	}
 
