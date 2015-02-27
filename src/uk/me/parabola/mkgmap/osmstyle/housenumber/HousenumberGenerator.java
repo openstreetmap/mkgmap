@@ -507,12 +507,17 @@ public class HousenumberGenerator {
 		roads.clear();
 	}
 	
+	/**
+	 * Find a first match between the roads in a cluster and the houses.
+	 * @param streetName
+	 * @param houses
+	 * @param roadsInCluster
+	 */
 	private static void matchCluster(String streetName, List<HousenumberMatch> houses,
 			List<MapRoad> roadsInCluster) {
 		
 		List<HousenumberMatch> housesNearCluster = new ArrayList<>();
 		Iterator<HousenumberMatch> iter = houses.iterator();
-		
 		while (iter.hasNext()){
 			HousenumberMatch hnm = iter.next();
 			boolean foundRoad = false;
@@ -547,7 +552,7 @@ public class HousenumberGenerator {
 			if (isOK || oldBad ==  badRoadMatches.size())
 				break;
 			if (log.isInfoEnabled())
-				log.info("repeating cluster for",streetName);
+				log.info("repeating cluster for",streetName, "loop counter=",loop);
 		}
 	}
 
@@ -654,7 +659,7 @@ public class HousenumberGenerator {
 		}
 
 		// we have now a first guess for the road and segment of each plausible house number element
-		if (roadsInCluster.size() > 1){
+		if (roadNumbers.size() > 1){
 			checkDubiousRoadMatches(streetName, housesNearCluster, roadNumbers);
 		}
 		
@@ -669,6 +674,7 @@ public class HousenumberGenerator {
 		return false;
 	}
 
+	
 	/**
 	 * If we find a sequence of house numbers like 1,3,5 or 1,2,3
 	 * where the house in the middle is assigned to a different road,
@@ -683,7 +689,6 @@ public class HousenumberGenerator {
 	private static void checkDubiousRoadMatches(String streetName,
 			List<HousenumberMatch> sortedHouses,
 			MultiHashMap<MapRoad, HousenumberMatch> roadNumbers) {
-		
 		int n = sortedHouses.size();
 		for (int pos1 = 0; pos1 < n; pos1++){
 			HousenumberMatch hnm1 = sortedHouses.get(pos1);
@@ -694,7 +699,6 @@ public class HousenumberGenerator {
 			int pos2 = pos1;
 			HousenumberMatch bestAlternative = null;
 			double bestAlternativeDist = Double.POSITIVE_INFINITY;
-			
 			
 			while (pos2 > 0){
 				HousenumberMatch hnm2 = sortedHouses.get(pos2);
@@ -976,6 +980,7 @@ public class HousenumberGenerator {
 		for (HousenumberMatch hnm : housesNearCluster){
 			if (hnm.isIgnored())
 				continue;
+			
 			int num = hnm.getHousenumber();
 			int countPlaces = 0;
 			int countRoads = 0;
