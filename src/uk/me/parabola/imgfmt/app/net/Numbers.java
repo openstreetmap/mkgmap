@@ -21,6 +21,8 @@ import uk.me.parabola.log.Logger;
 public class Numbers {
 	private static final Logger log = Logger.getLogger(Numbers.class);
 
+	private static final int MAX_DELTA = 131071; // see NumberPreparer
+
 	// The node in the road where these numbers apply.  In the polish notation it is the
 	// node in the road, whereas in the NET file it is the number of the routing node.
 	private int nodeNumber; // node in road index
@@ -194,7 +196,7 @@ public class Numbers {
 	}
 	
 	private static boolean isPlausible(NumberStyle style, int start, int end){
-		if (Math.abs(start - end) > 1000)
+		if (Math.abs(start - end) > MAX_DELTA)
 			return false;
 		if (style == NumberStyle.EVEN)
 			return start % 2 == 0 && end % 2 == 0;
