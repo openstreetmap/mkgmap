@@ -66,7 +66,7 @@ public class NumbersTest {
 	}
 	@Test
 	public void testRangeLargeNumbersNotOK() {
-		String spec = "0,B,10012,100240,N,0,0";
+		String spec = "0,B,10012,1000240,N,0,0";
 		Numbers numbers = new Numbers(spec);
 		assertFalse(numbers.isPlausible());
 	}

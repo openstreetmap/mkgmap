@@ -511,26 +511,6 @@ public class ExtNumbers {
 		} 
 
 		int splitSegment = (startInRoad + endInRoad) / 2;
-		// try to find better split position
-		BitSet segmentsWithNumbers = new BitSet();
-		for (HousenumberMatch hnm : leftHouses)
-			segmentsWithNumbers.set(hnm.getSegment());
-		for (HousenumberMatch hnm : rightHouses)
-			segmentsWithNumbers.set(hnm.getSegment());
-		int bestPos = -1;
-		int bestDiff = Integer.MAX_VALUE;
-		
-		for (int i = startInRoad + 1; i < endInRoad; i++){
-			if (segmentsWithNumbers.get(i) == false){
-				int diff = Math.abs(splitSegment - i);
-				if (diff < bestDiff){
-					bestDiff = diff;
-					bestPos = i;
-				}
-			}
-		}
-		if (bestPos >= 0)
-			splitSegment = bestPos;
 		getRoad().getPoints().get(splitSegment).setNumberNode(true);
 		ExtNumbers en1 = split();
 		ExtNumbers en2 = en1.next;
@@ -1245,8 +1225,8 @@ public class ExtNumbers {
 				if (searchDist == null){
 					log.warn("can't compute address search result of",hnm);
 				} else {
-					hnm.setSearchDist(searchDist);
 					double delta = Math.abs(distToStart - searchDist);
+					hnm.setSearchDist(delta);
 					if (delta > worstDelta){
 						worstDelta = delta;
 						worstHouse = hnm;
@@ -1256,9 +1236,7 @@ public class ExtNumbers {
 		}
 		if (worstDelta > MAX_LOCATE_ERROR){
 			log.info("trying to optimize address search for house number in road",getRoad(),worstHouse,"error before opt is",formatLen(worstDelta));
-			ExtNumbers test;
-			test = tryAddNumberNode(SR_OPT_LEN);
-			return test;
+			return tryAddNumberNode(SR_OPT_LEN);
 		}
 		return this;
 	}

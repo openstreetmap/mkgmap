@@ -16,6 +16,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.BitWriter;
+import uk.me.parabola.log.Logger;
 
 import static uk.me.parabola.imgfmt.app.net.NumberStyle.*;
 
@@ -29,7 +30,7 @@ import static uk.me.parabola.imgfmt.app.net.NumberStyle.*;
  * @author Steve Ratcliffe
  */
 public class NumberPreparer {
-
+	private static final Logger log = Logger.getLogger(NumberPreparer.class);
 	private final List<Numbers> numbers;
 	private boolean valid;
 
@@ -75,7 +76,7 @@ public class NumberPreparer {
 			if (bw.getLength() > 1)
 				valid = true;
 		} catch (Abandon e) {
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			valid = false;
 		}
 
@@ -207,6 +208,10 @@ public class NumberPreparer {
 	 * @return True if the preparer believes that the output is valid.
 	 */
 	public boolean isValid() {
+		try {
+			fetchBitStream();
+		} catch (Exception e) {
+		}
 		return valid;
 	}
 
