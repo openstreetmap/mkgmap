@@ -216,6 +216,15 @@ public class HousenumberGenerator {
 					HousenumberMatch m2 = new HousenumberMatch(n2);
 					int start = m1.getHousenumber();
 					int end = m2.getHousenumber();
+					if (start == end){
+						// handle special case from CanVec imports  
+						if (pos1 == 0 && pos2 +1 == w.getPoints().size()){
+							m1.setIgnored(true);
+							m2.setIgnored(true);
+							log.warn(w.toBrowseURL(),"addr:interpolation way connects two points with equal numbers, numbers are ignored");
+							return;
+						}
+					}
 					int steps, usedStep;
 					if (start < end){
 						steps = (end - start) / step - 1;
@@ -243,7 +252,7 @@ public class HousenumberGenerator {
 					List<Coord> interpolated = getPointsOnWay(w, pos1, pos2, steps);
 					if (interpolated == null || interpolated.isEmpty())
 						continue;
-					int hn = start; 
+					int hn = start;
 					StringBuilder sb = new StringBuilder();
 					for (Coord co : interpolated){
 						hn += usedStep;
