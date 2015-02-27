@@ -488,7 +488,7 @@ public class HousenumberGenerator {
 
 				List<Element> numbers = houseNumbers.get(streetName);
 				MultiHashMap<Integer, MapRoad> clusters = buildRoadClusters(possibleRoads);
-				List<HousenumberMatch> houses = convertElements(numbers);
+				List<HousenumberMatch> houses = convertElements(streetName, numbers);
 				for (List<MapRoad> cluster: clusters.values()){
 					matchCluster(streetName, houses, cluster);
 				}
@@ -1237,7 +1237,7 @@ public class HousenumberGenerator {
 		return clusters;
 	}
 	
-	private static List<HousenumberMatch> convertElements(List<Element> elements){
+	private static List<HousenumberMatch> convertElements(String streetName, List<Element> elements){
 		List<HousenumberMatch> houses = new ArrayList<HousenumberMatch>(
 				elements.size());
 		for (Element element : elements) {
@@ -1252,7 +1252,11 @@ public class HousenumberGenerator {
 					log.error("Please report on the mkgmap mailing list.");
 					log.error("Continue creating the map. This should be possible without a problem.");
 				} else {
-					houses.add(match);
+					if (match.getHousenumber() < 1_000_000)
+						houses.add(match);
+					else {
+						log.warn("Number too large, house number element",match,match.getElement().toBrowseURL(),"looks wrong, is ignored");
+					}
 				}
 			} catch (IllegalArgumentException exp) {
 				log.debug(exp);
