@@ -68,7 +68,8 @@ public class HousenumberRoad {
 		
 		filterRealDuplicates();
 		filterGroups();
-		
+		if (houseNumbers.isEmpty())
+			return;
 		List<HousenumberMatch> leftNumbers = new ArrayList<HousenumberMatch>();
 		List<HousenumberMatch> rightNumbers = new ArrayList<HousenumberMatch>();
 		
