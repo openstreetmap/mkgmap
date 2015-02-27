@@ -139,7 +139,7 @@ public class ExtNumbers {
 				endInRoad = endSegment;
 				assert startSegment < endSegment;
 				if (getRoad().getPoints().get(startInRoad).isNumberNode() == false || getRoad().getPoints().get(endInRoad).isNumberNode() == false){
-					log.error("internal error: start or end is not a number node");
+					log.error("internal error: start or end is not a number node", this);
 				}
 			}
 		}
@@ -544,6 +544,7 @@ public class ExtNumbers {
 			log.info("number node added in street",getRoad(),getNumbers(),"==>",en1.getNumbers(),"+",en2.getNumbers());
 		else 
 			log.info("point changed to number node in street",getRoad(),getNumbers(),"==>",en1.getNumbers(),"+",en2.getNumbers());
+		housenumberRoad.setChanged(true);
 		return en1;
 	}
 
@@ -613,7 +614,7 @@ public class ExtNumbers {
 				right1.addAll(rightHouses.subList(0, mid));
 				right2.addAll(rightHouses.subList(mid, rightHouses.size()));
 		} else {
-			log.error("don't know how to split"); 
+			log.error("don't know how to split", this); 
 		}
 		
 		assert splitSegment != startInRoad && splitSegment != endInRoad;
