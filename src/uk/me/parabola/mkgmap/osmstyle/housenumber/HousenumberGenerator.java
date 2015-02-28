@@ -219,8 +219,8 @@ public class HousenumberGenerator {
 					if (start == end){
 						// handle special case from CanVec imports  
 						if (pos1 == 0 && pos2 +1 == w.getPoints().size()){
-							m1.setIgnored(true);
-							m2.setIgnored(true);
+							houseNumbers.removeMapping(street1, n1);
+							houseNumbers.removeMapping(street1, n2);
 							log.warn(w.toBrowseURL(),"addr:interpolation way connects two points with equal numbers, numbers are ignored");
 							return;
 						}
