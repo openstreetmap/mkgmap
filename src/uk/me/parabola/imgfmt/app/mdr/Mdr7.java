@@ -18,7 +18,6 @@ import java.util.List;
 
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.imgfmt.app.srt.MultiSortKey;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 
@@ -167,12 +166,8 @@ public class Mdr7 extends MdrMapSection {
 		Sort sort = getConfig().getSort();
 		List<SortKey<Mdr7Record>> sortedStreets = new ArrayList<>(allStreets.size());
 		for (Mdr7Record m : allStreets) {
-			String partialName = m.getPartialName();
-			String name = m.getName();
-			SortKey<Mdr7Record> nameKey = sort.createSortKey(m, m.getName(), m.getMapIndex());
-			SortKey<Mdr7Record> partialKey = name.equals(partialName) ? nameKey : sort.createSortKey(m, partialName);
-			MultiSortKey<Mdr7Record> sortKey = new MultiSortKey<>(partialKey, nameKey, null);
-			sortedStreets.add(sortKey);
+			String nameForKey = m.getPartialName() + m.getInitialPart();
+			sortedStreets.add(sort.createSortKey(m, nameForKey, m.getMapIndex()));
 		}
 		Collections.sort(sortedStreets);
 
