@@ -833,16 +833,16 @@ public class ExtNumbers {
 						Collections.sort(otherNumbers, new HousenumberMatchComparator());
 					}
 				}
-				if (!move){
-					log.warn(hnm.getRoad(),"house number element",hnm,hnm.getElement().toBrowseURL(), "looks wrong, is ignored");
-					hnm.setIgnored(true);
-				} else {
-					if (log.isInfoEnabled())
-						log.info(hnm.getRoad(),"house number element",hnm,hnm.getElement().toBrowseURL(), "is considered to be on the",(leftIsWrong) ? "right":"left");
-				}
 			}
+			if (!move){
+				log.warn(hnm.getRoad(),"house number element",hnm,hnm.getElement().toBrowseURL(), "looks wrong, is ignored");
+				hnm.setIgnored(true);
+			} else {
+				if (log.isInfoEnabled())
+					log.info(hnm.getRoad(),"house number element",hnm,hnm.getElement().toBrowseURL(), "is considered to be on the",(leftIsWrong) ? "right":"left");
+			}
+			housenumberRoad.setChanged(true);
 			setNumbers(otherNumbers, startInRoad, endInRoad, !leftIsWrong);
-			
 			return true;
 		}
 		return false;
