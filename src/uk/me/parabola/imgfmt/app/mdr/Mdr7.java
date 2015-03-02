@@ -18,7 +18,6 @@ import java.util.List;
 
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.imgfmt.app.srt.MultiSortKey;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 
@@ -160,24 +159,21 @@ public class Mdr7 extends MdrMapSection {
 	/**
 	 * Since we change the number of records by removing some after sorting,
 	 * we sort and de-duplicate here.
+	 * This is a performance critical part of the index creation process
+	 * as it requires a lot of heap to store the sort keys. 	  	 
 	 */
 	protected void preWriteImpl() {
 		Sort sort = getConfig().getSort();
 		List<SortKey<Mdr7Record>> sortedStreets = new ArrayList<>(allStreets.size());
 		for (Mdr7Record m : allStreets) {
-			String partialName = m.getPartialName();
-			String name = m.getName();
-			SortKey<Mdr7Record> nameKey = sort.createSortKey(m, m.getName(), m.getMapIndex());
-			SortKey<Mdr7Record> partialKey = name.equals(partialName) ? nameKey : sort.createSortKey(m, partialName);
-			MultiSortKey<Mdr7Record> sortKey = new MultiSortKey<>(partialKey, nameKey, null);
-			sortedStreets.add(sortKey);
+			String nameForKey = m.getPartialName() + m.getInitialPart();
+			sortedStreets.add(sort.createSortKey(m, nameForKey, m.getMapIndex()));
 		}
 		Collections.sort(sortedStreets);
 
 		// De-duplicate the street names so that there is only one entry
 		// per map for the same name.
 		int recordNumber = 0;
-		
 		Mdr7Record last = new Mdr7Record();
 		for (int i = 0; i < sortedStreets.size(); i++){ 
 			SortKey<Mdr7Record> sk = sortedStreets.get(i);
@@ -195,9 +191,9 @@ public class Mdr7 extends MdrMapSection {
 				r.setIndex(recordNumber);
 				streets.add(r);
 			}
+			// release memory 
 			sortedStreets.set(i, null);
 		}
-		return;
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
