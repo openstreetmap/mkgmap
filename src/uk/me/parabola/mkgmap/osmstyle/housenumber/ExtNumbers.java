@@ -1219,16 +1219,16 @@ public class ExtNumbers {
 				double distToStart = 0;
 				for (int k = startInRoad; k < hnm.getSegment(); k++)
 					distToStart += segmentLenghts[k-startInRoad];
-				if (hnm.getSegmentFrac() > 0 && hnm.getSegmentFrac() <= 1)
-					distToStart += hnm.getSegmentFrac() * segmentLenghts[hnm.getSegment() - startInRoad];
+				if (hnm.getSegmentFrac() > 0)
+					distToStart += Math.min(1, hnm.getSegmentFrac()) * segmentLenghts[hnm.getSegment() - startInRoad];
 				Double searchDist = searchPositions.get(hnm.getHousenumber());
 				if (searchDist == null){
 					log.warn("can't compute address search result of",hnm);
 				} else {
-					double delta = Math.abs(distToStart - searchDist);
+					double delta = distToStart - searchDist;
 					hnm.setSearchDist(delta);
-					if (delta > worstDelta){
-						worstDelta = delta;
+					if (Math.abs(delta) > worstDelta){
+						worstDelta = Math.abs(delta);
 						worstHouse = hnm;
 					}
 				}
@@ -1238,6 +1238,8 @@ public class ExtNumbers {
 			log.info("trying to optimize address search for house number in road",getRoad(),worstHouse,"error before opt is",formatLen(worstDelta));
 			return tryAddNumberNode(SR_OPT_LEN);
 		}
+		if (log.isDebugEnabled())
+			log.debug("segment",this.getNumbers(), "with length",formatLen(fullLength),"is OK, worst address search for house number in road",getRoad(),worstHouse,"error is",formatLen(worstDelta));
 		return this;
 	}
 
@@ -1297,7 +1299,8 @@ public class ExtNumbers {
 		int dx =  Math.abs(x1-x), sx = x<x1 ? 1 : -1;
 		int dy = -Math.abs(y1-y), sy = y<y1 ? 1 : -1;
 		int err = dx+dy, e2; /* error value e_xy */
-		double minDist = Double.MAX_VALUE;
+		double minDistLine = Double.MAX_VALUE;
+		double minDistTarget = Double.MAX_VALUE;
 		int bestX = Integer.MAX_VALUE, bestY = Integer.MAX_VALUE;
 //		List<Coord> nearLinePoints = new ArrayList<>();
 		
@@ -1309,10 +1312,11 @@ public class ExtNumbers {
 					double distToTarget = t.distance(p);
 					if (distToTarget < 10){ 
 						double distLine = t.distToLineSegment(c1Dspl, c2Dspl);
-						if (distLine < minDist){
+						if (distLine < minDistLine || distLine == minDistLine && distToTarget < minDistTarget || distLine < 0.2 && distToTarget < minDistTarget){
 							bestX = x;
 							bestY = y;
-							minDist = distLine;
+							minDistLine = distLine;
+							minDistTarget = distToTarget;
 						}
 					}
 //					nearLinePoints.add(t);
@@ -1322,7 +1326,7 @@ public class ExtNumbers {
 			if (e2 > dy) { err += dy; x += sx; } /* e_xy+e_x > 0 */
 			if (e2 < dx) { err += dx; y += sy; } /* e_xy+e_y < 0 */
 		}
-		if (minDist == Double.MAX_VALUE)
+		if (minDistLine == Double.MAX_VALUE)
 			return null;
 		Coord best = new Coord(bestY, bestX);
 //		GpxCreator.createGpx("e:/ld/raster", Arrays.asList(c1,c2,best,c1), nearLinePoints);
