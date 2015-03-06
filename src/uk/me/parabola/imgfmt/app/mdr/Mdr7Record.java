@@ -69,6 +69,10 @@ public class Mdr7Record extends RecordBase implements NamedRecord {
 		return city;
 	}
 
+	public int getNameOffset() {
+		return nameOffset & 0xff;
+	}
+
 	public void setNameOffset(byte nameOffset) {
 		this.nameOffset = nameOffset;
 	}
