@@ -730,7 +730,7 @@ could match on +bridge=yes+, you would then almost always use +continue+ so
 that the +highway+ tag could be matched later. If you failed to do this
 then there might be a break in the road for routing purposes.
 
-Note that by default when using the _continue_ statement the action block
+Note that when using the _continue_ statement, the action block
 of the rule (if there is one) will only be applied _within this rule_ and
 not during any following rule matches.  Use the _continue with_actions_
 statement if you want to change this behaviour (see next section).

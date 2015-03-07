@@ -62,8 +62,9 @@ A112 | Usually only the first label is displayed. On some units the second label
 | +mkgmap:way-has-pois+  | +true+ for ways that have at least one point with a tag +access=\*+, +barrier=\*+, or +highway=*+ | 'link-pois-to-ways'
 | +mkgmap:dead-end-check+  | Set to +false+ to disable the dead end check for a specific way | 'report-dead-ends'
 | +mkgmap:flare-check+  | Set to +true+ to force the flare check for a specific way, set to +false+ to disable it | 'check-roundabout-flares'
-| +mkgmap:dir-check+  | Set to +false+ to tell mkgmap to ignore the way when checking roundabouts for clockwise direction | 'check-roundabouts'
-| +mkgmap:no-dir-check+  | Set to +true+ to tell mkgmap to ignore the way when checking roundabouts for clockwise direction | 'check-roundabouts'
+| +mkgmap:dir-check+  | Set to +false+ to tell mkgmap to ignore the way when checking roundabouts for direction | 'check-roundabouts'
+| +mkgmap:no-dir-check+  | Set to +true+ to tell mkgmap to ignore the way when checking roundabouts for direction | 'check-roundabouts'
+| +mkgmap:synthesised+  | Set to +true+ to tell mkgmap that this is an additional way created using the continue statement in an action block and that it should be excluded from checks | 'check-roundabouts', 'check-roundabout-flares'
     
 |=========================================================
 
