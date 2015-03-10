@@ -282,13 +282,13 @@ public class ExtNumbers {
 				// 3. wrong OSM data, one or more numbers are wrong, we want to ignore them
 				// 4. other cases, e.g. numbers 1,3,5 followed by 10,14,12. This should be fixed
 				// by splitting the segment first, as the OSM data might be correct.
-				if (log.isInfoEnabled()){
-					log.info("detected unplausible interval in",streetName,
-							curr.getNumbers(),"in road",curr.getRoad());
+				if (log.isInfoEnabled())
+					log.info("detected unplausible interval in",streetName, curr.getNumbers(),"in road",curr.getRoad());
+				if (log.isDebugEnabled()){
 					if (curr.leftNotInOrder)
-						log.debug("left numbers not in order:", getRoad(), leftHouses);
+						log.debug("left numbers not in order:", getRoad(), curr.leftHouses);
 					if (curr.rightNotInOrder)
-						log.debug("right numbers not in order:", getRoad(), rightHouses);
+						log.debug("right numbers not in order:", getRoad(), curr.rightHouses);
 				}
 				changed = curr.tryToFindSimpleCorrection();
 				if (!changed){
@@ -300,7 +300,7 @@ public class ExtNumbers {
 						curr = test;
 					}
 					else {
-						log.warn("can't fix unplausible numbers interaval for road",curr.getRoad(), curr.getNumbers(),"left",curr.leftHouses,"right",curr.rightHouses);
+						log.warn("can't fix unplausible numbers interaval for road",curr.getNumbers(),curr);
 						break;
 					}
 				}
@@ -1203,8 +1203,12 @@ public class ExtNumbers {
 			segmentLenghts[i-startInRoad] = len;
 			fullLength += len;
 		}
-		if (fullLength < MAX_LOCATE_ERROR)
+		if (fullLength < MAX_LOCATE_ERROR){
+			if (log.isDebugEnabled())
+				log.debug("segment",this.getNumbers(), "with length",formatLen(fullLength),"is considered OK");
+			
 			return this;
+		}
 		TreeMap<Integer, Double> searchPositions = new TreeMap<>();
 		boolean ok = calcSearchPositions(fullLength, searchPositions);
 		if (!ok)
