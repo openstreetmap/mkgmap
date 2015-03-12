@@ -193,7 +193,10 @@ public class Way extends Element {
 
 		double lat = 0;
 		double lon = 0;
-		for(Coord p : points) {
+		if (hasIdenticalEndPoints())
+			numPoints--;
+		for (int i = 0; i < numPoints; i++){
+			Coord p = points.get(i);
 			lat += (double)p.getHighPrecLat()/numPoints;
 			lon += (double)p.getHighPrecLon()/numPoints;
 		}
