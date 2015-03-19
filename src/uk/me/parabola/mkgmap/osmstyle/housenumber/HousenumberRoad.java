@@ -15,17 +15,15 @@ package uk.me.parabola.mkgmap.osmstyle.housenumber;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapRoad;
-import uk.me.parabola.mkgmap.osmstyle.housenumber.HousenumberGenerator.HousenumberMatchComparator;
-import uk.me.parabola.util.MultiHashMap;
+import uk.me.parabola.mkgmap.osmstyle.housenumber.HousenumberGenerator.HousenumberMatchByNumComparator;
+import uk.me.parabola.mkgmap.osmstyle.housenumber.HousenumberGenerator.HousenumberMatchByPosComparator;
 
 /**
  * Helper class to combine house numbers with MapRoad instances
@@ -39,7 +37,9 @@ public class HousenumberRoad {
 	private final MapRoad road;
 	private ExtNumbers extNumbersHead;
 	private final List<HousenumberMatch> houseNumbers;
+	private List<HousenumberGroup> groups = new ArrayList<>();
 	private boolean changed;
+	private boolean isRandom;
 
 	public HousenumberRoad(String streetName, MapRoad r, List<HousenumberMatch> potentialNumbersThisRoad) {
 		this.streetName = streetName;
@@ -47,22 +47,8 @@ public class HousenumberRoad {
 		this.houseNumbers = new ArrayList<>(potentialNumbersThisRoad);
 		
 	}
-
-	public void buildIntervals(MultiHashMap<HousenumberMatch, MapRoad> badMatches) {
-		Collections.sort(houseNumbers, new Comparator<HousenumberMatch>() {
-			public int compare(HousenumberMatch o1, HousenumberMatch o2) {
-				if (o1 == o2)
-					return 0;
-				int d = o1.getHousenumber() - o2.getHousenumber();
-				if (d != 0)
-					return d;
-				d = o1.getSign().compareTo(o2.getSign());
-				if (d != 0)
-					return d;
-				d = o1.getSegment() - o2.getSegment();
-				return d;
-			}
-		});
+	public void buildIntervals() {
+		Collections.sort(houseNumbers, new HousenumberMatchByNumComparator());
 		if (log.isInfoEnabled())
 			log.info("Initial housenumbers for",road,road.getCity(),houseNumbers);
 		
@@ -83,11 +69,11 @@ public class HousenumberRoad {
 				rightNumbers.add(hr);
 			}
 		}
-
-		Collections.sort(leftNumbers, new HousenumberMatchComparator());
-		Collections.sort(rightNumbers, new HousenumberMatchComparator());
+		detectGroups(0,leftNumbers, rightNumbers);
+		Collections.sort(leftNumbers, new HousenumberMatchByPosComparator());
+		Collections.sort(rightNumbers, new HousenumberMatchByPosComparator());
 		
-		optimizeNumberIntervalLengths();
+		
 		int currNodePos = 0;
 		int nodeIndex = 0;
 		int prevNumberNodeIndex = 0;
@@ -136,21 +122,102 @@ public class HousenumberRoad {
 	}
 
 	/**
-	 * @param badMatches
+	 * 
+	 * @param depth
+	 * @param leftNumbers
+	 * @param rightNumbers
 	 */
-	public void checkIntervals(MultiHashMap<HousenumberMatch, MapRoad> badMatches){
-		int oldBad = badMatches.size();
+	private void detectGroups(int depth, List<HousenumberMatch> leftNumbers, List<HousenumberMatch> rightNumbers) {
+
+		for (int side = 0; side < 2; side++){
+			boolean left = side == 0;
+			List<HousenumberMatch> houseGroup = new ArrayList<>();	
+			List<HousenumberMatch> houses = left ? leftNumbers : rightNumbers;
+			for (int j = 0; j + 1< houses.size(); j++){
+				HousenumberMatch hnm1 = houses.get(j);
+				HousenumberMatch hnm2 = houses.get(j+1);
+				int delta = hnm2.getHousenumber() - hnm1.getHousenumber();
+				boolean addedToGroup = false;
+				if (Math.abs(delta) <= 2){
+					if (houseGroup.isEmpty()){
+						double deltaDistToRoad = hnm1.getDistance() - hnm2.getDistance();
+						double distOnRoad = hnm2.getDistOnRoad(hnm1);
+						if (Math.abs(deltaDistToRoad) < distOnRoad)
+							continue;
+						if (distOnRoad < 10){
+							houseGroup.add(hnm1);
+							houseGroup.add(hnm2);
+							addedToGroup = true;
+						}
+						continue;
+					} 
+
+					for (HousenumberMatch hnmGroup : houseGroup){
+						double deltaDistToRoad = hnmGroup.getDistance() - hnm2.getDistance();
+						double distOnRoad = hnmGroup.getDistOnRoad(hnm2);
+						if (Math.abs(deltaDistToRoad) < distOnRoad)
+							continue;
+						
+						if (distOnRoad < 10){
+							houseGroup.add(hnm2);
+							addedToGroup = true;
+							break;
+						}
+					}
+				}
+				if (!addedToGroup && houseGroup.isEmpty() == false){
+					HousenumberGroup group = new HousenumberGroup(this, houseGroup);
+					if (group.verify()){
+						if (depth == 0 && log.isDebugEnabled())
+							log.debug("using zero-length segment for group:",streetName,group);
+						addGroup(group);
+					}
+					houseGroup.clear();
+				}
+			}
+		}
+		boolean nodeAdded = false;
+		for (HousenumberGroup group : groups){
+			nodeAdded = group.findSegment(streetName);
+			if(nodeAdded){
+				
+				road.setInternalNodes(true);
+				extNumbersHead = null;
+				groups.clear();
+				isRandom = false;
+				
+				for (HousenumberMatch hnm : this.houseNumbers){
+					if (hnm.getSegment() >= group.minSeg)
+						HousenumberGenerator.findClosestRoadSegment(hnm, getRoad());
+				}
+				break;
+				
+			}
+		}
+		if (nodeAdded){
+			// recurse
+			detectGroups(depth+1, leftNumbers, rightNumbers);
+		}
+		return;
+	}
+	
+	
+	/**
+	 */
+	public void checkIntervals(){
 		if (extNumbersHead == null)
 			return;
 		boolean anyChanges = false;
+		
+		extNumbersHead.detectRandom();
 		for (int loop = 0; loop < 10; loop++){
+			if (loop > 4){
+				// TODO: 3,4,5 ? 
+				setRandom(true);
+			}
 			setChanged(false);
-			extNumbersHead = extNumbersHead.checkSingleChainSegments(streetName, badMatches);
-			if (oldBad != badMatches.size())
-				return;
-			extNumbersHead = extNumbersHead.checkChainPlausibility(streetName, houseNumbers, badMatches);
-			if (oldBad != badMatches.size())
-				return;
+			extNumbersHead = extNumbersHead.checkSingleChainSegments(streetName);
+			extNumbersHead = extNumbersHead.checkChainPlausibility(streetName, houseNumbers);
 			if (isChanged())
 				anyChanges = true;
 			else 
@@ -373,41 +440,7 @@ public class HousenumberRoad {
 	}
 	
 
-	/**
-	 * Detect parts of roads without house numbers and change start
-	 * and end of the part to house number nodes (if not already)
-	 * This increases the precision of the address search
-	 * and costs only a few bytes. 
-	 */
-	private void optimizeNumberIntervalLengths() {
-		BitSet segmentsWithNumbers = new BitSet();
-		for (HousenumberMatch  hnm: houseNumbers){
-			segmentsWithNumbers.set(hnm.getSegment());
-		}
-		
-		boolean searched = segmentsWithNumbers.get(0);
-		int numPoints = road.getPoints().size();
-		for (int i = 0; i < numPoints; i++){
-			if (segmentsWithNumbers.get(i) != searched){
-				changePointToNumberNode(road,i);
-				searched = !searched;
-			}
-		}
-	}
-
-	
-	private static void changePointToNumberNode(MapRoad r, int pos) {
-		Coord co = r.getPoints().get(pos);
-		if (co.isNumberNode() == false){
-			if (log.isInfoEnabled())
-				log.info("road",r,"changing point",pos,"to number node at",co.toDegreeString(),"to increase precision for house number search");
-			co.setNumberNode(true);
-			r.setInternalNodes(true);
-		}
-	}
-
-	public void checkWrongRoadAssignmments(HousenumberRoad other,
-			MultiHashMap<HousenumberMatch, MapRoad> badMatches) {
+	public void checkWrongRoadAssignmments(HousenumberRoad other) {
 		if (this.extNumbersHead == null || other.extNumbersHead == null)
 			return;
 		
@@ -425,7 +458,7 @@ public class HousenumberRoad {
 						break;
 					if (en2.hasNumbers() == false)
 						continue;
-					int res = ExtNumbers.checkIntervals(streetName, en1, en2, badMatches);
+					int res = ExtNumbers.checkIntervals(streetName, en1, en2);
 					switch (res) {
 					case ExtNumbers.OK_NO_CHANGES:
 					case ExtNumbers.NOT_OK_KEEP:
@@ -437,7 +470,7 @@ public class HousenumberRoad {
 						break;
 					case ExtNumbers.NOT_OK_TRY_SPLIT:
 						if (en1.needsSplit()){
-							ExtNumbers test = en1.tryAddNumberNode(ExtNumbers.SR_FIX_ERROR);
+							ExtNumbers test = en1.tryChange(ExtNumbers.SR_FIX_ERROR);
 							if (test != en1){
 								changed = true;
 								if (test.prev == null){
@@ -446,7 +479,7 @@ public class HousenumberRoad {
 							}
 						}
 						if (en2.needsSplit()){
-							ExtNumbers test = en2.tryAddNumberNode(ExtNumbers.SR_FIX_ERROR);
+							ExtNumbers test = en2.tryChange(ExtNumbers.SR_FIX_ERROR);
 							if (test != en2){
 								changed = true;
 								if (test.prev == null){
@@ -485,25 +518,48 @@ public class HousenumberRoad {
 		this.changed = changed;
 	}
 
+	public boolean isRandom() {
+		return isRandom;
+	}
+
+	public void setRandom(boolean isRandom) {
+		if (this.isRandom == false)
+			log.debug("detected random case",this);
+		this.isRandom = isRandom;
+	}
+
 	/**
 	 * 
 	 */
 	public void improveSearchResults() {
 		ExtNumbers curr = extNumbersHead;
 		while (curr != null) {
-			ExtNumbers test = curr.splitLargeGaps();
-			if (test != curr) {
-				setChanged(true);
+			ExtNumbers en = curr.splitLargeGaps();
+			if (en != curr) {
+				if (en.hasNumbers() && en.next != null && en.next.hasNumbers())
+					setChanged(true);
+				else {
+					ExtNumbers test = en.hasNumbers() ?  en : en.next;
+					if (test.getNumbers().isSimilar(curr.getNumbers()) == false)
+						setChanged(true);
+				}
 				if (curr.prev == null)
-					extNumbersHead = test;
-				curr = test;
+					extNumbersHead = en;
+				curr = en;
 				continue;
 			}
 			curr = curr.next;
 		}
-		
+	}
+
+	public void addGroup(HousenumberGroup group){
+		groups.add(group);
 	}
 	
+	
+	public String toString(){
+		return getRoad().toString() + " " + houseNumbers;
+	}
 }
 
 

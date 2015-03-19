@@ -242,8 +242,20 @@ public class Numbers {
 		return matches;
 	}
 
-	public double calcPos(int housenumber) {
-		// TODO Auto-generated method stub
-		return 0;
+	/** 
+	 * Compare all fields that describe the interval, but not the position
+	 * @param other
+	 * @return true if these fields are equal
+	 */
+	public boolean isSimilar(Numbers other){
+		if (other == null)
+			return false;
+		if (leftNumberStyle != other.leftNumberStyle
+				|| leftStart != other.leftStart || leftEnd != other.leftEnd
+				|| rightNumberStyle != other.rightNumberStyle
+				|| rightStart != other.rightStart || rightEnd != other.rightEnd)
+			return false;
+		return true;
+		
 	}
 }

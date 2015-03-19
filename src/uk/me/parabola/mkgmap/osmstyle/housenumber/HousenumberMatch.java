@@ -13,6 +13,7 @@
 
 package uk.me.parabola.mkgmap.osmstyle.housenumber;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,7 +47,9 @@ public class HousenumberMatch {
 	private boolean isDuplicate;
 	private int moved;
 	// distance in m between closest point on road and the point that is found in the address search
-	private double searchDist = Double.NaN;   
+	private double searchDist = Double.NaN;
+	private boolean isFarDuplicate;
+	private HousenumberGroup block;
 	
 	/**
 	 * Instantiates a new housenumber match element.
@@ -301,5 +304,75 @@ public class HousenumberMatch {
 			return s1 + "("+segment+")";
 		return sign + "("+segment+")";
 	}
+
+	public void setFarDuplicate(boolean b) {
+		this.isFarDuplicate = b;
+		
+	}
+
+	public boolean isFarDuplicate() {
+		return isFarDuplicate;
+	}
+
+	/**
+	 * @return either an existing point on the road
+	 * or the calculated perpendicular. In the latter case
+	 * the highway count is zero.
+	 *   
+	 */
+	public Coord getClosestPointOnRoad(){
+		if (segmentFrac <= 0)
+			return getRoad().getPoints().get(segment);
+		if (segmentFrac >= 1)
+			return getRoad().getPoints().get(segment+1);
+		Coord c1 = getRoad().getPoints().get(segment);
+		Coord c2 = getRoad().getPoints().get(segment+1);
+		return c1.makeBetweenPoint(c2, segmentFrac);
+	}
+
+	/**
+	 * @param other a different house on the same road
+	 * @return  the distance in m between the perpendiculars on the road
+	 * of two houses.
+	 */
+	public double getDistOnRoad(HousenumberMatch other) {
+		if (getRoad() != other.getRoad()){
+			assert false : "cannot compute distance on road for different roads"; 
+		}
+		List<Coord> points = getRoad().getPoints();
+		HousenumberMatch hnm1 = this;
+		HousenumberMatch hnm2 = other;
+		if (hnm1.segment > hnm2.segment || hnm1.segment == hnm2.segment && hnm1.segmentFrac > hnm2.segmentFrac){
+			hnm1 = other;
+			hnm2 = this;
+		}
+		int s1 = hnm1.segment;
+		int s2 = hnm2.segment;
+		double distOnRoad = 0;
+		while (s1 < s2){
+			double segLen = points.get(s1).distance(points.get(s1 + 1));
+			if (s1 == hnm1.getSegment() && hnm1.getSegmentFrac() > 0){
+				// rest of first segment
+				distOnRoad += Math.max(0, 1-hnm1.getSegmentFrac()) * segLen;
+			} else
+				distOnRoad += segLen;
+			s1++;
+		}
+		double segLen = points.get(s1).distance(points.get(s1 + 1));
+		if (hnm2.getSegmentFrac() > 0)
+			distOnRoad += Math.min(1, hnm2.getSegmentFrac()) * segLen;
+		if (hnm1.getSegmentFrac() > 0 && s1 == hnm1.segment)
+			distOnRoad -= Math.min(1, hnm1.getSegmentFrac()) * segLen;
+		return distOnRoad;
+	}
+
+	public void setGroup(HousenumberGroup housenumberBlock) {
+		this.block = housenumberBlock;
+	}
+
+	public HousenumberGroup getBlock() {
+		return block;
+	}
+	
 }
 
