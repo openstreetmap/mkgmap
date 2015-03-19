@@ -379,20 +379,17 @@ public class ExtNumbers {
 						log.debug("right numbers not in order:", getRoad(), curr.rightHouses);
 				}
 				curr.setNeedsSplit(true);
-				boolean changed = curr.tryToFindSimpleCorrection();
-				if (!changed){
-					curr.findGoodSplitPos();
-					ExtNumbers test = curr.tryChange(SR_FIX_ERROR);
-					if (test != curr){
-						housenumberRoad.setChanged(true);
-						if (curr.prev == null)
-							head = test;
-						curr = test;
-					}
-					else {
-						log.warn("can't fix unplausible numbers interaval for road",curr.getNumbers(),curr);
-						break;
-					}
+				curr.findGoodSplitPos();
+				ExtNumbers test = curr.tryChange(SR_FIX_ERROR);
+				if (test != curr){
+					housenumberRoad.setChanged(true);
+					if (curr.prev == null)
+						head = test;
+					curr = test;
+				}
+				else {
+					log.warn("can't fix unplausible numbers interaval for road",curr.getNumbers(),curr);
+					break;
 				}
 			}
 		}
@@ -1049,119 +1046,6 @@ public class ExtNumbers {
 	}
 	
 	
-	/**
-	 * 
-	 * @return true if a change was done
-	 */
-	private boolean tryToFindSimpleCorrection() {
-		if (housenumberRoad.isRandom())
-			return false;
-		for (List<HousenumberMatch> list : Arrays.asList(leftHouses, rightHouses)){
-			for (HousenumberMatch hnm : list){
-				if (hnm.getDistance() > HousenumberGenerator.MAX_DISTANCE_TO_ROAD * 0.9){
-					Numbers test = simulateRemovalOfHouseNumber(hnm.getHousenumber(), list == leftHouses);
-					if (test.isPlausible()){
-						double nextHouseDist = Double.MAX_VALUE;
-						for (HousenumberMatch hnm2 : list){
-							if (hnm == hnm2)
-								continue;
-							double distToHouse = hnm.getLocation().distance(hnm2.getLocation());
-							if (distToHouse < nextHouseDist)
-								nextHouseDist = distToHouse;
-						}
-						if (nextHouseDist > 50){
-							log.warn(hnm.getRoad(),"house number element",hnm,hnm.getElement().toBrowseURL(),"is far from road and looks wrong in",getNumbers(),list,",is ignored");
-							hnm.setIgnored(true);
-							list.remove(hnm);
-							reset();
-							setNumbers(list, startInRoad, endInRoad, list == leftHouses);
-							return true;
-						}
-					}
-				}
-			}
-		}
-		boolean leftIsWrong = false;
-		if (next != null && prev != null)
-			return false; 
-		if (getNumbers().getLeftNumberStyle() != getNumbers().getRightNumberStyle()
-				&& (getNumbers().getLeftNumberStyle() == NumberStyle.BOTH || getNumbers().getRightNumberStyle() == NumberStyle.BOTH)) {
-			if (getNumbers().getLeftNumberStyle() == NumberStyle.BOTH)
-				leftIsWrong = true;
-			else if (getNumbers().getRightNumberStyle() == NumberStyle.BOTH)
-				leftIsWrong = false;
-			else 
-				return false;
-		} else if (getNumbers().getLeftNumberStyle() != NumberStyle.BOTH){
-			if (leftHouses.size() < rightHouses.size() )
-				leftIsWrong = true;
-		} else
-			return false;
-		
-		List<HousenumberMatch> wrongNumbers;
-		List<HousenumberMatch> otherNumbers;
-		NumberStyle otherNumberStyle;
-		if (leftIsWrong){
-			wrongNumbers = leftHouses;
-			otherNumbers = rightHouses;
-			otherNumberStyle = getNumbers().getRightNumberStyle();
-		} else {
-			wrongNumbers = rightHouses;
-			otherNumbers = leftHouses;
-			otherNumberStyle = getNumbers().getLeftNumberStyle();
-		}
-		int odd = countOdd(wrongNumbers);
-		int even = wrongNumbers.size() - odd;
-		int searchedRest = -1;
-		if (even == 1 && odd > 1 )
-			searchedRest = 0;
-		else if (odd == 1 && even > 1 )
-			searchedRest = 1;
-		else 
-			return false;
-		
-		for (int i = 0; i < wrongNumbers.size(); i++){
-			HousenumberMatch hnm = wrongNumbers.get(i);
-			if (hnm.getHousenumber() % 2 != searchedRest)
-				continue;
-			wrongNumbers.remove(i);
-			reset();
-			setNumbers(wrongNumbers, startInRoad, endInRoad, leftIsWrong);
-			boolean move = false;
-			if (hnm.getSegment() == 0 && prev == null || hnm.getSegment() == endInRoad-1 && next == null){
-				// at start or end of road, check if number was placed on the wrong
-				// side of the road
-				if (otherNumberStyle == NumberStyle.EVEN && searchedRest == 0
-						|| otherNumberStyle == NumberStyle.ODD && searchedRest == 1 || 
-						otherNumberStyle == NumberStyle.NONE){
-					if (hnm.getSegmentFrac() < 0 || hnm.getSegmentFrac() > 1)
-						move = true;
-					else if (otherNumbers.size() > 0){
-						int lastOtherSegment = otherNumbers.get(otherNumbers.size()-1).getSegment();
-						if (hnm.getSegment() > lastOtherSegment)
-							move = true;
-					}
-					if (move){
-						if (otherNumbers.isEmpty())
-							otherNumbers = new ArrayList<>();
-						otherNumbers.add(hnm);
-						Collections.sort(otherNumbers, new HousenumberMatchByPosComparator());
-					}
-				}
-			}
-			if (!move){
-				log.warn(hnm.getRoad(),"house number element",hnm,hnm.getElement().toBrowseURL(), "looks wrong, is ignored");
-				hnm.setIgnored(true);
-			} else {
-				if (log.isInfoEnabled())
-					log.info(hnm.getRoad(),"house number element",hnm,hnm.getElement().toBrowseURL(), "is considered to be on the",(leftIsWrong) ? "right":"left");
-			}
-			setNumbers(otherNumbers, startInRoad, endInRoad, !leftIsWrong);
-			housenumberRoad.setChanged(true);
-			return true;
-		}
-		return false;
-	}
 	
 	private void findGoodSplitPos(){
 		for (int side = 0; side < 2; side++){
@@ -1225,15 +1109,6 @@ public class ExtNumbers {
 		log.debug("splitpos details",Arrays.toString(firstBad), Arrays.toString(lastBad),"gives badNum",badNum);
 	}
 	
-	private static int countOdd(List<HousenumberMatch> houses) {
-		int odd = 0;
-		for (HousenumberMatch hnm : houses){
-			if (hnm.getHousenumber() % 2 != 0)
-				++odd;
-		}
-		return odd;
-	}
-
 	public ExtNumbers checkChainPlausibility(String streetName,
 			List<HousenumberMatch> potentialNumbersThisRoad) {
 		// we try to repair up to 10 times
@@ -1457,10 +1332,6 @@ public class ExtNumbers {
 						if (bestMoveOrig.isDuplicate()){
 							log.warn("duplicate number causes problems",streetName,bestMoveOrig.getSign(),bestMoveOrig.getElement().toBrowseURL() );
 						}
-						if (bestMoveOrig.getMoved() >= 3){
-							bestMoveOrig.setIgnored(true);
-							return NOT_OK_STOP;
-						}
 						List<HousenumberMatch> fromHouses, toHouses;
 						MapRoad fromRoad, toRoad;
 						if (bestRemove == en1){
@@ -1477,25 +1348,31 @@ public class ExtNumbers {
 							toRoad = en1.getRoad();
 							bestMoveOrig.setLeft(left1);
 						}
-						if (log.isInfoEnabled()){
-							if (toRoad == fromRoad)
-								log.info("moving",streetName,bestMoveOrig.getSign(),bestMoveOrig.getElement().toBrowseURL(),"from",fromHouses,"to",toHouses,"in road",toRoad);
-							else 
-								log.info("moving",streetName,bestMoveOrig.getSign(),bestMoveOrig.getElement().toBrowseURL(),"from",fromHouses,"in road",fromRoad,"to",toHouses,"in road",toRoad);
+						if (bestMoveOrig.getMoved() >= 3){
+							bestMoveMod = null;
+							bestMoveOrig = null;
+							bestRemove.housenumberRoad.setRandom(true);
+						} else {
+							if (log.isInfoEnabled()){
+								if (toRoad == fromRoad)
+									log.info("moving",streetName,bestMoveOrig.getSign(),bestMoveOrig.getElement().toBrowseURL(),"from",fromHouses,"to",toHouses,"in road",toRoad);
+								else 
+									log.info("moving",streetName,bestMoveOrig.getSign(),bestMoveOrig.getElement().toBrowseURL(),"from",fromHouses,"in road",fromRoad,"to",toHouses,"in road",toRoad);
+							}
+							bestMoveOrig.incMoved();
+							bestMoveOrig.setRoad(toRoad);
+							bestMoveOrig.setSegment(bestMoveMod.getSegment());
+							bestMoveOrig.setDistance(bestMoveMod.getDistance());
+							bestMoveOrig.setSegmentFrac(bestMoveMod.getSegmentFrac());
+							fromHouses.remove(bestMoveOrig);
+							toHouses.add(bestMoveOrig);
+							Collections.sort(toHouses, new HousenumberMatchByPosComparator());
+							en1.reset();
+							en2.reset();
+							en1.setNumbers(houses1, en1.startInRoad, en1.endInRoad, left1);
+							en2.setNumbers(houses2, en2.startInRoad, en2.endInRoad, left2);
+							return OK_AFTER_CHANGES;
 						}
-						bestMoveOrig.incMoved();
-						bestMoveOrig.setRoad(toRoad);
-						bestMoveOrig.setSegment(bestMoveMod.getSegment());
-						bestMoveOrig.setDistance(bestMoveMod.getDistance());
-						bestMoveOrig.setSegmentFrac(bestMoveMod.getSegmentFrac());
-						fromHouses.remove(bestMoveOrig);
-						toHouses.add(bestMoveOrig);
-						Collections.sort(toHouses, new HousenumberMatchByPosComparator());
-						en1.reset();
-						en2.reset();
-						en1.setNumbers(houses1, en1.startInRoad, en1.endInRoad, left1);
-						en2.setNumbers(houses2, en2.startInRoad, en2.endInRoad, left2);
-						return OK_AFTER_CHANGES;
 					} 
 				}
 				ExtNumbers toSplit = null;
@@ -1540,8 +1417,12 @@ public class ExtNumbers {
 							} else if (ivl2.countMatches(e1) > 0){
 								toSplit = en2;
 								splitNum = e1;
+							} else if ((left1 ? ivl1.getLeftNumberStyle() : ivl1.getRightNumberStyle()) == NumberStyle.BOTH){
+								toSplit = en1;
+							} else if ((left2 ? ivl2.getLeftNumberStyle() : ivl2.getRightNumberStyle()) == NumberStyle.BOTH){
+								toSplit = en2;
 							} else {
-								log.warn("internal error: unexpected overlap,en1,en2");
+								toSplit = (delta1 >= delta2) ? en1 : en2;
 							}
 						}
 					}
@@ -1820,6 +1701,7 @@ public class ExtNumbers {
 
 	public void detectRandom() {
 		int countFilledIvls = 0;
+		int countFilledSides = 0;
 		int countNotInOrder = 0;
 		for (ExtNumbers curr = this; curr != null; curr = curr.next){
 			if (curr.hasNumbers() == false)
@@ -1829,8 +1711,15 @@ public class ExtNumbers {
 				countNotInOrder++;
 			if (curr.rightNotInOrder)
 				countNotInOrder++;
+			if (curr.leftHouses.size() > 1)
+				++countFilledSides;
+			if (curr.rightHouses.size() > 1)
+				++countFilledSides;
+			
 		}
-		if (countNotInOrder > countFilledIvls || countNotInOrder > 2)
-			housenumberRoad.setRandom(true);
+		if (countNotInOrder > 0){
+			if (countNotInOrder > countFilledIvls || countNotInOrder > 2 || countFilledSides == countNotInOrder)
+				housenumberRoad.setRandom(true);
+		}
 	}
 }
