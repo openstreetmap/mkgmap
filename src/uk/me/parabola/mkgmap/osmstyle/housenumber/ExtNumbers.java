@@ -473,6 +473,10 @@ public class ExtNumbers {
 		boolean doSplit = false;
 		
 		Numbers origNumbers = getNumbers();
+		if (origNumbers.countMatches(badNum) == 0){
+			log.debug("badNum",badNum,"is not contained in",this);
+			return this;
+		}
 		Numbers testNumbers = new Numbers();
 		testNumbers.setLeftStart(origNumbers.getLeftStart());
 		testNumbers.setLeftEnd(origNumbers.getLeftEnd());
@@ -505,6 +509,8 @@ public class ExtNumbers {
 				segmentsAfter.set(hnm.getSegment());
 			}
 		}
+		if (before.isEmpty() || after.isEmpty())
+			return this;
 		if (log.isDebugEnabled())
 			log.debug("todo: find best method to separate",before,"and",after);
 		HousenumberMatch hnm1 = before.get(before.size() - 1);
@@ -1213,6 +1219,11 @@ public class ExtNumbers {
 					ok = checkIntervalBoundaries(s1, e1, s2, e2, left1 == left2 && en1.getRoad() == en2.getRoad());
 				if (ok) 
 					continue;
+				if (en1.getRoad() != en2.getRoad() && en1.hasGaps == false && en2.hasGaps == false){
+					allOK = false;
+					continue;
+				}
+
 				if (s1 == e1){
 					if (left1 && en1.leftHouses.get(0).isFarDuplicate() || !left1 && en1.rightHouses.get(0).isFarDuplicate()){
 						allOK = false;
