@@ -52,9 +52,8 @@ public class HousenumberMatch {
 	private double searchDist = Double.NaN;
 	private boolean isFarDuplicate;
 	private HousenumberGroup block;
-	private HousenumberIvl housenumberIvl1;
-	private HousenumberIvl housenumberIvl2;
 	private List<MapRoad> alternativeRoads;
+	private int intervalInfoRefs; // counter
 	
 	/**
 	 * Instantiates a new housenumber match element.
@@ -383,16 +382,6 @@ public class HousenumberMatch {
 		return block;
 	}
 
-	public void setInterpolationInfo(HousenumberIvl housenumberIvl, int pos) {
-		if (pos == 0)
-			this.housenumberIvl1 = housenumberIvl;
-		else 
-			this.housenumberIvl2 = housenumberIvl;
-	}
-	public HousenumberIvl getInterpolationInfo(int pos) {
-		return (pos == 0) ? housenumberIvl1 : housenumberIvl2;
-	}
-
 	public void addAlternativeRoad(MapRoad road2) {
 		if (alternativeRoads == null){
 			alternativeRoads = new ArrayList<>();
@@ -407,5 +396,19 @@ public class HousenumberMatch {
 	public void forgetAlternativeRoads(){
 		alternativeRoads = null;
 	}
+
+	public int getIntervalInfoRefs() {
+		return intervalInfoRefs;
+	}
+
+	public void incIntervalInfoRefs() {
+		intervalInfoRefs++;
+	}
+
+	public void decIntervalInfoRefs() {
+		if (intervalInfoRefs > 0)
+			--intervalInfoRefs;
+	}
+	
 }
 

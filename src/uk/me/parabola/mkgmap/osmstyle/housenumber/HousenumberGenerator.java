@@ -234,15 +234,6 @@ public class HousenumberGenerator {
 					HousenumberMatch m2 = new HousenumberMatch(n2);
 					int start = m1.getHousenumber();
 					int end = m2.getHousenumber();
-					if (start == end){
-						// handle special case from CanVec imports  
-						if (pos1 == 0 && pos2 +1 == w.getPoints().size()){
-							houseNumbers.removeMapping(street1, n1);
-							houseNumbers.removeMapping(street1, n2);
-							log.warn(w.toBrowseURL(),"addr:interpolation way connects two points with equal numbers, numbers are ignored");
-							return;
-						}
-					}
 					int steps;
 					if (start < end){
 						steps = (end - start) / step - 1;
@@ -259,6 +250,14 @@ public class HousenumberGenerator {
 					info.setSteps(steps);
 					info.setPoints(w.getPoints().subList(pos1, pos2+1));
 					interpolationWays.add(street1, info);
+					if (start == end && m1.getSign().equals(m2.getSign())){
+						// handle special case from CanVec imports  
+						if (pos1 == 0 && pos2 +1 == w.getPoints().size()){
+							info.setEqualEnds();
+							log.warn(w.toBrowseURL(),"addr:interpolation way connects two points with equal numbers, numbers are ignored");
+							return;
+						}
+					}
 					if (steps <= 0){
 						if (log.isDebugEnabled())
 							log.debug(w.toBrowseURL(),"addr:interpolation way segment ignored, no number between",start,"and",end);
@@ -450,9 +449,13 @@ public class HousenumberGenerator {
 				MultiHashMap<Integer, MapRoad> clusters = buildRoadClusters(possibleRoads);
 				List<HousenumberMatch> houses = convertElements(streetName, numbers);
 				List<HousenumberIvl> interpolationInfos = interpolationWays.get(streetName);
-				boolean hasInterpolationWays = attachInterpolationInfoToHouses(streetName, houses, interpolationInfos);
+				attachInterpolationInfoToHouses(streetName, houses, interpolationInfos);
 				for (List<MapRoad> cluster: clusters.values()){
-					matchCluster(streetName, houses, cluster, hasInterpolationWays);
+					matchCluster(streetName, houses, cluster, interpolationInfos);
+				}
+				for (HousenumberIvl hivl : interpolationInfos){
+					if (hivl.foundCluster() == false && hivl.isBad() == false)
+						log.warn("found no matching road near addr:interpolation way:",hivl);
 				}
 				for (HousenumberMatch house : houses){
 					log.warn("found no street for house number element",streetName,house.getSign(),house.getElement().toBrowseURL(),", distance to next possible road:",Math.round(house.getDistance()),"m");
@@ -477,21 +480,21 @@ public class HousenumberGenerator {
 	 * @param clusters
 	 * @return true if addr:interpolation ways should be evaluated
 	 */
-	private boolean attachInterpolationInfoToHouses(String streetName, List<HousenumberMatch> houses,
+	private void attachInterpolationInfoToHouses(String streetName, List<HousenumberMatch> houses,
 			List<HousenumberIvl> interpolationInfos) {
 		if (interpolationInfos.isEmpty())
-			return false;
-		boolean used = false;
+			return;
 		HashMap<Element, HousenumberMatch>  nodes = new HashMap<>();
 		for (HousenumberMatch hnm : houses){
 			if (hnm.getElement() instanceof Node)
 				nodes.put(hnm.getElement(), hnm);
 		}
-		for (HousenumberIvl hivl : interpolationInfos){
-			if (hivl.setNodeRefs(nodes))
-				used = true;
+		Iterator<HousenumberIvl> iter = interpolationInfos.iterator();
+		while (iter.hasNext()){
+			HousenumberIvl hivl = iter.next();
+			if (hivl.setNodeRefs(nodes) == false)
+				iter.remove();
 		}
-		return used;
 	}
 
 	/**
@@ -499,10 +502,10 @@ public class HousenumberGenerator {
 	 * @param streetName
 	 * @param houses
 	 * @param roadsInCluster
-	 * @param hasInterpolationWays 
+	 * @param interpolationInfos.isEmpty()  
 	 */
 	private static void matchCluster(String streetName, List<HousenumberMatch> houses,
-			List<MapRoad> roadsInCluster, boolean hasInterpolationWays) {
+			List<MapRoad> roadsInCluster, List<HousenumberIvl> interpolationInfos ) {
 		
 		List<HousenumberMatch> housesNearCluster = new ArrayList<>();
 		Iterator<HousenumberMatch> iter = houses.iterator();
@@ -536,8 +539,8 @@ public class HousenumberGenerator {
 		// we now have a list of houses and a list of roads that are in one area
 		assignHouseNumbersToRoads(streetName, housesNearCluster, roadsInCluster) ;
 		// we have now a first guess for the road and segment of each plausible house number element
-		if (hasInterpolationWays){
-			useInterpolationInfo(streetName, housesNearCluster, roadsInCluster);
+		if (interpolationInfos.isEmpty() == false){
+			useInterpolationInfo(streetName, housesNearCluster, roadsInCluster, interpolationInfos);
 			Collections.sort(housesNearCluster, new HousenumberMatchByNumComparator());
 		}
 		MultiHashMap<MapRoad, HousenumberMatch> roadNumbers = new MultiHashMap<>(); 
@@ -656,11 +659,11 @@ public class HousenumberGenerator {
 	 * @param streetName
 	 * @param housesNearCluster
 	 * @param roadsInCluster
+	 * @param interpolationInfos 
 	 */
 	private static void useInterpolationInfo(String streetName,
 			List<HousenumberMatch> housesNearCluster,
-			List<MapRoad> roadsInCluster) {
-		HashSet<HousenumberIvl> processedIvls = new HashSet<>();
+			List<MapRoad> roadsInCluster, List<HousenumberIvl> interpolationInfos) {
 		HashSet<String> simpleDupCheckSet = new HashSet<>();
 		HashSet<HousenumberIvl> badIvls = new HashSet<>();
 		Long2ObjectOpenHashMap<HousenumberIvl> id2IvlMap = new Long2ObjectOpenHashMap<>();
@@ -671,18 +674,12 @@ public class HousenumberGenerator {
 			existingNumbers.put(hnm.getHousenumber(), hnm);
 			// should we try to handle duplicates before interpolation?
 		}
-		
-		
+		int inCluster = 0;
 		boolean allOK = true;
-		for (HousenumberMatch hnm1 : housesNearCluster){
-			HousenumberIvl hivl = hnm1.getInterpolationInfo(0);
-			if (hivl == null)
+		for (HousenumberIvl hivl : interpolationInfos){
+			if (hivl.inCluster(housesNearCluster) == false)
 				continue;
-//			log.debug("trying to find interval for node",hnm1.getElement().toBrowseURL());
-			if (processedIvls.contains(hivl))
-				continue;
-			processedIvls.add(hivl);
-			
+			++inCluster;
 			if (hivl.checkRoads() == false){
 				allOK = false;
 			} else {
@@ -735,6 +732,8 @@ public class HousenumberGenerator {
 				}
 			}
 		}
+		if (inCluster == 0)
+			return;
 		for (HousenumberIvl badIvl: badIvls){
 			allOK = false;
 			badIvl.ignoreNodes();

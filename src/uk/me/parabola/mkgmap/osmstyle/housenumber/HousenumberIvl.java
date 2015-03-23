@@ -49,10 +49,12 @@ public class HousenumberIvl {
 	private int step, start, end, steps;
 	private HousenumberMatch[] knownHouses = {null, null}; 
 	
-//	private boolean needsSplit;
 	private boolean hasMultipleRoads;
+	private boolean foundCluster;
 	private int interpolated;
 	private boolean isBad;
+
+	private boolean equalEnds;
 	private static final short streetTagKey = TagDict.getInstance().xlate("mkgmap:street");
 	private static final short housenumberTagKey = TagDict.getInstance().xlate("mkgmap:housenumber");		
 	private static final short addrInterpolationTagKey = TagDict.getInstance().xlate("addr:interpolation");
@@ -116,7 +118,7 @@ public class HousenumberIvl {
 	
 	public boolean checkRoads(){
 		boolean res = checkRoads2();
-		if (!res){
+		if (!res || equalEnds){
 			// the interval is not ok --> ignore the numbers as well
 			ignoreNodes();
 		} 
@@ -215,7 +217,7 @@ public class HousenumberIvl {
 	
 	public List<HousenumberMatch> getInterpolatedHouses(){
 		List<HousenumberMatch> houses = new ArrayList<>();
-		if (isBad)
+		if (isBad || start == end || steps <= 0)
 			return houses;
 		List<Coord> interpolatedPoints = getInterpolatedPoints();
 		int usedStep = (start < end) ? step : -step;
@@ -319,26 +321,22 @@ public class HousenumberIvl {
 		return streetName + "_" + start + ".." + end + "_" + step;
 	}
 
-	public boolean setNodeRefs(HashMap<Element, HousenumberMatch> nodes) {
-		knownHouses[0] = nodes.get(n1);
-		knownHouses[1] = nodes.get(n2);
-		for (int i = 0; i < 2; i++){
-			if (knownHouses[i] == null)
-				return false;
-			if (knownHouses[i].getInterpolationInfo(i) == null)
-				knownHouses[i].setInterpolationInfo(this, i);
-			else {
-				log.warn("multiple addr:interpolation ways are referencing same node",this,knownHouses[i].getElement().toBrowseURL());
-				return false;
-			} 
-		}
+	public boolean setNodeRefs(HashMap<Element, HousenumberMatch> houses) {
+		knownHouses[0] = houses.get(n1);
+		knownHouses[1] = houses.get(n2);
+		if (knownHouses[0] == null || knownHouses[1] == null)
+			return false;
+		knownHouses[0].incIntervalInfoRefs();
+		knownHouses[1].incIntervalInfoRefs();
 		return true;
 	}
 
 	public void ignoreNodes() {
 		for (int i = 0; i < 2; i++){
 			if (knownHouses[i] != null){
-				knownHouses[i].setIgnored(true);
+				knownHouses[i].decIntervalInfoRefs();
+				if (knownHouses[i].getIntervalInfoRefs() == 0)
+					knownHouses[i].setIgnored(true);
 			}
 		}
 	}
@@ -353,5 +351,31 @@ public class HousenumberIvl {
 
 	public boolean isBad() {
 		return isBad;
+	}
+
+	public boolean inCluster(List<HousenumberMatch> housesNearCluster) {
+		int count = 0;
+		for (HousenumberMatch hnm : housesNearCluster){
+			if (knownHouses[0] == hnm || knownHouses[1] == hnm){
+				++count;
+				
+			}
+			if (count == 2)
+				break;
+		}
+		if (count > 0){
+			foundCluster = true;
+			return true;
+		}
+		return false;
+	}
+
+	public boolean foundCluster() {
+		return foundCluster;
+	}
+
+	public void setEqualEnds() {
+		this.equalEnds = true;
+		
 	}
 }
