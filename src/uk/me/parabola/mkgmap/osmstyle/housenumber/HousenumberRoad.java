@@ -139,6 +139,9 @@ public class HousenumberRoad {
 				int delta = hnm2.getHousenumber() - hnm1.getHousenumber();
 				boolean addedToGroup = false;
 				if (Math.abs(delta) <= 2){
+					if (hnm1.isInterpolated() || hnm2.isInterpolated()){
+						continue;
+					}
 					if (houseGroup.isEmpty()){
 						double deltaDistToRoad = hnm1.getDistance() - hnm2.getDistance();
 						double distOnRoad = hnm2.getDistOnRoad(hnm1);
@@ -157,7 +160,7 @@ public class HousenumberRoad {
 						double distOnRoad = hnmGroup.getDistOnRoad(hnm2);
 						if (Math.abs(deltaDistToRoad) < distOnRoad)
 							continue;
-						
+
 						if (distOnRoad < 10){
 							houseGroup.add(hnm2);
 							addedToGroup = true;

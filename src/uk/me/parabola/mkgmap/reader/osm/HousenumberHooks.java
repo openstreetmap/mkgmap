@@ -81,7 +81,7 @@ public class HousenumberHooks extends OsmReadingHooksAdaptor {
 		if (ai == null)
 			return;
 		if (nodes.size() < 2){
-			log.info(way.toBrowseURL(),"tag addr:interpolation="+ai, "is ignored, found less than two valid nodes.");
+				log.warn(way.toBrowseURL(),"tag addr:interpolation="+ai, "is ignored, found less than two valid nodes.");
 			return;
 		}
 		switch (ai) {
@@ -92,7 +92,8 @@ public class HousenumberHooks extends OsmReadingHooksAdaptor {
 		case "2":
 			break;
 		default:
-			log.info(way.toBrowseURL(),"tag addr:interpolation="+ai, "is ignored");
+			if (log.isInfoEnabled())
+				log.warn(way.toBrowseURL(),"tag addr:interpolation="+ai, "is ignored");
 			return;
 		}
 		

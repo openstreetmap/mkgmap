@@ -13,6 +13,8 @@
 
 package uk.me.parabola.mkgmap.osmstyle.housenumber;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -42,14 +44,17 @@ public class HousenumberMatch {
 	
 	private int housenumber;
 	private String sign; 
-	private boolean hasAlternativeRoad;
 	private boolean ignored;
 	private boolean isDuplicate;
+	private boolean interpolated;
 	private int moved;
 	// distance in m between closest point on road and the point that is found in the address search
 	private double searchDist = Double.NaN;
 	private boolean isFarDuplicate;
 	private HousenumberGroup block;
+	private HousenumberIvl housenumberIvl1;
+	private HousenumberIvl housenumberIvl2;
+	private List<MapRoad> alternativeRoads;
 	
 	/**
 	 * Instantiates a new housenumber match element.
@@ -259,11 +264,7 @@ public class HousenumberMatch {
 	}
 	
 	public boolean hasAlternativeRoad() {
-		return hasAlternativeRoad;
-	}
-
-	public void setHasAlternativeRoad(boolean hasAlternativeRoad) {
-		this.hasAlternativeRoad = hasAlternativeRoad;
+		return alternativeRoads != null && alternativeRoads.isEmpty() == false;
 	}
 
 	public boolean isIgnored() {
@@ -280,6 +281,14 @@ public class HousenumberMatch {
 
 	public void setDuplicate(boolean isDuplicate) {
 		this.isDuplicate = isDuplicate;
+	}
+
+	public boolean isInterpolated() {
+		return interpolated;
+	}
+
+	public void setInterpolated(boolean interpolated) {
+		this.interpolated = interpolated;
 	}
 
 	public int getMoved() {
@@ -373,6 +382,30 @@ public class HousenumberMatch {
 	public HousenumberGroup getBlock() {
 		return block;
 	}
-	
+
+	public void setInterpolationInfo(HousenumberIvl housenumberIvl, int pos) {
+		if (pos == 0)
+			this.housenumberIvl1 = housenumberIvl;
+		else 
+			this.housenumberIvl2 = housenumberIvl;
+	}
+	public HousenumberIvl getInterpolationInfo(int pos) {
+		return (pos == 0) ? housenumberIvl1 : housenumberIvl2;
+	}
+
+	public void addAlternativeRoad(MapRoad road2) {
+		if (alternativeRoads == null){
+			alternativeRoads = new ArrayList<>();
+		}
+		alternativeRoads.add(road2);
+	}
+	public List<MapRoad> getAlternativeRoads() {
+		if (alternativeRoads == null)
+			return Collections.emptyList();
+		return alternativeRoads;
+	}
+	public void forgetAlternativeRoads(){
+		alternativeRoads = null;
+	}
 }
 

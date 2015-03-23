@@ -433,6 +433,7 @@ public class ExtNumbers {
 				}
 			}
 		} 
+		//TODO: in some cases it might be better to move a house to the prev on next interval instead of splitting
 		if (en == this)
 			en = tryAddNumberNode(reason);
 		boolean changedInterval = false;
