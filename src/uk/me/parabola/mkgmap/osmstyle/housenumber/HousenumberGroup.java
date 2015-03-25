@@ -189,7 +189,10 @@ public class HousenumberGroup {
 		} else if (deltaDist < houses.size() * 3 ){
 				isOK = false;
 		}
-		
+		if (farthestHouseToRoad.getDistance() > HousenumberGenerator.MAX_DISTANCE_TO_ROAD){
+			log.debug("distance of farthest house is too large, group is not used");
+			isOK = false;
+		}
 		for (HousenumberMatch hnm : houses){
 			// forget the group, it will not improve search
 			hnm.setGroup(isOK ? this : null);
