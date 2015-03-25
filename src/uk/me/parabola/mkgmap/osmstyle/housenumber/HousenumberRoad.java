@@ -32,7 +32,6 @@ import uk.me.parabola.mkgmap.osmstyle.housenumber.HousenumberGenerator.Housenumb
  */
 public class HousenumberRoad {
 	private static final Logger log = Logger.getLogger(HousenumberRoad.class);
-	
 	private final String streetName;
 	private final MapRoad road;
 	private ExtNumbers extNumbersHead;
@@ -122,68 +121,54 @@ public class HousenumberRoad {
 	}
 
 	/**
-	 * 
+	 * Try to detect groups of houses with continues numbers 
+	 * which should be attached to a zero-length segment.
+	 * Very useful when a service road connects eg. 
+	 * numbers 7..15 to the named road, but also for just two numbers.
 	 * @param depth
 	 * @param leftNumbers
 	 * @param rightNumbers
 	 */
 	private void detectGroups(int depth, List<HousenumberMatch> leftNumbers, List<HousenumberMatch> rightNumbers) {
-
 		for (int side = 0; side < 2; side++){
 			boolean left = side == 0;
-			List<HousenumberMatch> houseGroup = new ArrayList<>();	
 			List<HousenumberMatch> houses = left ? leftNumbers : rightNumbers;
-			for (int j = 0; j + 1< houses.size(); j++){
-				HousenumberMatch hnm1 = houses.get(j);
-				HousenumberMatch hnm2 = houses.get(j+1);
-				int delta = hnm2.getHousenumber() - hnm1.getHousenumber();
-				boolean addedToGroup = false;
-				if (Math.abs(delta) <= 2){
-					if (hnm1.isInterpolated() || hnm2.isInterpolated()){
+			HousenumberGroup group = null;
+			for (int j = 1; j < houses.size(); j++){
+				HousenumberMatch hnm = houses.get(j);
+				if (group == null){
+					if (hnm.isInterpolated())
 						continue;
+					HousenumberMatch predHnm = houses.get(j-1);
+					int deltaNum = predHnm.getHousenumber() - hnm.getHousenumber();
+					if (Math.abs(deltaNum) > 2)
+						continue;
+					boolean buildGroup = false;
+					if (depth > 0 && hnm.getGroup() != null && hnm.getGroup() == predHnm.getGroup()){
+						// these two houses were detected as a group in a previous loop, group them again
+						buildGroup = true; 
 					}
-					if (houseGroup.isEmpty()){
-						double deltaDistToRoad = hnm1.getDistance() - hnm2.getDistance();
-						double distOnRoad = hnm2.getDistOnRoad(hnm1);
-						if (Math.abs(deltaDistToRoad) < distOnRoad)
-							continue;
-						if (distOnRoad < 10){
-							houseGroup.add(hnm1);
-							houseGroup.add(hnm2);
-							addedToGroup = true;
-						}
-						continue;
-					} 
-
-					for (HousenumberMatch hnmGroup : houseGroup){
-						double deltaDistToRoad = hnmGroup.getDistance() - hnm2.getDistance();
-						double distOnRoad = hnmGroup.getDistOnRoad(hnm2);
-						if (Math.abs(deltaDistToRoad) < distOnRoad)
-							continue;
-
-						if (distOnRoad < 10){
-							houseGroup.add(hnm2);
-							addedToGroup = true;
-							break;
-						}
+					else if (HousenumberGroup.housesFormAGroup(predHnm, hnm))
+						buildGroup = true;
+					if (buildGroup)
+						group = new HousenumberGroup(this, houses.subList(j-1, j+1));
+				} else {
+					if (group.tryAddHouse(hnm) == false){
+						useGroup(depth, group);
+						group = null;
 					}
 				}
-				if (!addedToGroup && houseGroup.isEmpty() == false){
-					HousenumberGroup group = new HousenumberGroup(this, houseGroup);
-					if (group.verify()){
-						if (depth == 0 && log.isDebugEnabled())
-							log.debug("using zero-length segment for group:",streetName,group);
-						addGroup(group);
-					}
-					houseGroup.clear();
-				}
+			}
+			if (group != null){
+				useGroup(depth, group);
 			}
 		}
 		boolean nodeAdded = false;
+		int oldNumPoints = getRoad().getPoints().size();
 		for (HousenumberGroup group : groups){
 			nodeAdded = group.findSegment(streetName);
 			if(nodeAdded){
-				
+				log.debug("added",getRoad().getPoints().size() - oldNumPoints,"number nodes for group",group);
 				road.setInternalNodes(true);
 				extNumbersHead = null;
 				groups.clear();
@@ -203,7 +188,14 @@ public class HousenumberRoad {
 		}
 		return;
 	}
-	
+
+	private void useGroup(int depth, HousenumberGroup group){
+		if(group.verify()){
+			groups.add(group);
+			if (/*depth == 0 && */log.isDebugEnabled())
+				log.debug("depth=",depth,"using zero-length segment for group:",streetName,group);
+		}
+	}
 	
 	/**
 	 */

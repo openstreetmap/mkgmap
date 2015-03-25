@@ -18,6 +18,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import java.util.ArrayList;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
@@ -41,183 +42,159 @@ public class HousenumberGroup {
 	int minNum = Integer.MAX_VALUE, maxNum = -1;
 	int minSeg = Integer.MAX_VALUE, maxSeg = -1;
 	double minFrac = Double.NaN, maxFrac = Double.NaN;
+	HousenumberMatch closestHouseToRoad = null;
+	HousenumberMatch farthestHouseToRoad = null;
 	int odd,even;
 	Coord linkNode;
 	
-	public HousenumberGroup(HousenumberRoad hnr, List<HousenumberMatch> houses) {
+	public HousenumberGroup(HousenumberRoad hnr, List<HousenumberMatch> housesToUse) {
 		this.hnr = hnr;
-		this.houses.addAll(houses);
-		updateFields();
-	}
-	
-	private void updateFields() {
-		HousenumberMatch pred = null;
-		for (HousenumberMatch hnm: houses){
-			int num = hnm.getHousenumber();
-			if (num % 2 == 0)
-				++even;
-			else 
-				++odd;
-			int count = usedNumbers.get(num);
-			usedNumbers.put(num, count + 1);
-			
-			hnm.setGroup(this);
-			if (pred == null){
-				minNum = maxNum = hnm.getHousenumber();
-				minSeg = maxSeg = hnm.getSegment();
-				minFrac = maxFrac = hnm.getSegmentFrac();
-			} else {
-				if (hnm.getSegment() < minSeg){
-					minSeg = hnm.getSegment();
-					minFrac = hnm.getSegmentFrac();
-				} else if (hnm.getSegment() > maxSeg){
-					maxSeg = hnm.getSegment();
-					maxFrac = hnm.getSegmentFrac();
-				} else if (minSeg == maxSeg){
-					minFrac = Math.min(minFrac, hnm.getSegmentFrac());
-					maxFrac = Math.max(maxFrac, hnm.getSegmentFrac());
-				}
-				minNum = Math.min(minNum, num);
-				maxNum = Math.max(maxNum, num);
-			}
-			pred = hnm;
+		for (HousenumberMatch hnm : housesToUse){
+			addHouse(hnm);
 		}
 	}
-
+	
+	private void addHouse(HousenumberMatch hnm){
+		int num = hnm.getHousenumber();
+		if (num % 2 == 0)
+			++even;
+		else 
+			++odd;
+		int count = usedNumbers.get(num);
+		usedNumbers.put(num, count + 1);
+		
+		if (houses.isEmpty()){
+			minNum = maxNum = hnm.getHousenumber();
+			minSeg = maxSeg = hnm.getSegment();
+			minFrac = maxFrac = hnm.getSegmentFrac();
+			closestHouseToRoad = farthestHouseToRoad = hnm;
+		} else {
+			if (hnm.getSegment() < minSeg){
+				minSeg = hnm.getSegment();
+				minFrac = hnm.getSegmentFrac();
+			} else if (hnm.getSegment() > maxSeg){
+				maxSeg = hnm.getSegment();
+				maxFrac = hnm.getSegmentFrac();
+			} else if (hnm.getSegment() == minSeg ){
+				minFrac = Math.min(minFrac, hnm.getSegmentFrac());
+			} else if (hnm.getSegment() == maxSeg ){
+				maxFrac = Math.max(maxFrac, hnm.getSegmentFrac());
+			}
+			minNum = Math.min(minNum, num);
+			maxNum = Math.max(maxNum, num);
+			if (hnm.getDistance() < closestHouseToRoad.getDistance())
+				closestHouseToRoad = hnm;
+			if (hnm.getDistance() > farthestHouseToRoad.getDistance())
+				farthestHouseToRoad = hnm;
+		}
+		houses.add(hnm);
+	}
+	
 	/**
-	 * 
+	 * find place for the group, change to or add number nodes
 	 * @return true if one or two nodes were added
 	 */
 	public boolean findSegment(String streetName){
-		// TODO: add checks, simplify
+		if (minSeg < 0 || maxSeg < 0){
+			log.error("internal error: group is not valid:",this);
+			return false;
+		}
 		List<Coord> points = getRoad().getPoints();
 		Coord point = null;
-		int countNumNodes = 0;
-		int nodePos = -1;
-		for (int i = minSeg+1; i <= maxSeg; i++){
-			if (points.get(i).isNumberNode()){
-				++countNumNodes;
-				if (point == null){
-					point = points.get(i);
-					nodePos = i;
-				}
-			}
-			if (countNumNodes > 1){
-				for (HousenumberMatch hnm : houses){
-					hnm.setSegment(i-1);
-					hnm.setSegmentFrac(1);
-					linkNode = point;
-				}
-				return false;
-			}
-		}
-		if (countNumNodes > 0 && point != null) {
+		if (minSeg != maxSeg){
 			if (points.size() + 1 > LineSplitterFilter.MAX_POINTS_IN_LINE)
 				return false;
+			int seg = closestHouseToRoad.getSegment();
+			Coord c1 = points.get(seg);
+			Coord c2 = points.get(seg + 1);
+			point = (closestHouseToRoad.getSegmentFrac() < 0.5) ? c1 : c2;
 			linkNode = point;
-			Coord c2 = points.get(nodePos + 1);
-			if (point.highPrecEquals(c2) && c2.isNumberNode()){
-				// nothing to do, we already have a zero-length segment with two number nodes
-				return false;
-			}
-			// duplicate existing node
 			point = Coord.makeHighPrecCoord(point.getHighPrecLat(), point.getHighPrecLon());
 			point.setNumberNode(true);
-			points.add(nodePos+1, point);
+			if (linkNode == c2)
+				seg++;
+			points.add(seg + 1, point);
 			return true;
-			
 		}
 		
-		if (point == null){
-			if (minSeg != maxSeg){
-				if (points.size() + 1 > LineSplitterFilter.MAX_POINTS_IN_LINE)
-					return false;
-				point = points.get(maxSeg);
-				linkNode = point; 
-				point.setNumberNode(true);
-				point = Coord.makeHighPrecCoord(point.getHighPrecLat(), point.getHighPrecLon());
-				point.setNumberNode(true);
-				points.add(maxSeg + 1, point);
-				return true;
-			}
+		assert minSeg == maxSeg;
+		Coord c1 = points.get(minSeg);
+		Coord c2 = points.get(minSeg + 1);
+		if (c1.highPrecEquals(c2)){
+			// group is already attached to zero-segment-length
+			linkNode = c1;
+			return false;
 		}
-		
-		if (point == null){
-			assert minSeg == maxSeg;
-			Coord c1 = points.get(minSeg);
-			Coord c2 = points.get(minSeg + 1);
-			if (c1.highPrecEquals(c2)){
-				// group is already attached to zero-segment-length
-				linkNode = c1;
-				return false;
+		if (points.size() + 2 > LineSplitterFilter.MAX_POINTS_IN_LINE)
+			return false;
+		int timesToAdd = 1;
+		//			double seglen = c1.distance(c2);
+		double midFrac = (Math.max(0, minFrac) + Math.min(1, maxFrac)) / 2;
+		point = c1.makeBetweenPoint(c2, midFrac);
+		double hard1Dist = c1.distance(point);
+		double hard2Dist = c2.distance(point);
+
+		if (minFrac <= 0 || hard1Dist <= 10)
+			point = c1;
+		else if (maxFrac >= 1 || hard2Dist <= 10)
+			point = c2;
+		else {
+			Coord optPoint = ExtNumbers.rasterLineNearPoint(c1, c2, point, true);
+			double opt1Dist = c1.distance(optPoint);
+			double opt2Dist = c2.distance(optPoint);
+			point = optPoint;
+			if (Math.min(opt1Dist, opt2Dist) <= 10){
+				point = (opt1Dist < opt2Dist) ? c1 : c2;
 			}
-			if (points.size() + 2 > LineSplitterFilter.MAX_POINTS_IN_LINE)
-				return false;
-			int timesToAdd = 1;
-			double seglen = c1.distance(c2);
-			double midFrac = (Math.max(0, minFrac) + Math.min(1, maxFrac)) / 2;
-			point = c1.makeBetweenPoint(c2, midFrac);
-			double hard1Dist = c1.distance(point);
-			double hard2Dist = c2.distance(point);
-			
-			if (minFrac <= 0 || hard1Dist <= 10)
-				point = c1;
-			else if (maxFrac >= 1 || hard2Dist <= 10)
-				point = c2;
 			else {
-				Coord optPoint = ExtNumbers.rasterLineNearPoint(c1, c2, point, true);
-//				log.debug("check optic for segment with length",HousenumberGenerator.formatLen(seglen),getRoad(),houses);
-//				double hardDist = point.getDisplayedCoord().distToLineSegment(c1.getDisplayedCoord(), c2.getDisplayedCoord());
-//				double optDist = optPoint.getDisplayedCoord().distToLineSegment(c1.getDisplayedCoord(), c2.getDisplayedCoord());
-//				double usedFrac = HousenumberGenerator.getFrac(c1, c2, optPoint);
-				double opt1Dist = c1.distance(optPoint);
-				double opt2Dist = c2.distance(optPoint);
-//				log.debug(HousenumberGenerator.formatLen(hard1Dist),HousenumberGenerator.formatLen(hard2Dist));
-//				log.debug(HousenumberGenerator.formatLen(opt1Dist),HousenumberGenerator.formatLen(opt2Dist));
-//				log.debug(HousenumberGenerator.formatLen(hardDist),HousenumberGenerator.formatLen(optDist), minFrac,maxFrac,midFrac,usedFrac);
-				point = optPoint;
-				if (Math.min(opt1Dist, opt2Dist) <= 10){
-					point = (opt1Dist < opt2Dist) ? c1 : c2;
-//					log.debug("duplicating existing node");
-				}
-				else {
-					timesToAdd = 2;
-//					log.debug("adding optimized point between original points two times");
-				}
-//				long dd = 4;
+				timesToAdd = 2;
 			}
-			linkNode = null;
-			if (timesToAdd == 1){
-				// we are duplicating an existing point
-				point.setNumberNode(true);
-				if (point == c1)
-					linkNode = point;
-			}
+		}
+		linkNode = null;
+		if (timesToAdd == 1){
+			// we are duplicating an existing point
+			point.setNumberNode(true);
+			if (point == c1)
+				linkNode = point;
+		}
+		point = Coord.makeHighPrecCoord(point.getHighPrecLat(), point.getHighPrecLon());
+		point.setNumberNode(true);
+		points.add(minSeg + 1, point);
+		if (timesToAdd > 1){
 			point = Coord.makeHighPrecCoord(point.getHighPrecLat(), point.getHighPrecLon());
 			point.setNumberNode(true);
 			points.add(minSeg + 1, point);
-			if (timesToAdd > 1){
-				point = Coord.makeHighPrecCoord(point.getHighPrecLat(), point.getHighPrecLon());
-				point.setNumberNode(true);
-				points.add(minSeg + 1, point);
-				linkNode = point;
-			}
-			if (linkNode == null)
-				linkNode = point;
-			return true;
+			linkNode = point;
 		}
-		return false;
+		if (linkNode == null)
+			linkNode = point;
+		return true;
 	}
 
 	public boolean verify(){
+		if (minSeg < 0 || maxSeg < 0)
+			return false;
 		int step = 1;
 		if (odd == 0 || even == 0)
 			step = 2;
+		boolean isOK = false;
 		if (usedNumbers.size() == (maxNum - minNum) / step + 1)
-			return true;
-		for (HousenumberMatch hnm : houses)
-			hnm.setGroup(null);
-		return false;
+			isOK = true;
+
+		// final check: 
+		double deltaDist = Math.abs(closestHouseToRoad.getDistance() - farthestHouseToRoad.getDistance());
+		if (houses.size() == 2){
+			if (farthestHouseToRoad.getDistance() < 30 && houses.get(0).getDistOnRoad(houses.get(1)) > 5)
+				isOK = false;
+		} else if (deltaDist < houses.size() * 3 ){
+				isOK = false;
+		}
+		
+		for (HousenumberMatch hnm : houses){
+			// forget the group, it will not improve search
+			hnm.setGroup(isOK ? this : null);
+		}
+		return isOK;
 	}
 	
 	public MapRoad getRoad(){
@@ -227,4 +204,111 @@ public class HousenumberGroup {
 	public String toString(){
 		return houses.toString();
 	}
+	public static boolean housesFormAGroup(HousenumberMatch hnm1,
+			HousenumberMatch hnm2) {
+		assert hnm1.getRoad() == hnm2.getRoad();
+		if (hnm1.getSegment() > hnm2.getSegment()){
+			HousenumberMatch help = hnm1;
+			hnm1 = hnm2;
+			hnm2 = help;
+		}
+		double distBetweenHouses = hnm1.getLocation().distance(hnm2.getLocation());
+		if (distBetweenHouses == 0)
+			return true;
+		double minDistToRoad = Math.min(hnm1.getDistance(), hnm2.getDistance());
+		double maxDistToRoad = Math.max(hnm1.getDistance(), hnm2.getDistance());
+		double deltaDistToRoad = Math.abs(hnm1.getDistance() - hnm2.getDistance());
+		if (maxDistToRoad < 20 && distBetweenHouses > 5)
+			return false;
+		double distOnRoad = hnm2.getDistOnRoad(hnm1);
+		if (hnm1.getSegment() != hnm2.getSegment()){
+			if (minDistToRoad > 40 && distBetweenHouses < 10)
+				return true;
+			
+			// not the same segment, the distance on road may be misleading when segments have a small angle 
+			// and the connection point is a bit more away 
+//			List<Coord> roadPoints = hnm1.getRoad().getPoints();
+			Coord c1 = hnm1.getLocation();
+			Coord c2 = hnm2.getLocation();
+			Coord closest1 = hnm1.getClosestPointOnRoad();
+			Coord closest2 = hnm2.getClosestPointOnRoad();
+//			GpxCreator.createGpx("e:/ld/test", roadPoints, Arrays.asList(c1,c2,closest1,closest2));
+			double frac1 = HousenumberGenerator.getFrac(closest1, closest2, c1);
+			double frac2 = HousenumberGenerator.getFrac(closest1, closest2, c2);
+			double segLen = closest1.distance(closest2);
+			if (frac1 < 0) frac1 = 0;
+			if (frac2 < 0) frac2 = 0;
+			if (frac1 > 1) frac1 = 1;
+			if (frac2 > 1) frac2 = 1;
+			double distOnRoadSimple = (Math.max(frac1, frac2) - Math.min(frac1, frac2)) * segLen;
+			if (distOnRoadSimple != distOnRoad){
+				log.debug("distOnRoad recalculation:", hnm1.getRoad(),hnm1,hnm2,distOnRoad,"--->",distOnRoadSimple);
+				distOnRoad = distOnRoadSimple;
+			}
+		}
+		if (distOnRoad <= 0){
+			return true;
+		}
+		
+		// two houses form a group when the distance on road is short
+		// how short? The closer the houses are to the road, the shorter
+		double toleranceDistOnRoad = 5 + minDistToRoad / 10;
+		
+		if (distOnRoad > toleranceDistOnRoad){
+			return false;
+		}
+		
+		
+		double ratio2 = deltaDistToRoad / distBetweenHouses;
+		// a ratio2 near or higher 1 means that the two houses and the closest point on the 
+		// road are on a straight line
+		if (ratio2 > 0.9)
+			return true;
+		if (ratio2 < 0.666)
+			return false;
+		return true;
+	}
+
+	public boolean tryAddHouse(HousenumberMatch hnm) {
+		if (hnm.isInterpolated() || hnm.getRoad() == null || hnm.isIgnored())
+			return false;
+		int num = hnm.getHousenumber();
+		int step = 1;
+		if (odd == 0 || even == 0)
+			step = 2;
+		if (num - maxNum != step)
+			return false;
+		HousenumberMatch last = houses.get(houses.size()-1);
+		if (last.getGroup() != null){ 
+			if (last.getGroup() == hnm.getGroup()){
+				addHouse(hnm);
+				return true;
+			} else 
+				return false;
+		}
+		if (last.getDistance() + 3 < hnm.getDistance() && last.isDirectlyConnected(hnm)){
+			addHouse(hnm);
+			return true;
+		}
+			
+		if (housesFormAGroup(hnm, last) == false){
+//			double distBetweenHouses = last.getLocation().distance(hnm.getLocation());
+//			if (distBetweenHouses < hnm.getDistance() && distBetweenHouses < 15 && hnm.getDistance() > 30 ){
+//				long dd = 4;
+//			}
+			return false;
+		}
+		if (houses.size() > 1){
+			HousenumberMatch first = houses.get(0);
+			if (housesFormAGroup(hnm, first) == false){
+				HousenumberMatch preLast = houses.get(houses.size()-2);
+				double angle = Utils.getAngle(hnm.getLocation(), last.getLocation(), preLast.getLocation());
+ 				if (Math.abs(angle) > 30)
+					return false;
+			}
+		}
+		addHouse(hnm);
+		return true;
+	}
+
 }

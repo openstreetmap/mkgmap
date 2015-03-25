@@ -1257,6 +1257,8 @@ public class ExtNumbers {
 				if (en1.housenumberRoad.isRandom() == false && en2.housenumberRoad.isRandom() == false){
 					// check if we can move a house from en1 to en2
 					for (HousenumberMatch hnm : houses1){
+						if (hnm.getGroup() != null)
+							continue;
 						int n = hnm.getHousenumber();
 						if (countOccurence(houses1, n) > 1)
 							continue;
@@ -1299,6 +1301,8 @@ public class ExtNumbers {
 						}
 					}
 					for (HousenumberMatch hnm : houses2){
+						if (hnm.getGroup() != null)
+							continue;
 						int n = hnm.getHousenumber();
 						if (countOccurence(houses2, n) > 1)
 							continue;
@@ -1392,14 +1396,23 @@ public class ExtNumbers {
 				int delta1 = Math.abs(e1-s1);
 				int delta2 = Math.abs(e2-s2);
 				if (delta1 > 0 && delta2 > 0){
-					if (possibleRemoves1.size() == 1){
+					if (en1.hasGaps != en2.hasGaps){
+						if (en1.hasGaps){
+							if (possibleRemoves1.isEmpty() == false)
+								splitNum = possibleRemoves1.get(0).getHousenumber();
+							toSplit = en1;
+						} else {
+							if (possibleRemoves2.isEmpty() == false)
+								splitNum = possibleRemoves2.get(0).getHousenumber();
+							toSplit = en2;
+						}
+					} else if (possibleRemoves1.size() == 1){
 						splitNum = possibleRemoves1.get(0).getHousenumber();
 						toSplit = en1;
 					} else if (possibleRemoves2.size() == 1){
 						splitNum = possibleRemoves2.get(0).getHousenumber();
 						toSplit = en2;
-					} 
-					if (possibleRemoves1.size() > 0){
+					} else if (possibleRemoves1.size() > 0){
 						splitNum = possibleRemoves1.get(0).getHousenumber();
 						toSplit = en1;
 					} else if (possibleRemoves2.size() > 0){

@@ -941,17 +941,18 @@ public class HousenumberGenerator {
 		MapRoad oldRoad = hnm.getRoad();
 		hnm.setRoad(null);
 		hnm.setDistance(Double.POSITIVE_INFINITY);
-		
+		boolean foundGroupLink = false;
 		int end = Math.min(r.getPoints().size(), stopSeg+1);
 		for (int node = firstSeg; node + 1 < end; node++){
 			Coord c1 = r.getPoints().get(node);
 			Coord c2 = r.getPoints().get(node + 1);
 			double frac = getFrac(c1, c2, cx);
 			double dist = distanceToSegment(c1,c2,cx,frac);
-			if (hnm.getBlock() != null && hnm.getBlock().linkNode == c1){
+			if (hnm.getGroup() != null && hnm.getGroup().linkNode == c1){
 				if (c1.highPrecEquals(c2) == false){
 					log.debug("block doesn't have zero length segment! Road:",r,hnm);
 				}
+				foundGroupLink = true;
 				hnm.setDistance(dist);
 				hnm.setSegmentFrac(frac);
 				hnm.setRoad(r);
@@ -963,6 +964,10 @@ public class HousenumberGenerator {
 				hnm.setRoad(r);
 				hnm.setSegment(node);
 			} 
+		}
+		
+		if (hnm.getGroup() != null && hnm.getGroup().linkNode != null && foundGroupLink == false){
+			log.debug(r,hnm,"has a group but the link was not found, should only happen after split of zero-length-segment");
 		}
 		if (oldRoad == r){
 			if (hnm.getDistance() > MAX_DISTANCE_TO_ROAD + 2.5 && oldDist <= MAX_DISTANCE_TO_ROAD ){

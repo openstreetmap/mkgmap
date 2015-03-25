@@ -51,7 +51,7 @@ public class HousenumberMatch {
 	// distance in m between closest point on road and the point that is found in the address search
 	private double searchDist = Double.NaN;
 	private boolean isFarDuplicate;
-	private HousenumberGroup block;
+	private HousenumberGroup group;
 	private List<MapRoad> alternativeRoads;
 	private int intervalInfoRefs; // counter
 	
@@ -375,11 +375,11 @@ public class HousenumberMatch {
 	}
 
 	public void setGroup(HousenumberGroup housenumberBlock) {
-		this.block = housenumberBlock;
+		this.group = housenumberBlock;
 	}
 
-	public HousenumberGroup getBlock() {
-		return block;
+	public HousenumberGroup getGroup() {
+		return group;
 	}
 
 	public void addAlternativeRoad(MapRoad road2) {
@@ -409,6 +409,26 @@ public class HousenumberMatch {
 		if (intervalInfoRefs > 0)
 			--intervalInfoRefs;
 	}
-	
+
+	public boolean isDirectlyConnected(HousenumberMatch other){
+		if (getElement() instanceof Way && other.getElement() instanceof Way){
+			List<Coord> s1 = ((Way) getElement()).getPoints();
+			List<Coord> s2 = ((Way) other.getElement()).getPoints();
+			for (int i = 0; i+1 < s1.size(); i++){
+			    Coord co = s1.get(i);
+			    co.setPartOfShape2(false);
+			}
+			for (int i = 0; i+1 < s2.size(); i++){
+			    Coord co = s2.get(i);
+			    co.setPartOfShape2(true);
+			}
+			for (int i = 0; i+1 < s1.size(); i++){
+			    Coord co = s1.get(i);
+			    if (co.isPartOfShape2())
+			    	return true;
+			}
+		}
+		return false;
+	}
 }
 
