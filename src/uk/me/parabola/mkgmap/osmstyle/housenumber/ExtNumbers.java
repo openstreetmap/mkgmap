@@ -405,11 +405,10 @@ public class ExtNumbers {
 					continue;
 				if (hnm.getSegment() < startInRoad || hnm.getSegment() >= endInRoad){
 					log.error("internal error, house has wrong segment",getRoad(),"house",hnm,hnm.getElement().toBrowseURL());
-					//assert false : "internal error " + getRoad() + " " + getNumbers() + " " + leftHouses + " " + rightHouses; 
 				}
 				if (hnm.getDistance() == Double.NaN || hnm.getDistance() > HousenumberGenerator.MAX_DISTANCE_TO_ROAD + 10){
-					log.error("distance to road too large, road",getRoad(),"house",hnm,hnm.getElement().toBrowseURL());
-					//assert false : "internal error " + getRoad() + " " + getNumbers() + " " + leftHouses + " " + rightHouses;
+					if (hnm.getGroup() == null)
+						log.error("distance to road too large, road",getRoad(),"house",hnm,hnm.getElement().toBrowseURL());
 				}
 			}
 		}

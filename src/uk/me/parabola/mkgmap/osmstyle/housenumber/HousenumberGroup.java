@@ -46,6 +46,7 @@ public class HousenumberGroup {
 	HousenumberMatch farthestHouseToRoad;
 	int odd,even;
 	Coord linkNode;
+	boolean findSegmentWasCalled;
 	
 	public HousenumberGroup(HousenumberRoad hnr, List<HousenumberMatch> housesToUse) {
 		this.hnr = hnr;
@@ -102,6 +103,7 @@ public class HousenumberGroup {
 			log.error("internal error: group is not valid:",this);
 			return false;
 		}
+		findSegmentWasCalled = true;
 		List<Coord> points = getRoad().getPoints();
 		Coord point = null;
 		if (minSeg != maxSeg){
@@ -175,14 +177,17 @@ public class HousenumberGroup {
 	}
 
 	public boolean verify(){
+		if (findSegmentWasCalled)
+			return true;
+		
 		if (minSeg < 0 || maxSeg < 0)
 			return false;
 		int step = 1;
 		if (odd == 0 || even == 0)
 			step = 2;
-		boolean isOK = false;
+		boolean ok = false;
 		if (usedNumbers.size() == (maxNum - minNum) / step + 1)
-			isOK = true;
+			ok = true;
 
 		// final check: 
 		double deltaDist = Math.abs(closestHouseToRoad.getDistance() - farthestHouseToRoad.getDistance());
@@ -190,17 +195,13 @@ public class HousenumberGroup {
 			// more than two houses: make sure that they are really not parallel to the road 
 			// for each house we calculate 3m so that a group is kept if it forms an angle of 45° or more
 			// with the road, presuming that the road is rather straight
-			isOK = false;
-		}
-		if (farthestHouseToRoad.getDistance() > HousenumberGenerator.MAX_DISTANCE_TO_ROAD){
-			log.debug("distance of farthest house is too large, group is not used");
-			isOK = false;
+			ok = false;
 		}
 		for (HousenumberMatch hnm : houses){
 			// forget the group, it will not improve search
-			hnm.setGroup(isOK ? this : null);
+			hnm.setGroup(ok ? this : null);
 		}
-		return isOK;
+		return ok;
 	}
 	
 	public MapRoad getRoad(){
@@ -208,9 +209,10 @@ public class HousenumberGroup {
 	}
 	
 	private final static double CLOSE_HOUSES_DIST = 10;
-	public static boolean housesFormAGroup(HousenumberMatch hnm1,
-			HousenumberMatch hnm2) {
+	public static boolean housesFormAGroup(HousenumberMatch hnm1, HousenumberMatch hnm2) {
 		assert hnm1.getRoad() == hnm2.getRoad();
+		
+
 		if (hnm1.getSegment() > hnm2.getSegment()){
 			HousenumberMatch help = hnm1;
 			hnm1 = hnm2;
@@ -220,8 +222,9 @@ public class HousenumberGroup {
 		if (distBetweenHouses == 0)
 			return true;
 		double minDistToRoad = Math.min(hnm1.getDistance(), hnm2.getDistance());
-		double deltaDistToRoad = Math.abs(hnm1.getDistance() - hnm2.getDistance());
+		double maxDistToRoad = Math.max(hnm1.getDistance(), hnm2.getDistance());
 		double distOnRoad = hnm2.getDistOnRoad(hnm1);
+		
 		if (hnm1.getSegment() != hnm2.getSegment()){
 			if (minDistToRoad > 40 && distBetweenHouses < CLOSE_HOUSES_DIST)
 				return true;
@@ -251,12 +254,13 @@ public class HousenumberGroup {
 		
 		// two houses form a group when the distance on road is short
 		// how short? The closer the houses are to the road, the shorter
-		double toleranceDistOnRoad = 5 + minDistToRoad / 10;
+		double toleranceDistOnRoad = 5 + maxDistToRoad/ 10;
 		
 		if (distOnRoad > toleranceDistOnRoad){
 			return false;
 		}
 		
+		double deltaDistToRoad = maxDistToRoad - minDistToRoad;
 		double ratio2 = deltaDistToRoad / distBetweenHouses;
 		// a ratio2 near or higher 1 means that the two houses and the closest point on the 
 		// road are on a straight line
@@ -306,11 +310,18 @@ public class HousenumberGroup {
 	}
 
 
-	public void recalcPositions(){
+	public boolean recalcPositions(){
 		List<HousenumberMatch> saveHouses = new ArrayList<>(houses);
 		reset();
 		for (HousenumberMatch hnm : saveHouses)
 			addHouse(hnm);
+		if (!verify()){
+			for (HousenumberMatch hnm : houses){
+				HousenumberGenerator.findClosestRoadSegment(hnm, getRoad());
+			}
+			return false;
+		}
+		return true;
 	}
 
 	private void reset() {

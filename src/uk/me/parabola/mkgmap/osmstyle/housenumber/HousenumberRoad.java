@@ -36,7 +36,6 @@ public class HousenumberRoad {
 	private final MapRoad road;
 	private ExtNumbers extNumbersHead;
 	private final List<HousenumberMatch> houseNumbers;
-	private List<HousenumberGroup> groups = new ArrayList<>();
 	private boolean changed;
 	private boolean isRandom;
 
@@ -130,6 +129,8 @@ public class HousenumberRoad {
 	 * @param rightNumbers
 	 */
 	private void detectGroups(List<HousenumberMatch> leftNumbers, List<HousenumberMatch> rightNumbers) {
+		List<HousenumberGroup> groups = new ArrayList<>();
+
 		for (int side = 0; side < 2; side++){
 			boolean left = side == 0;
 			List<HousenumberMatch> houses = left ? leftNumbers : rightNumbers;
@@ -147,28 +148,29 @@ public class HousenumberRoad {
 						group = new HousenumberGroup(this, houses.subList(j-1, j+1));
 				} else {
 					if (group.tryAddHouse(hnm) == false){
-						useVerifiedGroup(group);
+						if(group.verify())
+							groups.add(group);
 						group = null;
 					}
 				}
 			}
-			if (group != null){
-				useVerifiedGroup(group);
+			if (group != null && group.verify()){
+				groups.add(group);
 			}
 		}
 		if (groups.isEmpty())
 			return;
 		boolean nodesAdded = false;
+		
 		for (HousenumberGroup group : groups){
 			int oldNumPoints = getRoad().getPoints().size(); 
 			if (nodesAdded){
-				group.recalcPositions();
-				if (group.verify() == false)
+				if (group.recalcPositions() == false)
 					continue;
 			}
 			if (group.findSegment(streetName)){
 				nodesAdded = true;
-				log.debug("added",getRoad().getPoints().size() - oldNumPoints,"number node(s) for group",group);
+				log.debug("added",getRoad().getPoints().size() - oldNumPoints,"number node(s) for group",group,"in road",getRoad());
 				oldNumPoints = getRoad().getPoints().size();
 				road.setInternalNodes(true);
 				int minSeg = group.minSeg;
@@ -177,17 +179,11 @@ public class HousenumberRoad {
 						HousenumberGenerator.findClosestRoadSegment(hnm, getRoad());
 				}
 				group.recalcPositions();
-				
 			}
 		}
 		return;
 	}
 
-	private void useVerifiedGroup(HousenumberGroup group){
-		if(group.verify())
-			groups.add(group);
-	}
-	
 	/**
 	 */
 	public void checkIntervals(){
@@ -538,11 +534,6 @@ public class HousenumberRoad {
 		}
 	}
 
-	public void addGroup(HousenumberGroup group){
-		groups.add(group);
-	}
-	
-	
 	public String toString(){
 		return getRoad().toString() + " " + houseNumbers;
 	}
