@@ -68,7 +68,7 @@ public class HousenumberRoad {
 				rightNumbers.add(hr);
 			}
 		}
-		detectGroups(0,leftNumbers, rightNumbers);
+		detectGroups(leftNumbers, rightNumbers);
 		Collections.sort(leftNumbers, new HousenumberMatchByPosComparator());
 		Collections.sort(rightNumbers, new HousenumberMatchByPosComparator());
 		
@@ -129,7 +129,7 @@ public class HousenumberRoad {
 	 * @param leftNumbers
 	 * @param rightNumbers
 	 */
-	private void detectGroups(int depth, List<HousenumberMatch> leftNumbers, List<HousenumberMatch> rightNumbers) {
+	private void detectGroups(List<HousenumberMatch> leftNumbers, List<HousenumberMatch> rightNumbers) {
 		for (int side = 0; side < 2; side++){
 			boolean left = side == 0;
 			List<HousenumberMatch> houses = left ? leftNumbers : rightNumbers;
@@ -143,58 +143,49 @@ public class HousenumberRoad {
 					int deltaNum = predHnm.getHousenumber() - hnm.getHousenumber();
 					if (Math.abs(deltaNum) > 2)
 						continue;
-					boolean buildGroup = false;
-					if (depth > 0 && hnm.getGroup() != null && hnm.getGroup() == predHnm.getGroup()){
-						// these two houses were detected as a group in a previous loop, group them again
-						buildGroup = true; 
-					}
-					else if (HousenumberGroup.housesFormAGroup(predHnm, hnm))
-						buildGroup = true;
-					if (buildGroup)
+					if (HousenumberGroup.housesFormAGroup(predHnm, hnm))
 						group = new HousenumberGroup(this, houses.subList(j-1, j+1));
 				} else {
 					if (group.tryAddHouse(hnm) == false){
-						useGroup(depth, group);
+						useVerifiedGroup(group);
 						group = null;
 					}
 				}
 			}
 			if (group != null){
-				useGroup(depth, group);
+				useVerifiedGroup(group);
 			}
 		}
-		boolean nodeAdded = false;
-		int oldNumPoints = getRoad().getPoints().size();
+		if (groups.isEmpty())
+			return;
+		boolean nodesAdded = false;
 		for (HousenumberGroup group : groups){
-			nodeAdded = group.findSegment(streetName);
-			if(nodeAdded){
-				log.debug("added",getRoad().getPoints().size() - oldNumPoints,"number nodes for group",group);
+			int oldNumPoints = getRoad().getPoints().size(); 
+			if (nodesAdded){
+				group.recalcPositions();
+				if (group.verify() == false)
+					continue;
+			}
+			if (group.findSegment(streetName)){
+				nodesAdded = true;
+				log.debug("added",getRoad().getPoints().size() - oldNumPoints,"number node(s) for group",group);
+				oldNumPoints = getRoad().getPoints().size();
 				road.setInternalNodes(true);
-				extNumbersHead = null;
-				groups.clear();
-				isRandom = false;
-				
+				int minSeg = group.minSeg;
 				for (HousenumberMatch hnm : this.houseNumbers){
-					if (hnm.getSegment() >= group.minSeg)
+					if (hnm.getSegment() >= minSeg)
 						HousenumberGenerator.findClosestRoadSegment(hnm, getRoad());
 				}
-				break;
+				group.recalcPositions();
 				
 			}
-		}
-		if (nodeAdded){
-			// recurse
-			detectGroups(depth+1, leftNumbers, rightNumbers);
 		}
 		return;
 	}
 
-	private void useGroup(int depth, HousenumberGroup group){
-		if(group.verify()){
+	private void useVerifiedGroup(HousenumberGroup group){
+		if(group.verify())
 			groups.add(group);
-			if (/*depth == 0 && */log.isDebugEnabled())
-				log.debug("depth=",depth,"using zero-length segment for group:",streetName,group);
-		}
 	}
 	
 	/**

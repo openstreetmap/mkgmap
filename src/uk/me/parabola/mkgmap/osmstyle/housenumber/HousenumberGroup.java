@@ -38,17 +38,18 @@ public class HousenumberGroup {
 	private static final Logger log = Logger.getLogger(HousenumberGroup.class);
 	final HousenumberRoad hnr;
 	final List<HousenumberMatch> houses = new ArrayList<>();
-	Int2IntOpenHashMap usedNumbers = new Int2IntOpenHashMap();
-	int minNum = Integer.MAX_VALUE, maxNum = -1;
-	int minSeg = Integer.MAX_VALUE, maxSeg = -1;
-	double minFrac = Double.NaN, maxFrac = Double.NaN;
-	HousenumberMatch closestHouseToRoad = null;
-	HousenumberMatch farthestHouseToRoad = null;
+	Int2IntOpenHashMap usedNumbers;
+	int minNum,  maxNum;
+	int minSeg , maxSeg;
+	double minFrac, maxFrac;
+	HousenumberMatch closestHouseToRoad ;
+	HousenumberMatch farthestHouseToRoad;
 	int odd,even;
 	Coord linkNode;
 	
 	public HousenumberGroup(HousenumberRoad hnr, List<HousenumberMatch> housesToUse) {
 		this.hnr = hnr;
+		reset();
 		for (HousenumberMatch hnm : housesToUse){
 			addHouse(hnm);
 		}
@@ -89,6 +90,8 @@ public class HousenumberGroup {
 		}
 		houses.add(hnm);
 	}
+	
+	private static final double MIN_DISTANCE_TO_EXISTING_POINT = 7.5;
 	
 	/**
 	 * find place for the group, change to or add number nodes
@@ -134,16 +137,16 @@ public class HousenumberGroup {
 		double hard1Dist = c1.distance(point);
 		double hard2Dist = c2.distance(point);
 
-		if (minFrac <= 0 || hard1Dist <= 10)
+		if (minFrac <= 0 || hard1Dist <= MIN_DISTANCE_TO_EXISTING_POINT)
 			point = c1;
-		else if (maxFrac >= 1 || hard2Dist <= 10)
+		else if (maxFrac >= 1 || hard2Dist <= MIN_DISTANCE_TO_EXISTING_POINT)
 			point = c2;
 		else {
 			Coord optPoint = ExtNumbers.rasterLineNearPoint(c1, c2, point, true);
 			double opt1Dist = c1.distance(optPoint);
 			double opt2Dist = c2.distance(optPoint);
 			point = optPoint;
-			if (Math.min(opt1Dist, opt2Dist) <= 10){
+			if (Math.min(opt1Dist, opt2Dist) <= MIN_DISTANCE_TO_EXISTING_POINT){
 				point = (opt1Dist < opt2Dist) ? c1 : c2;
 			}
 			else {
@@ -183,11 +186,11 @@ public class HousenumberGroup {
 
 		// final check: 
 		double deltaDist = Math.abs(closestHouseToRoad.getDistance() - farthestHouseToRoad.getDistance());
-		if (houses.size() == 2){
-			if (farthestHouseToRoad.getDistance() < 30 && houses.get(0).getDistOnRoad(houses.get(1)) > 5)
-				isOK = false;
-		} else if (deltaDist < houses.size() * 3 ){
-				isOK = false;
+		if (houses.size() > 2 &&  deltaDist < houses.size() * 3 ){
+			// more than two houses: make sure that they are really not parallel to the road 
+			// for each house we calculate 3m so that a group is kept if it forms an angle of 45° or more
+			// with the road, presuming that the road is rather straight
+			isOK = false;
 		}
 		if (farthestHouseToRoad.getDistance() > HousenumberGenerator.MAX_DISTANCE_TO_ROAD){
 			log.debug("distance of farthest house is too large, group is not used");
@@ -204,9 +207,7 @@ public class HousenumberGroup {
 		return hnr.getRoad();
 	}
 	
-	public String toString(){
-		return houses.toString();
-	}
+	private final static double CLOSE_HOUSES_DIST = 10;
 	public static boolean housesFormAGroup(HousenumberMatch hnm1,
 			HousenumberMatch hnm2) {
 		assert hnm1.getRoad() == hnm2.getRoad();
@@ -219,23 +220,18 @@ public class HousenumberGroup {
 		if (distBetweenHouses == 0)
 			return true;
 		double minDistToRoad = Math.min(hnm1.getDistance(), hnm2.getDistance());
-		double maxDistToRoad = Math.max(hnm1.getDistance(), hnm2.getDistance());
 		double deltaDistToRoad = Math.abs(hnm1.getDistance() - hnm2.getDistance());
-		if (maxDistToRoad < 20 && distBetweenHouses > 5)
-			return false;
 		double distOnRoad = hnm2.getDistOnRoad(hnm1);
 		if (hnm1.getSegment() != hnm2.getSegment()){
-			if (minDistToRoad > 40 && distBetweenHouses < 10)
+			if (minDistToRoad > 40 && distBetweenHouses < CLOSE_HOUSES_DIST)
 				return true;
 			
 			// not the same segment, the distance on road may be misleading when segments have a small angle 
 			// and the connection point is a bit more away 
-//			List<Coord> roadPoints = hnm1.getRoad().getPoints();
 			Coord c1 = hnm1.getLocation();
 			Coord c2 = hnm2.getLocation();
 			Coord closest1 = hnm1.getClosestPointOnRoad();
 			Coord closest2 = hnm2.getClosestPointOnRoad();
-//			GpxCreator.createGpx("e:/ld/test", roadPoints, Arrays.asList(c1,c2,closest1,closest2));
 			double frac1 = HousenumberGenerator.getFrac(closest1, closest2, c1);
 			double frac2 = HousenumberGenerator.getFrac(closest1, closest2, c2);
 			double segLen = closest1.distance(closest2);
@@ -245,7 +241,7 @@ public class HousenumberGroup {
 			if (frac2 > 1) frac2 = 1;
 			double distOnRoadSimple = (Math.max(frac1, frac2) - Math.min(frac1, frac2)) * segLen;
 			if (distOnRoadSimple != distOnRoad){
-				log.debug("distOnRoad recalculation:", hnm1.getRoad(),hnm1,hnm2,distOnRoad,"--->",distOnRoadSimple);
+//				log.debug("distOnRoad recalculation:", hnm1.getRoad(),hnm1,hnm2,distOnRoad,"--->",distOnRoadSimple);
 				distOnRoad = distOnRoadSimple;
 			}
 		}
@@ -260,7 +256,6 @@ public class HousenumberGroup {
 		if (distOnRoad > toleranceDistOnRoad){
 			return false;
 		}
-		
 		
 		double ratio2 = deltaDistToRoad / distBetweenHouses;
 		// a ratio2 near or higher 1 means that the two houses and the closest point on the 
@@ -295,10 +290,6 @@ public class HousenumberGroup {
 		}
 			
 		if (housesFormAGroup(hnm, last) == false){
-//			double distBetweenHouses = last.getLocation().distance(hnm.getLocation());
-//			if (distBetweenHouses < hnm.getDistance() && distBetweenHouses < 15 && hnm.getDistance() > 30 ){
-//				long dd = 4;
-//			}
 			return false;
 		}
 		if (houses.size() > 1){
@@ -314,4 +305,28 @@ public class HousenumberGroup {
 		return true;
 	}
 
+
+	public void recalcPositions(){
+		List<HousenumberMatch> saveHouses = new ArrayList<>(houses);
+		reset();
+		for (HousenumberMatch hnm : saveHouses)
+			addHouse(hnm);
+	}
+
+	private void reset() {
+		usedNumbers = new Int2IntOpenHashMap();
+		minNum = Integer.MAX_VALUE; 
+		maxNum = -1;
+		minSeg = Integer.MAX_VALUE;
+		maxSeg = -1;
+		minFrac = maxFrac = Double.NaN;
+		closestHouseToRoad = null;
+		farthestHouseToRoad = null;
+		odd = even = 0;
+		houses.clear();
+	}
+
+	public String toString(){
+		return houses.toString();
+	}
 }
