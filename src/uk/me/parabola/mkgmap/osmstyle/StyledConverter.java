@@ -461,17 +461,24 @@ public class StyledConverter implements OsmConverter {
 		Way cycleWay = new Way(way.getId(), way.getPoints());
 		cycleWay.copyTags(way);
 
-		String name = way.getTag("name");
-		if(name != null)
-			name += " (cycleway)";
-		else
-			name = "cycleway";
-		cycleWay.addTag("name", name);
 		cycleWay.addTag("access", "no");
 		cycleWay.addTag("bicycle", "yes");
-		cycleWay.addTag("foot", "no");
 		cycleWay.addTag("mkgmap:synthesised", "yes");
 		cycleWay.addTag(onewayTagKey, "no");
+		// remove explicit access tags 
+		cycleWay.deleteTag("foot");
+		cycleWay.deleteTag("motorcar");
+		cycleWay.deleteTag("goods");
+		cycleWay.deleteTag("hgv");
+		cycleWay.deleteTag("bus");
+		cycleWay.deleteTag("taxi");
+		cycleWay.deleteTag("emergency");
+		cycleWay.deleteTag("vehicle");
+		cycleWay.deleteTag("motor_vehicle");
+		cycleWay.deleteTag("carpool");
+		cycleWay.deleteTag("motorcycle");
+		cycleWay.deleteTag("psv");
+		cycleWay.deleteTag("truck");
 		return cycleWay;
 	}
 	
