@@ -11,18 +11,20 @@
  * General Public License for more details.
  */
 
-package uk.me.parabola.mkgmap.general;
+package uk.me.parabola.util;
 
 import static org.junit.Assert.assertFalse;
 import org.junit.Test;
 
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.util.KdTree;
 
-public class MapPointKdTreeTest {
+public class KdTreeTest {
 
 	@Test
 	public void TestFindNextPoint(){
-        MapPointKdTree t = new MapPointKdTree( );
+        KdTree<MapPoint> t = new KdTree<>( );
         
         int [][]test = {{70,20}, {50,40}, {90,60}, {20,30}, {40,70}, {80,10}, {-10,20}, {-30,-40} }  ;
         Coord []testCoords = new Coord[test.length]; 
@@ -48,7 +50,7 @@ public class MapPointKdTreeTest {
         			}
         		}
         		toFind.setLocation(co);
-        		MapPoint next = t.findNextPoint(toFind);
+        		MapPoint next = (MapPoint) t.findNextPoint(toFind);
     			double dist =  next.getLocation().distanceInDegreesSquared(co);
     			double delta = Math.abs(dist - minDist); 
     			// if this test fails because 

@@ -11,11 +11,10 @@
  * General Public License for more details.
  */
 
-package uk.me.parabola.mkgmap.general;
+package uk.me.parabola.util;
 
 
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.mkgmap.general.MapPoint;
 
 
 /**
@@ -25,15 +24,15 @@ import uk.me.parabola.mkgmap.general.MapPoint;
  * @author GerdP
  *
  */
-public class MapPointKdTree {
+public class KdTree <T extends Locatable> {
 	private static final boolean ROOT_NODE_USES_LONGITUDE = false;
 	
-	private static class KdNode {
-		MapPoint point;
+	private class KdNode {
+		T point;
 		KdNode left;
 		KdNode right;
 
-		KdNode(MapPoint p) {
+		KdNode(T p) {
 			point = p;
 		}
 	}
@@ -43,13 +42,13 @@ public class MapPointKdTree {
     private int size;
 
     // helpers 
-    private MapPoint nextPoint ;
+    private T nextPoint ;
     private double minDist;
 
     /**
      *  create an empty tree
      */
-	public MapPointKdTree() {
+	public KdTree() {
 		root = null;
 	}
 
@@ -63,7 +62,7 @@ public class MapPointKdTree {
 	 * Start the add action with the root
 	 * @param toAdd
 	 */
-	public void add(MapPoint toAdd) {
+	public void add(T toAdd) {
 		size++;
 		root = add(toAdd, root, ROOT_NODE_USES_LONGITUDE);
 	}
@@ -93,7 +92,7 @@ public class MapPointKdTree {
 	 * 		<code>false</code> the tree node uses latitude for comparison
 	 * @return the subtree root node after insertion
 	 */
-    private KdNode add( MapPoint toAdd, KdNode tree,  boolean useLongitude){
+    private KdNode add( T toAdd, KdNode tree,  boolean useLongitude){
         if( tree == null ) {
             tree = new KdNode( toAdd );
         } else {
@@ -111,7 +110,7 @@ public class MapPointKdTree {
 	 * @param p the point to search for
 	 * @return the point with shortest distance to <var>p</var>
 	 */
-	public MapPoint findNextPoint(MapPoint p) {
+	public T findNextPoint(T p) {
 		// reset 
 		minDist = Double.MAX_VALUE;
 		nextPoint = null;
@@ -120,7 +119,7 @@ public class MapPointKdTree {
 		return findNextPoint(p, root, ROOT_NODE_USES_LONGITUDE);
 	}
 
-	private MapPoint findNextPoint(MapPoint p, KdNode tree, boolean useLongitude) {
+	private T findNextPoint(T p, KdNode tree, boolean useLongitude) {
 		boolean continueWithLeft = false;
 		if (tree == null)
 			return nextPoint;
