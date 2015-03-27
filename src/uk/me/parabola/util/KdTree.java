@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012.
+ * Copyright (C) 2014 Gerd Petermann
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 or
@@ -10,7 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
  */
-
 package uk.me.parabola.util;
 
 
@@ -21,7 +20,7 @@ import uk.me.parabola.imgfmt.app.Coord;
  * A kd-tree (2D) implementation to solve the nearest neighbor problem.
  * The tree is not explicitly balanced.
  * 
- * @author GerdP
+ * @author Gerd Petermann
  *
  */
 public class KdTree <T extends Locatable> {
@@ -38,7 +37,7 @@ public class KdTree <T extends Locatable> {
 	}
 	// the tree root
     private KdNode root;
-    // number of saved MapPoint objects  
+    // number of saved objects  
     private int size;
 
     // helpers 
