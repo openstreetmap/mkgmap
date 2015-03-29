@@ -86,6 +86,16 @@ public class Numbers {
 		return leftNumberStyle;
 	}
 
+	public NumberStyle getNumberStyle(boolean left) {
+		return (left) ? leftNumberStyle : rightNumberStyle;
+	}
+	public int getStart(boolean left) {
+		return (left) ? leftStart: rightStart;
+	}
+	public int getEnd(boolean left) {
+		return (left) ? leftEnd: rightEnd;
+	}
+	
 	public void setLeftNumberStyle(NumberStyle leftNumberStyle) {
 		this.leftNumberStyle = leftNumberStyle;
 	}
@@ -257,5 +267,9 @@ public class Numbers {
 			return false;
 		return true;
 		
+	}
+	
+	public boolean isEmpty(){
+		return leftNumberStyle == NumberStyle.NONE && rightNumberStyle == NumberStyle.NONE;
 	}
 }

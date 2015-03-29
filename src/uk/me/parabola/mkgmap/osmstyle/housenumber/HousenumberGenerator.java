@@ -34,7 +34,6 @@ import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.net.NumberStyle;
 import uk.me.parabola.imgfmt.app.net.Numbers;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LineAdder;
@@ -1207,7 +1206,7 @@ public class HousenumberGenerator {
 		Numbers last = null;
 		Numbers firstMatch = null;
 		for (Numbers numbers : r.getNumbers()){
-			if (numbers.getLeftNumberStyle() == NumberStyle.NONE && numbers.getRightNumberStyle() == NumberStyle.NONE)
+			if (numbers.isEmpty())
 				continue;
 			int n = numbers.countMatches(hn);
 			if (n > 0 && firstMatch == null)

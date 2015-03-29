@@ -258,11 +258,11 @@ public class ExtNumbers {
 			boolean increasing = false; // from low to high
 			if (start == end && highestNum - lowestNum != 0){
 				if (prev != null){
-					int lastEnd = left ?  prev.getNumbers().getLeftEnd() : prev.getNumbers().getRightEnd();
+					int lastEnd = prev.getNumbers().getEnd(left );
 					if (lastEnd <= lowestNum)
 						increasing = true;
 				} else if (next != null){
-					int nextStart = left ? next.getNumbers().getLeftStart() : next.getNumbers().getRightStart();
+					int nextStart = next.getNumbers().getStart(left);
 					if (highestNum < nextStart)
 						increasing = true;
 				} else {
@@ -485,11 +485,7 @@ public class ExtNumbers {
 		List<HousenumberMatch> before = new ArrayList<>();
 		List<HousenumberMatch> after = new ArrayList<>();
 		List<HousenumberMatch> toSplit = left ? leftHouses : rightHouses;
-		boolean inc;
-		if (left)
-			inc = (origNumbers.getLeftEnd() > origNumbers.getLeftStart());
-		else 
-			inc = (origNumbers.getRightEnd() > origNumbers.getRightStart());
+		boolean inc = (origNumbers.getEnd(left) > origNumbers.getStart(left));
 		BitSet segmentsBefore = new BitSet();
 		BitSet segmentsAfter = new BitSet();
 		for (HousenumberMatch hnm : toSplit){
@@ -499,7 +495,7 @@ public class ExtNumbers {
 			} else if (hnm.getHousenumber() > badNum){
 				target = inc ? after : before;
 			} else {
-				int s = left ? origNumbers.getLeftStart() : origNumbers.getRightStart();
+				int s = origNumbers.getStart(left);
 				target = (s == badNum) ? before : after;
 			}
 			target.add(hnm);
@@ -1076,15 +1072,15 @@ public class ExtNumbers {
 		int[] firstBad = {-1,-1};
 		int[] lastBad = {-1,-1};
 		for (int side = 0; side < 2; side++){
-			boolean left = side == 0;
-			int step = 1;
-			if (left && ivl.getLeftNumberStyle() != NumberStyle.BOTH || !left && ivl.getRightNumberStyle() != NumberStyle.BOTH)
-				step = 2;
-			int s = left ? ivl.getLeftStart() : ivl.getRightStart();
-			int e = left ? ivl.getLeftEnd() : ivl.getRightEnd();
-			int s2 = !left ? ivl.getLeftStart() : ivl.getRightStart();
-			int e2 = !left ? ivl.getLeftEnd() : ivl.getRightEnd();
-			NumberStyle style2 = !left ? ivl.getLeftNumberStyle() : ivl.getRightNumberStyle(); 
+			boolean left = (side == 0);
+			int step = 2;
+			if (ivl.getNumberStyle(left) == NumberStyle.BOTH)
+				step = 1;
+			int s = ivl.getStart(left);
+			int e = ivl.getEnd(left);
+			int s2 = ivl.getStart(!left);
+			int e2 = ivl.getEnd(!left );
+			NumberStyle style2 = ivl.getNumberStyle(!left); 
 			for (int hn = Math.min(s, e); hn <= Math.max(s, e); hn += step){
 				if (style2 == NumberStyle.EVEN && hn % 2 == 1 || style2 == NumberStyle.ODD && hn % 2 == 0 ){
 					if (firstBad[side] < 0)
@@ -1202,18 +1198,18 @@ public class ExtNumbers {
 		Numbers ivl2 = en2.getNumbers();
 		for (int i = 0; i < 2; i++){
 			boolean left1 = i == 0;
-			NumberStyle style1 = left1 ? ivl1.getLeftNumberStyle() : ivl1.getRightNumberStyle();
+			NumberStyle style1 = ivl1.getNumberStyle(left1);
 			if (style1 == NumberStyle.NONE)
 				continue;
-			int s1 = left1 ?  ivl1.getLeftStart() : ivl1.getRightStart();
-			int e1 = left1 ? ivl1.getLeftEnd() : ivl1.getRightEnd();
+			int s1 = ivl1.getStart(left1);
+			int e1 = ivl1.getEnd(left1);
 			for (int j = 0; j < 2; j++){
-				boolean left2 = j == 0;
-				NumberStyle style2 = left2 ? ivl2.getLeftNumberStyle() : ivl2.getRightNumberStyle();
+				boolean left2 = (j == 0);
+				NumberStyle style2 = ivl2.getNumberStyle(left2);
 				if (style2 == NumberStyle.NONE)
 					continue;
-				int s2 = left2 ? ivl2.getLeftStart() : ivl2.getRightStart();
-				int e2 = left2 ? ivl2.getLeftEnd() : ivl2.getRightEnd();
+				int s2 = ivl2.getStart(left2);
+				int e2 = ivl2.getEnd(left2);
 				boolean ok = true;
 				if (style1 == style2 || style1 == NumberStyle.BOTH || style2 == NumberStyle.BOTH)
 					ok = checkIntervalBoundaries(s1, e1, s2, e2, left1 == left2 && en1.getRoad() == en2.getRoad());
@@ -1264,38 +1260,48 @@ public class ExtNumbers {
 
 						if (n == s1 || n == e1) {
 							Numbers modNumbers = en1.simulateRemovalOfHouseNumber(n, left1);
-							int s1Mod = left1 ? modNumbers.getLeftStart() : modNumbers.getRightStart();
-							int e1Mod = left1 ? modNumbers.getLeftEnd() : modNumbers.getRightEnd();
-							NumberStyle modStyle = left1 ? modNumbers.getLeftNumberStyle() : modNumbers.getRightNumberStyle();
+							int s1Mod = modNumbers.getStart(left1);
+							int e1Mod = modNumbers.getEnd(left1);
+							NumberStyle modStyle = modNumbers.getNumberStyle(left1);
 							boolean ok2 = true;
 							if (modStyle == style2 || modStyle == NumberStyle.BOTH || style2 == NumberStyle.BOTH)
 								ok2 = checkIntervalBoundaries(s1Mod, e1Mod, s2, e2, left1 == left2 && en1.getRoad() == en2.getRoad());
 							if (ok2){
-								// the modified intervals don't overlap if hnm is removed from en1
+								// the intervals don't overlap if hnm is removed from en1
 								if (houses1.size() > 1)
 									possibleRemoves1.add(hnm);
 								
 								// check if it fits into en2
-								if (hnm.getHousenumber() <= Math.min(s2, e2) ||hnm.getHousenumber() >= Math.max(s2, e2))
-									continue;
-								boolean even = hnm.getHousenumber() % 2 == 0;
-								if (style2 == NumberStyle.EVEN && !even || style2 == NumberStyle.ODD && even)
-									continue;
-								HousenumberMatch test = new HousenumberMatch(hnm.getElement(), hnm.getHousenumber(), hnm.getSign());
-								HousenumberGenerator.findClosestRoadSegment(test, en2.getRoad(), en2.startInRoad, en2.endInRoad);
-								if (test.getDistance() <= HousenumberGenerator.MAX_DISTANCE_TO_ROAD){
+								HousenumberMatch test = checkMoveTo(hnm, en2, left2);
+								if (test.getRoad() != null){
 									double deltaDist = test.getDistance() - hnm.getDistance(); 
 									if (deltaDist < smallestDelta){
-										Coord c1 = en2.getRoad().getPoints().get(test.getSegment());
-										Coord c2 = en2.getRoad().getPoints().get(test.getSegment() + 1);
-										if (c1.highPrecEquals(c2) || left2 == HousenumberGenerator.isLeft(c1, c2, hnm.getLocation())){
-											bestMoveMod = test;
-											bestMoveOrig = hnm;
-											smallestDelta = deltaDist;
-											bestRemove = en1;
-										}
+										bestMoveMod = test;
+										bestMoveOrig = hnm;
+										smallestDelta = deltaDist;
+										bestRemove = en1;
 									}
-								}
+								} 
+//								if (hnm.getHousenumber() <= Math.min(s2, e2) ||hnm.getHousenumber() >= Math.max(s2, e2))
+//									continue;
+//								boolean even = hnm.getHousenumber() % 2 == 0;
+//								if (style2 == NumberStyle.EVEN && !even || style2 == NumberStyle.ODD && even)
+//									continue;
+//								HousenumberMatch test = new HousenumberMatch(hnm.getElement(), hnm.getHousenumber(), hnm.getSign());
+//								HousenumberGenerator.findClosestRoadSegment(test, en2.getRoad(), en2.startInRoad, en2.endInRoad);
+//								if (test.getDistance() <= HousenumberGenerator.MAX_DISTANCE_TO_ROAD){
+//									double deltaDist = test.getDistance() - hnm.getDistance(); 
+//									if (deltaDist < smallestDelta){
+//										Coord c1 = en2.getRoad().getPoints().get(test.getSegment());
+//										Coord c2 = en2.getRoad().getPoints().get(test.getSegment() + 1);
+//										if (c1.highPrecEquals(c2) || left2 == HousenumberGenerator.isLeft(c1, c2, hnm.getLocation())){
+//											bestMoveMod = test;
+//											bestMoveOrig = hnm;
+//											smallestDelta = deltaDist;
+//											bestRemove = en1;
+//										}
+//									}
+//								}
 							}
 						}
 					}
@@ -1308,38 +1314,49 @@ public class ExtNumbers {
 
 						if (n == s2 || n == e2) {
 							Numbers modNumbers = en2.simulateRemovalOfHouseNumber(n, left2);
-							int s2Mod = left2 ? modNumbers.getLeftStart() : modNumbers.getRightStart();
-							int e2Mod = left2 ? modNumbers.getLeftEnd() : modNumbers.getRightEnd();
-							NumberStyle modStyle = left2 ? modNumbers.getLeftNumberStyle() : modNumbers.getRightNumberStyle();
+							int s2Mod = modNumbers.getStart(left2);
+							int e2Mod = modNumbers.getEnd(left2);
+							NumberStyle modStyle = modNumbers.getNumberStyle(left2);
 							boolean ok2 = true;
 							if (modStyle == style1 || modStyle == NumberStyle.BOTH || style1 == NumberStyle.BOTH)
-								ok2 = checkIntervalBoundaries(s1, e1, s2Mod, e2Mod, left1 == left2);
+								ok2 = checkIntervalBoundaries(s1, e1, s2Mod, e2Mod, left1 == left2 && en1.getRoad() == en2.getRoad());
 							if (ok2){
 								// the intervals don't overlap if hnm is removed from en2
 								if (houses2.size() > 1)
 									possibleRemoves2.add(hnm);
 								
+								
 								// check if it fits into en1
-								if (hnm.getHousenumber() <= Math.min(s1, e1) ||hnm.getHousenumber() >= Math.max(s1, e1))
-									continue;
-								boolean even = hnm.getHousenumber() % 2 == 0;
-								if (style1 == NumberStyle.EVEN && !even || style1 == NumberStyle.ODD && even)
-									continue;
-								HousenumberMatch test = new HousenumberMatch(hnm.getElement(), hnm.getHousenumber(), hnm.getSign());
-								HousenumberGenerator.findClosestRoadSegment(test, en1.getRoad(), en1.startInRoad, en1.endInRoad);
-								if (test.getDistance() <= HousenumberGenerator.MAX_DISTANCE_TO_ROAD){
+								HousenumberMatch test = checkMoveTo(hnm, en1, left1);
+								if (test.getRoad() != null){
 									double deltaDist = test.getDistance() - hnm.getDistance(); 
 									if (deltaDist < smallestDelta){
-										Coord c1 = en1.getRoad().getPoints().get(test.getSegment());
-										Coord c2 = en1.getRoad().getPoints().get(test.getSegment() + 1);
-										if (c1.highPrecEquals(c2) || left1 == HousenumberGenerator.isLeft(c1, c2, hnm.getLocation())){
-											bestMoveMod = test;
-											bestMoveOrig = hnm;
-											smallestDelta = deltaDist;
-											bestRemove = en2;
-										}
+										bestMoveMod = test;
+										bestMoveOrig = hnm;
+										smallestDelta = deltaDist;
+										bestRemove = en2;
 									}
-								}
+								} 								
+//								if (hnm.getHousenumber() <= Math.min(s1, e1) ||hnm.getHousenumber() >= Math.max(s1, e1))
+//									continue;
+//								boolean even = hnm.getHousenumber() % 2 == 0;
+//								if (style1 == NumberStyle.EVEN && !even || style1 == NumberStyle.ODD && even)
+//									continue;
+//								HousenumberMatch test = new HousenumberMatch(hnm.getElement(), hnm.getHousenumber(), hnm.getSign());
+//								HousenumberGenerator.findClosestRoadSegment(test, en1.getRoad(), en1.startInRoad, en1.endInRoad);
+//								if (test.getDistance() <= HousenumberGenerator.MAX_DISTANCE_TO_ROAD){
+//									double deltaDist = test.getDistance() - hnm.getDistance(); 
+//									if (deltaDist < smallestDelta){
+//										Coord c1 = en1.getRoad().getPoints().get(test.getSegment());
+//										Coord c2 = en1.getRoad().getPoints().get(test.getSegment() + 1);
+//										if (c1.highPrecEquals(c2) || left1 == HousenumberGenerator.isLeft(c1, c2, hnm.getLocation())){
+//											bestMoveMod = test;
+//											bestMoveOrig = hnm;
+//											smallestDelta = deltaDist;
+//											bestRemove = en2;
+//										}
+//									}
+//								}
 							}
 						}
 					}
@@ -1441,9 +1458,9 @@ public class ExtNumbers {
 							} else if (ivl2.countMatches(e1) > 0){
 								toSplit = en2;
 								splitNum = e1;
-							} else if ((left1 ? ivl1.getLeftNumberStyle() : ivl1.getRightNumberStyle()) == NumberStyle.BOTH){
+							} else if (ivl1.getNumberStyle(left1) == NumberStyle.BOTH){
 								toSplit = en1;
-							} else if ((left2 ? ivl2.getLeftNumberStyle() : ivl2.getRightNumberStyle()) == NumberStyle.BOTH){
+							} else if (ivl2.getNumberStyle(left2) == NumberStyle.BOTH){
 								toSplit = en2;
 							} else {
 								toSplit = (delta1 >= delta2) ? en1 : en2;
@@ -1474,6 +1491,36 @@ public class ExtNumbers {
 		return NOT_OK_KEEP;
 	}
 
+	
+	private static HousenumberMatch checkMoveTo(HousenumberMatch hnm, ExtNumbers other, boolean otherLeft){
+		HousenumberMatch test = new HousenumberMatch(hnm.getElement(), hnm.getHousenumber(), hnm.getSign());
+		Numbers otherIvl = other.getNumbers();
+		int oStart = otherIvl.getStart(otherLeft);
+		int oEnd = otherIvl.getEnd(otherLeft);
+		// check if it fits into en2
+		if (hnm.getHousenumber() <= Math.min(oStart, oEnd) ||hnm.getHousenumber() >= Math.max(oStart, oEnd))
+			return test;
+		boolean even = hnm.getHousenumber() % 2 == 0;
+		NumberStyle oStyle = otherIvl.getNumberStyle(otherLeft);
+		if (oStyle == NumberStyle.EVEN && !even || oStyle == NumberStyle.ODD && even)
+			return test;
+		HousenumberGenerator.findClosestRoadSegment(test, other.getRoad(), other.startInRoad, other.endInRoad);
+		
+		if (test.getDistance() <= HousenumberGenerator.MAX_DISTANCE_TO_ROAD){
+			Coord c1 = other.getRoad().getPoints().get(test.getSegment());
+			Coord c2 = other.getRoad().getPoints().get(test.getSegment() + 1);
+			if (c1.highPrecEquals(c2) || otherLeft == HousenumberGenerator.isLeft(c1, c2, hnm.getLocation())){
+				test.setLeft(otherLeft);
+				return test;
+			}
+		} else {
+			//TODO: check if we can attach the house to a group in the other road
+			long dd = 4;
+		}
+		test.setRoad(null);
+		return test;
+	} 	
+	
 	/**
 	 * Check the start and end values of two consecutive number intervals
 	 * for plausibility.
@@ -1541,7 +1588,7 @@ public class ExtNumbers {
 	}
 
 	public boolean hasNumbers(){
-		return getNumbers().getLeftNumberStyle() != NumberStyle.NONE || getNumbers().getRightNumberStyle() != NumberStyle.NONE;
+		return getNumbers().isEmpty() == false;
 	}
 	
 	public String toString(){
@@ -1617,10 +1664,10 @@ public class ExtNumbers {
 		Numbers ivl = getNumbers();
 		for (int side = 0; side < 2; side++){
 			boolean left = side == 0;
-			NumberStyle style = (left) ? ivl.getLeftNumberStyle() : ivl.getRightNumberStyle();
+			NumberStyle style = ivl.getNumberStyle(left);
 			if (style != NumberStyle.NONE){
-				int start = (left) ? ivl.getLeftStart() : ivl.getRightStart();
-				int end = (left) ? ivl.getLeftEnd() : ivl.getRightEnd();
+				int start = ivl.getStart(left);
+				int end = ivl.getEnd(left);
 				int step = style == NumberStyle.BOTH ? 1 : 2;
 				if (step != 1 && start % 2 != end % 2){
 					log.error("bad interval in optimization",this);
