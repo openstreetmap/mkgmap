@@ -217,27 +217,6 @@ public class ExtNumbers {
 					if(lastDiff * diff < 0){
 						// sign changed
 						inOrder = false;
-//						if (inOrder){
-//							if (getRoad().getRoadDef().getId() == 28427753){
-//								long dd = 4;
-//							}
-//							// maybe two or more houses build a block?
-//							double distOnRoad = hnm.getDistOnRoad(pred);
-//							if (distOnRoad > 10 )
-//								inOrder = false;
-//							else {
-//								housenumbers.set(i, pred);
-//								housenumbers.set(i-1, hnm);
-//								
-//								if (pred.getDistance() < hnm.getDistance()){
-//									hnm.setRefMatch(pred);
-//								} else {
-//									pred.setRefMatch(hnm);
-//								}
-//								diff = -diff;
-//								hnm = pred;
-//							}
-//						}
 					}
 					lastDiff = diff;
 				}
@@ -1282,26 +1261,6 @@ public class ExtNumbers {
 										bestRemove = en1;
 									}
 								} 
-//								if (hnm.getHousenumber() <= Math.min(s2, e2) ||hnm.getHousenumber() >= Math.max(s2, e2))
-//									continue;
-//								boolean even = hnm.getHousenumber() % 2 == 0;
-//								if (style2 == NumberStyle.EVEN && !even || style2 == NumberStyle.ODD && even)
-//									continue;
-//								HousenumberMatch test = new HousenumberMatch(hnm.getElement(), hnm.getHousenumber(), hnm.getSign());
-//								HousenumberGenerator.findClosestRoadSegment(test, en2.getRoad(), en2.startInRoad, en2.endInRoad);
-//								if (test.getDistance() <= HousenumberGenerator.MAX_DISTANCE_TO_ROAD){
-//									double deltaDist = test.getDistance() - hnm.getDistance(); 
-//									if (deltaDist < smallestDelta){
-//										Coord c1 = en2.getRoad().getPoints().get(test.getSegment());
-//										Coord c2 = en2.getRoad().getPoints().get(test.getSegment() + 1);
-//										if (c1.highPrecEquals(c2) || left2 == HousenumberGenerator.isLeft(c1, c2, hnm.getLocation())){
-//											bestMoveMod = test;
-//											bestMoveOrig = hnm;
-//											smallestDelta = deltaDist;
-//											bestRemove = en1;
-//										}
-//									}
-//								}
 							}
 						}
 					}
@@ -1337,26 +1296,6 @@ public class ExtNumbers {
 										bestRemove = en2;
 									}
 								} 								
-//								if (hnm.getHousenumber() <= Math.min(s1, e1) ||hnm.getHousenumber() >= Math.max(s1, e1))
-//									continue;
-//								boolean even = hnm.getHousenumber() % 2 == 0;
-//								if (style1 == NumberStyle.EVEN && !even || style1 == NumberStyle.ODD && even)
-//									continue;
-//								HousenumberMatch test = new HousenumberMatch(hnm.getElement(), hnm.getHousenumber(), hnm.getSign());
-//								HousenumberGenerator.findClosestRoadSegment(test, en1.getRoad(), en1.startInRoad, en1.endInRoad);
-//								if (test.getDistance() <= HousenumberGenerator.MAX_DISTANCE_TO_ROAD){
-//									double deltaDist = test.getDistance() - hnm.getDistance(); 
-//									if (deltaDist < smallestDelta){
-//										Coord c1 = en1.getRoad().getPoints().get(test.getSegment());
-//										Coord c2 = en1.getRoad().getPoints().get(test.getSegment() + 1);
-//										if (c1.highPrecEquals(c2) || left1 == HousenumberGenerator.isLeft(c1, c2, hnm.getLocation())){
-//											bestMoveMod = test;
-//											bestMoveOrig = hnm;
-//											smallestDelta = deltaDist;
-//											bestRemove = en2;
-//										}
-//									}
-//								}
 							}
 						}
 					}
