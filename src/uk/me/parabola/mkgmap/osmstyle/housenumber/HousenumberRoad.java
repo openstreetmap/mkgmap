@@ -48,7 +48,7 @@ public class HousenumberRoad {
 	public void buildIntervals() {
 		Collections.sort(houseNumbers, new HousenumberMatchByNumComparator());
 		if (log.isInfoEnabled())
-			log.info("Initial housenumbers for",road,road.getCity(),houseNumbers);
+			log.info("Initial housenumbers for",road,"in",road.getCity(),houseNumbers);
 		
 		filterRealDuplicates();
 		filterGroups();
@@ -161,16 +161,15 @@ public class HousenumberRoad {
 		if (groups.isEmpty())
 			return;
 		boolean nodesAdded = false;
-		
 		for (HousenumberGroup group : groups){
 			int oldNumPoints = getRoad().getPoints().size(); 
 			if (nodesAdded){
 				if (group.recalcPositions() == false)
 					continue;
 			}
-			if (group.findSegment(streetName)){
+			if (group.findSegment(streetName, groups)){
 				nodesAdded = true;
-				log.debug("added",getRoad().getPoints().size() - oldNumPoints,"number node(s) for group",group,"in road",getRoad());
+				log.debug("added",getRoad().getPoints().size() - oldNumPoints,"number node(s) at",group.linkNode.toDegreeString(),"for group",group,"in road",getRoad());
 				oldNumPoints = getRoad().getPoints().size();
 				road.setInternalNodes(true);
 				int minSeg = group.minSeg;
@@ -179,6 +178,9 @@ public class HousenumberRoad {
 						HousenumberGenerator.findClosestRoadSegment(house, getRoad());
 				}
 				group.recalcPositions();
+			} else {
+				if(group.linkNode != null)
+					log.debug("used existing zero-length-segment at",group.linkNode.toDegreeString(),"for group",group,"in road",getRoad());
 			}
 		}
 		return;

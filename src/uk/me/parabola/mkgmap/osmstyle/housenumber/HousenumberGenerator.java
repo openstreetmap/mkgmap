@@ -923,7 +923,6 @@ public class HousenumberGenerator {
 	}
 
 	public static void findClosestRoadSegment(HousenumberMatch house, MapRoad r) {
-		house.setRoad(null);
 		findClosestRoadSegment(house, r, 0, r.getPoints().size());
 	}
 	

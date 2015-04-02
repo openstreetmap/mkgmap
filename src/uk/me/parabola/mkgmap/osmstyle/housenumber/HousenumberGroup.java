@@ -96,83 +96,91 @@ public class HousenumberGroup {
 	
 	/**
 	 * find place for the group, change to or add number nodes
+	 * @param nodesForLinks 
 	 * @return true if one or two nodes were added
 	 */
-	public boolean findSegment(String streetName){
+	public boolean findSegment(String streetName, List<HousenumberGroup> groups){
 		if (minSeg < 0 || maxSeg < 0){
 			log.error("internal error: group is not valid:",this);
 			return false;
 		}
 		findSegmentWasCalled = true;
+		linkNode = null;
 		List<Coord> points = getRoad().getPoints();
-		Coord point = null;
-		if (minSeg != maxSeg){
-			if (points.size() + 1 > LineSplitterFilter.MAX_POINTS_IN_LINE)
-				return false;
-			int seg = closestHouseToRoad.getSegment();
-			Coord c1 = points.get(seg);
-			Coord c2 = points.get(seg + 1);
-			point = (closestHouseToRoad.getSegmentFrac() < 0.5) ? c1 : c2;
-			linkNode = point;
-			point = Coord.makeHighPrecCoord(point.getHighPrecLat(), point.getHighPrecLon());
-			point.setNumberNode(true);
-			if (linkNode == c2)
-				seg++;
-			points.add(seg + 1, point);
-			return true;
-		}
-		
-		assert minSeg == maxSeg;
-		Coord c1 = points.get(minSeg);
-		Coord c2 = points.get(minSeg + 1);
+		Coord pointToUse = null;
+		int seg = closestHouseToRoad.getSegment();
+		Coord c1 = points.get(seg);
+		Coord c2 = points.get(seg + 1);
 		if (c1.highPrecEquals(c2)){
-			// group is already attached to zero-segment-length
-			linkNode = c1;
-			return false;
+			boolean useExisting = true;
+			// already a zero length segment
+			for (HousenumberGroup hg : groups){
+				if (hg == this)
+					continue;
+				if (hg.linkNode.highPrecEquals(c1)){
+					if (hg.closestHouseToRoad.isLeft() != this.closestHouseToRoad.isLeft()){
+						// attach this group to the same segment on the other road side
+						linkNode = c1;
+						return false;
+					} else {
+						log.warn("two groups on same side of road share same point, group 1:",hg,"group 2:",this,"in road",getRoad());
+						useExisting = false;
+						break;
+					}
+				}
+			}
+			if (useExisting){
+				c1.setNumberNode(true);
+				c2.setNumberNode(true);
+				linkNode = c1;
+				return false;
+			}
 		}
-		if (points.size() + 2 > LineSplitterFilter.MAX_POINTS_IN_LINE)
-			return false;
 		int timesToAdd = 1;
-		//			double seglen = c1.distance(c2);
-		double midFrac = (Math.max(0, minFrac) + Math.min(1, maxFrac)) / 2;
-		point = c1.makeBetweenPoint(c2, midFrac);
-		double hard1Dist = c1.distance(point);
-		double hard2Dist = c2.distance(point);
-
-		if (minFrac <= 0 || hard1Dist <= MIN_DISTANCE_TO_EXISTING_POINT)
-			point = c1;
-		else if (maxFrac >= 1 || hard2Dist <= MIN_DISTANCE_TO_EXISTING_POINT)
-			point = c2;
-		else {
-			Coord optPoint = ExtNumbers.rasterLineNearPoint(c1, c2, point, true);
+		double frac = closestHouseToRoad.getSegmentFrac();
+		if (frac < 0) frac = 0;
+		if (frac > 1) frac = 1;
+		double segLen = c1.distance(c2);
+		pointToUse = c1.makeBetweenPoint(c2, frac);
+		double len1 = segLen * frac;
+		double len2 = (1 - Math.min(1, frac)) * segLen;
+		if (Math.min(len1, len2) < MIN_DISTANCE_TO_EXISTING_POINT){
+			pointToUse = (len1 <= len2) ? c1 : c2;
+		} else {
+			Coord optPoint = ExtNumbers.rasterLineNearPoint(c1, c2, pointToUse, true);
 			double opt1Dist = c1.distance(optPoint);
 			double opt2Dist = c2.distance(optPoint);
-			point = optPoint;
+			pointToUse = optPoint;
 			if (Math.min(opt1Dist, opt2Dist) <= MIN_DISTANCE_TO_EXISTING_POINT){
-				point = (opt1Dist < opt2Dist) ? c1 : c2;
+				pointToUse = (opt1Dist < opt2Dist) ? c1 : c2;
 			}
 			else {
 				timesToAdd = 2;
 			}
 		}
-		linkNode = null;
-		if (timesToAdd == 1){
-			// we are duplicating an existing point
-			point.setNumberNode(true);
-			if (point == c1)
-				linkNode = point;
+		if (points.size() + timesToAdd > LineSplitterFilter.MAX_POINTS_IN_LINE)
+			return false;
+		pointToUse.setNumberNode(true);
+		if (timesToAdd == 2){
+			// add two new points between c1 and c2
+			points.add(seg + 1, pointToUse);
+			pointToUse = Coord.makeHighPrecCoord(pointToUse.getHighPrecLat(), pointToUse.getHighPrecLon());
+			pointToUse.setNumberNode(true);
+			points.add(seg + 1, pointToUse);
+			linkNode = pointToUse;
+		} else {
+		// copy it
+			pointToUse = Coord.makeHighPrecCoord(pointToUse.getHighPrecLat(), pointToUse.getHighPrecLon());
+			pointToUse.setNumberNode(true);
+			// add copy before c2 
+			points.add(seg + 1, pointToUse);
+			if (pointToUse.highPrecEquals(c1)){
+				linkNode = c1;
+			} else { 
+				// link to the copy of c2 which is before c2
+				linkNode = pointToUse;
+			}
 		}
-		point = Coord.makeHighPrecCoord(point.getHighPrecLat(), point.getHighPrecLon());
-		point.setNumberNode(true);
-		points.add(minSeg + 1, point);
-		if (timesToAdd > 1){
-			point = Coord.makeHighPrecCoord(point.getHighPrecLat(), point.getHighPrecLon());
-			point.setNumberNode(true);
-			points.add(minSeg + 1, point);
-			linkNode = point;
-		}
-		if (linkNode == null)
-			linkNode = point;
 		return true;
 	}
 

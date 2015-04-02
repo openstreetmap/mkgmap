@@ -310,7 +310,7 @@ public class ExtNumbers {
 			if (log.isInfoEnabled()) {
 				Numbers cn = curr.getNumbers();
 				if (curr.prev == null)
-					log.info("final numbers for",getRoad(),getRoad().getCity());
+					log.info("final numbers for",getRoad(),"in",getRoad().getCity());
 				log.info("Left: ",cn.getLeftNumberStyle(),cn.getRnodNumber(),"Start:",cn.getLeftStart(),"End:",cn.getLeftEnd(), "numbers "+curr.leftHouses);
 				log.info("Right:",cn.getRightNumberStyle(),cn.getRnodNumber(),"Start:",cn.getRightStart(),"End:",cn.getRightEnd(), "numbers "+curr.rightHouses);
 			}
