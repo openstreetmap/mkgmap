@@ -51,13 +51,13 @@ public class HousenumberGroup {
 	public HousenumberGroup(HousenumberRoad hnr, List<HousenumberMatch> housesToUse) {
 		this.hnr = hnr;
 		reset();
-		for (HousenumberMatch hnm : housesToUse){
-			addHouse(hnm);
+		for (HousenumberMatch house : housesToUse){
+			addHouse(house);
 		}
 	}
 	
-	private void addHouse(HousenumberMatch hnm){
-		int num = hnm.getHousenumber();
+	private void addHouse(HousenumberMatch house){
+		int num = house.getHousenumber();
 		if (num % 2 == 0)
 			++even;
 		else 
@@ -66,30 +66,30 @@ public class HousenumberGroup {
 		usedNumbers.put(num, count + 1);
 		
 		if (houses.isEmpty()){
-			minNum = maxNum = hnm.getHousenumber();
-			minSeg = maxSeg = hnm.getSegment();
-			minFrac = maxFrac = hnm.getSegmentFrac();
-			closestHouseToRoad = farthestHouseToRoad = hnm;
+			minNum = maxNum = house.getHousenumber();
+			minSeg = maxSeg = house.getSegment();
+			minFrac = maxFrac = house.getSegmentFrac();
+			closestHouseToRoad = farthestHouseToRoad = house;
 		} else {
-			if (hnm.getSegment() < minSeg){
-				minSeg = hnm.getSegment();
-				minFrac = hnm.getSegmentFrac();
-			} else if (hnm.getSegment() > maxSeg){
-				maxSeg = hnm.getSegment();
-				maxFrac = hnm.getSegmentFrac();
-			} else if (hnm.getSegment() == minSeg ){
-				minFrac = Math.min(minFrac, hnm.getSegmentFrac());
-			} else if (hnm.getSegment() == maxSeg ){
-				maxFrac = Math.max(maxFrac, hnm.getSegmentFrac());
+			if (house.getSegment() < minSeg){
+				minSeg = house.getSegment();
+				minFrac = house.getSegmentFrac();
+			} else if (house.getSegment() > maxSeg){
+				maxSeg = house.getSegment();
+				maxFrac = house.getSegmentFrac();
+			} else if (house.getSegment() == minSeg ){
+				minFrac = Math.min(minFrac, house.getSegmentFrac());
+			} else if (house.getSegment() == maxSeg ){
+				maxFrac = Math.max(maxFrac, house.getSegmentFrac());
 			}
 			minNum = Math.min(minNum, num);
 			maxNum = Math.max(maxNum, num);
-			if (hnm.getDistance() < closestHouseToRoad.getDistance())
-				closestHouseToRoad = hnm;
-			if (hnm.getDistance() > farthestHouseToRoad.getDistance())
-				farthestHouseToRoad = hnm;
+			if (house.getDistance() < closestHouseToRoad.getDistance())
+				closestHouseToRoad = house;
+			if (house.getDistance() > farthestHouseToRoad.getDistance())
+				farthestHouseToRoad = house;
 		}
-		houses.add(hnm);
+		houses.add(house);
 	}
 	
 	private static final double MIN_DISTANCE_TO_EXISTING_POINT = 7.5;
@@ -197,9 +197,9 @@ public class HousenumberGroup {
 			// with the road, presuming that the road is rather straight
 			ok = false;
 		}
-		for (HousenumberMatch hnm : houses){
+		for (HousenumberMatch house : houses){
 			// forget the group, it will not improve search
-			hnm.setGroup(ok ? this : null);
+			house.setGroup(ok ? this : null);
 		}
 		return ok;
 	}
@@ -209,32 +209,32 @@ public class HousenumberGroup {
 	}
 	
 	private final static double CLOSE_HOUSES_DIST = 10;
-	public static boolean housesFormAGroup(HousenumberMatch hnm1, HousenumberMatch hnm2) {
-		assert hnm1.getRoad() == hnm2.getRoad();
+	public static boolean housesFormAGroup(HousenumberMatch house1, HousenumberMatch house2) {
+		assert house1.getRoad() == house2.getRoad();
 		
 
-		if (hnm1.getSegment() > hnm2.getSegment()){
-			HousenumberMatch help = hnm1;
-			hnm1 = hnm2;
-			hnm2 = help;
+		if (house1.getSegment() > house2.getSegment()){
+			HousenumberMatch help = house1;
+			house1 = house2;
+			house2 = help;
 		}
-		double distBetweenHouses = hnm1.getLocation().distance(hnm2.getLocation());
+		double distBetweenHouses = house1.getLocation().distance(house2.getLocation());
 		if (distBetweenHouses == 0)
 			return true;
-		double minDistToRoad = Math.min(hnm1.getDistance(), hnm2.getDistance());
-		double maxDistToRoad = Math.max(hnm1.getDistance(), hnm2.getDistance());
-		double distOnRoad = hnm2.getDistOnRoad(hnm1);
+		double minDistToRoad = Math.min(house1.getDistance(), house2.getDistance());
+		double maxDistToRoad = Math.max(house1.getDistance(), house2.getDistance());
+		double distOnRoad = house2.getDistOnRoad(house1);
 		
-		if (hnm1.getSegment() != hnm2.getSegment()){
+		if (house1.getSegment() != house2.getSegment()){
 			if (minDistToRoad > 40 && distBetweenHouses < CLOSE_HOUSES_DIST)
 				return true;
 			
 			// not the same segment, the distance on road may be misleading when segments have a small angle 
 			// and the connection point is a bit more away 
-			Coord c1 = hnm1.getLocation();
-			Coord c2 = hnm2.getLocation();
-			Coord closest1 = hnm1.getClosestPointOnRoad();
-			Coord closest2 = hnm2.getClosestPointOnRoad();
+			Coord c1 = house1.getLocation();
+			Coord c2 = house2.getLocation();
+			Coord closest1 = house1.getClosestPointOnRoad();
+			Coord closest2 = house2.getClosestPointOnRoad();
 			double frac1 = HousenumberGenerator.getFrac(closest1, closest2, c1);
 			double frac2 = HousenumberGenerator.getFrac(closest1, closest2, c2);
 			double segLen = closest1.distance(closest2);
@@ -244,7 +244,7 @@ public class HousenumberGroup {
 			if (frac2 > 1) frac2 = 1;
 			double distOnRoadSimple = (Math.max(frac1, frac2) - Math.min(frac1, frac2)) * segLen;
 			if (distOnRoadSimple != distOnRoad){
-//				log.debug("distOnRoad recalculation:", hnm1.getRoad(),hnm1,hnm2,distOnRoad,"--->",distOnRoadSimple);
+//				log.debug("distOnRoad recalculation:", house1.getRoad(),house1,house2,distOnRoad,"--->",distOnRoadSimple);
 				distOnRoad = distOnRoadSimple;
 			}
 		}
@@ -271,10 +271,10 @@ public class HousenumberGroup {
 		return true;
 	}
 
-	public boolean tryAddHouse(HousenumberMatch hnm) {
-		if (hnm.isInterpolated() || hnm.getRoad() == null || hnm.isIgnored())
+	public boolean tryAddHouse(HousenumberMatch house) {
+		if (house.isInterpolated() || house.getRoad() == null || house.isIgnored())
 			return false;
-		int num = hnm.getHousenumber();
+		int num = house.getHousenumber();
 		int step = 1;
 		if (odd == 0 || even == 0)
 			step = 2;
@@ -282,30 +282,30 @@ public class HousenumberGroup {
 			return false;
 		HousenumberMatch last = houses.get(houses.size()-1);
 		if (last.getGroup() != null){ 
-			if (last.getGroup() == hnm.getGroup()){
-				addHouse(hnm);
+			if (last.getGroup() == house.getGroup()){
+				addHouse(house);
 				return true;
 			} else 
 				return false;
 		}
-		if (last.getDistance() + 3 < hnm.getDistance() && last.isDirectlyConnected(hnm)){
-			addHouse(hnm);
+		if (last.getDistance() + 3 < house.getDistance() && last.isDirectlyConnected(house)){
+			addHouse(house);
 			return true;
 		}
 			
-		if (housesFormAGroup(hnm, last) == false){
+		if (housesFormAGroup(house, last) == false){
 			return false;
 		}
 		if (houses.size() > 1){
 			HousenumberMatch first = houses.get(0);
-			if (housesFormAGroup(hnm, first) == false){
+			if (housesFormAGroup(house, first) == false){
 				HousenumberMatch preLast = houses.get(houses.size()-2);
-				double angle = Utils.getAngle(hnm.getLocation(), last.getLocation(), preLast.getLocation());
+				double angle = Utils.getAngle(house.getLocation(), last.getLocation(), preLast.getLocation());
  				if (Math.abs(angle) > 30)
 					return false;
 			}
 		}
-		addHouse(hnm);
+		addHouse(house);
 		return true;
 	}
 
@@ -313,11 +313,11 @@ public class HousenumberGroup {
 	public boolean recalcPositions(){
 		List<HousenumberMatch> saveHouses = new ArrayList<>(houses);
 		reset();
-		for (HousenumberMatch hnm : saveHouses)
-			addHouse(hnm);
+		for (HousenumberMatch house : saveHouses)
+			addHouse(house);
 		if (!verify()){
-			for (HousenumberMatch hnm : houses){
-				HousenumberGenerator.findClosestRoadSegment(hnm, getRoad());
+			for (HousenumberMatch house : houses){
+				HousenumberGenerator.findClosestRoadSegment(house, getRoad());
 			}
 			return false;
 		}

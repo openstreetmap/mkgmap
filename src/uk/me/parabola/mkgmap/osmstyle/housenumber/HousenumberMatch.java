@@ -348,29 +348,29 @@ public class HousenumberMatch {
 			assert false : "cannot compute distance on road for different roads"; 
 		}
 		List<Coord> points = getRoad().getPoints();
-		HousenumberMatch hnm1 = this;
-		HousenumberMatch hnm2 = other;
-		if (hnm1.segment > hnm2.segment || hnm1.segment == hnm2.segment && hnm1.segmentFrac > hnm2.segmentFrac){
-			hnm1 = other;
-			hnm2 = this;
+		HousenumberMatch house1 = this;
+		HousenumberMatch house2 = other;
+		if (house1.segment > house2.segment || house1.segment == house2.segment && house1.segmentFrac > house2.segmentFrac){
+			house1 = other;
+			house2 = this;
 		}
-		int s1 = hnm1.segment;
-		int s2 = hnm2.segment;
+		int s1 = house1.segment;
+		int s2 = house2.segment;
 		double distOnRoad = 0;
 		while (s1 < s2){
 			double segLen = points.get(s1).distance(points.get(s1 + 1));
-			if (s1 == hnm1.getSegment() && hnm1.getSegmentFrac() > 0){
+			if (s1 == house1.getSegment() && house1.getSegmentFrac() > 0){
 				// rest of first segment
-				distOnRoad += Math.max(0, 1-hnm1.getSegmentFrac()) * segLen;
+				distOnRoad += Math.max(0, 1-house1.getSegmentFrac()) * segLen;
 			} else
 				distOnRoad += segLen;
 			s1++;
 		}
 		double segLen = points.get(s1).distance(points.get(s1 + 1));
-		if (hnm2.getSegmentFrac() > 0)
-			distOnRoad += Math.min(1, hnm2.getSegmentFrac()) * segLen;
-		if (hnm1.getSegmentFrac() > 0 && s1 == hnm1.segment)
-			distOnRoad -= Math.min(1, hnm1.getSegmentFrac()) * segLen;
+		if (house2.getSegmentFrac() > 0)
+			distOnRoad += Math.min(1, house2.getSegmentFrac()) * segLen;
+		if (house1.getSegmentFrac() > 0 && s1 == house1.segment)
+			distOnRoad -= Math.min(1, house1.getSegmentFrac()) * segLen;
 		return distOnRoad;
 	}
 

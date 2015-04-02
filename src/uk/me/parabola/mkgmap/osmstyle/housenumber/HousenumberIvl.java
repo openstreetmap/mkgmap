@@ -106,13 +106,13 @@ public class HousenumberIvl {
 //		return needsSplit;
 //	}
 	
-	public void addHousenumberMatch(HousenumberMatch hnm) {
-		if (hnm.getElement() == n1)
-			knownHouses[0] = hnm;
-		else if (hnm.getElement() == n2)
-			knownHouses[1] = hnm;
+	public void addHousenumberMatch(HousenumberMatch house) {
+		if (house.getElement() == n1)
+			knownHouses[0] = house;
+		else if (house.getElement() == n2)
+			knownHouses[1] = house;
 		else {
-			log.error("cannot add",hnm,"to",this);
+			log.error("cannot add",house,"to",this);
 		}
 	}
 	
@@ -230,20 +230,20 @@ public class HousenumberIvl {
 			generated.addTag(streetTagKey, streetName);
 			String number = String.valueOf(hn);
 			generated.addTag(housenumberTagKey, number);
-			HousenumberMatch hnm = new HousenumberMatch(generated, hn, Integer.toString(hn));
+			HousenumberMatch house = new HousenumberMatch(generated, hn, Integer.toString(hn));
 			if (!hasMultipleRoads){
-				HousenumberGenerator.findClosestRoadSegment(hnm, knownHouses[0].getRoad());
-				if (hnm.getRoad() == null || hnm.getDistance() > MAX_INTERPOLATION_DISTANCE_TO_ROAD ){
+				HousenumberGenerator.findClosestRoadSegment(house, knownHouses[0].getRoad());
+				if (house.getRoad() == null || house.getDistance() > MAX_INTERPOLATION_DISTANCE_TO_ROAD ){
 					if (distanceWarningIssued == false){
-						log.warn("interpolated house is not close to expected road",this,hnm);
+						log.warn("interpolated house is not close to expected road",this,house);
 						distanceWarningIssued = true;
 					}
 					continue;
 				}
-				hnm.setLeft(knownHouses[0].isLeft());
+				house.setLeft(knownHouses[0].isLeft());
 			}
-			hnm.setInterpolated(true);
-			houses.add(hnm);
+			house.setInterpolated(true);
+			houses.add(house);
 		}
 		if (log.isDebugEnabled()){
 			String addrInterpolationMethod = interpolationWay.getTag(addrInterpolationTagKey);
@@ -355,8 +355,8 @@ public class HousenumberIvl {
 
 	public boolean inCluster(List<HousenumberMatch> housesNearCluster) {
 		int count = 0;
-		for (HousenumberMatch hnm : housesNearCluster){
-			if (knownHouses[0] == hnm || knownHouses[1] == hnm){
+		for (HousenumberMatch house : housesNearCluster){
+			if (knownHouses[0] == house || knownHouses[1] == house){
 				++count;
 				
 			}

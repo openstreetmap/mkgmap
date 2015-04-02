@@ -136,18 +136,18 @@ public class HousenumberRoad {
 			List<HousenumberMatch> houses = left ? leftNumbers : rightNumbers;
 			HousenumberGroup group = null;
 			for (int j = 1; j < houses.size(); j++){
-				HousenumberMatch hnm = houses.get(j);
+				HousenumberMatch house = houses.get(j);
 				if (group == null){
-					if (hnm.isInterpolated())
+					if (house.isInterpolated())
 						continue;
-					HousenumberMatch predHnm = houses.get(j-1);
-					int deltaNum = predHnm.getHousenumber() - hnm.getHousenumber();
+					HousenumberMatch predHouse = houses.get(j-1);
+					int deltaNum = predHouse.getHousenumber() - house.getHousenumber();
 					if (Math.abs(deltaNum) > 2)
 						continue;
-					if (HousenumberGroup.housesFormAGroup(predHnm, hnm))
+					if (HousenumberGroup.housesFormAGroup(predHouse, house))
 						group = new HousenumberGroup(this, houses.subList(j-1, j+1));
 				} else {
-					if (group.tryAddHouse(hnm) == false){
+					if (group.tryAddHouse(house) == false){
 						if(group.verify())
 							groups.add(group);
 						group = null;
@@ -174,9 +174,9 @@ public class HousenumberRoad {
 				oldNumPoints = getRoad().getPoints().size();
 				road.setInternalNodes(true);
 				int minSeg = group.minSeg;
-				for (HousenumberMatch hnm : this.houseNumbers){
-					if (hnm.getSegment() >= minSeg)
-						HousenumberGenerator.findClosestRoadSegment(hnm, getRoad());
+				for (HousenumberMatch house : this.houseNumbers){
+					if (house.getSegment() >= minSeg)
+						HousenumberGenerator.findClosestRoadSegment(house, getRoad());
 				}
 				group.recalcPositions();
 			}
@@ -217,16 +217,16 @@ public class HousenumberRoad {
 		List<HousenumberMatch> toIgnore = new ArrayList<>();
 		final int TO_SEARCH = 6;
 		int oddLeft = 0, oddRight = 0, evenLeft = 0, evenRight = 0;
-		for (HousenumberMatch  hnm: houseNumbers){
-			if (hnm.isIgnored())
+		for (HousenumberMatch  house: houseNumbers){
+			if (house.isIgnored())
 				continue;
-			if (hnm.isLeft()){
-				if (hnm.getHousenumber() % 2 == 0) 
+			if (house.isLeft()){
+				if (house.getHousenumber() % 2 == 0) 
 					evenLeft++;
 				else 
 					oddLeft++;
 			} else {
-				if (hnm.getHousenumber() % 2 == 0)
+				if (house.getHousenumber() % 2 == 0)
 					evenRight++;
 				else
 					oddRight++;
@@ -234,24 +234,24 @@ public class HousenumberRoad {
 		}
 		HousenumberMatch usedForCalc = null;
 		for (int i = 1; i < houseNumbers.size(); i++){
-			HousenumberMatch hnm1 = houseNumbers.get(i - 1);
-			HousenumberMatch hnm2 = houseNumbers.get(i);
-			if (hnm1.getSign().equals(hnm2.getSign()) == false){
+			HousenumberMatch house1 = houseNumbers.get(i - 1);
+			HousenumberMatch house2 = houseNumbers.get(i);
+			if (house1.getSign().equals(house2.getSign()) == false){
 				usedForCalc = null;
 			} else {
 				// found a duplicate house number (e.g. 2 and 2 or 1b and 1b)
-				double distBetweenHouses = hnm2.getLocation().distance(hnm1.getLocation());
-				double distToUsed = (usedForCalc == null) ? distBetweenHouses : hnm2.getLocation().distance(usedForCalc.getLocation()); 
+				double distBetweenHouses = house2.getLocation().distance(house1.getLocation());
+				double distToUsed = (usedForCalc == null) ? distBetweenHouses : house2.getLocation().distance(usedForCalc.getLocation()); 
 				if (usedForCalc == null)
-					usedForCalc = (hnm1.getDistance() < hnm2.getDistance()) ? hnm1 : hnm2;
+					usedForCalc = (house1.getDistance() < house2.getDistance()) ? house1 : house2;
 				else {
-					hnm1 = usedForCalc;
+					house1 = usedForCalc;
 				}
-				boolean sameSide = (hnm2.isLeft() == hnm1.isLeft());
+				boolean sameSide = (house2.isLeft() == house1.isLeft());
 				if (log.isDebugEnabled())
-					log.debug("analysing duplicate address",streetName,hnm1.getSign(),"for road with id",getRoad().getRoadDef().getId());
+					log.debug("analysing duplicate address",streetName,house1.getSign(),"for road with id",getRoad().getRoadDef().getId());
 				if (sameSide && (distBetweenHouses < 100 || distToUsed < 100)){
-					HousenumberMatch obsolete = hnm1 == usedForCalc ? hnm2 : hnm1;
+					HousenumberMatch obsolete = house1 == usedForCalc ? house2 : house1;
 					if (log.isDebugEnabled())
 						log.debug("house",obsolete,obsolete.getElement().toBrowseURL(),"is close to other element and on the same road side, is ignored");
 					toIgnore.add(obsolete);
@@ -262,19 +262,19 @@ public class HousenumberRoad {
 					if (log.isDebugEnabled())
 						log.debug("oddLeft, oddRight, evenLeft, evenRight:",oddLeft, oddRight, evenLeft, evenRight);
 					HousenumberMatch wrongSide = null;
-					if (hnm2.getHousenumber() % 2 == 0){
+					if (house2.getHousenumber() % 2 == 0){
 						if (evenLeft == 1 && (oddLeft > 1 || evenRight > 0 && oddRight == 0)){
-							wrongSide = hnm2.isLeft() ? hnm2: hnm1;
+							wrongSide = house2.isLeft() ? house2: house1;
 						}
 						if (evenRight == 1 && (oddRight > 1 || evenLeft > 0 && oddLeft == 0)){
-							wrongSide = !hnm2.isLeft() ? hnm2: hnm1;
+							wrongSide = !house2.isLeft() ? house2: house1;
 						}
 					} else {
 						if (oddLeft == 1 && (evenLeft > 1 || oddRight > 0 && evenRight == 0)){
-							wrongSide = hnm2.isLeft() ? hnm2: hnm1;
+							wrongSide = house2.isLeft() ? house2: house1;
 						}
 						if (oddRight == 1 && (evenRight > 1 || oddLeft > 0 && evenLeft == 0)){
-							wrongSide = !hnm2.isLeft() ? hnm2: hnm1;
+							wrongSide = !house2.isLeft() ? house2: house1;
 						}
 					}
 					if (wrongSide != null){
@@ -285,21 +285,12 @@ public class HousenumberRoad {
 					}
 				}
 				
-//				String[] locTags = {"mkgmap:postal_code", "mkgmap:city"};
-//				for (String locTag : locTags){
-//					String loc1 = hnm1.getElement().getTag(locTag);
-//					String loc2 = hnm2.getElement().getTag(locTag);
-//					if (loc1 != null && loc2 != null && loc1.equals(loc2) == false){
-//						if (log.isDebugEnabled())
-//							log.debug("different",locTag,"values:",loc1,loc2);
-//					}
-//				}
 				double[] sumDist = new double[2];
 				double[] sumDistSameSide = new double[2];
 				int[] confirmed = new int[2];
 				int[] falsified = new int[2];
 				int[] found = new int[2];
-				List<HousenumberMatch> dups = Arrays.asList(hnm2, hnm1);
+				List<HousenumberMatch> dups = Arrays.asList(house2, house1);
 				for (int k = 0; k < dups.size(); k++){
 					HousenumberMatch other, curr;
 					if (k == 0){
@@ -363,8 +354,8 @@ public class HousenumberRoad {
 					found[k] = TO_SEARCH - 1 - stillToFind; 
 				}
 				if (log.isDebugEnabled()){
-					log.debug("dup check 1:", streetName, hnm1, hnm1.getElement().toBrowseURL());
-					log.debug("dup check 2:", streetName, hnm2, hnm2.getElement().toBrowseURL());
+					log.debug("dup check 1:", streetName, house1, house1.getElement().toBrowseURL());
+					log.debug("dup check 2:", streetName, house2, house2.getElement().toBrowseURL());
 					log.debug("confirmed",Arrays.toString(confirmed),"falsified",Arrays.toString(falsified),"sum-dist",Arrays.toString(sumDist),"sum-dist-same-side",Arrays.toString(sumDistSameSide));
 				}
 				HousenumberMatch bad = null;
@@ -381,17 +372,17 @@ public class HousenumberRoad {
 				} else {
 					if (log.isDebugEnabled())
 						log.debug("duplicate house number, don't know which one to use, ignoring both");
-					toIgnore.add(hnm1);
-					toIgnore.add(hnm2);
-					hnm2.setIgnored(true);
-					hnm1.setIgnored(true);
+					toIgnore.add(house1);
+					toIgnore.add(house2);
+					house2.setIgnored(true);
+					house1.setIgnored(true);
 				}
 			}
 		} 
-		for (HousenumberMatch hnm : toIgnore){
+		for (HousenumberMatch house : toIgnore){
 			if (log.isInfoEnabled())
-				log.info("duplicate housenumber",streetName,hnm.getSign(),"is ignored for road with id",hnm.getRoad().getRoadDef().getId(),",house:",hnm.getElement().toBrowseURL());
-			houseNumbers.remove(hnm);
+				log.info("duplicate housenumber",streetName,house.getSign(),"is ignored for road with id",house.getRoad().getRoadDef().getId(),",house:",house.getElement().toBrowseURL());
+			houseNumbers.remove(house);
 		}
 	}
 
@@ -407,17 +398,17 @@ public class HousenumberRoad {
 		HousenumberMatch prev = houseNumbers.get(0);
 		HousenumberMatch used = null;
 		for (int i = 1; i < houseNumbers.size(); i++){
-			HousenumberMatch hnm = houseNumbers.get(i);
-			if (hnm.getHousenumber() != prev.getHousenumber())
+			HousenumberMatch house = houseNumbers.get(i);
+			if (house.getHousenumber() != prev.getHousenumber())
 				used = null;
 			else {
 				if (used == null)
 					used = prev;
-				hnm.setIgnored(true);
+				house.setIgnored(true);
 				if (log.isInfoEnabled())
-					log.info("using",streetName,used.getSign(), "in favor of",hnm.getSign(),"as target for address search");
+					log.info("using",streetName,used.getSign(), "in favor of",house.getSign(),"as target for address search");
 			}
-			prev = hnm;
+			prev = house;
 		}
 	}
 	
