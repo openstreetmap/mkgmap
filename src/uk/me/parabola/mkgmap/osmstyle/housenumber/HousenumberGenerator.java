@@ -18,6 +18,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -42,10 +43,12 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 import uk.me.parabola.mkgmap.reader.osm.HousenumberHooks;
 import uk.me.parabola.mkgmap.reader.osm.Node;
+import uk.me.parabola.mkgmap.reader.osm.OSMId2ObjectMap;
 import uk.me.parabola.mkgmap.reader.osm.POIGeneratorHook;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.TagDict;
 import uk.me.parabola.mkgmap.reader.osm.Way;
+import uk.me.parabola.util.EnhancedProperties;
 import uk.me.parabola.util.MultiHashMap;
 
 /**
@@ -63,24 +66,38 @@ public class HousenumberGenerator {
 	public static final double MAX_DISTANCE_TO_ROAD = 150d;
 	
 	private boolean numbersEnabled;
+
+	// options for handling of unnamed (service?) roads	
+	private boolean nameServiceRoads;
+	private int nameSearchDepth;
 	
 	private MultiHashMap<String, MapRoad> roadByNames;
+	private List<MapRoad> unnamedRoads;
 	private MultiHashMap<String, HousenumberIvl> interpolationWays;
 	private List<MapRoad> roads;
 	private MultiHashMap<String, Element> houseNumbers;
 	private Map<Long,Node> houseNodes;
+
 	
 	private static final short streetTagKey = TagDict.getInstance().xlate("mkgmap:street");
 	private static final short addrStreetTagKey = TagDict.getInstance().xlate("addr:street");
 	private static final short addrInterpolationTagKey = TagDict.getInstance().xlate("addr:interpolation");	
 	
-	public HousenumberGenerator(Properties props) {
+	public HousenumberGenerator(EnhancedProperties props) {
 		this.roadByNames = new MultiHashMap<String,MapRoad>();
 		this.houseNumbers = new MultiHashMap<String,Element>();
 		this.roads = new ArrayList<MapRoad>();
 		this.houseNodes = new HashMap<>();
 		this.interpolationWays = new MultiHashMap<>();
+		this.unnamedRoads = new ArrayList<>();
 		numbersEnabled=props.containsKey("housenumbers");
+		int n = props.getProperty("name-service-roads", 0);
+		if (n > 0){
+			nameServiceRoads = true;
+			nameSearchDepth = Math.min(25,n);
+			if (nameSearchDepth != n)
+				log.warn("name-service-roads="+n,"was changed to name-service-roads="+nameSearchDepth);
+		}
 	}
 
 	/**
@@ -293,13 +310,18 @@ public class HousenumberGenerator {
 			 * only the first. This ensures that we don't try to assign numbers from bad
 			 * matches to these copies.
 			 */
-			if(!road.isSkipHousenumberProcessing()){
+			if(!road.isSkipHousenumberProcessing() && !road.getRoadDef().ferry()){
 				String name = getStreetname(osmRoad); 
 				if (name != null) {
 					if (log.isDebugEnabled())
 						log.debug("Housenumber - Streetname:", name, "Way:",osmRoad.getId(),osmRoad.toTagString());
 					roadByNames.add(name, road);
+					
+				} else {
+					if (nameServiceRoads)
+						unnamedRoads.add(road);
 				}
+				
 			}
 		} 
 	}
@@ -429,7 +451,8 @@ public class HousenumberGenerator {
 	
 	public void generate(LineAdder adder) {
 		if (numbersEnabled) {
-
+			if (nameServiceRoads)
+				identifyServiceRoads();
 			TreeSet<String> sortedStreetNames = new TreeSet<>();
 			for (Entry<String, List<Element>> numbers : houseNumbers.entrySet()) {
 				sortedStreetNames.add(numbers.getKey());
@@ -442,7 +465,6 @@ public class HousenumberGenerator {
 				if (possibleRoads.isEmpty()) {
 					continue;
 				}
-				
 				
 				List<Element> numbers = houseNumbers.get(streetName);
 				MultiHashMap<Integer, MapRoad> clusters = buildRoadClusters(possibleRoads);
@@ -471,6 +493,100 @@ public class HousenumberGenerator {
 		roads.clear();
 	}
 	
+	private void identifyServiceRoads() {
+		Int2ObjectOpenHashMap<String> roadNamesByNodes = new Int2ObjectOpenHashMap<>();
+		MultiHashMap<MapRoad, Coord> coordNodesUnnamedRoads = new MultiHashMap<>();
+		HashSet<Integer> unclearNodes = new HashSet<>();
+		long t1 = System.currentTimeMillis();
+		int numUnnamedRoads = unnamedRoads.size();
+		for (MapRoad road : unnamedRoads){
+			if(road.getName() != null){
+				identifyNodes(road.getPoints(), road.getName(), roadNamesByNodes, unclearNodes);
+				road = null;
+			}
+			else {
+				for (Coord co : road.getPoints()){
+					if (co.getId() != 0)
+						coordNodesUnnamedRoads.add(road, co);
+				}
+			}
+		}
+		for (Entry<String, List<MapRoad>> roadEntry : roadByNames.entrySet()){
+			if (houseNumbers.containsKey(roadEntry.getKey()) == false)
+				continue;
+			for (MapRoad road : roadEntry.getValue()){
+				identifyNodes(road.getPoints(), road.getName(), roadNamesByNodes, unclearNodes);
+			}
+		}
+		long t2 = System.currentTimeMillis();
+		log.debug("indentifyServiceRoad step 1 took",(t2-t1),"ms, found",roadNamesByNodes.size(),"nodes to check and",numUnnamedRoads,"unnamed roads" );
+		long t3 = System.currentTimeMillis();
+		int named = 0;
+		MapRoad deepest = null;
+		String lastName = null;
+		for (int i = 0; i < nameSearchDepth; i ++){
+			boolean foundName = false;
+			for (int j = 0; j < unnamedRoads.size(); j++){
+				MapRoad road = unnamedRoads.get(j);
+				if (road == null)
+					continue;
+				List<Coord> coordNodes = coordNodesUnnamedRoads.get(road); 
+				String name = null;
+				for (Coord co : coordNodes){
+					if (unclearNodes.contains(co.getId())){
+						name = null;
+						unnamedRoads.set(j, null); // don't process again
+						break;
+					}
+					String possibleName = roadNamesByNodes.get(co.getId());
+					if (possibleName == null)
+						continue;
+					if (name == null)
+						name = possibleName;
+					else if (name.equals(possibleName) == false){
+						name = null;
+						unnamedRoads.set(j, null); // don't process again
+						break;
+					}
+				}
+				if (name != null){
+					if (houseNumbers.containsKey(name)){
+						named++;
+						foundName = true;
+						if (log.isDebugEnabled())
+							log.debug("using unnamed road for housenumber processing,id=",road.getRoadDef().getId(),":",name);
+						roadByNames.add(name, road);
+						identifyNodes(coordNodes, name, roadNamesByNodes, unclearNodes);
+					}
+					deepest = road;
+					lastName = name;
+					unnamedRoads.set(j, null); // don't process again
+				}
+			}
+			if (foundName == false)
+				break;
+			log.debug("pass",i,unnamedRoads.size(),named);
+		}
+		long t4 = System.currentTimeMillis();
+		log.info("indentifyServiceRoad step 2 took",(t4-t3),"ms, found name for",named,"roads" );
+		if (named > 0)
+			log.info("last named road was",deepest.getRoadDef().getId(),lastName);
+		return;
+	}
+
+	private void identifyNodes(List<Coord> roadPoints,
+			String streetName, Int2ObjectOpenHashMap<String> roadNamesByNodes, HashSet<Integer> unclearNodes) {
+		for (Coord co : roadPoints){
+			if (co.getId() != 0){
+				String prevName = roadNamesByNodes.put(co.getId(), streetName);
+				if (prevName != null){
+					if (prevName.equals(streetName) == false)
+						unclearNodes.add(co.getId());
+				}
+			}
+		}			
+	}
+
 	/**
 	 * 
 	 * @param streetName 

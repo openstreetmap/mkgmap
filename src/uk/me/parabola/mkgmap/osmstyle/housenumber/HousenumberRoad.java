@@ -478,6 +478,19 @@ public class HousenumberRoad {
 	public void setNumbers() {
 		if (extNumbersHead == null)
 			return;
+		
+		if (streetName.equals(road.getName()) == false){
+			String[] labels = road.getLabels();
+			String droppedLabel = labels[labels.length-1];
+			System.arraycopy(labels, 0, labels, 1, labels.length-1);
+			labels[0] = streetName;
+			if (droppedLabel != null){
+				if (log.isInfoEnabled())
+					log.info("dropped label",droppedLabel,"for",road,"in preference to correct address search. Labels are now:",Arrays.toString(labels));
+			}
+		}
+		
+		
 		road.setNumbers(extNumbersHead.getNumberList());
 	}
 	
