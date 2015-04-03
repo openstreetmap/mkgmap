@@ -358,6 +358,9 @@ public class Coord implements Comparable<Coord> {
 		return 503 * latitude + longitude;
 	}
 
+	/**
+	 * Compares the coordinates that are displayed in the map
+	 */
 	public boolean equals(Object obj) {
 		if (obj == null || !(obj instanceof Coord))
 			return false;
@@ -365,6 +368,13 @@ public class Coord implements Comparable<Coord> {
 		return latitude == other.latitude && longitude == other.longitude;
 	}
 	
+	/**
+	 * Compares the coordinates using the delta values. 
+	 * XXX: Note that 
+	 * p1.highPrecEquals(p2) is not always equal to p1.equals(p2)
+	 * @param other
+	 * @return
+	 */
 	public boolean highPrecEquals(Coord other) {
 		if (other == null)
 			return false;
