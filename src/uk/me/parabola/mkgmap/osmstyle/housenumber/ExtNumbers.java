@@ -518,10 +518,10 @@ public class ExtNumbers {
 			// handle cases where perpendicular is not on the road
 			if (wantedFraction <= 0){
 				wantedFraction = 0;
-				toAdd = Coord.makeHighPrecCoord(c1.getHighPrecLat(), c1.getHighPrecLon());
+				toAdd = new Coord(c1);
 			} else if (wantedFraction >= 1){
 				wantedFraction = 1;
-				toAdd = Coord.makeHighPrecCoord(c2.getHighPrecLat(), c2.getHighPrecLon());
+				toAdd = new Coord(c2);
 			} 
 			double usedFraction = wantedFraction;
 
@@ -530,11 +530,11 @@ public class ExtNumbers {
 				toAdd = rasterLineNearPoint(c1, c2, wanted, true);
 				if (toAdd != null){
 					if (toAdd.equals(c1)){
-						toAdd = Coord.makeHighPrecCoord(c1.getHighPrecLat(), c1.getHighPrecLon());
+						toAdd = new Coord(c1);
 						usedFraction = 0.0;
 					}
 					else if (toAdd.equals(c2)){
-						toAdd = Coord.makeHighPrecCoord(c2.getHighPrecLat(), c2.getHighPrecLon());
+						toAdd = new Coord(c2);
 						usedFraction = 0;
 					}
 					else {
@@ -551,10 +551,10 @@ public class ExtNumbers {
 				double len2 = (1 - wantedFraction) * segmentLength;
 				if (Math.min(len1, len2) < MAX_LOCATE_ERROR){
 					if (len1 < len2){
-						toAdd = Coord.makeHighPrecCoord(c1.getHighPrecLat(), c1.getHighPrecLon());
+						toAdd = new Coord(c1);
 						usedFraction = 0.0;
 					} else {
-						toAdd = Coord.makeHighPrecCoord(c2.getHighPrecLat(), c2.getHighPrecLon());
+						toAdd = new Coord(c2);
 						usedFraction = 1.0;
 					}
 				}
@@ -845,7 +845,7 @@ public class ExtNumbers {
 		int index = (atStart) ? startInRoad : endInRoad;
 		int splitSegment = (atStart) ? startInRoad + 1: endInRoad;
 		Coord closePoint = getRoad().getPoints().get(index);
-		Coord toAdd = Coord.makeHighPrecCoord(closePoint.getHighPrecLat(), closePoint.getHighPrecLon());
+		Coord toAdd = new Coord(closePoint);
 		toAdd.setOnBoundary(closePoint.getOnBoundary());
 		toAdd.incHighwayCount();
 		// we have to make sure that the road starts and ends with a CoordNode!

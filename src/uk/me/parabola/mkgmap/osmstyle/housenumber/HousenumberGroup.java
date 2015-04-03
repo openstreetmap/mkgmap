@@ -117,7 +117,7 @@ public class HousenumberGroup {
 			for (HousenumberGroup hg : groups){
 				if (hg == this)
 					continue;
-				if (hg.linkNode.highPrecEquals(c1)){
+				if (hg.linkNode == c1){
 					if (hg.closestHouseToRoad.isLeft() != this.closestHouseToRoad.isLeft()){
 						// attach this group to the same segment on the other road side
 						linkNode = c1;
@@ -164,13 +164,13 @@ public class HousenumberGroup {
 		if (timesToAdd == 2){
 			// add two new points between c1 and c2
 			points.add(seg + 1, pointToUse);
-			pointToUse = Coord.makeHighPrecCoord(pointToUse.getHighPrecLat(), pointToUse.getHighPrecLon());
+			pointToUse = new Coord (pointToUse);
 			pointToUse.setNumberNode(true);
 			points.add(seg + 1, pointToUse);
 			linkNode = pointToUse;
 		} else {
 		// copy it
-			pointToUse = Coord.makeHighPrecCoord(pointToUse.getHighPrecLat(), pointToUse.getHighPrecLon());
+			pointToUse = new Coord(pointToUse);
 			pointToUse.setNumberNode(true);
 			// add copy before c2 
 			points.add(seg + 1, pointToUse);
