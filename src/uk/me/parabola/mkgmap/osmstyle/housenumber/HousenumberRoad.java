@@ -478,18 +478,31 @@ public class HousenumberRoad {
 	public void setNumbers() {
 		if (extNumbersHead == null)
 			return;
-		
-		if (streetName.equals(road.getName()) == false){
-			String[] labels = road.getLabels();
-			String droppedLabel = labels[labels.length-1];
-			System.arraycopy(labels, 0, labels, 1, labels.length-1);
-			labels[0] = streetName;
+		// make sure that the name we used for the cluster is also attached to the road
+		String[] labels = road.getLabels();
+		boolean found = false;
+		for (String label : labels){
+			if (streetName.equals(label))
+				found = true;
+		}
+		if (!found){
+			for (int i = 0; i < labels.length; i++){
+				if (labels[i] == null){
+					labels[i] = streetName;
+					found = true;
+					break;
+				}
+			}
+		}
+		if (!found){
+			int last = labels.length-1;
+			String droppedLabel = labels[last];
+			labels[last] = streetName;
 			if (droppedLabel != null){
 				if (log.isInfoEnabled())
 					log.info("dropped label",droppedLabel,"for",road,"in preference to correct address search. Labels are now:",Arrays.toString(labels));
 			}
 		}
-		
 		
 		road.setNumbers(extNumbersHead.getNumberList());
 	}
