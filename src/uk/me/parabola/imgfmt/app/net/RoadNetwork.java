@@ -87,7 +87,9 @@ public class RoadNetwork {
 				arcLength += d;
 				roadLength += d;
 			}
-
+			if (roadDef.skipAddToNOD())
+				continue;
+			
 			int id = co.getId();
 
 			pointsHash += co.hashCode();
@@ -265,6 +267,8 @@ public class RoadNetwork {
 		long t1 = System.currentTimeMillis();
 		
 		for (RoadDef rd: roadDefs){
+			if (rd.skipAddToNOD())
+				continue;
 			if (rd.getRoadClass() >= 1)
 				rd.getNode().addArcsToMajorRoads(rd);
 		}

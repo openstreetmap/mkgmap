@@ -138,6 +138,7 @@ public class StyledConverter implements OsmConverter {
 	private int reportDeadEnds; 
 	private final boolean linkPOIsToWays;
 	private final boolean mergeRoads;
+	private final boolean routable;
 	
 
 	private LineAdder lineAdder = new LineAdder() {
@@ -196,7 +197,7 @@ public class StyledConverter implements OsmConverter {
 		
 		// undocumented option - usually used for debugging only
 		mergeRoads = props.getProperty("no-mergeroads", false) == false;
-
+		routable = props.containsKey("route");
 		
 	}
 
@@ -1566,6 +1567,9 @@ public class StyledConverter implements OsmConverter {
 		elementSetup(line, cw.getGType(), way);
 		line.setPoints(points);
 		MapRoad road = new MapRoad(way.getId(), line);
+		if (routable == false)
+			road.skipAddToNOD(true);
+		
 		if (cw.isNotFirstRoutableWay()){
 			road.setSkipHousenumberProcessing(true);
 		}

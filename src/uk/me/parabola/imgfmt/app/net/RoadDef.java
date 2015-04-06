@@ -84,6 +84,9 @@ public class RoadDef {
 	private static final int TABAACCESS_FLAG_NO_BIKE    = 0x0020;
 	private static final int TABAACCESS_FLAG_NO_TRUCK   = 0x0040;
 	
+	// true if road should not be added to NOD 
+	private boolean skipAddToNOD;
+	
 	// the offset in Nod2 of our Nod2 record
 	private int offsetNod2;
 
@@ -475,6 +478,8 @@ public class RoadDef {
 	 * which will be pointed at from NET 1.
 	 */
 	public void setNode(RouteNode node) {
+		if (skipAddToNOD)
+			return;
 		netFlags |= NET_FLAG_NODINFO;
 		this.node = node;
 	}
@@ -517,6 +522,11 @@ public class RoadDef {
 	public void writeNod2(ImgFileWriter writer) {
 		if (!hasNodInfo())
 			return;
+		if (skipAddToNOD){
+			// should not happen
+			log.error("internal error: writeNod2 called for roaddef with skipAddToNOD=true");
+			return;
+		}
 
 		log.debug("writing nod2");
 
@@ -766,6 +776,17 @@ public class RoadDef {
 	}
 
 	public void setNod2BitSet(BitSet bs) {
+		if (skipAddToNOD)
+			return;
 		nod2BitSet = bs;
 	}
+
+	public boolean skipAddToNOD() {
+		return skipAddToNOD;
+	}
+
+	public void skipAddToNOD(boolean skip) {
+		this.skipAddToNOD = skip;
+	}
+	
 }

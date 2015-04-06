@@ -176,6 +176,14 @@ public class MapRoad extends MapLine {
 		this.skipHousenumberProcessing = skipHousenumberProcessing;
 	}
 
+	public boolean skipAddToNOD() {
+		return roadDef.skipAddToNOD();
+	}
+
+	public void skipAddToNOD(boolean skip) {
+		roadDef.skipAddToNOD(skip);
+	}
+
 	public String toString(){
 		return "id="+this.getRoadDef().getId() + ", " + this.getName();
 	}
