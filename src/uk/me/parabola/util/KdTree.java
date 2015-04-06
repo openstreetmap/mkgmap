@@ -143,7 +143,7 @@ public class KdTree <T extends Locatable> {
 		}
 		
 		double dist = tree.point.getLocation().distanceInDegreesSquared(p.getLocation());
-		if (dist < minDist){
+		if (dist < minDist && tree.point != p){
 			nextPoint = tree.point;
 			minDist = dist;
 		}
