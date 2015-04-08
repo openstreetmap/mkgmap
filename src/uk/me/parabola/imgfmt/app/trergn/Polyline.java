@@ -278,12 +278,17 @@ public class Polyline extends MapObject {
 		return getSubdiv().getLongitude() + (getDeltaLong() << getSubdiv().getShift());
 	}
 
-	public int getNodeCount() {
+	/**
+	 * 
+	 * @param countAllNodes : false: count only coord nodes, true: count number nodes
+	 * @return
+	 */
+	public int getNodeCount(boolean countAllNodes ) {
 		int idx = 0;
 		int count = 0;
-		boolean countNumberNodes = roaddef.hasHouseNumbers();
+		
 		for (Coord co : points) {
-			if (idx++ > 0 && (co.getId() > 0 || countNumberNodes && co.isNumberNode()))
+			if (idx++ > 0 && (co.getId() > 0 || countAllNodes && co.isNumberNode()))
 				count++;
 		}
 		return count;

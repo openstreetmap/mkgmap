@@ -18,6 +18,7 @@ package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -79,10 +80,27 @@ public class RoadNetwork {
 		int pointsHash = 0;
 
 		int npoints = coordList.size();
+		int numCoordNodes = 0;
+		boolean hasInternalNodes = false;
+		int numNumberNodes = 0;
+		BitSet nodeFlags = new BitSet();
 		for (int index = 0; index < npoints; index++) {
 			Coord co = coordList.get(index);
+			int id = co.getId();
 
-			if (index > 0) {
+			if (id != 0){
+				nodeFlags.set(numNumberNodes);
+				++numCoordNodes;
+				if(index > 0 && index < npoints - 1)
+					hasInternalNodes = true;
+			}
+			if (co.isNumberNode())
+				++numNumberNodes;
+			if (index == 0){
+				if (id == 0)
+					roadDef.setStartsWithNode(false);
+				
+			} else { 
 				double d = co.distance(coordList.get(index-1));
 				arcLength += d;
 				roadLength += d;
@@ -90,8 +108,6 @@ public class RoadNetwork {
 			if (roadDef.skipAddToNOD())
 				continue;
 			
-			int id = co.getId();
-
 			pointsHash += co.hashCode();
 
 			if (id == 0)
@@ -196,6 +212,17 @@ public class RoadNetwork {
 			arcLength = 0;
 			pointsHash = co.hashCode();
 		}
+		if (roadDef.hasHouseNumbers()){
+			// we ignore number nodes when we have no house numbers
+			if (numCoordNodes < numNumberNodes)
+				hasInternalNodes = true;
+			roadDef.setNumNodes(numNumberNodes);
+			roadDef.setNod2BitSet(nodeFlags);
+		} else {
+			roadDef.setNumNodes(numCoordNodes);
+		}
+		if (hasInternalNodes)
+			roadDef.setInternalNodes(true);
 		roadDef.setLength(roadLength);
 	}
 

@@ -28,7 +28,7 @@ import uk.me.parabola.imgfmt.app.trergn.MapObject;
  * @author Steve Ratcliffe.
  */
 public abstract class MapElement {
-	private String[] labels;
+	protected String[] labels;
 	private int type;
 
 	private int minResolution = 24;

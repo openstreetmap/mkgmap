@@ -104,33 +104,8 @@ public class MapRoad extends MapLine {
 		roadDef.setNoThroughRouting();
 	}
 
-	public void setStartsWithNode(boolean s) {
-		roadDef.setStartsWithNode(s);
-	}
-
-	public void setInternalNodes(boolean s) {
-		roadDef.setInternalNodes(s);
-	}
-
-	public void setNumNodes(int n) {
-		roadDef.setNumNodes(n);
-	}
-
 	public void setNumbers(List<Numbers> numbers) {
 		roadDef.setNumbersList(numbers);
-		if (roadDef.hasHouseNumbers()) {
-			BitSet bs = new BitSet();
-			int numNodes = 0;
-			for (int i = 0; i < getPoints().size(); i++){
-				Coord co = getPoints().get(i);
-				if (co.getId() != 0)
-					bs.set(numNodes);
-				if (co.isNumberNode())
-					numNodes++;
-			}
-			roadDef.setNumNodes(numNodes);
-			roadDef.setNod2BitSet(bs);
-		}
 	}
 	public List<Numbers> getNumbers() {
 		return roadDef.getNumbersList();

@@ -228,6 +228,9 @@ public class RoadDef {
 
 		if((netFlags & NET_FLAG_ADDRINFO) != 0) {
 			nodeCount--;
+			if (nodeCount + 2 != nnodes){
+				log.error("internal error? The nodeCount doesn't match value calculated by RoadNetWork:",this);
+			}
 			writer.put((byte) (nodeCount & 0xff)); // lo bits of node count
 
 			int code = 0xe8;     // zip and city present
@@ -362,7 +365,7 @@ public class RoadDef {
 		l.add(new RoadIndex(pl));
 
 		if (level == 0) {
-			nodeCount += pl.getNodeCount();
+			nodeCount += pl.getNodeCount(hasHouseNumbers());
 		}
 	}
 
@@ -455,11 +458,11 @@ public class RoadDef {
 		}
 	}
 
-	private boolean internalNodes = true;
+	private boolean internalNodes;
 
 	/**
 	 * Does the road have any nodes besides start and end?
-	 *
+	 * These can be number nodes or routing nodes.
 	 * This affects whether we need to write extra bits in
 	 * the bitstream in RGN.
 	 */

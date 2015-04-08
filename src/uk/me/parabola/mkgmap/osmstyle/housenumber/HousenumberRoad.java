@@ -171,7 +171,6 @@ public class HousenumberRoad {
 				nodesAdded = true;
 				log.debug("added",getRoad().getPoints().size() - oldNumPoints,"number node(s) at",group.linkNode.toDegreeString(),"for group",group,"in road",getRoad());
 				oldNumPoints = getRoad().getPoints().size();
-				road.setInternalNodes(true);
 				int minSeg = group.minSeg;
 				for (HousenumberMatch house : this.houseNumbers){
 					if (house.getSegment() >= minSeg)

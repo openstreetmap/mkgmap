@@ -1634,14 +1634,11 @@ public class StyledConverter implements OsmConverter {
 				rr.updateViaWay(way, nodeIndices);
 			}
 		}
-		road.setNumNodes(numNodes);
+		
 		if(numNodes > 0) {
 			// replace Coords that are nodes with CoordNodes
-			boolean hasInternalNodes = false;
 			for(int i = 0; i < numNodes; ++i) {
 				int n = nodeIndices.get(i);
-				if(n > 0 && n < points.size() - 1)
-					hasInternalNodes = true;
 				Coord coord = points.get(n);
 				CoordNode thisCoordNode = nodeIdMap.get(coord);
 				assert thisCoordNode != null : "Way " + debugWayName + " node " + i + " (point index " + n + ") at " + coord.toOSMURL() + " yields a null coord node";
@@ -1651,9 +1648,6 @@ public class StyledConverter implements OsmConverter {
 				}
 				points.set(n, thisCoordNode);
 			}
-
-			road.setStartsWithNode(nodeIndices.get(0) == 0);
-			road.setInternalNodes(hasInternalNodes);
 		}
 
 		if (roadLog.isInfoEnabled()) {

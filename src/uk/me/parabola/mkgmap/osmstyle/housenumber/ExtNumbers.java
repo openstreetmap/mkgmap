@@ -967,7 +967,6 @@ public class ExtNumbers {
 	private ExtNumbers split(){
 		ExtNumbers en1 = new ExtNumbers(housenumberRoad);
 		ExtNumbers en2 = new ExtNumbers(housenumberRoad);
-		getRoad().setInternalNodes(true);
 		// maintain the linked list
 		en1.prev = this.prev;
 		if (prev != null)
@@ -997,7 +996,6 @@ public class ExtNumbers {
 	private int addAsNumberNode(int pos, Coord toAdd){
 		toAdd.setNumberNode(true);
 		getRoad().getPoints().add(pos, toAdd);
-		getRoad().setInternalNodes(true);
 		
 		ExtNumbers work = next;
 		while (work != null){

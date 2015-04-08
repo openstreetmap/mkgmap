@@ -144,16 +144,9 @@ class RoadHelper {
 		}
 
 		List<Coord> points = road.getPoints();
-		road.setNumNodes(nodes.size());
 
-		boolean starts = false;
-		boolean intern = false;
 		for (NodeIndex ni : nodes) {
 			int n = ni.index;
-			if (n == 0)
-				starts = true;
-			else if (n < points.size() - 1)
-				intern = true;
 			if (log.isDebugEnabled())
 				log.debug("road has " + points.size() +" points");
 			Coord coord = points.get(n);
@@ -169,8 +162,6 @@ class RoadHelper {
 				log.warn("Inconsistant node ids");
 			}
 		}
-		road.setStartsWithNode(starts);
-		road.setInternalNodes(intern);
 
 		return road;
 	}
