@@ -712,7 +712,7 @@ public class RestrictionRelation extends Relation {
 			viaWayIds.add(wayPos+1, way.getId());
 		}
 		if (viaPoints.size() != viaWayIds.size()+1){
-			log.error("internal error: number of via points and via ways no longer fits");
+			log.error(messagePrefix,"internal error: number of via points and via ways no longer fits");
 			valid = false;
 		} else if (viaPoints.size() > 6){
 			log.warn(messagePrefix,"has more than 6 via nodes, this is not supported");
