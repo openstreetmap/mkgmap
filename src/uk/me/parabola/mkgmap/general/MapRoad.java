@@ -159,6 +159,20 @@ public class MapRoad extends MapLine {
 		roadDef.skipAddToNOD(skip);
 	}
 
+	public boolean addLabel(String label){
+		if (label == null)
+			return false;
+		for (int i = 0; i < labels.length; i++){
+			if (labels[i] == null){
+				labels[i] = label;
+				return true;
+			}
+			if (labels[i].equals(label))
+				return false;
+		}
+		return false;
+	}
+	
 	public String toString(){
 		return "id="+this.getRoadDef().getId() + ", " + this.getName();
 	}

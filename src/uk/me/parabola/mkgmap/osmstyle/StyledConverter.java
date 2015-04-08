@@ -604,7 +604,7 @@ public class StyledConverter implements OsmConverter {
 			if (cw.isValid())
 				addRoad(cw);
 		}
-		housenumberGenerator.generate(lineAdder);
+		housenumberGenerator.generate(lineAdder, nextNodeId);
 		
 		createRouteRestrictionsFromPOI();
 		poiRestrictions = null;
@@ -1634,7 +1634,7 @@ public class StyledConverter implements OsmConverter {
 				rr.updateViaWay(way, nodeIndices);
 			}
 		}
-		
+
 		if(numNodes > 0) {
 			// replace Coords that are nodes with CoordNodes
 			for(int i = 0; i < numNodes; ++i) {

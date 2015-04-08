@@ -55,6 +55,7 @@ public class HousenumberHooks extends OsmReadingHooksAdaptor {
 		usedTags.add("addr:street");
 		usedTags.add("addr:housenumber");
 		usedTags.add("addr:interpolation");
+		usedTags.add("addr:place");
 		return usedTags;
 	}
 	

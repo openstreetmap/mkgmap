@@ -109,7 +109,7 @@ public class KdTree <T extends Locatable> {
 	 * @param p the point to search for
 	 * @return the point with shortest distance to <var>p</var>
 	 */
-	public T findNextPoint(T p) {
+	public T findNextPoint(Locatable p) {
 		// reset 
 		minDist = Double.MAX_VALUE;
 		nextPoint = null;
@@ -118,7 +118,7 @@ public class KdTree <T extends Locatable> {
 		return findNextPoint(p, root, ROOT_NODE_USES_LONGITUDE);
 	}
 
-	private T findNextPoint(T p, KdNode tree, boolean useLongitude) {
+	private T findNextPoint(Locatable p, KdNode tree, boolean useLongitude) {
 		boolean continueWithLeft = false;
 		if (tree == null)
 			return nextPoint;

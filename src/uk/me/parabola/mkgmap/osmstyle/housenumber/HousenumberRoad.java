@@ -80,7 +80,8 @@ public class HousenumberRoad {
 		ExtNumbers currNumbers = null;
 		for (Coord p : road.getPoints()) {
 			if (currNodePos == 0) {
-				assert p instanceof CoordNode; 
+				if (road.skipAddToNOD() == false)
+					assert p instanceof CoordNode; 
 			}
 
 			// An ordinary point in the road.
@@ -488,6 +489,7 @@ public class HousenumberRoad {
 			for (int i = 0; i < labels.length; i++){
 				if (labels[i] == null){
 					labels[i] = streetName;
+					log.info("added label",streetName,"for",road,"Labels are now:",Arrays.toString(labels));
 					found = true;
 					break;
 				}

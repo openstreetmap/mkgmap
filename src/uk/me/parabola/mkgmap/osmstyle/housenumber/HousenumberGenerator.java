@@ -18,7 +18,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -28,27 +28,29 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.TreeSet;
 
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.net.Numbers;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LineAdder;
+import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 import uk.me.parabola.mkgmap.reader.osm.HousenumberHooks;
 import uk.me.parabola.mkgmap.reader.osm.Node;
-import uk.me.parabola.mkgmap.reader.osm.OSMId2ObjectMap;
 import uk.me.parabola.mkgmap.reader.osm.POIGeneratorHook;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.TagDict;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.util.EnhancedProperties;
+import uk.me.parabola.util.KdTree;
+import uk.me.parabola.util.Locatable;
 import uk.me.parabola.util.MultiHashMap;
 
 /**
@@ -58,9 +60,7 @@ import uk.me.parabola.util.MultiHashMap;
  * @author WanMil
  */
 public class HousenumberGenerator {
-
-	private static final Logger log = Logger
-			.getLogger(HousenumberGenerator.class);
+	private static final Logger log = Logger.getLogger(HousenumberGenerator.class);
 
 	/** Gives the maximum distance between house number element and the matching road */
 	public static final double MAX_DISTANCE_TO_ROAD = 150d;
@@ -70,6 +70,8 @@ public class HousenumberGenerator {
 	// options for handling of unnamed (service?) roads	
 	private boolean nameServiceRoads;
 	private int nameSearchDepth;
+
+	private int nextNodeId;
 	
 	private MultiHashMap<String, MapRoad> roadByNames;
 	private List<MapRoad> unnamedRoads;
@@ -77,11 +79,15 @@ public class HousenumberGenerator {
 	private List<MapRoad> roads;
 	private MultiHashMap<String, Element> houseNumbers;
 	private Map<Long,Node> houseNodes;
+	private MultiHashMap<String, Element> placeHouseNumbers;
+
 
 	
 	private static final short streetTagKey = TagDict.getInstance().xlate("mkgmap:street");
 	private static final short addrStreetTagKey = TagDict.getInstance().xlate("addr:street");
-	private static final short addrInterpolationTagKey = TagDict.getInstance().xlate("addr:interpolation");	
+	private static final short addrInterpolationTagKey = TagDict.getInstance().xlate("addr:interpolation");
+	private static final short addrPlaceTagKey = TagDict.getInstance().xlate("addr:place");
+	
 	
 	public HousenumberGenerator(EnhancedProperties props) {
 		this.roadByNames = new MultiHashMap<String,MapRoad>();
@@ -90,7 +96,10 @@ public class HousenumberGenerator {
 		this.houseNodes = new HashMap<>();
 		this.interpolationWays = new MultiHashMap<>();
 		this.unnamedRoads = new ArrayList<>();
+		this.placeHouseNumbers = new MultiHashMap<>(); 
+
 		numbersEnabled=props.containsKey("housenumbers");
+
 		int n = props.getProperty("name-service-roads", 0);
 		if (n > 0){
 			nameServiceRoads = true;
@@ -125,13 +134,19 @@ public class HousenumberGenerator {
 			return; 		
 		if (HousenumberMatch.getHousenumber(n) != null) {
 			String streetname = getStreetname(n);
-			if (streetname != null) {
+			if (streetname == null){
+				String place = n.getTag(addrPlaceTagKey);
+				if (place != null){
+					placeHouseNumbers.add(place, n);
+				} else {
+					if (log.isDebugEnabled())
+						log.debug(n.toBrowseURL()," ignored, doesn't contain a street or place name.");
+				}
+
+			} else {
 				houseNumbers.add(streetname, n);
 				if (n.getTag(HousenumberHooks.partOfInterpolationTagKey) != null)
 					houseNodes.put(n.getId(),n);
-			} else {
-				if (log.isDebugEnabled())
-					log.debug(n.toBrowseURL()," ignored, doesn't contain a street name.");
 			}
 		} 
 	}
@@ -166,11 +181,16 @@ public class HousenumberGenerator {
 			if (streetname != null) {
 				houseNumbers.add(streetname, w);
 			} else {
-				if (log.isDebugEnabled()){
-					if (FakeIdGenerator.isFakeId(w.getId()))
-						log.debug("mp-created way ignored, doesn't contain a street name. Tags:",w.toTagString());
-					else 
-						log.debug(w.toBrowseURL()," ignored, doesn't contain a street name.");
+				String place = w.getTag(addrPlaceTagKey);
+				if (place != null){
+					placeHouseNumbers.add(place, w);
+				} else {
+					if (log.isDebugEnabled()){
+						if (FakeIdGenerator.isFakeId(w.getId()))
+							log.debug("mp-created way ignored, doesn't contain a street name. Tags:",w.toTagString());
+						else 
+							log.debug(w.toBrowseURL()," ignored, doesn't contain a street or place name.");
+					}				
 				}
 			}
 		}
@@ -449,8 +469,19 @@ public class HousenumberGenerator {
 	}
 	
 	
-	public void generate(LineAdder adder) {
+	/**
+	 * 
+	 * @param adder
+	 * @param naxNodeId the highest nodeId used before
+	 */
+	public void generate(LineAdder adder, int naxNodeId) {
 		if (numbersEnabled) {
+			KdTree<Locatable> roadSearchTree = buildRoadPointSearchTree();
+			if (placeHouseNumbers.isEmpty() == false){
+				nextNodeId = ++naxNodeId;
+//				generateFakeRoadsForPlaces(adder);
+				findRoadsNearPlaces(roadSearchTree);
+			}
 			if (nameServiceRoads)
 				identifyServiceRoads();
 			TreeSet<String> sortedStreetNames = new TreeSet<>();
@@ -493,6 +524,19 @@ public class HousenumberGenerator {
 		roads.clear();
 	}
 	
+	/**
+	 * process option --x-name-service-roads=n
+	 * The program identifies unnamed roads which are only connected to one
+	 * road with a name or to multiple roads with the same name. The process is
+	 * repeated n times. If n > 1 the program will also use unnamed roads which
+	 * are connected to unnamed roads if those are connected to named roads.
+	 * Higher values for n mean deeper search, but reasonable values are
+	 * probably between 1 and 5.
+	 * 
+	 * These roads are then used for house number processing like the named
+	 * ones. If house numbers are assigned to these roads, they are named so
+	 * that address search will find them.
+	 */
 	private void identifyServiceRoads() {
 		Int2ObjectOpenHashMap<String> roadNamesByNodes = new Int2ObjectOpenHashMap<>();
 		MultiHashMap<MapRoad, Coord> coordNodesUnnamedRoads = new MultiHashMap<>();
@@ -1553,5 +1597,209 @@ public class HousenumberGenerator {
 		}
 		return houses;
 	}
+
+	private class RoadPoint implements Locatable{
+		final Coord p;
+		final MapRoad r;
+		final int segment;
+		MultiHashMap<String, HousenumberMatch> houses;
+		public RoadPoint(MapRoad road, Coord co, int s) {
+			this.p = co;
+			this.r = road;
+			this.segment = s;
+		}
+		public void addHouse(String name, HousenumberMatch house){
+			if (houses == null)
+				houses = new MultiHashMap<>();
+			houses.add(name, house);	
+		}
+		@Override
+		public Coord getLocation() {
+			return p;
+		}
+	}
+
+	/**
+	 * TODO: use k-d-tree for clusters
+	 * @return
+	 */
+	private KdTree<Locatable> buildRoadPointSearchTree(){
+		// fill k-d-tree with points on roads
+		KdTree<Locatable> searchTree = new KdTree<>();
+		for (MapRoad road : roads){
+			List<Coord> points = road.getPoints();
+			for (int i = 0; i + 1 < points.size(); i++){
+				Coord c1 = points.get(i);
+				Coord c2 = points.get(i + 1);
+				searchTree.add(new RoadPoint(road, c1, i));
+				while (true){
+					double segLen = c1.distance(c2);
+					double frac = 100 / segLen;
+					if (frac > 0.75)
+						break;
+					// if points are not close enough, add extra point
+					c1 = c1.makeBetweenPoint(c2, frac);
+					searchTree.add(new RoadPoint(road, c1, i));
+					segLen -= 100;
+				}
+			}
+			int last = points.size() - 1;
+			searchTree.add(new RoadPoint(road, points.get(last) , last));
+		}
+		return searchTree;
+	}
+
+	private void findRoadsNearPlaces(KdTree<Locatable> roadSearchTree){
+		long t1 = System.currentTimeMillis();
+		MultiHashMap<MapRoad , RoadPoint> usedSegments = new MultiHashMap<>();
+		MultiHashMap<MapRoad, String> potentialRoadNames = new MultiHashMap<>();
+		// now find closest road(s) for houses 
+		for (Entry<String, List<Element>> entry : placeHouseNumbers.entrySet()){
+			String placeName = entry.getKey();
+			if (houseNumbers.get(placeName).isEmpty() == false){
+				log.debug("implement handling of addr:place with equal names like addr:street for",placeName);
+				continue;
+			}
+			HashSet<MapRoad> candidates = new HashSet<>();
+			List<Element> elements = entry.getValue();
+			List<HousenumberMatch> houses = convertElements(placeName, elements);
+			for (HousenumberMatch house : houses){
+				RoadPoint rp = (RoadPoint) roadSearchTree.findNextPoint(house);
+				Coord c1 = rp.p;
+				double d1 = house.getLocation().distance(c1);
+				boolean useIt = false;
+				if (d1 < MAX_DISTANCE_TO_ROAD){
+					useIt = true;
+				} else if (d1 < 200){
+					if (!useIt && rp.segment > 0){
+						Coord c0 = rp.r.getPoints().get(rp.segment - 1);
+						double d0 = house.getLocation().shortestDistToLineSegment(c0, c1);
+						if (d0 < MAX_DISTANCE_TO_ROAD){
+							useIt = true;
+						}
+					}
+					if (!useIt && rp.segment + 1 < rp.r.getPoints().size()){
+						Coord c2 = rp.r.getPoints().get(rp.segment + 1);
+						double d2 = house.getLocation().shortestDistToLineSegment(c1, c2);
+						if (d2 < MAX_DISTANCE_TO_ROAD){
+							useIt = true;
+						}
+					}
+				}
+				if (!useIt)
+					continue;
+				rp.addHouse(placeName, house);
+				candidates.add(rp.r);
+				usedSegments.add(rp.r,rp);
+			}
+			if (candidates.isEmpty()){
+				log.debug("found no road near houses with addr:place="+placeName);
+				continue;
+			}
+			for (MapRoad road : candidates){
+				potentialRoadNames.add(road, placeName);
+			}
+		}
+		HashSet<String> goodPlaceHouses = new HashSet<>();
+		for (int roadPos = 0; roadPos < roads.size(); roadPos++){
+			MapRoad road = roads.get(roadPos);
+			List<String> names = potentialRoadNames.get(road);
+			if (names.isEmpty())
+				continue;
+			if (names.size() == 1) {
+				boolean okay = true;
+				// road has one or more labels
+				// road.getStreet() returns the value from tag mkgmap:street
+				if (road.getName() == null){
+					List<Element> housesWithStreet = houseNumbers.get(road.getStreet());
+					okay = housesWithStreet.isEmpty();
+				}
+				String placeName = names.get(0);
+				if (!okay){
+					log.debug("road",road,"is candidate for houses with addr:street and with addr:place, ignoring it for addr:place");
+					continue;
+				}
+				boolean changed = road.addLabel(placeName);
+				if (changed && log.isInfoEnabled()){
+					if (placeName.equals(road.getName()))
+						log.info("using place name",placeName,"for road",road);
+					else 
+						log.info("added place name",placeName,"as label for road",road);
+				}
+
+				List<Element> housesWithStreet = houseNumbers.get(placeName);
+				if (housesWithStreet.isEmpty()){
+					goodPlaceHouses.add(placeName);
+					roadByNames.add(placeName, road);
+				} else {
+					log.debug("???");
+				}
+			} else {
+				List<RoadPoint> segments = usedSegments.get(road);
+				HashMap<String, BitSet> placeSegments = new HashMap<>();
+				for (RoadPoint rp: segments){
+//					log.debug(rp.r, rp.segment,rp.houses.size());
+					for (String name : rp.houses.keySet()){
+						BitSet bs = placeSegments.get(name);
+						if (bs == null){
+							bs = new BitSet();
+							placeSegments.put(name, bs);
+						}
+						bs.set(rp.segment);
+					}
+				}
+				for (Entry<String, BitSet> entry : placeSegments.entrySet()){
+					BitSet bs = entry.getValue();
+					String placeName = entry.getKey();
+					List<Element> housesWithStreet = houseNumbers.get(placeName);
+					if (housesWithStreet.isEmpty()){
+						int first = Math.max(0, bs.nextSetBit(0) - 1);
+						int last = Math.min(bs.length()+1, road.getPoints().size());
+						List<Coord> points = new ArrayList<>(last-first);
+						for (int k = first; k < last; k++){
+							Coord co = road.getPoints().get(k);
+							Coord c2;
+							if (k == first || k + 1 == last ){
+								c2 = new CoordNode(co, nextNodeId++, co.getOnBoundary());
+							}
+							else 						
+								c2 = new Coord (co);
+							points.add(c2);
+						}
+						MapLine ml = new MapLine(road);
+						assert points.get(0).getId() != 0;
+						assert points.get(points.size()-1).getId() != 0;
+						ml.setPoints(points);
+						ml.setName(placeName);
+						MapRoad copy = new MapRoad(road.getRoadDef().getId(), ml);
+						copy.setMinResolution(road.getMaxResolution());
+						copy.setRoadClass(road.getRoadDef().getRoadClass());
+						copy.setSpeed(road.getRoadDef().getRoadSpeed());
+						if (road.getRoadDef().isOneway())
+							copy.setOneway();
+						copy.setAccess((byte) 0);
+						copy.skipAddToNOD(true);
+						goodPlaceHouses.add(placeName);
+						roadByNames.add(placeName, copy);
+						roads.add(roadPos+1,copy);
+						log.debug("adding copy of road",road,"for place",placeName,"with segments",first,"to",last);
+					} else {
+						log.debug("???");
+					}
+
+				}
+			}
+		}
+		for (String placeName : goodPlaceHouses){
+			List<Element> elements = placeHouseNumbers.remove(placeName);
+			for (Element el : elements){
+				houseNumbers.add(placeName, el);
+			}
+		}
+		long t2 = System.currentTimeMillis();
+		log.debug("preperation for addr:place houses took",t2-t1,"ms");
+		return;	
+	}
+	
 	
 }

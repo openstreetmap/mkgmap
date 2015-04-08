@@ -25,12 +25,13 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.TagDict;
 import uk.me.parabola.mkgmap.reader.osm.Way;
+import uk.me.parabola.util.Locatable;
 
 /**
  * Stores the matching data between a housenumber and its road.
  * @author WanMil
  */
-public class HousenumberMatch {
+public class HousenumberMatch implements Locatable {
 
 	private final Element element;
 	private Coord location;
