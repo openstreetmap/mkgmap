@@ -684,7 +684,7 @@ public class RestrictionRelation extends Relation {
 				if (Math.abs(posLast - posFirst) == 1){
 					break;
 				} else {
-					log.error(messagePrefix, "check self intersection!");
+//					log.error(messagePrefix, "check self intersection!");
 				}
 			}
 		}
