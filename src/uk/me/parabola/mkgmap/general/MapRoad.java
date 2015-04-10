@@ -16,10 +16,8 @@
  */
 package uk.me.parabola.mkgmap.general;
 
-import java.util.BitSet;
 import java.util.List;
 
-import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Zip;
 import uk.me.parabola.imgfmt.app.net.Numbers;
