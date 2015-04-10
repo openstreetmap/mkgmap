@@ -46,6 +46,7 @@ public class RestrictionRelation extends Relation {
     private List<Long> toWayIds = new ArrayList<>(2);
     private List<Long> viaWayIds = new ArrayList<>(2);
     private List<Coord> viaPoints = new ArrayList<>(2);
+    private HashSet<Long> updatedViaWays = new HashSet<>(); 
     private Coord viaCoord;
     private String restriction;
 	private byte exceptMask;
@@ -666,21 +667,25 @@ public class RestrictionRelation extends Relation {
 			return;
 		if (viaWayIds.contains(way.getId()) == false)
 			return;
+		if(updatedViaWays.contains(way.getId())){
+			log.error(messagePrefix, "internal error: via way is updated again");
+		}
 		Coord first = way.getPoints().get(nodeIndices.get(0));
 		Coord last = way.getPoints().get(
 				nodeIndices.get(nodeIndices.size() - 1));
 		int posFirst = -1;
-		for (int i = 0; i < viaPoints.size(); i++) {
-			if (first == viaPoints.get(i)) {
-				posFirst = i;
-				break;
-			}
-		}
 		int posLast = -1;
 		for (int i = 0; i < viaPoints.size(); i++) {
-			if (last == viaPoints.get(i)) {
+			if (first == viaPoints.get(i)) 
+				posFirst = i;
+			if (last== viaPoints.get(i)) 
 				posLast = i;
-				break;
+			if (posFirst >= 0 && posLast >= 0){
+				if (Math.abs(posLast - posFirst) == 1){
+					break;
+				} else {
+					log.error(messagePrefix, "check self intersection!");
+				}
 			}
 		}
 		if (posFirst < 0  || posLast < 0){
@@ -688,7 +693,11 @@ public class RestrictionRelation extends Relation {
 			valid = false;
 			return;
 		}
-		
+		if (Math.abs(posLast - posFirst) != 1){
+			log.error(messagePrefix, "internal error: via way doesn't contain points in expected position");
+			valid = false;
+			return;
+		}
 		List<Coord> midPoints = new ArrayList<>();
 		for (int i = 1; i + 1 < nodeIndices.size(); i++) {
 			midPoints.add(way.getPoints().get(nodeIndices.get(i)));
@@ -717,6 +726,7 @@ public class RestrictionRelation extends Relation {
 		} else if (viaPoints.size() > 6){
 			log.warn(messagePrefix,"has more than 6 via nodes, this is not supported");
 			valid = false;
-		} 
+		}
+		updatedViaWays.add(way.getId());
 	}
 }
