@@ -605,6 +605,7 @@ public class StyledConverter implements OsmConverter {
 				addRoad(cw);
 		}
 		housenumberGenerator.generate(lineAdder, nextNodeId);
+		housenumberGenerator = null;
 		
 		createRouteRestrictionsFromPOI();
 		poiRestrictions = null;

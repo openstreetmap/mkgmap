@@ -13,6 +13,8 @@
 package uk.me.parabola.util;
 
 
+import java.util.HashSet;
+import java.util.Set;
 import uk.me.parabola.imgfmt.app.Coord;
 
 
@@ -43,6 +45,8 @@ public class KdTree <T extends Locatable> {
     // helpers 
     private T nextPoint ;
     private double minDist;
+    private double maxDist;
+    private Set<T> set;
 
     /**
      *  create an empty tree
@@ -112,10 +116,28 @@ public class KdTree <T extends Locatable> {
 	public T findNextPoint(Locatable p) {
 		// reset 
 		minDist = Double.MAX_VALUE;
+		maxDist = -1;
+		set = null;
 		nextPoint = null;
 		
 		// false => first node is a latitude level
 		return findNextPoint(p, root, ROOT_NODE_USES_LONGITUDE);
+	}
+
+	/**
+	 * Searches for the point that has smallest distance to the given point.
+	 * @param p the point to search for
+	 * @return the point with shortest distance to <var>p</var>
+	 */
+	public Set<T> findNextPoint(Locatable p, double maxDist) {
+		// reset 
+		minDist = Double.MAX_VALUE;
+		this.maxDist = Math.pow(maxDist * 360 / Coord.U, 2); // convert maxDist in meter to distanceInDegreesSquared
+		nextPoint = null;
+		this.set = new HashSet<>();
+		// false => first node is a latitude level
+		findNextPoint(p, root, ROOT_NODE_USES_LONGITUDE);
+		return set;
 	}
 
 	private T findNextPoint(Locatable p, KdNode tree, boolean useLongitude) {
@@ -125,9 +147,15 @@ public class KdTree <T extends Locatable> {
 		
 		if (tree.left == null && tree.right == null){
 			double dist = tree.point.getLocation().distanceInDegreesSquared(p.getLocation());
+			if (dist <= maxDist && set != null){
+				set.add(tree.point);
+			}
 			if (dist < minDist){
 				nextPoint = tree.point;
-				minDist = dist;
+				if (dist < maxDist)
+					minDist = maxDist;
+				else
+					minDist = dist;
 			}
 			return nextPoint;
 		}
@@ -143,11 +171,16 @@ public class KdTree <T extends Locatable> {
 		}
 		
 		double dist = tree.point.getLocation().distanceInDegreesSquared(p.getLocation());
-		if (dist < minDist && tree.point != p){
+		if (dist <= maxDist && set != null)
+			set.add(tree.point);
+		if (dist < minDist){
 			nextPoint = tree.point;
 			minDist = dist;
-		}
-		
+			if (dist < maxDist)
+				minDist = maxDist;
+			else
+				minDist = dist;
+		} 		
 		// do we have to search the other part of the tree?
 		Coord test;
 		if (useLongitude)

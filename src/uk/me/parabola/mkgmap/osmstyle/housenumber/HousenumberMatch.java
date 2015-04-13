@@ -16,14 +16,10 @@ package uk.me.parabola.mkgmap.osmstyle.housenumber;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.reader.osm.Element;
-import uk.me.parabola.mkgmap.reader.osm.Node;
-import uk.me.parabola.mkgmap.reader.osm.TagDict;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.util.Locatable;
 
@@ -31,10 +27,7 @@ import uk.me.parabola.util.Locatable;
  * Stores the matching data between a housenumber and its road.
  * @author WanMil
  */
-public class HousenumberMatch implements Locatable {
-
-	private final Element element;
-	private Coord location;
+public class HousenumberMatch extends HousenumberElem implements Locatable {
 	private MapRoad road;
 	
 	private double distance = Double.POSITIVE_INFINITY;
@@ -43,8 +36,6 @@ public class HousenumberMatch implements Locatable {
 	
 	private double segmentFrac;
 	
-	private int housenumber;
-	private String sign; 
 	private boolean ignored;
 	private boolean isDuplicate;
 	private boolean interpolated;
@@ -56,110 +47,8 @@ public class HousenumberMatch implements Locatable {
 	private List<MapRoad> alternativeRoads;
 	private int intervalInfoRefs; // counter
 	
-	/**
-	 * Instantiates a new housenumber match element.
-	 * @param element the OSM element tagged with mkgmap:housenumber
-	 * @throws IllegalArgumentException if the housenumber cannot be parsed
-	 */
-	public HousenumberMatch(Element element) {
-		this.element = element;
-		parseHousenumber();
-	}
-	
-	public HousenumberMatch(Element element, int hn, String sign){
-		this.element = element;
-		this.housenumber = hn;
-		this.sign = sign;
-	}
-
-	/**
-	 * Retrieves the location of the housenumber.
-	 * @return location of housenumber
-	 */
-	public Coord getLocation() {
-		if (location == null)
-		  location = (element instanceof Node ? ((Node)element).getLocation() : ((Way)element).getCofG());
-		return location;
-	}
-	
-	/**
-	 * Retrieves the house number of this element.
-	 * @param e an OSM element
-	 * @return the house number (or {@code null} if no house number set)
-	 */
-	private static final short housenumberTagKey1 =  TagDict.getInstance().xlate("mkgmap:housenumber");
-	private static final short housenumberTagKey2 =  TagDict.getInstance().xlate("addr:housenumber");
-	public static String getHousenumber(Element e) {
-		String res = e.getTag(housenumberTagKey1); 
-		if (res != null)
-			return res;
-		return e.getTag(housenumberTagKey2);
-	}
-	
-	/**
-	 * Parses the house number string. It accepts the first positive number part
-	 * of a string. So all leading and preceding non number parts are ignored.
-	 * So the following strings are accepted:
-	 * <table>
-	 * <tr>
-	 * <th>Input</th>
-	 * <th>Output</th>
-	 * </tr>
-	 * <tr>
-	 * <td>23</td>
-	 * <td>23</td>
-	 * </tr>
-	 * <tr>
-	 * <td>-23</td>
-	 * <td>23</td>
-	 * </tr>
-	 * <tr>
-	 * <td>21-23</td>
-	 * <td>21</td>
-	 * </tr>
-	 * <tr>
-	 * <td>Abc 21</td>
-	 * <td>21</td>
-	 * </tr>
-	 * <tr>
-	 * <td>Abc 21.45</td>
-	 * <td>21</td>
-	 * </tr>
-	 * <tr>
-	 * <td>21 Main Street</td>
-	 * <td>21</td>
-	 * </tr>
-	 * <tr>
-	 * <td>Main Street</td>
-	 * <td><i>IllegalArgumentException</i></td>
-	 * </tr>
-	 * </table>
-	 * @throws IllegalArgumentException if parsing fails
-	 */
-	private void parseHousenumber() {
-		String housenumberString = getHousenumber(element);
-		sign = housenumberString;
-		if (housenumberString == null) {
-			throw new IllegalArgumentException("No housenumber found in "+element.toBrowseURL());
-		}
-		
-		// the housenumber must match against the pattern <anything>number<notnumber><anything>
-		Pattern p = Pattern.compile("\\D*(\\d+)\\D?.*");
-		Matcher m = p.matcher(housenumberString);
-		if (m.matches() == false) {
-			throw new IllegalArgumentException("No housenumber ("+element.toBrowseURL()+"): "+housenumberString);
-		}
-		try {
-			// get the number part and parse it
-			housenumber = Integer.parseInt(m.group(1));
-		} catch (NumberFormatException exp) {
-			throw new IllegalArgumentException("No housenumber ("+element.toBrowseURL()+"): "+housenumberString);
-		}
-
-		// a housenumber must be > 0
-		if (housenumber <= 0) {
-			throw new IllegalArgumentException("No housenumber ("+element.toBrowseURL()+"): "+housenumberString);
-		}
+	public HousenumberMatch(HousenumberElem he) {
+		super(he);
 	}
 
 	public MapRoad getRoad() {
@@ -232,37 +121,6 @@ public class HousenumberMatch implements Locatable {
 		this.segmentFrac = segmentFrac;
 	}
 
-	/**
-	 * Retrieve the house number
-	 * @return the house number
-	 */
-	public int getHousenumber() {
-		return housenumber;
-	}
-
-	/**
-	 * Set the house number.
-	 * @param housenumber house number
-	 */
-	public void setHousenumber(int housenumber) {
-		this.housenumber = housenumber;
-	}
-
-	/**
-	 * Retrieve the OSM element that defines the house number.
-	 * @return the OSM element
-	 */
-	public Element getElement() {
-		return element;
-	}
-
-	/** 
-	 * @return the house number as coded in the tag
-	 */
-	public String getSign(){
-		return sign;
-	}
-	
 	public boolean hasAlternativeRoad() {
 		return alternativeRoads != null && alternativeRoads.isEmpty() == false;
 	}
@@ -308,10 +166,10 @@ public class HousenumberMatch implements Locatable {
 	}
 
 	public String toString() {
-		String s1 = String.valueOf(housenumber);
-		if (sign.length() > 2 + s1.length())
+		String s1 = String.valueOf(getHousenumber());
+		if (getSign().length() > 2 + s1.length())
 			return s1 + "("+segment+")";
-		return sign + "("+segment+")";
+		return getSign() + "("+segment+")";
 	}
 
 	public void setFarDuplicate(boolean b) {

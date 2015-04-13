@@ -318,12 +318,12 @@ public class ExtNumbers {
 		return list;
 	}
 	
-	public ExtNumbers checkSingleChainSegments(String streetName) {
+	public ExtNumbers checkSingleChainSegments(String streetName, boolean removeGaps) {
 		ExtNumbers curr = this;
 		ExtNumbers head = this;
-		if (housenumberRoad.isRandom()){
+		if (housenumberRoad.isRandom() || removeGaps){
 			for (curr = head; curr != null; curr = curr.next){
-				while (curr.hasGaps && (curr.leftNotInOrder || curr.rightNotInOrder)){
+				while (curr.hasGaps && (removeGaps || curr.leftNotInOrder || curr.rightNotInOrder)){
 					ExtNumbers test = curr.tryChange(SR_FIX_ERROR);
 					if (test != curr){
 						if (curr.prev == null)
@@ -1430,7 +1430,7 @@ public class ExtNumbers {
 
 	
 	private static HousenumberMatch checkMoveTo(HousenumberMatch house, ExtNumbers other, boolean otherLeft){
-		HousenumberMatch test = new HousenumberMatch(house.getElement(), house.getHousenumber(), house.getSign());
+		HousenumberMatch test = new HousenumberMatch(house);
 		Numbers otherIvl = other.getNumbers();
 		int oStart = otherIvl.getStart(otherLeft);
 		int oEnd = otherIvl.getEnd(otherLeft);

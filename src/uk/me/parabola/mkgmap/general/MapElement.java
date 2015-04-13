@@ -91,6 +91,17 @@ public abstract class MapElement {
 		this.labels = Arrays.copyOf(labels, 4);
 	}
 
+	public int numLabels(){
+		int count = 0;
+		for (int i = 0; i < 4; i++) {
+			if (this.labels[i] != null) 
+				count++;
+			else 
+				break;
+		}
+		return count;
+	}
+
 	public ExtTypeAttributes getExtTypeAttributes() {
 		return extTypeAttributes;
 	}

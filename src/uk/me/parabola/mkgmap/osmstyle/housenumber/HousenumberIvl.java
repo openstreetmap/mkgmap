@@ -165,7 +165,7 @@ public class HousenumberIvl {
 			for (int i = 0; i < 2; i++){
 				test[i] = knownHouses[i];
 				if (test[i].getRoad() != r){
-					test[i] = new HousenumberMatch(knownHouses[i].getElement(), knownHouses[i].getHousenumber(), knownHouses[i].getSign());
+					test[i] = new HousenumberMatch(knownHouses[i]);
 					HousenumberGenerator.findClosestRoadSegment(test[i], r);
 				}
 				if (test[i].getRoad() == null || test[i].getDistance() > MAX_INTERPOLATION_DISTANCE_TO_ROAD ){
@@ -230,7 +230,11 @@ public class HousenumberIvl {
 			generated.addTag(streetTagKey, streetName);
 			String number = String.valueOf(hn);
 			generated.addTag(housenumberTagKey, number);
-			HousenumberMatch house = new HousenumberMatch(generated, hn, Integer.toString(hn));
+			HousenumberElem houseElem = new HousenumberElem(generated);
+			houseElem.setHousenumber(hn);
+			houseElem.setStreet(streetName);
+			houseElem.setSign(number);
+			HousenumberMatch house = new HousenumberMatch(houseElem);
 			if (!hasMultipleRoads){
 				HousenumberGenerator.findClosestRoadSegment(house, knownHouses[0].getRoad());
 				if (house.getRoad() == null || house.getDistance() > MAX_INTERPOLATION_DISTANCE_TO_ROAD ){

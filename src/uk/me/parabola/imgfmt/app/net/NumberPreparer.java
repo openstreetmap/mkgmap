@@ -139,7 +139,6 @@ public class NumberPreparer {
 		for (Numbers n : numbers) {
 			if (!n.hasRnodNumber())
 				throw new Abandon("no r node set");
-
 			// See if we need to skip some nodes
 			if (n.getRnodNumber() != lastNode + 1)
 				state.writeSkip(bw, n.getRnodNumber() - lastNode - 2);

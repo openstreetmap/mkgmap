@@ -38,6 +38,7 @@ public class HousenumberRoad {
 	private final List<HousenumberMatch> houseNumbers;
 	private boolean changed;
 	private boolean isRandom;
+	private boolean removeGaps;
 
 	public HousenumberRoad(String streetName, MapRoad r, List<HousenumberMatch> potentialNumbersThisRoad) {
 		this.streetName = streetName;
@@ -170,7 +171,8 @@ public class HousenumberRoad {
 			}
 			if (group.findSegment(streetName, groups)){
 				nodesAdded = true;
-				log.debug("added",getRoad().getPoints().size() - oldNumPoints,"number node(s) at",group.linkNode.toDegreeString(),"for group",group,"in road",getRoad());
+				if (log.isDebugEnabled())
+					log.debug("added",getRoad().getPoints().size() - oldNumPoints,"number node(s) at",group.linkNode.toDegreeString(),"for group",group,"in road",getRoad());
 				oldNumPoints = getRoad().getPoints().size();
 				int minSeg = group.minSeg;
 				for (HousenumberMatch house : this.houseNumbers){
@@ -179,8 +181,10 @@ public class HousenumberRoad {
 				}
 				group.recalcPositions();
 			} else {
-				if(group.linkNode != null)
-					log.debug("used existing zero-length-segment at",group.linkNode.toDegreeString(),"for group",group,"in road",getRoad());
+				if(group.linkNode != null){
+					if (log.isDebugEnabled())
+						log.debug("used existing zero-length-segment at",group.linkNode.toDegreeString(),"for group",group,"in road",getRoad());
+				}
 			}
 		}
 		return;
@@ -200,7 +204,7 @@ public class HousenumberRoad {
 				setRandom(true);
 			}
 			setChanged(false);
-			extNumbersHead = extNumbersHead.checkSingleChainSegments(streetName);
+			extNumbersHead = extNumbersHead.checkSingleChainSegments(streetName, removeGaps);
 			extNumbersHead = extNumbersHead.checkChainPlausibility(streetName, houseNumbers);
 			if (isChanged())
 				anyChanges = true;
@@ -526,8 +530,16 @@ public class HousenumberRoad {
 
 	public void setRandom(boolean isRandom) {
 		if (this.isRandom == false)
-			log.debug("detected random case",this);
+			if (log.isDebugEnabled())
+				log.debug("detected random case",this);
 		this.isRandom = isRandom;
+	}
+
+	public void setRemoveGaps(boolean b) {
+		removeGaps = true;
+	}
+	public boolean getRemoveGaps() {
+		return removeGaps;
 	}
 
 	/**
