@@ -131,9 +131,10 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			String line;
 			while ((line = in.readLine()) != null) {
 				++lineNo;
-				if (line.trim().isEmpty() || line.charAt(0) == ';')
+				line = line.trim();
+				if (line.isEmpty() || line.charAt(0) == ';')
 					continue;
-				if (line.startsWith("[END"))
+				if (line.toUpperCase().startsWith("[END"))
 					endSection();
 				else if (line.charAt(0) == '[')
 					sectionStart(line);
@@ -192,30 +193,29 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	 * @param line The raw line from the input file.
 	 */
 	private void sectionStart(String line) {
-		String name = line.substring(1, line.length() - 1);
+		String name = line.substring(1, line.length() - 1).trim();
 		log.debug("section name", name);
 
 		extraAttributes = null;
 
-		if (name.equals("IMG ID")) {
+		if (name.equalsIgnoreCase("IMG ID")) {
 			section = S_IMG_ID;
-		} else if (name.equals("POI") || name.equals("RGN10") || name.equals("RGN20")) {
+		} else if (name.equalsIgnoreCase("POI") || name.equals("RGN10") || name.equals("RGN20")) {
 			point = new MapPoint();
 			section = S_POINT;
-		} else if (name.equals("POLYLINE") || name.equals("RGN40")) {
+		} else if (name.equalsIgnoreCase("POLYLINE") || name.equals("RGN40")) {
 			polyline = new MapLine();
 			roadHelper.clear();
 			section = S_POLYLINE;
-		} else if (name.equals("POLYGON") || name.equals("RGN80")) {
+		} else if (name.equalsIgnoreCase("POLYGON") || name.equals("RGN80")) {
 			shape = new MapShape();
 			section = S_POLYGON;
-		}
-        else if (name.equals("Restrict")) {
+		} else if (name.equalsIgnoreCase("Restrict")) {
             restriction = new PolishTurnRestriction();
             section = S_RESTRICTION;
         }
 		else
-			log.info("Ignoring " + name + " section");
+			System.out.println("Ignoring unrecognised section: " + name);
 	}
 
 	/**
@@ -310,8 +310,8 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			log.warn("short line? " + line);
 			return;
 		}
-		String name = nameVal[0];
-		String value = nameVal[1];
+		String name = nameVal[0].trim();
+		String value = nameVal[1].trim();
 
 		log.debug("LINE: ", name, "|", value);
 		
