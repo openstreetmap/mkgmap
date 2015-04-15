@@ -1602,7 +1602,7 @@ public class HousenumberGenerator {
 			if (potentialNumbersThisRoad.isEmpty()) 
 				continue;
 			HousenumberRoad hnr = new HousenumberRoad(streetName, r, potentialNumbersThisRoad);
-			if (roadsForNoGapMethod.contains(roadsForNoGapMethod))
+			if (roadsForNoGapMethod.contains(r))
 				hnr.setRemoveGaps(true);
 			hnr.buildIntervals();
 			housenumberRoads.add(hnr);

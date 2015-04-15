@@ -385,7 +385,7 @@ public class ExtNumbers {
 				if (house.getSegment() < startInRoad || house.getSegment() >= endInRoad){
 					log.error("internal error, house has wrong segment",getRoad(),"house",house,house.getElement().toBrowseURL());
 				}
-				if (house.getDistance() == Double.NaN || house.getDistance() > HousenumberGenerator.MAX_DISTANCE_TO_ROAD + 10){
+				if (Double.isNaN(house.getDistance()) || house.getDistance() > HousenumberGenerator.MAX_DISTANCE_TO_ROAD + 10){
 					if (house.getGroup() == null)
 						log.error("distance to road too large, road",getRoad(),"house",house,house.getElement().toBrowseURL());
 				}
