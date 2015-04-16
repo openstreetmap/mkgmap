@@ -90,15 +90,17 @@ public class RuleSet implements Rule, Iterable<Rule> {
 			if (rules != null && !rules.isEmpty() )
 				candidates.or(rules);
 		}
+		Rule lastRule = null;
 		for (int i = candidates.nextSetBit(0); i >= 0; i = candidates.nextSetBit(i + 1)) {			
 			a.reset();
-			cacheId = rules[i].resolveType(cacheId, el, a);
+			lastRule = rules[i];
+			cacheId = lastRule.resolveType(cacheId, el, a);
 			if (a.isResolved())
 				return cacheId;
 		}
-		if (finalizeRule != null){
+		if (lastRule != null && lastRule.getFinalizeRule() != null){
 			if ("true".equals(el.getTag(executeFinalizeRulesTagKey))){
-				cacheId = finalizeRule.resolveType(cacheId, el, a);
+				cacheId = lastRule.getFinalizeRule().resolveType(cacheId, el, a);
 			}
 		}
 		return cacheId;
@@ -269,6 +271,11 @@ public class RuleSet implements Rule, Iterable<Rule> {
 		
 		compiled = false;
 		this.finalizeRule = finalizeRule;  
+	}
+
+	@Override
+	public Rule getFinalizeRule() {
+		return finalizeRule;
 	}
 
 	@Override

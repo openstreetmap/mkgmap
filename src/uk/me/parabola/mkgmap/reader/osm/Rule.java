@@ -54,5 +54,7 @@ public interface Rule {
 	public void setFinalizeRule(Rule finalizeRule);
 	
 	public void printStats(String header);
+
+	public Rule getFinalizeRule();
 	
 }

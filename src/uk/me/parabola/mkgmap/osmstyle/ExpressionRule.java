@@ -95,6 +95,11 @@ public class ExpressionRule implements Rule {
 		this.finalizeRule = finalizeRule;
 	}
 	
+	@Override
+	public Rule getFinalizeRule() {
+		return finalizeRule;
+	}
+
 	public Op getOp(){
 		return expression;
 	}
