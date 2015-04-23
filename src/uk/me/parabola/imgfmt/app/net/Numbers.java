@@ -13,6 +13,7 @@
 package uk.me.parabola.imgfmt.app.net;
 
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.CityInfo;
 
 /**
  * Describes the house numbering from a node in the road.
@@ -20,6 +21,8 @@ import uk.me.parabola.log.Logger;
  */
 public class Numbers {
 	private static final Logger log = Logger.getLogger(Numbers.class);
+	public static final boolean LEFT = true;
+	public static final boolean RIGHT = false;
 
 	private static final int MAX_DELTA = 131071; // see NumberPreparer
 
@@ -27,37 +30,122 @@ public class Numbers {
 	// node in the road, whereas in the NET file it is the number of the routing node.
 	private int nodeNumber; // node in road index
 	private Integer rnodNumber; // routing node index
+	// the data on side of the road
+	private RoadSide leftSide,rightSide;
+	
+	private class RoadSide {
+		NumDesc numbers;
+		// to be added
+		CityInfo cityInfo; 
+		String zipCode;
+		
+		boolean isEmpty(){
+			return cityInfo == null && zipCode == null && numbers == null;
+		}
+	}
 
-	// On the left hand side of the road.
-	private NumberStyle leftNumberStyle;
-	private int leftStart;
-	private int leftEnd;
+	private class NumDesc{
+		NumberStyle numberStyle;
+		int start,end;
+		
+		public NumDesc(NumberStyle numberStyle, int start, int end) {
+			this.numberStyle = numberStyle;
+			this.start = start;
+			this.end = end;
+		}
 
-	// On the right hand side of the road.
-	private NumberStyle rightNumberStyle;
-	private int rightStart;
-	private int rightEnd;
+		@Override
+		public String toString() {
+			return String.format("%s,%d,%d", numberStyle, start,end);
+		}
+			
+	}
 
 	public Numbers() {
 	}
 
 	/**
 	 * This constructor takes a comma separated list as in the polish format. Also used in testing as
-	 * it is an easy way to set all the parameters at once.
+	 * it is an easy way to set all common parameters at once.
 	 *
 	 * @param spec Node number, followed by left and then right parameters as in the polish format.
 	 */
 	public Numbers(String spec) {
 		String[] strings = spec.split(",");
 		nodeNumber = Integer.valueOf(strings[0]);
-		leftNumberStyle = NumberStyle.fromChar(strings[1]);
-		leftStart = Integer.valueOf(strings[2]);
-		leftEnd = Integer.valueOf(strings[3]);
-		rightNumberStyle = NumberStyle.fromChar(strings[4]);
-		rightStart = Integer.valueOf(strings[5]);
-		rightEnd = Integer.valueOf(strings[6]);
+		NumberStyle numberStyle = NumberStyle.fromChar(strings[1]);
+		int start = Integer.valueOf(strings[2]);
+		int end = Integer.valueOf(strings[3]);
+		setNumbers(LEFT, numberStyle, start, end);
+		numberStyle = NumberStyle.fromChar(strings[4]);
+		start = Integer.valueOf(strings[5]);
+		end = Integer.valueOf(strings[6]);
+		setNumbers(RIGHT, numberStyle, start, end);
 	}
 
+	public void setNumbers(boolean left, NumberStyle numberStyle, int start, int end){
+		if (numberStyle != NumberStyle.NONE || start != -1 || end != -1){
+			RoadSide rs = assureSideIsAllocated(left);
+			rs.numbers = new NumDesc(numberStyle, start, end);
+		} else {
+			RoadSide rs = (left) ? leftSide : rightSide;
+			if (rs != null)
+				rs.numbers = null;
+			removeIfEmpty(left);
+		}
+	}
+
+	public void setCityInfo(boolean left, CityInfo ci){
+		if (ci != null){
+			RoadSide rs = assureSideIsAllocated(left);
+			rs.cityInfo = ci;
+		} else {
+			RoadSide rs = (left) ? leftSide : rightSide;
+			if (rs != null)
+				rs.cityInfo = null;
+			removeIfEmpty(left);
+		}
+	}
+	
+	public CityInfo getCityInfo(boolean left){
+		RoadSide rs = (left) ? leftSide : rightSide;
+		return (rs != null) ? rs.cityInfo : null;
+	}
+
+	public String getZipCode(boolean left){
+		RoadSide rs = (left) ? leftSide : rightSide;
+		return (rs != null) ? rs.zipCode : null; 
+	}
+	
+
+	public void setZipCode(boolean left, String zipCode){
+		if (zipCode != null){
+			RoadSide rs = assureSideIsAllocated(left);
+			rs.zipCode = zipCode;
+		} else {
+			RoadSide rs = (left) ? leftSide : rightSide;
+			if (rs != null)
+				rs.zipCode= null;
+			removeIfEmpty(left);
+		}
+	}
+	
+	private void removeIfEmpty(boolean left){
+		if (left && leftSide != null && leftSide.isEmpty())
+			leftSide = null;
+		if (!left && rightSide != null && rightSide.isEmpty())
+			rightSide = null;
+	}
+	
+	// allocate or return allocated RoadSide instance for the given road side
+	private RoadSide assureSideIsAllocated(boolean left){
+		if (left && leftSide == null)
+			leftSide = new RoadSide();
+		if (!left && rightSide == null)
+			rightSide = new RoadSide();
+		return (left) ? leftSide : rightSide;
+	}
+	
 	public int getNodeNumber() {
 		return nodeNumber;
 	}
@@ -82,64 +170,27 @@ public class Numbers {
 		this.rnodNumber = rnodNumber;
 	}
 
-	public NumberStyle getLeftNumberStyle() {
-		return leftNumberStyle;
+	private NumDesc getNumbers(boolean left) {
+		RoadSide rs = (left) ? leftSide : rightSide;
+		return (rs != null) ? rs.numbers : null;  
 	}
 
 	public NumberStyle getNumberStyle(boolean left) {
-		return (left) ? leftNumberStyle : rightNumberStyle;
+		NumDesc n = getNumbers(left);
+		return (n == null) ? NumberStyle.NONE : n.numberStyle;
 	}
+
 	public int getStart(boolean left) {
-		return (left) ? leftStart: rightStart;
+		NumDesc n = getNumbers(left);
+		return (n == null) ? -1 : n.start; // -1 is the default in the polish format
 	}
+
 	public int getEnd(boolean left) {
-		return (left) ? leftEnd: rightEnd;
+		NumDesc n = getNumbers(left);
+		return (n == null) ? -1 : n.end; // -1 is the default in the polish format
 	}
+
 	
-	public void setLeftNumberStyle(NumberStyle leftNumberStyle) {
-		this.leftNumberStyle = leftNumberStyle;
-	}
-
-	public int getLeftStart() {
-		return leftStart;
-	}
-
-	public void setLeftStart(int leftStart) {
-		this.leftStart = leftStart;
-	}
-
-	public int getLeftEnd() {
-		return leftEnd;
-	}
-
-	public void setLeftEnd(int leftEnd) {
-		this.leftEnd = leftEnd;
-	}
-
-	public NumberStyle getRightNumberStyle() {
-		return rightNumberStyle;
-	}
-
-	public void setRightNumberStyle(NumberStyle rightNumberStyle) {
-		this.rightNumberStyle = rightNumberStyle;
-	}
-
-	public int getRightStart() {
-		return rightStart;
-	}
-
-	public void setRightStart(int rightStart) {
-		this.rightStart = rightStart;
-	}
-
-	public int getRightEnd() {
-		return rightEnd;
-	}
-
-	public void setRightEnd(int rightEnd) {
-		this.rightEnd = rightEnd;
-	}
-
 	public String toString() {
 		String nodeStr = "0";
 		if (nodeNumber > 0)
@@ -149,54 +200,61 @@ public class Numbers {
 
 		return String.format("%s,%s,%d,%d,%s,%d,%d",
 				nodeStr,
-				leftNumberStyle,
-				leftStart,
-				leftEnd,
-				rightNumberStyle,
-				rightStart,
-				rightEnd);
+				getNumberStyle(LEFT),
+				getStart(LEFT),
+				getEnd(LEFT),
+				getNumberStyle(RIGHT),
+				getStart(RIGHT),
+				getEnd(RIGHT));
 	}
 
-	public boolean equals(Object obj) {
-		if (!(obj instanceof Numbers))
-			return false;
-
-		Numbers other = (Numbers) obj;
-		return toString().equals(other.toString());
+	public NumberStyle getLeftNumberStyle() {
+		return getNumberStyle(LEFT);
 	}
-
-	public int hashCode() {
-		return toString().hashCode();
+	public NumberStyle getRightNumberStyle() {
+		return getNumberStyle(RIGHT);
 	}
-
+	public int getLeftStart(){
+		return getStart(LEFT);
+	}
+	public int getRightStart(){
+		return getStart(RIGHT);
+	}
+	public int getLeftEnd(){
+		return getEnd(LEFT);
+	}
+	public int getRightEnd(){
+		return getEnd(RIGHT);
+	} 
+	
 	public boolean isPlausible(){
-		if (!isPlausible(leftNumberStyle, leftStart, leftEnd))
+		if (!isPlausible(getLeftNumberStyle(), getLeftStart(), getLeftEnd()))
 			return false;
-		if (!isPlausible(rightNumberStyle, rightStart, rightEnd))
+		if (!isPlausible(getRightNumberStyle(), getRightStart(), getRightEnd()))
 			return false;
-		if (leftNumberStyle == NumberStyle.NONE
-				|| rightNumberStyle == NumberStyle.NONE)
+		if (getLeftNumberStyle() == NumberStyle.NONE
+				|| getRightNumberStyle() == NumberStyle.NONE)
 			return true;
-		if (leftNumberStyle == rightNumberStyle || leftNumberStyle == NumberStyle.BOTH || rightNumberStyle==NumberStyle.BOTH){
+		if (getLeftNumberStyle() == getRightNumberStyle() || getLeftNumberStyle() == NumberStyle.BOTH || getRightNumberStyle()==NumberStyle.BOTH){
 			// check if intervals are overlapping
 			int start1, start2,end1,end2;
-			if (leftStart < leftEnd){
-				start1 = leftStart;
-				end1 = leftEnd;
+			if (getLeftStart() < getLeftEnd()){
+				start1 = getLeftStart();
+				end1 = getLeftEnd();
 			} else {
-				start1 = leftEnd;
-				end1 = leftStart;
+				start1 = getLeftEnd();
+				end1 = getLeftStart();
 			}
-			if (rightStart < rightEnd){
-				start2 = rightStart;
-				end2 = rightEnd;
+			if (getRightStart() < getRightEnd()){
+				start2 = getRightStart();
+				end2 = getRightEnd();
 			} else {
-				start2 = rightEnd;
-				end2 = rightStart;
+				start2 = getRightEnd();
+				end2 = getRightStart();
 			}
 			if (start2 > end1 || end2 < start1)
 				return true;
-			if (leftStart == leftEnd && rightStart == rightEnd && leftStart == rightStart)
+			if (getLeftStart() == getLeftEnd() && getRightStart() == getRightEnd() && getLeftStart() == getRightStart())
 				return true; // single number on both sides of the road 
 			
 			return false;
@@ -221,32 +279,32 @@ public class Numbers {
 	public int countMatches(int hn) {
 		boolean isEven = (hn % 2 == 0);
 		int matches = 0;
-		if (leftNumberStyle == NumberStyle.BOTH
-				|| leftNumberStyle == NumberStyle.EVEN && isEven
-				|| leftNumberStyle == NumberStyle.ODD && !isEven) {
-			if (leftStart <= leftEnd) {
-				if (leftStart <= hn && hn <= leftEnd)
+		if (getLeftNumberStyle() == NumberStyle.BOTH
+				|| getLeftNumberStyle() == NumberStyle.EVEN && isEven
+				|| getLeftNumberStyle() == NumberStyle.ODD && !isEven) {
+			if (getLeftStart() <= getLeftEnd()) {
+				if (getLeftStart() <= hn && hn <= getLeftEnd())
 					++matches;
 			}
 			else { 
-				if (leftEnd <= hn && hn <= leftStart)
+				if (getLeftEnd() <= hn && hn <= getLeftStart())
 					++matches;
 			}
 		}
-		if (rightNumberStyle == NumberStyle.BOTH
-				|| rightNumberStyle == NumberStyle.EVEN && isEven
-				|| rightNumberStyle == NumberStyle.ODD && !isEven) {
-			if (rightStart <= rightEnd) {
-				if (rightStart <= hn && hn <= rightEnd)
+		if (getRightNumberStyle() == NumberStyle.BOTH
+				|| getRightNumberStyle() == NumberStyle.EVEN && isEven
+				|| getRightNumberStyle() == NumberStyle.ODD && !isEven) {
+			if (getRightStart() <= getRightEnd()) {
+				if (getRightStart() <= hn && hn <= getRightEnd())
 					++matches;
 			}
 			else { 
-				if (rightEnd <= hn && hn <= rightStart)
+				if (getRightEnd() <= hn && hn <= getRightStart())
 					++matches;
 			}
 		}
 		if (matches > 1){
-			if (leftStart == leftEnd && rightStart == rightEnd)
+			if (getLeftStart() == getLeftEnd() && getRightStart() == getRightEnd())
 				matches = 1; // single number on both sides of the road 
 		}
 		return matches;
@@ -260,16 +318,16 @@ public class Numbers {
 	public boolean isSimilar(Numbers other){
 		if (other == null)
 			return false;
-		if (leftNumberStyle != other.leftNumberStyle
-				|| leftStart != other.leftStart || leftEnd != other.leftEnd
-				|| rightNumberStyle != other.rightNumberStyle
-				|| rightStart != other.rightStart || rightEnd != other.rightEnd)
+		if (getLeftNumberStyle() != other.getLeftNumberStyle()
+				|| getLeftStart() != other.getLeftStart() || getLeftEnd() != other.getLeftEnd()
+				|| getRightNumberStyle() != other.getRightNumberStyle()
+				|| getRightStart() != other.getRightStart() || getRightEnd() != other.getRightEnd())
 			return false;
 		return true;
 		
 	}
 	
 	public boolean isEmpty(){
-		return leftNumberStyle == NumberStyle.NONE && rightNumberStyle == NumberStyle.NONE;
+		return getLeftNumberStyle() == NumberStyle.NONE && getRightNumberStyle() == NumberStyle.NONE;
 	}
 }

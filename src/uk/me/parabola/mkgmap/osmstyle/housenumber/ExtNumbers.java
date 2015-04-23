@@ -272,20 +272,13 @@ public class ExtNumbers {
 					break;
 				}
 			}
+			getNumbers().setNumbers(left, style, start, end);
 			if (left) { 
-				getNumbers().setLeftStart(start);
-				getNumbers().setLeftEnd(end);
 				leftNotInOrder = !inOrder;
 			} else {
-				getNumbers().setRightStart(start);
-				getNumbers().setRightEnd(end);
 				rightNotInOrder = !inOrder;
 			}
 		}
-		if (left)
-			getNumbers().setLeftNumberStyle(style);
-		else
-			getNumbers().setRightNumberStyle(style);
 	}
 
 	/**
@@ -457,9 +450,7 @@ public class ExtNumbers {
 			return this;
 		}
 		Numbers testNumbers = new Numbers();
-		testNumbers.setLeftStart(origNumbers.getLeftStart());
-		testNumbers.setLeftEnd(origNumbers.getLeftEnd());
-		testNumbers.setLeftNumberStyle(origNumbers.getLeftNumberStyle());
+		testNumbers.setNumbers(Numbers.LEFT, origNumbers.getLeftNumberStyle(), origNumbers.getLeftStart(),origNumbers.getLeftEnd()); 
 		boolean left = (testNumbers.countMatches(badNum) > 0);
 		List<HousenumberMatch> before = new ArrayList<>();
 		List<HousenumberMatch> after = new ArrayList<>();

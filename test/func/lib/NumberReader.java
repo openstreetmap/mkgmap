@@ -291,14 +291,8 @@ public class NumberReader {
 
 		Numbers n = new Numbers();
 		n.setRnodNumber(nodeCounter);
-
-		n.setLeftNumberStyle(leftStyle);
-		n.setLeftStart(leftStart);
-		n.setLeftEnd(leftEnd);
-
-		n.setRightNumberStyle(rightStyle);
-		n.setRightStart(rightStart);
-		n.setRightEnd(rightEnd);
+		n.setNumbers(Numbers.LEFT, leftStyle, leftStart, leftEnd);
+		n.setNumbers(Numbers.RIGHT, rightStyle, rightStart, rightEnd);
 
 		numbers.add(n);
 		nodeCounter++;
@@ -331,26 +325,11 @@ public class NumberReader {
 		adjustValues();
 
 		Numbers n = new Numbers();
-		if (leftStyle == NONE) {
-			n.setRnodNumber(nodeCounter);
-			n.setRightNumberStyle(rightStyle);
-			n.setRightStart(rightStart);
-			n.setRightEnd(rightEnd);
-
-			n.setLeftNumberStyle(NONE);
-			n.setLeftStart(-1);
-			n.setLeftEnd(-1);
-		}
-		else {
-			n.setRnodNumber(nodeCounter);
-			n.setLeftNumberStyle(leftStyle);
-			n.setLeftStart(leftStart);
-			n.setLeftEnd(leftEnd);
-
-			n.setRightNumberStyle(NONE);
-			n.setRightStart(-1);
-			n.setRightEnd(-1);
-		}
+		n.setRnodNumber(nodeCounter);
+		if (leftStyle == NONE) 
+			n.setNumbers(Numbers.RIGHT, rightStyle, rightStart, rightEnd);
+		else 
+			n.setNumbers(Numbers.LEFT, leftStyle, leftStart, leftEnd);
 		numbers.add(n);
 		nodeCounter++;
 	}
