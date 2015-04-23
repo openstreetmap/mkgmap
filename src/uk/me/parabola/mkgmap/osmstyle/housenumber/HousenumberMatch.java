@@ -19,7 +19,6 @@ import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.general.MapRoad;
-import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.util.Locatable;
 
@@ -29,6 +28,7 @@ import uk.me.parabola.util.Locatable;
  */
 public class HousenumberMatch extends HousenumberElem implements Locatable {
 	private MapRoad road;
+	private HousenumberRoad housenumberRoad;
 	
 	private double distance = Double.POSITIVE_INFINITY;
 	private int segment = -1;
@@ -233,6 +233,14 @@ public class HousenumberMatch extends HousenumberElem implements Locatable {
 		return distOnRoad;
 	}
 
+	public HousenumberRoad getHousenumberRoad() {
+		return housenumberRoad;
+	}
+
+	public void setHousenumberRoad(HousenumberRoad housenumberRoad) {
+		this.housenumberRoad = housenumberRoad;
+	}
+	
 	public void setGroup(HousenumberGroup housenumberBlock) {
 		this.group = housenumberBlock;
 	}
@@ -288,6 +296,16 @@ public class HousenumberMatch extends HousenumberElem implements Locatable {
 			}
 		}
 		return false;
+	}
+
+
+	public void calcRoadSide(){
+		if (getRoad() == null)
+			return;
+		Coord c1 = getRoad().getPoints().get(getSegment());
+		Coord c2 = getRoad().getPoints().get(getSegment()+1);
+		setLeft(HousenumberGenerator.isLeft(c1, c2, getLocation()));
+		
 	}
 }
 

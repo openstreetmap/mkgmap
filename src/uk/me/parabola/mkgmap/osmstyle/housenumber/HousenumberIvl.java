@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
@@ -192,9 +193,7 @@ public class HousenumberIvl {
 		}
 		assert knownHouses[0].getRoad() == knownHouses[1].getRoad();
 		for (int i = 0; i < 2; i++){
-			Coord c1 = knownHouses[i].getRoad().getPoints().get(knownHouses[i].getSegment());
-			Coord c2 = knownHouses[i].getRoad().getPoints().get(knownHouses[i].getSegment()+1);
-			knownHouses[i].setLeft(HousenumberGenerator.isLeft(c1, c2, knownHouses[i].getLocation()));
+			knownHouses[i].calcRoadSide();
 		}
 		if (knownHouses[0].isLeft() != knownHouses[1].isLeft()){
 			log.warn("addr:interpolation way crosses road",streetName,this);
@@ -210,9 +209,7 @@ public class HousenumberIvl {
 		dest.setSegment(source.getSegment());
 		dest.setSegmentFrac(source.getSegmentFrac());
 		dest.setDistance(source.getDistance());
-		Coord c1 = dest.getRoad().getPoints().get(dest.getSegment());
-		Coord c2 = dest.getRoad().getPoints().get(dest.getSegment() + 1);
-		dest.setLeft(HousenumberGenerator.isLeft(c1, c2, dest.getLocation()));
+		dest.calcRoadSide();
 	}
 	
 	public List<HousenumberMatch> getInterpolatedHouses(){
@@ -230,7 +227,9 @@ public class HousenumberIvl {
 			generated.addTag(streetTagKey, streetName);
 			String number = String.valueOf(hn);
 			generated.addTag(housenumberTagKey, number);
-			HousenumberElem houseElem = new HousenumberElem(generated);
+			// TODO: maybe add check that city info of both houses is equal
+			// what if not ?
+			HousenumberElem houseElem = new HousenumberElem(generated, knownHouses[0].getCityInfo());
 			houseElem.setHousenumber(hn);
 			houseElem.setStreet(streetName);
 			houseElem.setSign(number);
@@ -381,5 +380,26 @@ public class HousenumberIvl {
 	public void setEqualEnds() {
 		this.equalEnds = true;
 		
+	}
+
+	public boolean setNodeRefs2(Map<Long, Integer> interpolationNodes,
+			List<HousenumberElem> houseElems) {
+		for (int i = 0; i < 2; i++){
+			long id = (i == 0) ? n1.getId(): n2.getId();
+			Integer elemPos = interpolationNodes.get(id);
+			if (elemPos == null || elemPos >= houseElems.size())
+				return false;
+			HousenumberElem he = houseElems.get(elemPos);
+			if (he instanceof HousenumberMatch == false)
+				return false;
+			if (he.getElement().getId() != id)
+				return false;
+			knownHouses[i] = (HousenumberMatch) he;
+		}
+		return true;
+	}
+	
+	public HousenumberMatch[] getHouseNodes (){
+		return knownHouses;
 	}
 }

@@ -13,7 +13,7 @@
 package uk.me.parabola.util;
 
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import uk.me.parabola.imgfmt.app.Coord;
 
@@ -134,7 +134,7 @@ public class KdTree <T extends Locatable> {
 		minDist = Double.MAX_VALUE;
 		this.maxDist = Math.pow(maxDist * 360 / Coord.U, 2); // convert maxDist in meter to distanceInDegreesSquared
 		nextPoint = null;
-		this.set = new HashSet<>();
+		this.set = new LinkedHashSet<>();
 		// false => first node is a latitude level
 		findNextPoint(p, root, ROOT_NODE_USES_LONGITUDE);
 		return set;

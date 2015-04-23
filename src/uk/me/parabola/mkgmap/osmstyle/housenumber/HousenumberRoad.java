@@ -13,14 +13,23 @@
 
 package uk.me.parabola.mkgmap.osmstyle.housenumber;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.CityInfo;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.osmstyle.housenumber.HousenumberGenerator.HousenumberMatchByNumComparator;
 import uk.me.parabola.mkgmap.osmstyle.housenumber.HousenumberGenerator.HousenumberMatchByPosComparator;
@@ -32,20 +41,39 @@ import uk.me.parabola.mkgmap.osmstyle.housenumber.HousenumberGenerator.Housenumb
  */
 public class HousenumberRoad {
 	private static final Logger log = Logger.getLogger(HousenumberRoad.class);
-	private final String streetName;
+	private String streetName;
 	private final MapRoad road;
+	private final CityInfo roadCityInfo;
 	private ExtNumbers extNumbersHead;
 	private final List<HousenumberMatch> houseNumbers;
 	private boolean changed;
 	private boolean isRandom;
 	private boolean removeGaps;
-
-	public HousenumberRoad(String streetName, MapRoad r, List<HousenumberMatch> potentialNumbersThisRoad) {
-		this.streetName = streetName;
+	private LinkedHashSet<String> furtherNames;
+	
+	
+	public HousenumberRoad(MapRoad r, CityInfo ci, List<HousenumberMatch> potentialNumbersThisRoad) {
+		this.streetName = r.getStreet();
 		this.road = r;
+		this.roadCityInfo = ci;
 		this.houseNumbers = new ArrayList<>(potentialNumbersThisRoad);
-		
+		for (HousenumberMatch house : houseNumbers){
+			house.setHousenumberRoad(this);
+		}
 	}
+
+	
+	public void addPlaceName(String name) {
+		if (furtherNames == null){
+			furtherNames = new LinkedHashSet<>();
+		}
+		furtherNames.add(name);
+	}
+
+	public String getName (){
+		return streetName; 
+	}
+	
 	public void buildIntervals() {
 		Collections.sort(houseNumbers, new HousenumberMatchByNumComparator());
 		if (log.isInfoEnabled())
@@ -483,6 +511,10 @@ public class HousenumberRoad {
 		if (extNumbersHead == null)
 			return;
 		// make sure that the name we used for the cluster is also attached to the road
+		if (streetName == null){
+			log.error("found no name for road with housenumbers, implement a move to the next named road ?",road);
+			return;
+		}
 		String[] labels = road.getLabels();
 		boolean found = false;
 		for (String label : labels){
@@ -508,13 +540,27 @@ public class HousenumberRoad {
 					log.info("dropped label",droppedLabel,"for",road,"in preference to correct address search. Labels are now:",Arrays.toString(labels));
 			}
 		}
-		
+		if (furtherNames != null){
+			boolean changed = false;
+			for (String furtherName : furtherNames){
+				if (road.addLabel(furtherName))
+					changed = true;
+			}
+			if (changed){
+				log.info("added further labels for",road,"Labels are now:",Arrays.toString(labels));
+			}
+		}
 		road.setNumbers(extNumbersHead.getNumberList());
 	}
 	
 	public MapRoad getRoad(){
 		return road;
 	}
+
+	public CityInfo getRoadCityInfo() {
+		return roadCityInfo;
+	}
+
 
 	public boolean isChanged() {
 		return changed;
@@ -568,6 +614,137 @@ public class HousenumberRoad {
 
 	public String toString(){
 		return getRoad().toString() + " " + houseNumbers;
+	}
+
+	public List<HousenumberMatch> checkStreetName(Map<MapRoad, HousenumberRoad> road2HousenumberRoadMap, Int2ObjectOpenHashMap<HashSet<MapRoad>> nodeId2RoadLists) {
+		List<HousenumberMatch> noWrongHouses = Collections.emptyList();
+		List<HousenumberMatch> wrongHouses = Collections.emptyList();
+		if (road.getRoadDef().getId() == 72760701){
+			long dd = 4;
+		}
+		
+		if (houseNumbers.isEmpty() == false){
+			HashMap<String, Integer>possibleStreetNamesFromHouses = new HashMap<>();
+			HashMap<String, Integer>possiblePlaceNamesFromHouses = new HashMap<>();
+			for (HousenumberMatch house : houseNumbers){
+				if (house.getElement().getId() == 2513431945L){
+					long dd = 4;
+				}
+				String potentialName = house.getStreet();
+				if (potentialName != null){
+					Integer oldCount = possibleStreetNamesFromHouses.put(potentialName, 1);
+					if (oldCount != null)
+						possibleStreetNamesFromHouses.put(potentialName, oldCount + 1);
+				}
+				String placeName = house.getPlace();
+				if (placeName != null){
+					Integer oldCount = possiblePlaceNamesFromHouses.put(placeName, 1);
+					if (oldCount != null)
+						possiblePlaceNamesFromHouses.put(placeName, oldCount + 1);
+				}
+			}
+			HashSet<String> connectedRoadNames = new HashSet<>();
+			for (Coord co : road.getPoints()){
+				if (co.getId() == 0)
+					continue;
+				HashSet<MapRoad> connectedRoads = nodeId2RoadLists.get(co.getId());
+				for (MapRoad r : connectedRoads){
+					if (r.getStreet() != null)
+						connectedRoadNames.add(r.getStreet());
+				}
+			}
+			if (streetName != null){
+				if (possibleStreetNamesFromHouses.isEmpty()){
+					// ok, houses have no street name 
+					return noWrongHouses; 
+				}
+				if (possibleStreetNamesFromHouses.size() == 1){
+					if (possibleStreetNamesFromHouses.containsKey(streetName)){
+						// ok, houses have same name as street 
+						return noWrongHouses; 
+					}
+				}
+				long dd = 4;
+			} 
+			if (possibleStreetNamesFromHouses.isEmpty()){
+				// neither road not houses tell us a street name
+				if (furtherNames != null && furtherNames.size() > 0){
+					Iterator<String> iter = furtherNames.iterator();
+					streetName = iter.next();
+					iter.remove();
+					if (furtherNames.isEmpty())
+						furtherNames = null;
+					else {
+						long dd = 4;
+					}
+				}
+				return noWrongHouses;
+			}
+			if (streetName == null){
+				if (possibleStreetNamesFromHouses.size() == 1){
+					String potentialName = possibleStreetNamesFromHouses.keySet().iterator().next(); 
+					if (connectedRoadNames.contains(potentialName) || houseNumbers.size() > 1){
+						streetName = potentialName;
+						return noWrongHouses; // all good, return empty list
+					} 
+				}
+			}
+			// if we get here we have no usable street name
+			// if all houses have the same addr:place name, use that
+			wrongHouses  = new ArrayList<>();
+			if (streetName == null){
+				if (possibleStreetNamesFromHouses.size() > 1){
+					for (Entry<String, Integer> entry : possibleStreetNamesFromHouses.entrySet()){
+						if (entry.getValue() > houseNumbers.size() / 2){
+							streetName = entry.getKey();
+							break;
+						}
+					}
+				}
+			}
+			Iterator<HousenumberMatch> iter = houseNumbers.iterator();
+			while (iter.hasNext()){
+				HousenumberMatch house = iter.next();
+				if (streetName != null){
+					if (house.getStreet() == null || streetName.equals(house.getStreet()))
+						continue;
+				} else if (house.getPlace() != null)
+					continue;
+				double bestDist = Double.MAX_VALUE;
+				HousenumberMatch best = null;
+				for (MapRoad altRoad : house.getAlternativeRoads()){
+					if (house.getStreet() != null){
+						if (house.getStreet().equals(altRoad.getStreet())){
+							HousenumberMatch test = new HousenumberMatch(house);
+							HousenumberGenerator.findClosestRoadSegment(test, altRoad);
+							if (test.getDistance() < bestDist){
+								best = test;
+								bestDist = test.getDistance();
+							}
+						}
+					}
+				}
+				iter.remove();
+				if (best != null){
+					best.calcRoadSide();
+					wrongHouses.add(best);
+				} else {
+					log.warn("found no plausible road for address",house.getStreet(),house,house.getElement().toBrowseURL());
+				}
+			}
+			
+		}
+		return wrongHouses;
+	}
+
+	public void addHouse(HousenumberMatch house) {
+		assert extNumbersHead == null;
+		house.setHousenumberRoad(this);
+		houseNumbers.add(house);
+	}
+
+	public List<HousenumberMatch> getHouses() {
+		return houseNumbers;
 	}
 }
 

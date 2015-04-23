@@ -19,8 +19,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeMap;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -28,6 +30,7 @@ import uk.me.parabola.imgfmt.app.net.NumberStyle;
 import uk.me.parabola.imgfmt.app.net.Numbers;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
+import uk.me.parabola.mkgmap.general.CityInfo;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.osmstyle.housenumber.HousenumberGenerator.HousenumberMatchByPosComparator;
 
@@ -67,18 +70,22 @@ public class ExtNumbers {
 	private final HousenumberRoad housenumberRoad;
 	private static final int MAX_LOCATE_ERROR = 40; 
 	
+	private static final List<HousenumberMatch> NO_HOUSES = Collections.emptyList();
 	public ExtNumbers prev,next;
-	private List<HousenumberMatch> leftHouses = Collections.emptyList();
-	private List<HousenumberMatch> rightHouses = Collections.emptyList();
+	class RoadSide {
+		List<HousenumberMatch> houses = Collections.emptyList();
+		Set<CityInfo> cityInfos = new HashSet<>();
+		Set<String> zipCodes = new HashSet<>();
+		boolean notInOrder;
+	}
+	private RoadSide leftSide,rightSide;
 	private Numbers numbers = null;
 	private int startInRoad, endInRoad;
 	private int rnodNumber;
 	
 	private boolean needsSplit;
 	private HousenumberMatch worstHouse;
-	private boolean leftNotInOrder;
-	private boolean rightNotInOrder;
-
+	
 	// indicates a number that is found in the interval, but should not   
 	private int badNum;
 
@@ -93,7 +100,6 @@ public class ExtNumbers {
 		super();
 		this.housenumberRoad = housenumberRoad;
 		reset();
-		
 	}
 
 	private void setNeedsSplit(boolean b) {
@@ -102,6 +108,16 @@ public class ExtNumbers {
 
 	public boolean needsSplit() {
 		return needsSplit;
+	}
+
+	public boolean notInOrder(boolean left){
+		RoadSide rs = (left) ? leftSide : rightSide;
+		return (rs != null) ? rs.notInOrder : false; 
+	}
+
+	public List<HousenumberMatch> getHouses(boolean left){
+		RoadSide rs = (left) ? leftSide : rightSide;
+		return (rs != null) ? rs.houses : NO_HOUSES;  
 	}
 
 	private MapRoad getRoad(){
@@ -126,8 +142,8 @@ public class ExtNumbers {
 		if (numbers == null){
 			numbers = new Numbers();
 			numbers.setRnodNumber(rnodNumber);
-			fillNumbers(true);
-			fillNumbers(false);
+			fillNumbers(Numbers.LEFT);
+			fillNumbers(Numbers.RIGHT);
 			verify(); // TODO : remove 
 		}
 		return numbers;
@@ -145,8 +161,12 @@ public class ExtNumbers {
 	 */
 	public int setNumbers(List<HousenumberMatch> housenumbers, int startSegment, int endSegment, boolean left) {
 		int assignedNumbers = 0;
-		
 		if (housenumbers.isEmpty() == false) {
+			RoadSide rs = new RoadSide(); 
+			if (left)
+				leftSide = rs;
+			else
+				rightSide = rs;
 			// get the sublist of house numbers
 			int maxN = -1;
 			for (int i = 0; i< housenumbers.size(); i++) {
@@ -161,12 +181,7 @@ public class ExtNumbers {
 			
 			if (maxN >= 0) {
 				assignedNumbers = maxN + 1;
-				if (left) { 
-					leftHouses = new ArrayList<>(housenumbers.subList(0, assignedNumbers));
-				} else {
-					rightHouses = new ArrayList<>(housenumbers.subList(0, assignedNumbers));
-				}
-				
+				rs.houses = new ArrayList<>(housenumbers.subList(0, assignedNumbers));
 				startInRoad = startSegment;
 				endInRoad = endSegment;
 				assert startSegment < endSegment;
@@ -177,28 +192,33 @@ public class ExtNumbers {
 		}
 		return assignedNumbers;
 	}
+	
 	/**
 	 * Apply the given house numbers to the numbers object.
 	 * @param left {@code true} the left side of the street; {@code false} the right side of the street
 	 */
 	public void fillNumbers(boolean left) {
-		
 		NumberStyle style = NumberStyle.NONE;
-		List<HousenumberMatch> housenumbers = left ? leftHouses : rightHouses;
-		
-		if (housenumbers.isEmpty() == false) {
+		RoadSide rs = (left) ? leftSide : rightSide;
+		Set<CityInfo> cityInfos = new HashSet<>();
+		Set<String> zipCodes = new HashSet<>();
+		if (rs.houses.isEmpty() == false) {
 			// get the sublist of house numbers
 			boolean even = false;
 			boolean odd = false;
 			boolean inOrder = true;
 			int lastDiff = 0;
 			HousenumberMatch highest, lowest;
-			lowest = highest = housenumbers.get(0);
+			lowest = highest = rs.houses.get(0);
 			Int2IntOpenHashMap distinctNumbers = new Int2IntOpenHashMap();
-			int numHouses = housenumbers.size();
+			int numHouses = rs.houses.size();
 			HousenumberMatch pred = null;
 			for (int i = 0; i< numHouses; i++) {
-				HousenumberMatch house = housenumbers.get(i);
+				HousenumberMatch house = rs.houses.get(i);
+				if (house.getCityInfo() != null)
+					cityInfos.add(house.getCityInfo());
+				if (house.getZipCode() != null)
+					zipCodes.add(house.getZipCode());
 				int num = house.getHousenumber();
 				if (!hasGaps)
 					distinctNumbers.put(num, 1);
@@ -232,8 +252,8 @@ public class ExtNumbers {
 			}
 			int highestNum = highest.getHousenumber();
 			int lowestNum = lowest.getHousenumber();
-			int start = housenumbers.get(0).getHousenumber();
-			int end = housenumbers.get(numHouses-1).getHousenumber();
+			int start = rs.houses.get(0).getHousenumber();
+			int end = rs.houses.get(numHouses-1).getHousenumber();
 			boolean increasing = false; // from low to high
 			if (start == end && highestNum - lowestNum != 0){
 				if (prev != null){
@@ -272,12 +292,12 @@ public class ExtNumbers {
 					break;
 				}
 			}
-			getNumbers().setNumbers(left, style, start, end);
-			if (left) { 
-				leftNotInOrder = !inOrder;
-			} else {
-				rightNotInOrder = !inOrder;
-			}
+			getNumbers().setNumbers(left,style,start,end);
+			if (cityInfos.size() == 1)
+				getNumbers().setCityInfo(left, cityInfos.iterator().next());
+			if (zipCodes.size() == 1)
+				getNumbers().setZipCode(left, zipCodes.iterator().next());
+			rs.notInOrder = !inOrder;
 		}
 	}
 
@@ -304,8 +324,8 @@ public class ExtNumbers {
 				Numbers cn = curr.getNumbers();
 				if (curr.prev == null)
 					log.info("final numbers for",getRoad(),"in",getRoad().getCity());
-				log.info("Left: ",cn.getLeftNumberStyle(),cn.getRnodNumber(),"Start:",cn.getLeftStart(),"End:",cn.getLeftEnd(), "numbers "+curr.leftHouses);
-				log.info("Right:",cn.getRightNumberStyle(),cn.getRnodNumber(),"Start:",cn.getRightStart(),"End:",cn.getRightEnd(), "numbers "+curr.rightHouses);
+				log.info("Left: ",cn.getLeftNumberStyle(),cn.getRnodNumber(),"Start:",cn.getLeftStart(),"End:",cn.getLeftEnd(), "numbers "+curr.getHouses(Numbers.LEFT));
+				log.info("Right:",cn.getRightNumberStyle(),cn.getRnodNumber(),"Start:",cn.getRightStart(),"End:",cn.getRightEnd(), "numbers "+curr.getHouses(Numbers.RIGHT));
 			}
 		}
 		return list;
@@ -316,7 +336,7 @@ public class ExtNumbers {
 		ExtNumbers head = this;
 		if (housenumberRoad.isRandom() || removeGaps){
 			for (curr = head; curr != null; curr = curr.next){
-				while (curr.hasGaps && (removeGaps || curr.leftNotInOrder || curr.rightNotInOrder)){
+				while (curr.hasGaps && (removeGaps || curr.notInOrder(true) || curr.notInOrder(false))){
 					ExtNumbers test = curr.tryChange(SR_FIX_ERROR);
 					if (test != curr){
 						if (curr.prev == null)
@@ -345,10 +365,10 @@ public class ExtNumbers {
 				if (log.isInfoEnabled())
 					log.info("detected unplausible interval in",streetName, curr.getNumbers(),"in road", getRoad());
 				if (log.isDebugEnabled()){
-					if (curr.leftNotInOrder)
-						log.debug("left numbers not in order:", getRoad(), curr.leftHouses);
-					if (curr.rightNotInOrder)
-						log.debug("right numbers not in order:", getRoad(), curr.rightHouses);
+					if (curr.notInOrder(Numbers.LEFT))
+						log.debug("left numbers not in order:", getRoad(), curr.getHouses(Numbers.LEFT));
+					if (curr.notInOrder(Numbers.RIGHT))
+						log.debug("right numbers not in order:", getRoad(), curr.getHouses(Numbers.RIGHT));
 				}
 				curr.setNeedsSplit(true);
 				curr.findGoodSplitPos();
@@ -371,7 +391,7 @@ public class ExtNumbers {
 	private void verify() {
 		if (hasNumbers() == false)
 			return;
-		for (List<HousenumberMatch> houses : Arrays.asList(leftHouses, rightHouses)){
+		for (List<HousenumberMatch> houses : Arrays.asList(getHouses(Numbers.LEFT), getHouses(Numbers.RIGHT))){
 			for (HousenumberMatch house : houses){
 				if (house.isIgnored())
 					continue;
@@ -394,7 +414,7 @@ public class ExtNumbers {
 	public ExtNumbers tryChange(int reason){
 		ExtNumbers en = this; 
 		if (reason == SR_FIX_ERROR){
-			if (leftNotInOrder == false && rightNotInOrder == false){
+			if (notInOrder(Numbers.LEFT) == false && notInOrder(Numbers.RIGHT) == false){
 				if (badNum < 0 && worstHouse != null)
 					badNum = worstHouse.getHousenumber();
 				if (badNum > 0)
@@ -450,11 +470,11 @@ public class ExtNumbers {
 			return this;
 		}
 		Numbers testNumbers = new Numbers();
-		testNumbers.setNumbers(Numbers.LEFT, origNumbers.getLeftNumberStyle(), origNumbers.getLeftStart(),origNumbers.getLeftEnd()); 
+		testNumbers.setNumbers(Numbers.LEFT, origNumbers.getLeftNumberStyle(), origNumbers.getLeftStart(), origNumbers.getLeftEnd());
 		boolean left = (testNumbers.countMatches(badNum) > 0);
 		List<HousenumberMatch> before = new ArrayList<>();
 		List<HousenumberMatch> after = new ArrayList<>();
-		List<HousenumberMatch> toSplit = left ? leftHouses : rightHouses;
+		List<HousenumberMatch> toSplit = left ? getHouses(Numbers.LEFT) : getHouses(Numbers.RIGHT);
 		boolean inc = (origNumbers.getEnd(left) > origNumbers.getStart(left));
 		BitSet segmentsBefore = new BitSet();
 		BitSet segmentsAfter = new BitSet();
@@ -571,9 +591,9 @@ public class ExtNumbers {
 						house.setSegment(house.getSegment()+1);
 				}
 				if (left)
-					recalcHousePositions(rightHouses);
+					recalcHousePositions(getHouses(Numbers.RIGHT));
 				 else 
-					recalcHousePositions(leftHouses);
+					recalcHousePositions(getHouses(Numbers.LEFT));
 			}
 		}
 		if (doSplit){
@@ -581,25 +601,25 @@ public class ExtNumbers {
 			ExtNumbers en1 = split();
 			ExtNumbers en2 = en1.next;
 			if (housenumberRoad.isRandom() && endInRoad - startInRoad > 1){
-				int leftUsed = en1.setNumbers(leftHouses, startInRoad, splitSegment, true);
-				en2.setNumbers(leftHouses.subList(leftUsed,leftHouses.size() ), splitSegment, endInRoad, true);
-				int rightUsed = en1.setNumbers(rightHouses, startInRoad, splitSegment, false);
-				en2.setNumbers(rightHouses.subList(rightUsed,rightHouses.size()), splitSegment, endInRoad, false);
+				int leftUsed = en1.setNumbers(getHouses(Numbers.LEFT), startInRoad, splitSegment, true);
+				en2.setNumbers(getHouses(Numbers.LEFT).subList(leftUsed,getHouses(Numbers.LEFT).size() ), splitSegment, endInRoad, true);
+				int rightUsed = en1.setNumbers(getHouses(Numbers.RIGHT), startInRoad, splitSegment, false);
+				en2.setNumbers(getHouses(Numbers.RIGHT).subList(rightUsed,getHouses(Numbers.RIGHT).size()), splitSegment, endInRoad, false);
 			} else {
 				if (left){
 					en1.setNumbers(before, startInRoad, splitSegment, true);
 					en2.setNumbers(after, splitSegment, endInRoad, true);
-					int rightUsed = en1.setNumbers(rightHouses, startInRoad, splitSegment, false);
-					en2.setNumbers(rightHouses.subList(rightUsed,rightHouses.size()), splitSegment, endInRoad, false);
+					int rightUsed = en1.setNumbers(getHouses(Numbers.RIGHT), startInRoad, splitSegment, false);
+					en2.setNumbers(getHouses(Numbers.RIGHT).subList(rightUsed,getHouses(Numbers.RIGHT).size()), splitSegment, endInRoad, false);
 				} else {
-					int leftUsed = en1.setNumbers(leftHouses, startInRoad, splitSegment, true);
-					en2.setNumbers(leftHouses.subList(leftUsed,leftHouses.size() ), splitSegment, endInRoad, true);
+					int leftUsed = en1.setNumbers(getHouses(Numbers.LEFT), startInRoad, splitSegment, true);
+					en2.setNumbers(getHouses(Numbers.LEFT).subList(leftUsed,getHouses(Numbers.LEFT).size() ), splitSegment, endInRoad, true);
 					en1.setNumbers(before, startInRoad, splitSegment, false);
 					en2.setNumbers(after, splitSegment, endInRoad, false);
 				}
 			}
-			if (en1.leftHouses.size() + en2.leftHouses.size() != leftHouses.size() ||
-					en1.rightHouses.size() + en2.rightHouses.size() != rightHouses.size()){
+			if (en1.getHouses(Numbers.LEFT).size() + en2.getHouses(Numbers.LEFT).size() != getHouses(Numbers.LEFT).size() ||
+					en1.getHouses(Numbers.RIGHT).size() + en2.getHouses(Numbers.RIGHT).size() != getHouses(Numbers.RIGHT).size()){
 				log.error("lost houses");
 			}
 			log.info("number node added in street",getRoad(),getNumbers(),"==>",en1.getNumbers(),"+",en2.getNumbers());		
@@ -644,7 +664,7 @@ public class ExtNumbers {
 			int countAfterEnd = 0, countBeforeStart = 0;
 			double minFraction0To1 = 2;
 			double maxFraction0To1 = -1;
-			for (List<HousenumberMatch> houses : Arrays.asList(leftHouses, rightHouses)){
+			for (List<HousenumberMatch> houses : Arrays.asList(getHouses(Numbers.LEFT), getHouses(Numbers.RIGHT))){
 				for (HousenumberMatch house : houses){
 					if (house.getSegmentFrac() < 0)
 						++countBeforeStart;
@@ -687,7 +707,7 @@ public class ExtNumbers {
 					} else 
 						log.debug("trying to find good split point, houses are at",formatLen(len1),"in segment with",formatLen(segmentLength));
 				}
-				if (len2 - len1 < 10 && leftHouses.size() <= 1 && rightHouses.size() <= 1){
+				if (len2 - len1 < 10 && getHouses(Numbers.LEFT).size() <= 1 && getHouses(Numbers.RIGHT).size() <= 1){
 					// one house or two opposite houses  
 					// we try to split so that the house(s) are near the middle of one part
 					wantedFraction = wantedFraction * 2 - (wantedFraction > 0.5 ? 1 : 0);
@@ -774,8 +794,8 @@ public class ExtNumbers {
 				log.info("adding number node at",toAdd.toDegreeString(),"to split, dist to line is",formatLen(bestDist));
 			action = "add";
 			this.endInRoad = addAsNumberNode(startInRoad + 1, toAdd);
-			this.recalcHousePositions(leftHouses);
-			this.recalcHousePositions(rightHouses);
+			this.recalcHousePositions(getHouses(Numbers.LEFT));
+			this.recalcHousePositions(getHouses(Numbers.RIGHT));
 		}
 		int splitSegment = (startInRoad + endInRoad) / 2;
 		if (worstHouse != null){
@@ -786,7 +806,7 @@ public class ExtNumbers {
 		} else if (endInRoad - startInRoad > 2){
 			int firstSegWithHouses = endInRoad;
 			int lastSegWithHouses = -1;
-			for (List<HousenumberMatch> houses : Arrays.asList(leftHouses,rightHouses)){
+			for (List<HousenumberMatch> houses : Arrays.asList(getHouses(Numbers.LEFT),getHouses(Numbers.RIGHT))){
 				for (HousenumberMatch house : houses){
 					int s = house.getSegment();
 					if (s < firstSegWithHouses)
@@ -803,12 +823,12 @@ public class ExtNumbers {
 		getRoad().getPoints().get(splitSegment).setNumberNode(true);
 		ExtNumbers en1 = split();
 		ExtNumbers en2 = en1.next;
-		int leftUsed = en1.setNumbers(leftHouses, startInRoad, splitSegment, true);
-		int rightUsed = en1.setNumbers(rightHouses, startInRoad, splitSegment, false);
-		leftHouses.subList(0, leftUsed).clear();
-		rightHouses.subList(0, rightUsed).clear(); 				
-		leftUsed = en2.setNumbers(leftHouses, splitSegment, endInRoad, true);
-		rightUsed = en2.setNumbers(rightHouses, splitSegment, endInRoad, false);
+		int leftUsed = en1.setNumbers(getHouses(Numbers.LEFT), startInRoad, splitSegment, true);
+		int rightUsed = en1.setNumbers(getHouses(Numbers.RIGHT), startInRoad, splitSegment, false);
+		getHouses(Numbers.LEFT).subList(0, leftUsed).clear();
+		getHouses(Numbers.RIGHT).subList(0, rightUsed).clear(); 				
+		leftUsed = en2.setNumbers(getHouses(Numbers.LEFT), splitSegment, endInRoad, true);
+		rightUsed = en2.setNumbers(getHouses(Numbers.RIGHT), splitSegment, endInRoad, false);
 		if (reason == SR_OPT_LEN){
 			// TODO: fill gaps, e.g. if split results in O,1,9 -> O,1,1 + O,9,9 ?
 		}
@@ -829,7 +849,7 @@ public class ExtNumbers {
 	 * @return the new chain with two segments 
 	 */
 	private ExtNumbers dupNode(double fraction, int reason) {
-		log.info("duplicating number node in road",getRoad(),getNumbers(),leftHouses,rightHouses);
+		log.info("duplicating number node in road",getRoad(),getNumbers(),getHouses(Numbers.LEFT),getHouses(Numbers.RIGHT));
 		boolean atStart = (fraction <= 0.5);
 		
 		// add a copy of an existing node 
@@ -849,7 +869,7 @@ public class ExtNumbers {
 		List<HousenumberMatch> right2= new ArrayList<>();
 		List<HousenumberMatch> target;
 		if (reason == SR_SPLIT_ROAD_END || reason == SR_OPT_LEN){
-			for (HousenumberMatch house : leftHouses){
+			for (HousenumberMatch house : getHouses(Numbers.LEFT)){
 				if (house.getSegmentFrac() < fraction)
 					target = left1;
 				else if (house.getSegmentFrac() > fraction)
@@ -857,7 +877,7 @@ public class ExtNumbers {
 				else target = (atStart) ? left1: left2;
 				target.add(house);
 			}
-			for (HousenumberMatch house : rightHouses){
+			for (HousenumberMatch house : getHouses(Numbers.RIGHT)){
 				if (house.getSegmentFrac() < fraction)
 					target = right1;
 				else if (house.getSegmentFrac() > fraction)
@@ -865,13 +885,13 @@ public class ExtNumbers {
 				else target = (atStart) ? right1:right2;
 				target.add(house);
 			}
-		} else if (leftHouses.size() > 1 || rightHouses.size() > 1){
+		} else if (getHouses(Numbers.LEFT).size() > 1 || getHouses(Numbers.RIGHT).size() > 1){
 			int start,end;
 			start = getNumbers().getLeftStart();
 			end = getNumbers().getLeftEnd();
 			if (start != end){
 				int midNum = (start + end) / 2;
-				for (HousenumberMatch house : leftHouses){
+				for (HousenumberMatch house : getHouses(Numbers.LEFT)){
 					if (house.getHousenumber() < midNum)
 						target = left1;
 					else if (house.getHousenumber() > midNum)
@@ -881,15 +901,15 @@ public class ExtNumbers {
 				}
 			} else {
 				if (atStart) 
-					left2.addAll(leftHouses);
+					left2.addAll(getHouses(Numbers.LEFT));
 				else 
-					left1.addAll(leftHouses);
+					left1.addAll(getHouses(Numbers.LEFT));
 			}
 			start = getNumbers().getRightStart();
 			end = getNumbers().getRightEnd(); 
 			if (start != end){
 				int midNum = (start + end) / 2;
-				for (HousenumberMatch house : rightHouses){
+				for (HousenumberMatch house : getHouses(Numbers.RIGHT)){
 					if (house.getHousenumber() < midNum)
 						target = right1;
 					else if (house.getHousenumber() > midNum)
@@ -899,9 +919,9 @@ public class ExtNumbers {
 				}
 			} else {
 				if (atStart)
-					right2.addAll(rightHouses);
+					right2.addAll(getHouses(Numbers.RIGHT));
 				else 
-					right1.addAll(rightHouses);
+					right1.addAll(getHouses(Numbers.RIGHT));
 			}
 		} else {
 			log.error("don't know how to split", this); 
@@ -1003,13 +1023,13 @@ public class ExtNumbers {
 			startInRoad++;
 			endInRoad++;
 		}
-		for (List<HousenumberMatch> list: Arrays.asList(leftHouses, rightHouses)){
+		for (List<HousenumberMatch> list: Arrays.asList(getHouses(Numbers.LEFT), getHouses(Numbers.RIGHT))){
 			for (HousenumberMatch house : list){
 				int s = house.getSegment();
 				if (s > startPos)
 					house.setSegment(s+1);
 				else 
-					assert false : "internal error " + getRoad() + " " + leftHouses + " " + rightHouses;
+					assert false : "internal error " + getRoad() + " " + getHouses(Numbers.LEFT) + " " + getHouses(Numbers.RIGHT);
 			}
 		}
 		
@@ -1020,7 +1040,7 @@ public class ExtNumbers {
 	private void findGoodSplitPos(){
 		for (int side = 0; side < 2; side++){
 			boolean left = side == 0;
-			List<HousenumberMatch> houses = left ? leftHouses : rightHouses;
+			List<HousenumberMatch> houses = left ? getHouses(Numbers.LEFT) : getHouses(Numbers.RIGHT);
 			if (houses.size() <= 1)
 				continue;
 			for (HousenumberMatch house: houses){
@@ -1150,6 +1170,7 @@ public class ExtNumbers {
 	 * @return true if something was changed
 	 */
 	public static int checkIntervals(String streetName, ExtNumbers en1, ExtNumbers en2) {
+		//TODO: don't check intervals with different cityInfos 
 		if (en1.getRoad() != en2.getRoad()){
 			Coord cs1 = en1.getRoad().getPoints().get(en1.startInRoad);
 			Coord ce1 = en1.getRoad().getPoints().get(en1.endInRoad);
@@ -1159,7 +1180,6 @@ public class ExtNumbers {
 				en1 = en2;
 				en2 = help;
 			}
-				
 		}
 		boolean allOK = true;
 		Numbers ivl1 = en1.getNumbers();
@@ -1189,19 +1209,19 @@ public class ExtNumbers {
 				}
 
 				if (s1 == e1){
-					if (left1 && en1.leftHouses.get(0).isFarDuplicate() || !left1 && en1.rightHouses.get(0).isFarDuplicate()){
+					if (left1 && en1.getHouses(Numbers.LEFT).get(0).isFarDuplicate() || !left1 && en1.getHouses(Numbers.RIGHT).get(0).isFarDuplicate()){
 						allOK = false;
 						continue;
 					}
 				}
 				if (s2 == e2){
-					if (left2 && en2.leftHouses.get(0).isFarDuplicate() || !left2 && en2.rightHouses.get(0).isFarDuplicate()){
+					if (left2 && en2.getHouses(Numbers.LEFT).get(0).isFarDuplicate() || !left2 && en2.getHouses(Numbers.RIGHT).get(0).isFarDuplicate()){
 						allOK = false;
 						continue;
 					}
 				}
-				List<HousenumberMatch> houses1 = left1 ? en1.leftHouses : en1.rightHouses;
-				List<HousenumberMatch> houses2 = left2 ? en2.leftHouses : en2.rightHouses;
+				List<HousenumberMatch> houses1 = left1 ? en1.getHouses(Numbers.LEFT) : en1.getHouses(Numbers.RIGHT);
+				List<HousenumberMatch> houses2 = left2 ? en2.getHouses(Numbers.LEFT) : en2.getHouses(Numbers.RIGHT);
 				if (log.isInfoEnabled()){
 					log.info("detected unplausible combination of intervals in",streetName, 
 							s1 + ".." + e1, "and", s2 + ".." + e2, "houses:",
@@ -1503,7 +1523,7 @@ public class ExtNumbers {
 		help.prev = prev;
 		help.next = next;
 		
-		List<HousenumberMatch> modifiedHouses = new ArrayList<>(left ? leftHouses : rightHouses);
+		List<HousenumberMatch> modifiedHouses = new ArrayList<>(left ? getHouses(Numbers.LEFT) : getHouses(Numbers.RIGHT));
 		Iterator<HousenumberMatch> iter = modifiedHouses.iterator();
 		while (iter.hasNext()){
 			HousenumberMatch house = iter.next();
@@ -1511,7 +1531,7 @@ public class ExtNumbers {
 				iter.remove();
 		}
 		help.setNumbers(modifiedHouses, startInRoad, endInRoad, left);
-		help.setNumbers(left ? rightHouses : leftHouses, startInRoad, endInRoad, !left);
+		help.setNumbers(left ? getHouses(Numbers.RIGHT) : getHouses(Numbers.LEFT), startInRoad, endInRoad, !left);
 		return help.getNumbers();
 	}
 
@@ -1520,7 +1540,7 @@ public class ExtNumbers {
 	}
 	
 	public String toString(){
-		return getRoad().toString() + leftHouses.toString() + rightHouses.toString();
+		return getRoad().toString() + getHouses(Numbers.LEFT).toString() + getHouses(Numbers.RIGHT).toString();
 	}
 
 	/**
@@ -1558,7 +1578,7 @@ public class ExtNumbers {
 		double worstDelta = 0;
 		worstHouse = null;
 		for (int side = 0; side < 2; side++){
-			List<HousenumberMatch> houses = (side == 0) ? leftHouses : rightHouses;
+			List<HousenumberMatch> houses = (side == 0) ? getHouses(Numbers.LEFT) : getHouses(Numbers.RIGHT);
 			for (int i = 0; i < houses.size(); i++){
 				HousenumberMatch house = houses.get(i);
 				double distToStart = 0;
@@ -1706,13 +1726,13 @@ public class ExtNumbers {
 			if (curr.hasNumbers() == false)
 				continue;
 			countFilledIvls++;
-			if (curr.leftNotInOrder)
+			if (curr.notInOrder(Numbers.LEFT))
 				countNotInOrder++;
-			if (curr.rightNotInOrder)
+			if (curr.notInOrder(Numbers.RIGHT))
 				countNotInOrder++;
-			if (curr.leftHouses.size() > 1)
+			if (curr.getHouses(Numbers.LEFT).size() > 1)
 				++countFilledSides;
-			if (curr.rightHouses.size() > 1)
+			if (curr.getHouses(Numbers.RIGHT).size() > 1)
 				++countFilledSides;
 			
 		}
@@ -1721,4 +1741,12 @@ public class ExtNumbers {
 				housenumberRoad.setRandom(true);
 		}
 	}
+	
+	private boolean StringIsEqual(String s1, String s2){
+		if (s1 != null)
+			return s1.equals(s2);
+		else 
+			return s2 == null;
+	}
 }
+
