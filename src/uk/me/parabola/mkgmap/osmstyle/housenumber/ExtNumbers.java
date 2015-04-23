@@ -71,6 +71,9 @@ public class ExtNumbers {
 	private static final int MAX_LOCATE_ERROR = 40; 
 	
 	private static final List<HousenumberMatch> NO_HOUSES = Collections.emptyList();
+	private static final Set<CityInfo> NO_CIIES = Collections.emptySet();
+	private static final Set<String> NO_ZIP_CODES= Collections.emptySet();
+	
 	public ExtNumbers prev,next;
 	class RoadSide {
 		List<HousenumberMatch> houses = Collections.emptyList();
@@ -78,6 +81,7 @@ public class ExtNumbers {
 		Set<String> zipCodes = new HashSet<>();
 		boolean notInOrder;
 	}
+	
 	private RoadSide leftSide,rightSide;
 	private Numbers numbers = null;
 	private int startInRoad, endInRoad;
@@ -115,14 +119,25 @@ public class ExtNumbers {
 		return (rs != null) ? rs.notInOrder : false; 
 	}
 
-	public List<HousenumberMatch> getHouses(boolean left){
+	private List<HousenumberMatch> getHouses(boolean left){
 		RoadSide rs = (left) ? leftSide : rightSide;
 		return (rs != null) ? rs.houses : NO_HOUSES;  
 	}
 
+	private Set<CityInfo> getCities(boolean left){
+		RoadSide rs = (left) ? leftSide : rightSide;
+		return (rs != null) ? rs.cityInfos : NO_CIIES;  
+	}
+
+	private Set<String> getZipCodes(boolean left){
+		RoadSide rs = (left) ? leftSide : rightSide;
+		return (rs != null) ? rs.zipCodes: NO_ZIP_CODES;  
+	}
+	
 	private MapRoad getRoad(){
 		return housenumberRoad.getRoad();
 	}
+	
 	private void reset() {
 		numbers = null;
 		needsSplit = false;
@@ -148,8 +163,6 @@ public class ExtNumbers {
 		}
 		return numbers;
 	}
-
-
 
 	/**
 	 * Store given house numbers and meta info
@@ -202,19 +215,20 @@ public class ExtNumbers {
 		RoadSide rs = (left) ? leftSide : rightSide;
 		Set<CityInfo> cityInfos = new HashSet<>();
 		Set<String> zipCodes = new HashSet<>();
-		if (rs.houses.isEmpty() == false) {
+		List<HousenumberMatch> houses = getHouses(left);
+		if (houses.isEmpty() == false) {
 			// get the sublist of house numbers
 			boolean even = false;
 			boolean odd = false;
 			boolean inOrder = true;
 			int lastDiff = 0;
 			HousenumberMatch highest, lowest;
-			lowest = highest = rs.houses.get(0);
+			lowest = highest = houses.get(0);
 			Int2IntOpenHashMap distinctNumbers = new Int2IntOpenHashMap();
-			int numHouses = rs.houses.size();
+			int numHouses = houses.size();
 			HousenumberMatch pred = null;
 			for (int i = 0; i< numHouses; i++) {
-				HousenumberMatch house = rs.houses.get(i);
+				HousenumberMatch house = houses.get(i);
 				if (house.getCityInfo() != null)
 					cityInfos.add(house.getCityInfo());
 				if (house.getZipCode() != null)
@@ -252,8 +266,8 @@ public class ExtNumbers {
 			}
 			int highestNum = highest.getHousenumber();
 			int lowestNum = lowest.getHousenumber();
-			int start = rs.houses.get(0).getHousenumber();
-			int end = rs.houses.get(numHouses-1).getHousenumber();
+			int start = houses.get(0).getHousenumber();
+			int end = houses.get(numHouses-1).getHousenumber();
 			boolean increasing = false; // from low to high
 			if (start == end && highestNum - lowestNum != 0){
 				if (prev != null){
@@ -1742,11 +1756,24 @@ public class ExtNumbers {
 		}
 	}
 	
-	private boolean StringIsEqual(String s1, String s2){
-		if (s1 != null)
-			return s1.equals(s2);
-		else 
-			return s2 == null;
+	private void checkZipCodes(){
+		for (int i = 0; i < 2; i++){
+			String zip = null;
+			List<HousenumberMatch> houses = getHouses(i == 0);
+			for (HousenumberMatch house : houses){
+				if (house.getZipCode() == null)
+					continue;
+				if (zip == null)
+					zip = house.getZipCode();
+				else {
+					if (zip.equals(house.getZipCode()))
+						continue;
+				}
+				needsSplit = true;
+				worstHouse = house;
+				break;
+			}
+		}
 	}
 }
 

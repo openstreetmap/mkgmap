@@ -307,5 +307,22 @@ public class HousenumberMatch extends HousenumberElem implements Locatable {
 		setLeft(HousenumberGenerator.isLeft(c1, c2, getLocation()));
 		
 	}
+	
+	public boolean isEqualAddress(HousenumberElem other){
+		if (getRoad() != other.getRoad())
+			return false;
+		if (getSign().equals(other.getSign()) == false)
+			return false;
+		if (getZipCode() != null && other.getZipCode() != null){
+			if (getZipCode().equals(other.getZipCode()) == false)
+				return false;
+		}
+		if (getCityInfo() != null && other.getCityInfo() != null){
+			if (getCityInfo().equals(other.getCityInfo()) == false)
+				return false;
+		}
+		return true;
+	}
+	
 }
 

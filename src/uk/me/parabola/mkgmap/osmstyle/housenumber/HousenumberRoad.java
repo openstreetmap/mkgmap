@@ -273,7 +273,9 @@ public class HousenumberRoad {
 			if (house1.getSign().equals(house2.getSign()) == false){
 				usedForCalc = null;
 			} else {
-				// found a duplicate house number (e.g. 2 and 2 or 1b and 1b)
+				if (house1.isEqualAddress(house2) == false)
+					continue;
+				// found a duplicate address (e.g. 2 and 2 or 1b and 1b in same road,city etc.)
 				double distBetweenHouses = house2.getLocation().distance(house1.getLocation());
 				double distToUsed = (usedForCalc == null) ? distBetweenHouses : house2.getLocation().distance(usedForCalc.getLocation()); 
 				if (usedForCalc == null)

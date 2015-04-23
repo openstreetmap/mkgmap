@@ -2552,10 +2552,6 @@ public class HousenumberGenerator {
 		 */
 		public HousenumberMatch createHousenumberMatch(HousenumberElem house){
 			HousenumberMatch bestMatch = new HousenumberMatch(house);
-			if (house.getElement().getId() == 894372973L){
-				long dd = 4;
-			}
-			
 			List<RoadPoint> closeRoadPoints = getCLoseRoadPoints(house);
 			if (closeRoadPoints.isEmpty())
 				return bestMatch;
@@ -2564,12 +2560,7 @@ public class HousenumberGenerator {
 			double bestDist = Double.MAX_VALUE;
 			double lastSameDist = Double.MAX_VALUE;
 			for (RoadPoint rp : closeRoadPoints){
-				if (rp.r.getRoadDef().getId() == 213188728){
-					long dd = 4;
-				}
 				if (house.getStreet() != null && house.getStreet().equals(rp.r.getStreet()) == false){
-//					if (house.getPlace() == null)
-//						continue;
 					if (rp.r.getStreet() != null){
 						continue;
 					}
@@ -2618,7 +2609,7 @@ public class HousenumberGenerator {
 				checkAngle(bestMatch, sameDist);
 			}
 			if (bestMatch.getRoad() != null){
-				HousenumberMatch bestMatchWithStreetName = null;
+//				HousenumberMatch bestMatchWithStreetName = null;
 //				for (HousenumberMatch altHouse : matches.values()){
 //					if (house.getStreet() != null && house.getStreet().equals(altHouse.getRoad().getStreet())){
 //						if (bestMatchWithStreetName == null)
