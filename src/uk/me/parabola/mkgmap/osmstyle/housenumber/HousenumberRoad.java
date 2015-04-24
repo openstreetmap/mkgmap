@@ -440,14 +440,17 @@ public class HousenumberRoad {
 			else {
 				if (used == null)
 					used = prev;
-				house.setIgnored(true);
-				if (log.isInfoEnabled())
-					log.info("using",streetName,used.getSign(), "in favor of",house.getSign(),"as target for address search");
+				if (prev.getSign().equals(house.getSign()) &&  prev.isEqualAddress(house) == false){
+					// we want to keep these duplicates 
+				} else {
+					house.setIgnored(true);
+					if (log.isInfoEnabled())
+						log.info("using",streetName,used.getSign(), "in favor of",house.getSign(),"as target for address search");
+				}
 			}
 			prev = house;
 		}
 	}
-	
 
 	public void checkWrongRoadAssignmments(HousenumberRoad other) {
 		if (this.extNumbersHead == null || other.extNumbersHead == null)
@@ -618,20 +621,25 @@ public class HousenumberRoad {
 		return getRoad().toString() + " " + houseNumbers;
 	}
 
+
+	/**
+	 * Check if street name is set, if not, try to find one. 
+	 * Identify those houses which are assigned to this road because it was the closest,
+	 * but can't be correct because street name doesn't match.
+	 * 
+	 * @param road2HousenumberRoadMap maps {@link MapRoad} instances to corresponding  
+	 * {@link HousenumberRoad} instances
+	 * @param nodeId2RoadLists maps node ids to the {@link MapRoad} that use the corresponding nodes.  
+	 * @return
+	 */
 	public List<HousenumberMatch> checkStreetName(Map<MapRoad, HousenumberRoad> road2HousenumberRoadMap, Int2ObjectOpenHashMap<HashSet<MapRoad>> nodeId2RoadLists) {
 		List<HousenumberMatch> noWrongHouses = Collections.emptyList();
 		List<HousenumberMatch> wrongHouses = Collections.emptyList();
-		if (road.getRoadDef().getId() == 72760701){
-			long dd = 4;
-		}
 		
 		if (houseNumbers.isEmpty() == false){
 			HashMap<String, Integer>possibleStreetNamesFromHouses = new HashMap<>();
 			HashMap<String, Integer>possiblePlaceNamesFromHouses = new HashMap<>();
 			for (HousenumberMatch house : houseNumbers){
-				if (house.getElement().getId() == 2513431945L){
-					long dd = 4;
-				}
 				String potentialName = house.getStreet();
 				if (potentialName != null){
 					Integer oldCount = possibleStreetNamesFromHouses.put(potentialName, 1);
@@ -666,7 +674,6 @@ public class HousenumberRoad {
 						return noWrongHouses; 
 					}
 				}
-				long dd = 4;
 			} 
 			if (possibleStreetNamesFromHouses.isEmpty()){
 				// neither road not houses tell us a street name
@@ -676,9 +683,6 @@ public class HousenumberRoad {
 					iter.remove();
 					if (furtherNames.isEmpty())
 						furtherNames = null;
-					else {
-						long dd = 4;
-					}
 				}
 				return noWrongHouses;
 			}

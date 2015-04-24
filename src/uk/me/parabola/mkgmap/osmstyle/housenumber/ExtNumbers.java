@@ -307,10 +307,12 @@ public class ExtNumbers {
 				}
 			}
 			getNumbers().setNumbers(left,style,start,end);
-			if (cityInfos.size() == 1)
+			if (cityInfos.size() == 1){
 				getNumbers().setCityInfo(left, cityInfos.iterator().next());
-			if (zipCodes.size() == 1)
+			}
+			if (zipCodes.size() == 1){
 				getNumbers().setZipCode(left, zipCodes.iterator().next());
+			}
 			rs.notInOrder = !inOrder;
 		}
 	}
@@ -366,7 +368,7 @@ public class ExtNumbers {
 			}
 		}
 		for (curr = head; curr != null; curr = curr.next){
-			while (curr.getNumbers().isPlausible() == false){
+			while (curr.isPlausible() == false){
 				// this happens in the following cases:
 				// 1. correct OSM data, multiple houses build a block. Standing on the road
 				// you probably see a small service road which leads to the houses.
@@ -1050,7 +1052,6 @@ public class ExtNumbers {
 	}
 	
 	
-	
 	private void findGoodSplitPos(){
 		for (int side = 0; side < 2; side++){
 			boolean left = side == 0;
@@ -1184,7 +1185,7 @@ public class ExtNumbers {
 	 * @return true if something was changed
 	 */
 	public static int checkIntervals(String streetName, ExtNumbers en1, ExtNumbers en2) {
-		//TODO: don't check intervals with different cityInfos 
+		//TODO: ignore intervals with different zip code/ cityInfos ? 
 		if (en1.getRoad() != en2.getRoad()){
 			Coord cs1 = en1.getRoad().getPoints().get(en1.startInRoad);
 			Coord ce1 = en1.getRoad().getPoints().get(en1.endInRoad);
@@ -1475,9 +1476,6 @@ public class ExtNumbers {
 				test.setLeft(otherLeft);
 				return test;
 			}
-		} else {
-			//TODO: check if we can attach the house to a group in the other road
-			long dd = 4;
 		}
 		test.setRoad(null);
 		return test;
@@ -1756,24 +1754,16 @@ public class ExtNumbers {
 		}
 	}
 	
-	private void checkZipCodes(){
-		for (int i = 0; i < 2; i++){
-			String zip = null;
-			List<HousenumberMatch> houses = getHouses(i == 0);
-			for (HousenumberMatch house : houses){
-				if (house.getZipCode() == null)
-					continue;
-				if (zip == null)
-					zip = house.getZipCode();
-				else {
-					if (zip.equals(house.getZipCode()))
-						continue;
-				}
-				needsSplit = true;
-				worstHouse = house;
-				break;
-			}
-		}
+	private boolean isPlausible(){
+		if (getNumbers().isPlausible() == false)
+			return false;
+		if (getCities(true).size() > 1 || getCities(false).size() > 1)
+			return false;  // very unlikely, maybe not properly handled by split routines
+
+		if (getZipCodes(true).size() > 1 || getZipCodes(false).size() > 1)
+			return false; // very unlikely, maybe not properly handled by split routines 
+
+		return true;
 	}
 }
 

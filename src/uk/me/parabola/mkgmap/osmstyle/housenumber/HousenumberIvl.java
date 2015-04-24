@@ -15,14 +15,12 @@ package uk.me.parabola.mkgmap.osmstyle.housenumber;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapRoad;
-import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.TagDict;
 import uk.me.parabola.mkgmap.reader.osm.Way;
@@ -227,10 +225,11 @@ public class HousenumberIvl {
 			generated.addTag(streetTagKey, streetName);
 			String number = String.valueOf(hn);
 			generated.addTag(housenumberTagKey, number);
-			// TODO: maybe add check that city info of both houses is equal
+			// TODO: maybe add check that city info and zip code of both houses is equal ?
 			// what if not ?
 			HousenumberElem houseElem = new HousenumberElem(generated, knownHouses[0].getCityInfo());
 			houseElem.setHousenumber(hn);
+			houseElem.setZipCode(knownHouses[0].getZipCode());
 			houseElem.setStreet(streetName);
 			houseElem.setSign(number);
 			HousenumberMatch house = new HousenumberMatch(houseElem);
@@ -324,16 +323,16 @@ public class HousenumberIvl {
 		return streetName + "_" + start + ".." + end + "_" + step;
 	}
 
-	public boolean setNodeRefs(HashMap<Element, HousenumberMatch> houses) {
-		knownHouses[0] = houses.get(n1);
-		knownHouses[1] = houses.get(n2);
-		if (knownHouses[0] == null || knownHouses[1] == null)
-			return false;
-		knownHouses[0].incIntervalInfoRefs();
-		knownHouses[1].incIntervalInfoRefs();
-		return true;
-	}
-
+//	public boolean setNodeRefs(HashMap<Element, HousenumberMatch> houses) {
+//		knownHouses[0] = houses.get(n1);
+//		knownHouses[1] = houses.get(n2);
+//		if (knownHouses[0] == null || knownHouses[1] == null)
+//			return false;
+//		knownHouses[0].incIntervalInfoRefs();
+//		knownHouses[1].incIntervalInfoRefs();
+//		return true;
+//	}
+//
 	public void ignoreNodes() {
 		for (int i = 0; i < 2; i++){
 			if (knownHouses[i] != null){
@@ -382,7 +381,7 @@ public class HousenumberIvl {
 		
 	}
 
-	public boolean setNodeRefs2(Map<Long, Integer> interpolationNodes,
+	public boolean setNodeRefs(Map<Long, Integer> interpolationNodes,
 			List<HousenumberElem> houseElems) {
 		for (int i = 0; i < 2; i++){
 			long id = (i == 0) ? n1.getId(): n2.getId();
@@ -395,6 +394,7 @@ public class HousenumberIvl {
 			if (he.getElement().getId() != id)
 				return false;
 			knownHouses[i] = (HousenumberMatch) he;
+			knownHouses[i].incIntervalInfoRefs();
 		}
 		return true;
 	}
