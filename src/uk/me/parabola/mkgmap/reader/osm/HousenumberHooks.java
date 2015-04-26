@@ -68,8 +68,7 @@ public class HousenumberHooks extends OsmReadingHooksAdaptor {
 		currentNodeInWay = saver.getNode(id);
 		if (currentNodeInWay == null)
 			return;
-		if (currentNodeInWay.getTag(addrStreetTagKey) == null
-				|| currentNodeInWay.getTag(addrHousenumberTagKey) == null)
+		if (currentNodeInWay.getTag(addrHousenumberTagKey) == null)
 			return;
 		// this node might be part of a way that has the addr:interpolation tag
 		nodes.add(currentNodeInWay);
