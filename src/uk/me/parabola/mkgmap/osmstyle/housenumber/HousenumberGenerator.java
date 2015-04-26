@@ -343,6 +343,8 @@ public class HousenumberGenerator {
 		if (step == 0)
 			return; // should not happen here
 		int pos = 0;
+		List<HousenumberIvl> hivls = new ArrayList<>();
+		String streetName = null;
 		for (int i = 0; i+1 < numNodes; i++){
 			// the way have other points, find the sequence including the pair of nodes    
 			HousenumberElem he1 = nodes.get(i);
@@ -371,49 +373,60 @@ public class HousenumberGenerator {
 			pos = pos2;
 			String street = he1.getStreet();
 			if (street != null && street.equals(he2.getStreet())){
+				if (streetName == null)
+					streetName = street;
+				else if (streetName.equals(street) == false){
+					log.warn(w.toBrowseURL(),"addr:interpolation=even is used with different street names",streetName,street);
+					return;
+				}
+				
 				int start = he1.getHousenumber();
 				int end = he2.getHousenumber();
 				int steps;
 				if (start < end){
 					steps = (end - start) / step - 1;
-
-
 				} else {
 					steps = (start - end) / step - 1;
-
 				}
-				HousenumberIvl info = new HousenumberIvl(street, w, (Node)he1.element, (Node)he2.element);
-				info.setStart(start);
-				info.setEnd(end);
-				info.setStep(step);
-				info.setSteps(steps);
-				info.setPoints(w.getPoints().subList(pos1, pos2+1));
-				interpolationWays.add(street, info);
+				HousenumberIvl hivl = new HousenumberIvl(street, w, (Node)he1.element, (Node)he2.element);
+				hivl.setStart(start);
+				hivl.setEnd(end);
+				hivl.setStep(step);
+				hivl.setSteps(steps);
+				hivl.setPoints(w.getPoints().subList(pos1, pos2+1));
+				if (w.getId() == 34418300){
+					long dd = 4;
+				}
+//				if (pos1 > 0){
+//					double angle = Utils.getAngle(w.getPoints().get(pos1-1), w.getPoints().get(pos1), w.getPoints().get(pos1+1));
+//					if (Math.abs(angle) > 75){
+//						log.warn(w.toBrowseURL(),"addr:interpolation way has sharp angle at number",start,"cannot use it");
+//						return;
+//					}
+//						
+//				}
+				
+				hivls.add(hivl);
+				if ("even".equals(addrInterpolationMethod) && (start % 2 != 0 || end % 2 != 0)){
+					log.warn(w.toBrowseURL(),"addr:interpolation=even is used with odd housenumber(s)",start,end);
+					return;
+				}
+				if ("odd".equals(addrInterpolationMethod) && (start % 2 == 0 || end % 2 == 0)){
+					log.warn(w.toBrowseURL(),"addr:interpolation=odd is used with even housenumber(s)",start,end);
+					return;
+				}
+				
 				if (start == end && he1.getSign().equals(he2.getSign())){
 					// handle special case from CanVec imports  
 					if (pos1 == 0 && pos2 +1 == w.getPoints().size()){
-						info.setEqualEnds();
+						hivl.setEqualEnds();
 						log.warn(w.toBrowseURL(),"addr:interpolation way connects two points with equal numbers, numbers are ignored");
-						return;
 					}
-				}
-				if (steps <= 0){
-					if (log.isDebugEnabled())
-						log.debug(w.toBrowseURL(),"addr:interpolation way segment ignored, no number between",start,"and",end);
-					info.setBad(true);
-				}
-				if ("even".equals(addrInterpolationMethod) && (start % 2 != 0 || end % 2 != 0)){
-					if (log.isInfoEnabled())
-						log.info(w.toBrowseURL(),"addr:interpolation=even is used with odd housenumber(s)",start,end);
-					info.setBad(true);
-				}
-				if ("odd".equals(addrInterpolationMethod) && (start % 2 == 0 || end % 2 == 0)){
-					if (log.isInfoEnabled())
-						log.info(w.toBrowseURL(),"addr:interpolation=odd is used with even housenumber(s)",start,end);
-					info.setBad(true);
 				}
 			}
 		}
+		for (HousenumberIvl  hivl : hivls)
+			interpolationWays.add(streetName, hivl);
 	}
 
 	
@@ -642,30 +655,34 @@ public class HousenumberGenerator {
 			// TODO: interpolate addr:interpolation houses
 			removeDupsGroupedByCityAndName(hnrList);
 			
-			TreeMap<CityInfo, TreeMap<String, List<HousenumberRoad>>> cityStreetnameRoadMap = new TreeMap<>();
+			// group by street name and city
+			TreeMap<String, TreeMap<CityInfo, List<HousenumberRoad>>> streetnameCityRoadMap = new TreeMap<>();
 			for (HousenumberRoad hnr : hnrList){
-				TreeMap<String, List<HousenumberRoad>> cluster = cityStreetnameRoadMap.get(hnr.getRoadCityInfo());
+				TreeMap<CityInfo, List<HousenumberRoad>> cluster = streetnameCityRoadMap.get(hnr.getName());
 				if (cluster == null){
 					cluster = new TreeMap<>();
-					cityStreetnameRoadMap.put(hnr.getRoadCityInfo(), cluster);
+					streetnameCityRoadMap.put(hnr.getName(), cluster);
 				}
-				List<HousenumberRoad> roadsInCluster = cluster.get(hnr.getName());
+				List<HousenumberRoad> roadsInCluster = cluster.get(hnr.getRoadCityInfo());
 				if (roadsInCluster == null){
 					roadsInCluster = new ArrayList<>();
-					cluster.put(hnr.getName(), roadsInCluster);
+					cluster.put(hnr.getRoadCityInfo(), roadsInCluster);
 				}
 				roadsInCluster.add(hnr);
 			}
-			for (Entry<CityInfo, TreeMap<String, List<HousenumberRoad>>> cityEntry : cityStreetnameRoadMap.entrySet()){
-//				if (log.isDebugEnabled())
-//					log.debug("processing roads in city",cityEntry.getKey());
-				for (Entry<String, List<HousenumberRoad>> clusterEntry : cityEntry.getValue().entrySet()){
+			
+			for (Entry<String, TreeMap<CityInfo, List<HousenumberRoad>>> streetNameEntry : streetnameCityRoadMap.entrySet()){
+				String streetName = streetNameEntry.getKey();
+				List<HousenumberRoad> roadsWithStreetName = new ArrayList<>();
+				for (Entry<CityInfo, List<HousenumberRoad>> clusterEntry : streetNameEntry.getValue().entrySet()){
+					roadsWithStreetName.addAll(clusterEntry.getValue());
+				}
+				useInterpolationInfo(streetName, roadsWithStreetName, road2HousenumberRoadMap);
+				
+				for (Entry<CityInfo, List<HousenumberRoad>> clusterEntry : streetNameEntry.getValue().entrySet()){
 					List<HousenumberRoad> roadsInCluster = clusterEntry.getValue();
-					String streetName = clusterEntry.getKey();
-					
-					useInterpolationInfo(streetName, roadsInCluster, road2HousenumberRoadMap);
 					if (log.isDebugEnabled()){
-						log.debug("processing road(s) with name",streetName,"in",cityEntry.getKey() );
+						log.debug("processing road(s) with name",streetName,"in",clusterEntry.getKey() );
 					}
 					for (HousenumberRoad hnr : roadsInCluster){
 						hnr.buildIntervals();
@@ -697,7 +714,10 @@ public class HousenumberGenerator {
 		if (log.isInfoEnabled()){
 			for (HousenumberElem house : houseElems){
 				if (house.getRoad() == null){
-					log.info("found no plausible road for house number element",house.getElement().toBrowseURL(),house);
+					if (house.getStreet() != null)
+						log.info("found no plausible road for house number element",house.getElement().toBrowseURL(),house.getStreet(),house.getSign());
+					else 
+						log.info("found no plausible road for house number element",house.getElement().toBrowseURL());
 				}
 			}
 		}
@@ -859,6 +879,9 @@ public class HousenumberGenerator {
 		for (Entry<String, List<HousenumberIvl>> entry : interpolationWays.entrySet()){
 			List<HousenumberIvl> infos = entry.getValue();
 			for (HousenumberIvl info : infos){
+				if (info.isBad()){
+					continue;
+				}
 				boolean isOK = info.setNodeRefs(interpolationNodes, houseElems);
 				if (!isOK)
 					continue;
@@ -875,7 +898,8 @@ public class HousenumberGenerator {
 				for (int i = 0 ; i < houses.length; i++){
 					if (houses[i].getRoad() != uncheckedRoads[i]){
 						initialHousesForRoads.removeMapping(uncheckedRoads[i], houses[i]);
-						initialHousesForRoads.add(houses[i].getRoad(), houses[i]);
+						if (houses[i].isIgnored() == false)
+							initialHousesForRoads.add(houses[i].getRoad(), houses[i]);
 					}
 				}
 			}
@@ -889,15 +913,18 @@ public class HousenumberGenerator {
 			if (house.getRoad() == null)
 				continue;
 			if (house instanceof HousenumberMatch){
-				HousenumberRoad hnr = ((HousenumberMatch) house).getHousenumberRoad();
-				if (hnr.getName() == null)
+				HousenumberMatch hm = (HousenumberMatch) house;
+				if (hm.isIgnored())
 					continue;
-				MultiHashMap<String, HousenumberMatch> subMap = cityNameHouseMap.get(house.getCityInfo());
+				HousenumberRoad hnr = hm.getHousenumberRoad();
+				if (hnr == null || hnr.getName() == null)
+					continue;
+				MultiHashMap<String, HousenumberMatch> subMap = cityNameHouseMap.get(hm.getCityInfo());
 				if (subMap == null){
 					subMap = new MultiHashMap<>();
-					cityNameHouseMap.put(house.getCityInfo(), subMap);
+					cityNameHouseMap.put(hm.getCityInfo(), subMap);
 				}
-				subMap.add(hnr.getName(), (HousenumberMatch) house);
+				subMap.add(hnr.getName(), hm);
 			}
 		}
 		
@@ -1057,7 +1084,6 @@ public class HousenumberGenerator {
 		List<HousenumberIvl> interpolationInfos = interpolationWays.get(streetName);
 		if (interpolationInfos.isEmpty())
 			return;
-		
 		List<HousenumberMatch> housesWithIvlInfo = new ArrayList<>();
 		for (HousenumberRoad hnr : roadsInCluster){
 			for (HousenumberMatch house : hnr.getHouses()){
@@ -1083,65 +1109,57 @@ public class HousenumberGenerator {
 		int inCluster = 0;
 		boolean allOK = true;
 		for (HousenumberIvl hivl : interpolationInfos){
-			if (hivl.getId() == 35027547){
-				long dd = 4;
-			}
-
-			if (hivl.inCluster(housesWithIvlInfo) == false)
+			if (hivl.inCluster(housesWithIvlInfo) == false || hivl.ignoreForInterpolation())
 				continue;
 			++inCluster;
-			if (hivl.checkRoads() == false){
+			String hivlDesc = hivl.getDesc();
+			if (simpleDupCheckSet.contains(hivlDesc)){
+				// happens often in Canada (CanVec imports): two or more addr:interpolation ways with similar meaning
+				// sometimes at completely different road parts, sometimes at exactly the same
+				log.warn("found additional addr:interpolation way with same meaning, is ignored:",streetName, hivl);
+				badIvls.add(hivl);
 				allOK = false;
-			} else {
-				String hivlDesc = hivl.getDesc();
-				if (simpleDupCheckSet.contains(hivlDesc)){
-					// happens often in Canada (CanVec imports): two or more addr:interpolation ways with similar meaning
-					// sometimes at completely different road parts, sometimes at exactly the same
-					log.warn("found additional addr:interpolation way with same meaning, is ignored:",streetName, hivl);
-					badIvls.add(hivl);
-					allOK = false;
-					continue;
+				continue;
+			}
+			simpleDupCheckSet.add(hivlDesc);
+
+			id2IvlMap.put(hivl.getId(), hivl);
+			List<HousenumberMatch> interpolatedHouses = hivl.getInterpolatedHouses();
+			if (interpolatedHouses.isEmpty() == false){
+				if (interpolatedHouses.get(0).getRoad() == null){
+					// the interpolated houses are not all along one road
+					findRoadForInterpolatedHouses(streetName, interpolatedHouses, roadsInCluster);
 				}
-				simpleDupCheckSet.add(hivlDesc);
-				
-				id2IvlMap.put(hivl.getId(), hivl);
-				List<HousenumberMatch> interpolatedHouses = hivl.getInterpolatedHouses();
-				if (interpolatedHouses.isEmpty() == false){
-					if (interpolatedHouses.get(0).getRoad() == null){
-						// the interpolated houses are not all along one road
-						findRoadForInterpolatedHouses(streetName, interpolatedHouses, roadsInCluster);
+
+				boolean foundDup = false;
+				for (HousenumberMatch house : interpolatedHouses){
+					if (house.getRoad() == null || house.getDistance() > HousenumberIvl.MAX_INTERPOLATION_DISTANCE_TO_ROAD)
+						continue;
+					boolean ignoreGenOnly = false;
+					HousenumberMatch old = interpolatedNumbers.put(house.getHousenumber(), house);
+					if (old == null){
+						ignoreGenOnly = true;
+						old = existingNumbers.get(house.getHousenumber());
 					}
-					
-					boolean foundDup = false;
-					for (HousenumberMatch house : interpolatedHouses){
-						if (house.getRoad() == null || house.getDistance() > HousenumberIvl.MAX_INTERPOLATION_DISTANCE_TO_ROAD)
-							continue;
-						boolean ignoreGenOnly = false;
-						HousenumberMatch old = interpolatedNumbers.put(house.getHousenumber(), house);
-						if (old == null){
-							ignoreGenOnly = true;
-							old = existingNumbers.get(house.getHousenumber());
-						}
-						if (old != null){
-							// forget both or only one ? Which one?
-							house.setIgnored(true);
-							if (old.getLocation().distance(house.getLocation()) > 5){
-								foundDup = true;
-								if (!ignoreGenOnly){
-									old.setIgnored(true);
-									long ivlId = old.getElement().getOriginalId();
-									HousenumberIvl bad = id2IvlMap.get(ivlId);
-									if (bad != null)
-										badIvls.add(bad);
-								}
+					if (old != null){
+						// forget both or only one ? Which one?
+						house.setIgnored(true);
+						if (old.getLocation().distance(house.getLocation()) > 5){
+							foundDup = true;
+							if (!ignoreGenOnly){
+								old.setIgnored(true);
+								long ivlId = old.getElement().getOriginalId();
+								HousenumberIvl bad = id2IvlMap.get(ivlId);
+								if (bad != null)
+									badIvls.add(bad);
 							}
 						}
 					}
-					if (foundDup)
-						badIvls.add(hivl);
-					else
-						housesToAdd.put(hivl, interpolatedHouses);
 				}
+				if (foundDup)
+					badIvls.add(hivl);
+				else
+					housesToAdd.put(hivl, interpolatedHouses);
 			}
 		}
 		if (inCluster == 0)
@@ -1497,7 +1515,6 @@ public class HousenumberGenerator {
 
 	/**
 	 * 
-	 * @param streetName
 	 * @param housenumberRoads
 	 */
 	private static void checkWrongRoadAssignmments(List<HousenumberRoad> housenumberRoads) {
@@ -1931,73 +1948,82 @@ public class HousenumberGenerator {
 			List<RoadPoint> closeRoadPoints = getCLoseRoadPoints(house);
 			if (closeRoadPoints.isEmpty())
 				return bestMatch;
-			Map<MapRoad, BitSet> testedSegments = new HashMap<>();
-			Map<MapRoad, HousenumberMatch> matches = new HashMap<>();
-			double bestDist = Double.MAX_VALUE;
-			double lastSameDist = Double.MAX_VALUE;
+			Collections.sort(closeRoadPoints, new Comparator<RoadPoint>() {
+				// sort by distance (smallest first)
+				public int compare(RoadPoint o1,  RoadPoint o2) {
+					if (o1 == o2)
+						return 0;
+					if (o1.r != o2.r){
+						return o1.r.hashCode() - o2.r.hashCode();
+					}
+					if (o1.segment != o2.segment)
+						return Integer.compare(o1.segment, o2.segment);
+					return Integer.compare(o1.partOfSeg, o2.partOfSeg);
+				}
+			});
+
+			List<HousenumberMatch> matches = new ArrayList<>(40);
+			BitSet testedSegments = new BitSet();
+			MapRoad lastRoad = null;
+			HousenumberMatch hnm = null;
 			for (RoadPoint rp : closeRoadPoints){
 				if (house.getStreet() != null && house.getStreet().equals(rp.r.getStreet()) == false){
 					if (rp.r.getStreet() != null){
 						continue;
 					}
 				}
-				
-				BitSet bs = testedSegments.get(rp.r);
-				HousenumberMatch hnm;
-				if (bs == null){
+				if (rp.r != lastRoad){
 					hnm = new HousenumberMatch(house);
-					matches.put(rp.r, hnm);
-					bs = new BitSet();
-					testedSegments.put(rp.r, bs);
-				} else {
-					hnm = matches.get(rp.r);
+					testedSegments.clear();
+					matches.add(hnm);
+					lastRoad = rp.r;
 				}
 				double oldDist = hnm.getDistance();
 				if (rp.partOfSeg >= 0){
 					// rp.p is at start or before end of segment 
-					if (bs.get(rp.segment) == false){
-						bs.set(rp.segment);
+					if (testedSegments.get(rp.segment) == false){
+						testedSegments.set(rp.segment);
 						checkSegment(hnm, rp.r, rp.segment);
 					}
 				} 
 				if (rp.partOfSeg == 0 && rp.segment > 0 || rp.partOfSeg < 0){
 					// rp is at end of segment, check (also) the preceding segment 
-					if (bs.get(rp.segment - 1) == false){
-						bs.set(rp.segment-1);
+					if (testedSegments.get(rp.segment - 1) == false){
+						testedSegments.set(rp.segment-1);
 						checkSegment(hnm, rp.r, rp.segment-1);
 					}
 				}
 				if (oldDist == hnm.getDistance())
 					continue;
-				if (bestDist > hnm.getDistance()){
-					bestDist = hnm.getDistance();
-					bestMatch = hnm;
-				} else if (bestDist == hnm.getDistance()){
-					lastSameDist = bestDist;
-				}
 			}
 			if (matches.isEmpty())
 				return bestMatch;
-			
-			if (lastSameDist == bestDist){
-				List<HousenumberMatch> sameDist = new ArrayList<>();
-				for (HousenumberMatch hnm : matches.values()){
-					if (bestDist == hnm.getDistance())
-						sameDist.add(hnm);
+			Collections.sort(matches, new Comparator<HousenumberMatch>() {
+				// sort by distance (smallest first)
+				public int compare(HousenumberMatch o1, HousenumberMatch o2) {
+					if (o1 == o2)
+						return 0;
+					int d = Double.compare(o1.getDistance(), o2.getDistance());
+					if (d != 0)
+						return d;
+					return 0;
+
 				}
-				checkAngle(bestMatch, sameDist);
-			}
-			if (bestMatch.getRoad() != null){
-				for (HousenumberMatch altHouse : matches.values()){
-					if (altHouse.getRoad() != bestMatch.getRoad() && altHouse.getDistance() < MAX_DISTANCE_TO_ROAD){
-						if (house.getStreet() != null && altHouse.getDistance() > bestDist){
-							if (house.getStreet().equals(altHouse.getRoad().getStreet()) == false)
-								continue;
-						}
-						bestMatch.addAlternativeRoad(altHouse.getRoad());
+			});
+			bestMatch = matches.get(0);
+			bestMatch = checkAngle(bestMatch, matches);
+			bestMatch.calcRoadSide();
+			// safe information about other roads 
+			for (HousenumberMatch altHouse : matches){
+				if (altHouse.getDistance() >= MAX_DISTANCE_TO_ROAD)
+					break;
+				if (altHouse.getRoad() != bestMatch.getRoad()){
+					if (house.getStreet() != null && altHouse.getDistance() > bestMatch.getDistance()){
+						if (house.getStreet().equals(altHouse.getRoad().getStreet()) == false)
+							continue;
 					}
+					bestMatch.addAlternativeRoad(altHouse.getRoad());
 				}
-				bestMatch.calcRoadSide();
 			}
 			return bestMatch;
 		}

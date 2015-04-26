@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapRoad;
@@ -31,6 +31,15 @@ import uk.me.parabola.mkgmap.reader.osm.Way;
  * and the information how numbers are interpolated along
  * the way that is described by these points. 
  * 
+ * We try to use the information to find 
+ * a) the right road for the houses
+ * b) the right road segment 
+ * c) the position of the interpolated houses
+ * 
+ * We have to be aware of several special cases so we use some
+ * flags to say for which of the above points the information
+ * can be used.
+ * 
  * @author Gerd Petermann
  *
  */
@@ -39,10 +48,11 @@ public class HousenumberIvl {
 	
 	/** Gives the maximum distance between house number element and the matching road 
 	 * when the number is part of an addr:interpolation way */
-	public static final double MAX_INTERPOLATION_DISTANCE_TO_ROAD = 40d;
+	public static final double MAX_INTERPOLATION_DISTANCE_TO_ROAD = 75.0;
 
 	private final String streetName;
 	private final Way interpolationWay;
+	private MapRoad roadForInterpolatedHouses;
 	private final Node n1,n2;
 	private List<Coord> points;
 	private int step, start, end, steps;
@@ -50,8 +60,8 @@ public class HousenumberIvl {
 	
 	private boolean hasMultipleRoads;
 	private boolean foundCluster;
-	private int interpolated;
-	private boolean isBad;
+	private int interpolated; // counter to detect wrong double use 
+	private boolean ignoreForInterpolation;
 
 	private boolean equalEnds;
 	private static final short streetTagKey = TagDict.getInstance().xlate("mkgmap:street");
@@ -120,7 +130,7 @@ public class HousenumberIvl {
 		if (!res || equalEnds){
 			// the interval is not ok --> ignore the numbers as well
 			ignoreNodes();
-		} 
+		}  
 		return res;
 	}
 	
@@ -130,7 +140,7 @@ public class HousenumberIvl {
 				log.error("internal error: housenumber matches not properly set", this);
 				return false;
 			}
-			if (knownHouses[i].getRoad() == null || knownHouses[i].getDistance() > 40 ){
+			if (knownHouses[i].getRoad() == null || knownHouses[i].getDistance() > 100 ){
 				log.warn("cannot find any reasonable road for both nodes, ignoring them",streetName,this);
 				return false;
 			}
@@ -149,7 +159,17 @@ public class HousenumberIvl {
 				}
 			}			
 		}
-		
+		// make sure that the closest road is one with a matching name
+		for (int i = 0; i < 2; i++){
+			while (streetName.equals(knownHouses[i].getRoad().getStreet()) == false && knownHouses[i].hasAlternativeRoad()){
+				HousenumberMatch testx = new HousenumberMatch(knownHouses[i]);
+				MapRoad r = knownHouses[i].getAlternativeRoads().remove(0);
+				HousenumberGenerator.findClosestRoadSegment(testx, r);
+				if (testx.getDistance() < MAX_INTERPOLATION_DISTANCE_TO_ROAD){
+					copyRoadData(testx, knownHouses[i]);
+				}
+			}
+		}
 		List<MapRoad> toTest = new ArrayList<>();
 		toTest.add(knownHouses[0].getRoad());
 		toTest.add(knownHouses[1].getRoad());
@@ -158,40 +178,92 @@ public class HousenumberIvl {
 				toTest.add(r);
 		}
 		HousenumberMatch[] test = new HousenumberMatch[2];
-		boolean foundRoad = false;
+		boolean foundSingleRoad = false;
 		for (MapRoad r : toTest){
-			foundRoad = true;
+			if (streetName.equals(r.getStreet()) == false)
+				continue;
+			foundSingleRoad = true;
 			for (int i = 0; i < 2; i++){
 				test[i] = knownHouses[i];
 				if (test[i].getRoad() != r){
 					test[i] = new HousenumberMatch(knownHouses[i]);
 					HousenumberGenerator.findClosestRoadSegment(test[i], r);
+					test[i].calcRoadSide();
 				}
 				if (test[i].getRoad() == null || test[i].getDistance() > MAX_INTERPOLATION_DISTANCE_TO_ROAD ){
-					foundRoad = false;
+					foundSingleRoad = false;
 					break;
 				}
 			}
-			if (foundRoad)
+			if (foundSingleRoad){
+				if (test[0].isLeft() != test[1].isLeft()){
+					foundSingleRoad = false;
+					continue;
+				}
+				int s0 = test[0].getSegment();
+				int s1 = test[1].getSegment();
+				if (s0 != s1){
+					// not the same segment, find out if another is better
+					// check if the road and the addr:interpolation way are nearly parallel lines
+					double angle1 = Utils.getAngle(test[0].getClosestPointOnRoad(), points.get(0),points.get(1));
+					if (Math.abs(angle1) < 30){
+						foundSingleRoad = false;
+						HousenumberMatch testx = new HousenumberMatch(test[0]);
+						for (int s = Math.min(s0,s1); s <= Math.max(s0, s1); s++){
+							if (s != test[0].getSegment()){
+								HousenumberGenerator.findClosestRoadSegment(testx, r, s,s+1);
+								angle1 = Utils.getAngle(testx.getClosestPointOnRoad(), points.get(0),points.get(1));
+								if (Math.abs(angle1) >= 30 && testx.getDistance() < 2*test[0].getDistance()){
+									test[0] = testx;
+									foundSingleRoad = true;
+									break;
+								}
+							}
+						}
+					}
+					double angle2 = Utils.getAngle(points.get(points.size()-2),points.get(points.size()-1),test[1].getClosestPointOnRoad());
+					if (Math.abs(angle2) < 30){
+						foundSingleRoad = false;
+						HousenumberMatch testx = new HousenumberMatch(test[1]);
+						for (int s = Math.min(s0,s1); s <= Math.max(s0, s1); s++){
+							if (s != test[1].getSegment()){
+								HousenumberGenerator.findClosestRoadSegment(testx, r, s,s+1);
+								angle2 = Utils.getAngle(points.get(points.size()-2),points.get(points.size()-1),testx.getClosestPointOnRoad());
+								if (Math.abs(angle2) >= 30 && testx.getDistance() < 2*test[1].getDistance()){
+									test[1] = testx;
+									foundSingleRoad = true;
+									break;
+								}
+							}
+						}
+					}
+					
+				}
+				
+			}
+			if (foundSingleRoad)
 				break;
 		}
-		if (!foundRoad){
-			log.warn("cannot find reasonable road for both nodes",streetName,this);
-			return false;
+		if (!foundSingleRoad){
+			if (streetName.equals(knownHouses[0].getRoad().getStreet()) == false || streetName.equals(knownHouses[1].getRoad().getStreet()) == false){
+				log.warn("cannot find reasonable road for both nodes",streetName,this);
+				return false;
+			}
+			hasMultipleRoads = true;
+			return true;
 		}
-		// we found a plausible road, make sure that both nodes are using it
+		// we found the road that should be used for interpolation
+		roadForInterpolatedHouses = test[0].getRoad();
+
+		// we found a single plausible road, make sure that both nodes are using it
 		for (int i = 0; i < 2; i++){
-			if (knownHouses[i].getRoad() != test[i].getRoad()){
+			if (knownHouses[i].getRoad() != test[i].getRoad() || knownHouses[i].getSegment() != test[i].getSegment()){
 				copyRoadData(test[i], knownHouses[i]);
 				knownHouses[i].forgetAlternativeRoads();
 			}
 			if (knownHouses[i].getSegmentFrac() < 0 || knownHouses[i].getSegmentFrac() > 1){
 				hasMultipleRoads = true;
 			}
-		}
-		assert knownHouses[0].getRoad() == knownHouses[1].getRoad();
-		for (int i = 0; i < 2; i++){
-			knownHouses[i].calcRoadSide();
 		}
 		if (knownHouses[0].isLeft() != knownHouses[1].isLeft()){
 			log.warn("addr:interpolation way crosses road",streetName,this);
@@ -201,8 +273,12 @@ public class HousenumberIvl {
 	}
 
 	private void copyRoadData(HousenumberMatch source, HousenumberMatch dest) {
-		if (log.isInfoEnabled())
-			log.info("moving",streetName,dest.getSign(),dest.getElement().toBrowseURL(),"from road",dest.getRoad(),"to road",source.getRoad());
+		if (log.isInfoEnabled()){
+			if (source.getRoad() != dest.getRoad())
+				log.info("moving",streetName,dest.getSign(),dest.getElement().toBrowseURL(),"from road",dest.getRoad(),"to road",source.getRoad());
+			else 
+				log.info("moving",streetName,dest.getSign(),dest.getElement().toBrowseURL(),"from segment",dest.getSegment(),"to ",source.getSegment(),"in road",source.getRoad());
+		}
 		dest.setRoad(source.getRoad());
 		dest.setSegment(source.getSegment());
 		dest.setSegmentFrac(source.getSegmentFrac());
@@ -212,7 +288,7 @@ public class HousenumberIvl {
 	
 	public List<HousenumberMatch> getInterpolatedHouses(){
 		List<HousenumberMatch> houses = new ArrayList<>();
-		if (isBad || start == end || steps <= 0)
+		if (ignoreForInterpolation|| start == end || steps <= 0)
 			return houses;
 		List<Coord> interpolatedPoints = getInterpolatedPoints();
 		int usedStep = (start < end) ? step : -step;
@@ -233,8 +309,8 @@ public class HousenumberIvl {
 			houseElem.setStreet(streetName);
 			houseElem.setSign(number);
 			HousenumberMatch house = new HousenumberMatch(houseElem);
-			if (!hasMultipleRoads){
-				HousenumberGenerator.findClosestRoadSegment(house, knownHouses[0].getRoad());
+			if (roadForInterpolatedHouses != null){
+				HousenumberGenerator.findClosestRoadSegment(house, roadForInterpolatedHouses);
 				if (house.getRoad() == null || house.getDistance() > MAX_INTERPOLATION_DISTANCE_TO_ROAD ){
 					if (distanceWarningIssued == false){
 						log.warn("interpolated house is not close to expected road",this,house);
@@ -242,7 +318,7 @@ public class HousenumberIvl {
 					}
 					continue;
 				}
-				house.setLeft(knownHouses[0].isLeft());
+				house.calcRoadSide();
 			}
 			house.setInterpolated(true);
 			houses.add(house);
@@ -347,13 +423,19 @@ public class HousenumberIvl {
 		return interpolationWay.getId();
 	}
 
-	public void setBad(boolean b) {
-		this.isBad = b;
+	
+	public boolean ignoreForInterpolation() {
+		return ignoreForInterpolation;
+	}
+
+	public void setIgnoreForInterpolation(boolean ignoreForInterpolation) {
+		this.ignoreForInterpolation = ignoreForInterpolation;
 	}
 
 	public boolean isBad() {
-		return isBad;
+		return false;
 	}
+
 
 	public boolean inCluster(List<HousenumberMatch> housesNearCluster) {
 		int count = 0;

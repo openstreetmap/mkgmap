@@ -218,7 +218,13 @@ public class HousenumberGroup {
 	
 	private final static double CLOSE_HOUSES_DIST = 10;
 	public static boolean housesFormAGroup(HousenumberMatch house1, HousenumberMatch house2) {
-		assert house1.getRoad() == house2.getRoad();
+		if (house1.isIgnored() || house2.isIgnored())
+			return false;
+		if (house1.getRoad() != house2.getRoad()){
+			log.error("internal error, group check with houses on different roads?",house1.getElement().getId(),house2.getElement().getId());
+			return false;
+		}
+//		assert house1.getRoad() == house2.getRoad();
 		
 
 		if (house1.getSegment() > house2.getSegment()){

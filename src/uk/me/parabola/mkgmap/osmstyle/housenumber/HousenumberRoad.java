@@ -86,14 +86,17 @@ public class HousenumberRoad {
 		List<HousenumberMatch> leftNumbers = new ArrayList<HousenumberMatch>();
 		List<HousenumberMatch> rightNumbers = new ArrayList<HousenumberMatch>();
 		
-		for (HousenumberMatch hr : houseNumbers) {
-			if (hr.getRoad() == null || hr.isIgnored()){
+		for (HousenumberMatch house : houseNumbers) {
+			if (house.getRoad() == null || house.isIgnored()){
 				continue;
 			}
-			if (hr.isLeft()) {
-				leftNumbers.add(hr);
+			if (house.getHousenumberRoad() != this || house.getHousenumberRoad().getRoad() != house.getRoad()){
+				log.error("internal error, road links are not correct",house.getElement().toBrowseURL());
+			}
+			if (house.isLeft()) {
+				leftNumbers.add(house);
 			} else {
-				rightNumbers.add(hr);
+				rightNumbers.add(house);
 			}
 		}
 		detectGroups(leftNumbers, rightNumbers);
@@ -744,7 +747,9 @@ public class HousenumberRoad {
 	}
 
 	public void addHouse(HousenumberMatch house) {
-		assert extNumbersHead == null;
+		if (extNumbersHead != null){
+			log.error("internal error: trying to add house to road that was already processed",this.getRoad(),house);
+		}
 		house.setHousenumberRoad(this);
 		houseNumbers.add(house);
 	}
