@@ -353,6 +353,8 @@ public class ExtNumbers {
 		if (housenumberRoad.isRandom() || removeGaps){
 			for (curr = head; curr != null; curr = curr.next){
 				while (curr.hasGaps && (removeGaps || curr.notInOrder(true) || curr.notInOrder(false))){
+					curr.worstHouse = null;
+					curr.badNum = -1;
 					ExtNumbers test = curr.tryChange(SR_FIX_ERROR);
 					if (test != curr){
 						if (curr.prev == null)
