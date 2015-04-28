@@ -89,6 +89,7 @@ public class HousenumberGenerator {
 	private static final short regionTagKey = TagDict.getInstance().xlate("mkgmap:region");
 	private static final short countryTagKey = TagDict.getInstance().xlate("mkgmap:country");
 	private static final short postalCodeTagKey = TagDict.getInstance().xlate("mkgmap:postal_code");
+	private static final short numbersTagKey = TagDict.getInstance().xlate("mkgmap:numbers");
 	
 	public HousenumberGenerator(EnhancedProperties props) {
 		this.interpolationWays = new MultiHashMap<>();
@@ -394,9 +395,6 @@ public class HousenumberGenerator {
 				hivl.setStep(step);
 				hivl.setSteps(steps);
 				hivl.setPoints(w.getPoints().subList(pos1, pos2+1));
-				if (w.getId() == 34418300){
-					long dd = 4;
-				}
 //				if (pos1 > 0){
 //					double angle = Utils.getAngle(w.getPoints().get(pos1-1), w.getPoints().get(pos1), w.getPoints().get(pos1+1));
 //					if (Math.abs(angle) > 75){
@@ -438,13 +436,13 @@ public class HousenumberGenerator {
 	public void addRoad(Way osmRoad, MapRoad road) {
 		allRoads.add(road);
 		if (numbersEnabled) {
+			if(road.getRoadDef().ferry() || "false".equals(osmRoad.getTag(numbersTagKey))) 
+				road.setSkipHousenumberProcessing(true);
 			/*
 			 * If the style adds the same OSM way as two or more routable ways, we use
 			 * only the first. This ensures that we don't try to assign numbers from bad
 			 * matches to these copies.
 			 */
-			if(road.getRoadDef().ferry())
-				road.setSkipHousenumberProcessing(true);
 			if(!road.isSkipHousenumberProcessing()){
 				String name = road.getStreet(); 
 				if (name != null) {
