@@ -595,8 +595,8 @@ public class HousenumberGenerator {
 	 */
 	public void generate(LineAdder adder, int naxNodeId) {
 		if (numbersEnabled) {
-			MultiHashMap<MapRoad,HousenumberMatch> initialHousesForRoads = findClosestRoadsToHouse();
 			identifyServiceRoads();
+			MultiHashMap<MapRoad,HousenumberMatch> initialHousesForRoads = findClosestRoadsToHouse();
 			
 			handleInterpolationWays(initialHousesForRoads);
 			
@@ -770,8 +770,7 @@ public class HousenumberGenerator {
 //				log.warn("found no plausible road for house number element",house.getElement().toBrowseURL());
 				continue;
 			}
-			house = bestMatch;
-			initialHousesForRoads.add(house.getRoad(), bestMatch);
+			initialHousesForRoads.add(bestMatch.getRoad(), bestMatch);
 		}
 		long t4 = System.currentTimeMillis();
 		log.debug("identification of closest road for each house took",t4-t3,"ms");
@@ -1233,18 +1232,7 @@ public class HousenumberGenerator {
 				// multiple roads, we assume that the closest is the best
 				// but we may have to check the alternatives as well
 				
-				Collections.sort(matches, new Comparator<HousenumberMatch>() {
-					// sort by distance (smallest first)
-					public int compare(HousenumberMatch o1, HousenumberMatch o2) {
-						if (o1 == o2)
-							return 0;
-						int d = Double.compare(o1.getDistance(), o2.getDistance());
-						if (d != 0)
-							return d;
-						return 0;
-						
-					}
-				});
+				Collections.sort(matches, new HousenumberGenerator.HousenumberMatchByDistComparator());
 				closest  = matches.get(0);
 				best = checkAngle(closest, matches);	
 			}
@@ -1558,7 +1546,7 @@ public class HousenumberGenerator {
 			}
 			if (o1.getRoad() != o2.getRoad()) {
 				// should not happen
-				return o1.getRoad().hashCode() - o2.getRoad().hashCode();
+				return o1.getRoad().getRoadId() - o2.getRoad().getRoadId();
 			} 
 			
 			int dSegment = o1.getSegment() - o2.getSegment();
@@ -1607,6 +1595,27 @@ public class HousenumberGenerator {
 				return d;
 			d  = Long.compare(o1.getElement().getId(), o2.getElement().getId());
 			return d;
+		}
+	}
+	/**
+	 * Sorts house numbers by distance. If eqaul, compare segment and road to produce
+	 * predictable results.  
+	 * @author Gerd Petermann
+	 */
+	public static class HousenumberMatchByDistComparator implements Comparator<HousenumberMatch> {
+		public int compare(HousenumberMatch o1, HousenumberMatch o2) {
+			if (o1 == o2)
+				return 0;
+			int d = Double.compare(o1.getDistance(), o2.getDistance());
+			if (d != 0)
+				return d;
+			d = Integer.compare(o1.getSegment(), o2.getSegment());
+			if (d != 0)
+				return d;
+			d = Integer.compare(o1.getRoad().getRoadId(), o2.getRoad().getRoadId());
+			if (d != 0)
+				return d;
+			return 0;
 		}
 	}
 	
@@ -1951,11 +1960,12 @@ public class HousenumberGenerator {
 				public int compare(RoadPoint o1,  RoadPoint o2) {
 					if (o1 == o2)
 						return 0;
-					if (o1.r != o2.r){
-						return o1.r.hashCode() - o2.r.hashCode();
-					}
-					if (o1.segment != o2.segment)
-						return Integer.compare(o1.segment, o2.segment);
+					int d = Integer.compare(o1.r.getRoadId(), o2.r.getRoadId());
+					if (d != 0)
+						return d;
+					d = Integer.compare(o1.segment, o2.segment);
+					if (d != 0)
+						return d; 
 					return Integer.compare(o1.partOfSeg, o2.partOfSeg);
 				}
 			});
@@ -1996,29 +2006,29 @@ public class HousenumberGenerator {
 			}
 			if (matches.isEmpty())
 				return bestMatch;
-			Collections.sort(matches, new Comparator<HousenumberMatch>() {
-				// sort by distance (smallest first)
-				public int compare(HousenumberMatch o1, HousenumberMatch o2) {
-					if (o1 == o2)
-						return 0;
-					int d = Double.compare(o1.getDistance(), o2.getDistance());
-					if (d != 0)
-						return d;
-					return 0;
-
-				}
-			});
+			Collections.sort(matches, new HousenumberGenerator.HousenumberMatchByDistComparator());
 			bestMatch = matches.get(0);
 			bestMatch = checkAngle(bestMatch, matches);
 			bestMatch.calcRoadSide();
+			double bestDistRightName =  Double.MAX_VALUE;
+			
+			if (house.getElement().getId() == 1339498994){
+				long dd = 4;
+			}
+			int count = 0;
 			// safe information about other roads 
 			for (HousenumberMatch altHouse : matches){
 				if (altHouse.getDistance() >= MAX_DISTANCE_TO_ROAD)
 					break;
 				if (altHouse.getRoad() != bestMatch.getRoad()){
 					if (house.getStreet() != null && altHouse.getDistance() > bestMatch.getDistance()){
-						if (house.getStreet().equals(altHouse.getRoad().getStreet()) == false)
-							continue;
+						if (house.getStreet().equals(altHouse.getRoad().getStreet())){
+							if (bestDistRightName > altHouse.getDistance())
+								bestDistRightName = altHouse.getDistance();
+						} else {
+							if (altHouse.getDistance() > bestDistRightName)
+								continue;
+						}
 					}
 					bestMatch.addAlternativeRoad(altHouse.getRoad());
 				}

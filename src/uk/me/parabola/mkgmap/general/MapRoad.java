@@ -41,19 +41,28 @@ public class MapRoad extends MapLine {
 	private final RoadDef roadDef;
 	private boolean segmentsFollowing;
 	private boolean skipHousenumberProcessing;
+	private final int roadId;
 	
-	public MapRoad(long id, MapLine line) {
+	public MapRoad(int roadId, long OSMid, MapLine line) {
 		super(line);
+		this.roadId = roadId;
 		setPoints(line.getPoints());
-		roadDef = new RoadDef(id, getName());
+		roadDef = new RoadDef(OSMid, getName());
 	}
 
 	private MapRoad(MapRoad r) {
 		super(r);
+		roadId = r.roadId;
 		roadDef = r.roadDef;
 		segmentsFollowing = r.segmentsFollowing;
 	}
 
+	/**
+	 * @return value that can be used to sort MapRoad instances
+	 */
+	public int getRoadId(){
+		return roadId;
+	}
 	public MapRoad copy() {
 		return new MapRoad(this);
 	}

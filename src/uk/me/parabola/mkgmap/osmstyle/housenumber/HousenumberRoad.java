@@ -638,11 +638,13 @@ public class HousenumberRoad {
 	public List<HousenumberMatch> checkStreetName(Map<MapRoad, HousenumberRoad> road2HousenumberRoadMap, Int2ObjectOpenHashMap<HashSet<MapRoad>> nodeId2RoadLists) {
 		List<HousenumberMatch> noWrongHouses = Collections.emptyList();
 		List<HousenumberMatch> wrongHouses = Collections.emptyList();
-		
+		double maxDist = 0;
 		if (houseNumbers.isEmpty() == false){
 			HashMap<String, Integer>possibleStreetNamesFromHouses = new HashMap<>();
 			HashMap<String, Integer>possiblePlaceNamesFromHouses = new HashMap<>();
 			for (HousenumberMatch house : houseNumbers){
+				if (house.getDistance() > maxDist)
+					maxDist = house.getDistance();
 				String potentialName = house.getStreet();
 				if (potentialName != null){
 					Integer oldCount = possibleStreetNamesFromHouses.put(potentialName, 1);
@@ -691,11 +693,18 @@ public class HousenumberRoad {
 			}
 			if (streetName == null){
 				if (possibleStreetNamesFromHouses.size() == 1){
-					String potentialName = possibleStreetNamesFromHouses.keySet().iterator().next(); 
+					String potentialName = possibleStreetNamesFromHouses.keySet().iterator().next();
 					if (connectedRoadNames.contains(potentialName) || houseNumbers.size() > 1){
 						streetName = potentialName;
 						return noWrongHouses; // all good, return empty list
-					} 
+					}
+					if (road.getPoints().size() == 2 && maxDist <= 5){ 
+						if (road.getPoints().get(0).distance(road.getPoints().get(1)) < 10){
+							// very short road with just one house, use it
+							streetName = potentialName;
+							return noWrongHouses; // all good, return empty list
+						}
+					}
 				}
 			}
 			// if we get here we have no usable street name

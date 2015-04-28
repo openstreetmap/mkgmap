@@ -118,6 +118,7 @@ public class StyledConverter implements OsmConverter {
 	private HashSet<Long> deletedRoads = new HashSet<>();
 
 	private int nextNodeId = 1;
+	private int nextRoadId = 1;
 	
 	private HousenumberGenerator housenumberGenerator;
 	
@@ -252,6 +253,9 @@ public class StyledConverter implements OsmConverter {
 	private int lineCacheId = 0;
 	private BitSet routingWarningWasPrinted = new BitSet();
 	public void convertWay(final Way way) {
+		if (way.getId() == 119144316){
+			long dd = 4;
+		}
 		if (way.getPoints().size() < 2 || way.getTagCount() == 0){
 			// no tags or no points => nothing to convert
 			removeRestrictionsWithWay(Level.WARNING, way, "is ignored");
@@ -1570,7 +1574,7 @@ public class StyledConverter implements OsmConverter {
 		MapLine line = new MapLine();
 		elementSetup(line, cw.getGType(), way);
 		line.setPoints(points);
-		MapRoad road = new MapRoad(way.getId(), line);
+		MapRoad road = new MapRoad(nextRoadId++, way.getId(), line);
 		if (routable == false)
 			road.skipAddToNOD(true);
 		

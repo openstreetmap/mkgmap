@@ -127,7 +127,7 @@ class RoadHelper {
 		if (log.isDebugEnabled())
 			log.debug("finishing road id " + roadId);
 
-		MapRoad road = new MapRoad(roadId, l);
+		MapRoad road = new MapRoad(roadId, roadId, l);
 
 		// Set parameters.
 		road.setRoadClass(roadClass);
