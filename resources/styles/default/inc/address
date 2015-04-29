@@ -59,6 +59,8 @@ mkgmap:country=CHE & mkgmap:city!=* & mkgmap:admin_level8=* { set mkgmap:city='$
  
 # Canada
 mkgmap:country=CAN & mkgmap:region!=* & mkgmap:admin_level4=* { set mkgmap:region='${mkgmap:admin_level4}' }
+mkgmap:country=CAN & mkgmap:city!=* & mkgmap:admin_level8=Toronto & mkgmap:admin_level9=* { set mkgmap:city='${mkgmap:admin_level9}' }
+mkgmap:country=CAN & mkgmap:city!=* & mkgmap:admin_level8=Ottawa & mkgmap:admin_level9=* { set mkgmap:city='${mkgmap:admin_level9}' }
 mkgmap:country=CAN & mkgmap:city!=* & mkgmap:admin_level8=* { set mkgmap:city='${mkgmap:admin_level8|subst:City of }' }
 
 # United States
