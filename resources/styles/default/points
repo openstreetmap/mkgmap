@@ -8,6 +8,7 @@
 # and http://wiki.openstreetmap.org/wiki/Mkgmap/help/Custom_styles
 # for more information.
 
+addr:housenumber=* {set mkgmap:execute_finalize_rules=true}
 barrier=* & bicycle=*    { set mkgmap:bicycle='${bicycle|subst:private=>no}' }
 barrier=* & foot=*       { set mkgmap:foot='${foot|subst:private=>no}' }                  
 barrier=* & hgv=*        { set mkgmap:truck='${hgv|subst:private=>no}' }                  

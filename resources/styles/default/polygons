@@ -8,6 +8,8 @@
 # and http://wiki.openstreetmap.org/wiki/Mkgmap/help/Custom_styles
 # for more information.
 
+addr:housenumber=* {set mkgmap:execute_finalize_rules=true}
+
 leisure=* & sport=* & name=* { set name='${name} (${sport})' }
 leisure=* & sport=* & name!=* { add name='${sport}' }
 
@@ -79,5 +81,8 @@ include 'inc/landuse_polygons';
 
 <finalize>
 # The finalizer section is executed for each element when a rule with an element type matches
+
+# we need addrees info from buildings for the address search
+include 'inc/address';
 
 name=* { name '${name}' }
