@@ -13,6 +13,7 @@
 package uk.me.parabola.imgfmt.app.net;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -955,12 +956,8 @@ class CityZipWriter {
 	}
 
 	private void write(int skip, int[] indexes, int[] prevIndexes) {
-		int initFlag = Math.max(skip-1,0);
-		if (initFlag > 31){
-			// we have to write two bytes
-			buf.write((byte) (initFlag & 0x1f | 0x7<<5));
-			initFlag >>= 5;
-		}
+		if (Arrays.equals(indexes, prevIndexes))
+			return;
 		// we can signal new values for left and / or right side 
 		int sidesFlag = 0;  
 		if (indexes[0] <= 0 && indexes[1] <= 0){
@@ -977,14 +974,25 @@ class CityZipWriter {
 					sidesFlag |= 2;
 			}
 		}
-		
+
+		int initFlag = Math.max(skip-1,0);
+		if (initFlag > 31){
+			// we have to write two bytes
+			buf.write((byte) (initFlag & 0x1f | 0x7<<5));
+			initFlag >>= 5;
+		}
 		initFlag |= sidesFlag << 5;
+		if ((initFlag & 0xff) == 4){
+			long dd = 4;
+		}
 		buf.write((byte) (initFlag & 0xff));
 		if ((sidesFlag & 4) == 0) {
 			if (indexes[0] > 0 && (sidesFlag == 0 || (sidesFlag & 1) == 1))
 				writeIndex(indexes[0]);
 			if (indexes[1] > 0 && (sidesFlag & 2) != 0)
 				writeIndex(indexes[1]);
+		} else {
+			long dd = 4;
 		}
 		System.arraycopy(indexes, 0, prevIndexes, 0, indexes.length);
 	}

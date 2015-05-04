@@ -54,6 +54,9 @@ public class CityInfo implements Comparable<CityInfo> {
 		this.imgCity = imgCity;
 	}
 
+	public boolean isEmpty(){
+		return city == UNKNOWN && region == UNKNOWN && country == UNKNOWN;
+	}
 
 	@Override
 	public int hashCode() {

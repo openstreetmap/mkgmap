@@ -303,8 +303,10 @@ public class ExtNumbers {
 			rs.multipleZipCodes = (zipCodes.size() > 1);
 			if (cityInfos.size() == 1){
 				CityInfo ci = cityInfos.iterator().next();
-				if (ci.equals(housenumberRoad.getRoadCityInfo()) == false)
-					numbers.setCityInfo(left, ci);
+				if (ci.isEmpty() == false){
+					if (ci.equals(housenumberRoad.getRoadCityInfo()) == false)
+						numbers.setCityInfo(left, ci);
+				}
 			}
 			
 			if (zipCodes.size() == 1){
