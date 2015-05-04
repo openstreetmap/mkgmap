@@ -309,12 +309,14 @@ public class ExtNumbers {
 			
 			if (zipCodes.size() == 1){
 				ZipCodeInfo zipCodeInfo = zipCodes.iterator().next();
-				if (zipCodeInfo.equals(housenumberRoad.getRoadZipCode()) == false){
-					// we found a zip code and the road doesn't yet have one, use it for the whole road
-					if (getRoad().getZip() == null){
-						housenumberRoad.setZipCodeInfo(zipCodeInfo);
-					} else
-						numbers.setZipCode(left, zipCodeInfo);
+				if (zipCodeInfo.getZipCode() != null){
+					if (zipCodeInfo.equals(housenumberRoad.getRoadZipCode()) == false){
+						// we found a zip code and the road doesn't yet have one, use it for the whole road
+						if (getRoad().getZip() == null){
+							housenumberRoad.setZipCodeInfo(zipCodeInfo);
+						} else
+							numbers.setZipCode(left, zipCodeInfo);
+					}
 				}
 			}
 			rs.notInOrder = !inOrder;
@@ -886,81 +888,68 @@ public class ExtNumbers {
 		this.endInRoad = addAsNumberNode(splitSegment, toAdd);
 		
 		// distribute the houses to the new intervals
-		List<HousenumberMatch> left1 = new ArrayList<>();
-		List<HousenumberMatch> left2 = new ArrayList<>();
-		List<HousenumberMatch> right1= new ArrayList<>();
-		List<HousenumberMatch> right2= new ArrayList<>();
-		List<HousenumberMatch> target;
+		List<ArrayList<HousenumberMatch>> leftTargets = Arrays.asList(new ArrayList<HousenumberMatch>(),new ArrayList<HousenumberMatch>());
+		List<ArrayList<HousenumberMatch>> rightTargets = Arrays.asList(new ArrayList<HousenumberMatch>(),new ArrayList<HousenumberMatch>());
+		int target;
 		if (reason == SR_SPLIT_ROAD_END || reason == SR_OPT_LEN){
-			for (HousenumberMatch house : getHouses(Numbers.LEFT)){
-				if (house.getSegmentFrac() < fraction)
-					target = left1;
-				else if (house.getSegmentFrac() > fraction)
-					target = left2;
-				else target = (atStart) ? left1: left2;
-				target.add(house);
-			}
-			for (HousenumberMatch house : getHouses(Numbers.RIGHT)){
-				if (house.getSegmentFrac() < fraction)
-					target = right1;
-				else if (house.getSegmentFrac() > fraction)
-					target = right2;
-				else target = (atStart) ? right1:right2;
-				target.add(house);
+			for (int side = 0; side < 2; side++){
+				boolean left = side == 0;
+				List<ArrayList<HousenumberMatch>> targets = left ? leftTargets : rightTargets;
+				for (HousenumberMatch house : getHouses(left)){
+					if (house.getSegmentFrac() < fraction)
+						target = 0;
+					else if (house.getSegmentFrac() > fraction)
+						target = 1;
+					else target = (atStart) ? 0 : 1;
+					targets.get(target).add(house);
+				}
 			}
 		} else if (getHouses(Numbers.LEFT).size() > 1 || getHouses(Numbers.RIGHT).size() > 1){
 			int start,end;
-			start = getNumbers().getLeftStart();
-			end = getNumbers().getLeftEnd();
-			if (start != end){
-				int midNum = (start + end) / 2;
-				for (HousenumberMatch house : getHouses(Numbers.LEFT)){
-					if (house.getHousenumber() < midNum)
-						target = left1;
-					else if (house.getHousenumber() > midNum)
-						target = left2;
-					else target = (atStart) ? left1: left2;
-					target.add(house);
+			for (int side = 0; side < 2; side++){
+				boolean left = side == 0;
+				if (getHouses(left).isEmpty())
+					continue;
+				start = getNumbers().getStart(left);
+				end = getNumbers().getEnd(left);
+				List<ArrayList<HousenumberMatch>> targets = left ? leftTargets : rightTargets;
+				if (start != end){
+					int midNum = (start + end) / 2;
+					for (HousenumberMatch house : getHouses(left)){
+						if (house.getHousenumber() < midNum)
+							target = 0;
+						else if (house.getHousenumber() > midNum)
+							target = 1;
+						else target = (atStart) ? 0 : 1;
+						targets.get(target).add(house);
+					}
+				} else if (multipleZipOrCity(left) == false){
+					if (atStart) 
+						targets.get(1).addAll(getHouses(left));
+					else 
+						targets.get(0).addAll(getHouses(left));
+				} else {
+					int mid = getHouses(left).size() / 2;
+					targets.get(0).addAll(getHouses(left).subList(0, mid));
+					targets.get(1).addAll(getHouses(left).subList(mid,getHouses(left).size()));
 				}
-			} else {
-				if (atStart) 
-					left2.addAll(getHouses(Numbers.LEFT));
-				else 
-					left1.addAll(getHouses(Numbers.LEFT));
-			}
-			start = getNumbers().getRightStart();
-			end = getNumbers().getRightEnd(); 
-			if (start != end){
-				int midNum = (start + end) / 2;
-				for (HousenumberMatch house : getHouses(Numbers.RIGHT)){
-					if (house.getHousenumber() < midNum)
-						target = right1;
-					else if (house.getHousenumber() > midNum)
-						target = right2;
-					else target = (atStart) ? right1: right2;
-					target.add(house);
-				}
-			} else {
-				if (atStart)
-					right2.addAll(getHouses(Numbers.RIGHT));
-				else 
-					right1.addAll(getHouses(Numbers.RIGHT));
+				
 			}
 		} else {
 			log.error("don't know how to split", this); 
 		}
 		
 		assert splitSegment != startInRoad && splitSegment != endInRoad;
-		setSegment(startInRoad, left1);
-		setSegment(startInRoad, right1);
-		setSegment(splitSegment, left2);
-		setSegment(splitSegment, right2);
+		setSegment(startInRoad, leftTargets.get(0));
+		setSegment(startInRoad, rightTargets.get(0));
+		setSegment(splitSegment, leftTargets.get(1));
+		setSegment(splitSegment, rightTargets.get(1));
 		ExtNumbers en1 = split();
 		ExtNumbers en2 = en1.next;
-		en1.setNumbers(left1, startInRoad, splitSegment, true);
-		en1.setNumbers(right1, startInRoad, splitSegment, false);
-		en2.setNumbers(left2, splitSegment, endInRoad, true);
-		en2.setNumbers(right2, splitSegment, endInRoad, false);
+		en1.setNumbers(leftTargets.get(0), startInRoad, splitSegment, true);
+		en1.setNumbers(rightTargets.get(0), startInRoad, splitSegment, false);
+		en2.setNumbers(leftTargets.get(1), splitSegment, endInRoad, true);
+		en2.setNumbers(rightTargets.get(1), splitSegment, endInRoad, false);
 		log.info("zero length interval added in street",getRoad(),getNumbers(),"==>",en1.getNumbers(),"+",en2.getNumbers());
 		if (atStart && !en1.hasNumbers() ||  !atStart && !en2.hasNumbers()){
 			log.error("zero length interval has no numbers in road",getRoad());

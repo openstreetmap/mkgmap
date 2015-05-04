@@ -418,13 +418,14 @@ public class MapBuilder implements Configurable {
 						for (int i = 0; i < 2; i++){
 							boolean left = (i == 0);
 							ZipCodeInfo zipInfo = num.getZipCodeInfo(left);
-							if (zipInfo != null){
+							if (zipInfo != null && zipInfo.getZipCode() != null){
 								Zip zip = zipInfo.getImgZip();
 								if (zipInfo.getImgZip() == null){
 									zip = lbl.createZip(zipInfo.getZipCode());
 									zipInfo.setImgZip(zip);
 								}
-								road.addRoadZip(zip);
+								if (zip != null)
+									road.addRoadZip(zip);
 							}
 							CityInfo cityInfo = num.getCityInfo(left);
 							if (cityInfo != null){
@@ -433,7 +434,8 @@ public class MapBuilder implements Configurable {
 									city = calcCity(lbl, cityInfo.getCity(), cityInfo.getRegion(), cityInfo.getCountry());
 									cityInfo.setImgCity(city);
 								}
-								road.addRoadCity(city);
+								if (city != null)
+									road.addRoadCity(city);
 							}
 						}
 					}
