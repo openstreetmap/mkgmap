@@ -404,8 +404,9 @@ public class MapBuilder implements Configurable {
 				}
 
 				MapRoad road = (MapRoad) line;
-				if(cityName != null) 
-					road.addRoadCity(calcCity(lbl, cityName, cityRegionName, cityCountryName));
+				City roadCity = calcCity(lbl, cityName, cityRegionName, cityCountryName);
+				if (roadCity != null)
+					road.addRoadCity(roadCity);
 
 				if(zipStr != null) {
 					road.addRoadZip(lbl.createZip(zipStr));
@@ -426,9 +427,9 @@ public class MapBuilder implements Configurable {
 								road.addRoadZip(zip);
 							}
 							CityInfo cityInfo = num.getCityInfo(left);
-							if (cityInfo != null ){
+							if (cityInfo != null){
 								City city = cityInfo.getImgCity();
-								if (city == null){
+								if (city == null ){
 									city = calcCity(lbl, cityInfo.getCity(), cityInfo.getRegion(), cityInfo.getCountry());
 									cityInfo.setImgCity(city);
 								}
@@ -449,6 +450,8 @@ public class MapBuilder implements Configurable {
 			// use empty name for the city
 			city = UNKNOWN_CITY_NAME;
 		}
+		if (city == null)
+			return null;
 		if(cr != null) {
 			return lbl.createCity(cr, city, false);
 		}
