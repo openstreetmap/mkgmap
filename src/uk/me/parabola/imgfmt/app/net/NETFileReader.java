@@ -12,6 +12,8 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -111,9 +113,15 @@ public class NETFileReader extends ImgFile {
 				int zipFlag = (flags2 >> 10) & 0x3;
 				int cityFlag = (flags2 >> 12) & 0x3;
 				int numberFlag = (flags2 >> 14) & 0x3;
-
-				road.setZip(fetchZipCity(reader, zipFlag, zips, zipSize));
-				road.setCity(fetchZipCity(reader, cityFlag, cities, citySize));
+				IntArrayList indexes = new IntArrayList();
+				fetchZipCityIndexes(reader, zipFlag, zipSize, indexes);
+				for (int index : indexes){
+					road.addZipIfNotPresent(zips.get(index));
+				}
+				fetchZipCityIndexes(reader, cityFlag, citySize, indexes);
+				for (int index : indexes){
+					road.addCityIfNotPresent(cities.get(index));
+				}
 
 				fetchNumber(reader, numberFlag);
 			}
@@ -132,31 +140,83 @@ public class NETFileReader extends ImgFile {
 	}
 
 	/**
-	 * Fetch a zip or a city.
-	 * @param <T> Can be city or zip.
-	 * @return The found City or Zip.
+	 * Parse a list of zip/city indexes.
+	 * @param reader
+	 * @param flag
+	 * @param size
+	 * @param indexes
 	 */
-	private <T> T fetchZipCity(ImgFileReader reader, int flag, List<T> list, int size) {
-		T item = null;
+	private void fetchZipCityIndexes(ImgFileReader reader, int flag, int size, IntArrayList indexes) {
+		indexes.clear();
 		if (flag == 2) {
 			// fetch city/zip index
 			int ind = (size == 2)? reader.getChar(): (reader.get() & 0xff);
 			if (ind != 0)
-				item = list.get(ind-1);
+				indexes.add(ind-1);
 		} else if (flag == 3) {
 			// there is no item
 		} else if (flag == 0) {
-			// Skip over these
-			int n = reader.get();
-			reader.get(n);
+			int n = reader.get() & 0xff;
+			parseList(reader, n, size, indexes);
 		} else if (flag == 1) {
-			// Skip over these
 			int n = reader.getChar();
-			reader.get(n);
+			parseList(reader, n, size, indexes);
 		} else {
 			assert false : "flag is " + flag;
 		}
-		return item;
+	}
+	
+	private void parseList(ImgFileReader reader, int n, int size,
+			IntArrayList indexes) {
+		long endPos = reader.position() + n;
+		int node = 0; // not yet used
+		while (reader.position() < endPos) {
+			int initFlag = reader.get() & 0xff;
+			int skip = (initFlag & 0x1f);
+			initFlag >>= 5;
+			if (initFlag == 7) {
+				// Need to read another byte
+				initFlag = reader.get() & 0xff;
+				skip |= ((initFlag & 0x1f) << 5);
+				initFlag >>= 5;
+			}
+			node += skip + 1;
+			int right = 0, left = 0;
+			if (initFlag == 0) {
+				right = left = getCityOrZip(reader, size, endPos);
+			} else if ((initFlag & 0x4) != 0) {
+				if ((initFlag & 1) == 0)
+					right = 0;
+				if ((initFlag & 2) == 0)
+					left = 0;
+			} else {
+				if ((initFlag & 1) != 0)
+					left = getCityOrZip(reader, size, endPos);
+				if ((initFlag & 2) != 0)
+					right = getCityOrZip(reader, size, endPos);
+			}
+			if (left > 0)
+				indexes.add(left - 1);
+			if (right > 0 && left != right)
+				indexes.add(right - 1);
+		}
+	}
+
+	private int getCityOrZip(ImgFileReader reader, int size, long endPos) {
+		if (reader.position() > endPos - size) {
+			assert false : "ERRROR overflow";
+			return 0;
+		}
+		int cnum;
+		if (size == 1)
+			cnum = reader.get() & 0xff;
+		else if (size == 2)
+			cnum = reader.getChar();
+		else {
+			assert false : "unexpected size value" + size;
+			return 0;
+		}
+		return cnum;
 	}
 
 	/**

@@ -44,7 +44,9 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.CityInfo;
 import uk.me.parabola.mkgmap.general.LineAdder;
 import uk.me.parabola.mkgmap.general.MapRoad;
+import uk.me.parabola.mkgmap.general.ZipCodeInfo;
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 import uk.me.parabola.mkgmap.reader.osm.HousenumberHooks;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.POIGeneratorHook;
@@ -78,6 +80,7 @@ public class HousenumberGenerator {
 	private Map<Long,Integer> interpolationNodes;
 	private List<HousenumberElem> houseElems;
 	private HashMap<CityInfo, CityInfo> cityInfos = new HashMap<>();
+	private HashMap<ZipCodeInfo, ZipCodeInfo> zipInfos = new HashMap<>();
 
 	private static final short housenumberTagKey1 =  TagDict.getInstance().xlate("mkgmap:housenumber");
 	private static final short housenumberTagKey2 =  TagDict.getInstance().xlate("addr:housenumber");
@@ -207,7 +210,7 @@ public class HousenumberGenerator {
 			log.error("Element: " + el.toBrowseURL() + " " + el);
 			log.error("Please report on the mkgmap mailing list.");
 			log.error("Continue creating the map. This should be possible without a problem.");
-			return house;
+			return null;
 		}
 		
 		house.setSign(sign);
@@ -215,22 +218,18 @@ public class HousenumberGenerator {
 		if (hn == null){
 			if (log.isDebugEnabled())
 				log.debug("No housenumber (", el.toBrowseURL(), "): ", sign);
-			return house;
+			return null;
 		}
 		if (hn < 0 || hn > 1_000_000){
 			log.warn("Number looks wrong, is ignored",house.getSign(),hn,"element",el.toBrowseURL());
-			return house;
+			return null;
 		}
 		house.setHousenumber(hn);
 		house.setStreet(getStreetname(el));
 		house.setPlace(el.getTag(addrPlaceTagKey));
-		house.setZipCode(el.getTag(postalCodeTagKey));
-//		if (log.isDebugEnabled()){
-//			if (city == null)
-//				log.debug("mkgmap:city is not set in house number element",el.toBrowseURL(),el.toTagString());
-//		}
-		
-		house.setValid(true);
+		String zipStr = el.getTag(postalCodeTagKey);
+		ZipCodeInfo zip = getZipInfos(zipStr);
+		house.setZipCode(zip);
 		return house;
 	}
 	
@@ -244,13 +243,22 @@ public class HousenumberGenerator {
 		return ci;
 	}
 
+	private ZipCodeInfo getZipInfos(String zipStr) {
+		ZipCodeInfo zip = new ZipCodeInfo(zipStr);
+		ZipCodeInfo zipOld = zipInfos.get(zip);
+		if (zipOld != null)
+			return zipOld;
+		zipInfos.put(zip, zip);
+		return zip;
+	}
+
 	private HousenumberElem handleElement(Element el){
 		String sign = getHousenumber(el);
 		if (sign == null)
 			return null;
 		
 		HousenumberElem he = parseElement(el, sign);
-		if (he.isValid() == false)
+		if (he == null)
 			return null;
 		houseElems.add(he);
 		return he;
@@ -435,6 +443,9 @@ public class HousenumberGenerator {
 	 */
 	public void addRoad(Way osmRoad, MapRoad road) {
 		allRoads.add(road);
+		if (FakeIdGenerator.isFakeId(osmRoad.getId())){
+			long dd = 4;
+		}
 		if (numbersEnabled) {
 			if(road.getRoadDef().ferry() || "false".equals(osmRoad.getTag(numbersTagKey))) 
 				road.setSkipHousenumberProcessing(true);
@@ -635,6 +646,8 @@ public class HousenumberGenerator {
 						if (hnr2 == null){
 							CityInfo ci = getCityInfos(r.getCity(), r.getRegion(), r.getCountry());
 							hnr2 = new HousenumberRoad(r, ci, Arrays.asList(house));
+							if (r.getZip() != null)
+								hnr2.setZipCodeInfo(getZipInfos(r.getZip()));
 							road2HousenumberRoadMap.put(r,hnr2);
 							addedRoads.add(hnr2);
 						} else {
@@ -747,6 +760,9 @@ public class HousenumberGenerator {
 				continue;
 			CityInfo ci = getCityInfos(road.getCity(), road.getRegion(), road.getCountry());
 			HousenumberRoad hnr = new HousenumberRoad(road, ci, houses);
+			if (road.getZip() != null)
+				hnr.setZipCodeInfo(getZipInfos(road.getZip()));
+				
 			hnrList.add(hnr);
 		}
 		return hnrList;
@@ -1756,11 +1772,11 @@ public class HousenumberGenerator {
 				c2 = c4;
 			} 
 		}
-		if (log.isInfoEnabled()){
+		if (log.isDebugEnabled()){
 			if (closestMatch.getRoad() != bestMatch.getRoad()){
-				log.info("check angle: using road",bestMatch.getRoad().getRoadDef().getId(),"instead of",closestMatch.getRoad().getRoadDef().getId(),"for house number",bestMatch.getSign(),bestMatch.getElement().toBrowseURL());
+				log.debug("check angle: using road",bestMatch.getRoad().getRoadDef().getId(),"instead of",closestMatch.getRoad().getRoadDef().getId(),"for house number",bestMatch.getSign(),bestMatch.getElement().toBrowseURL());
 			} else if (closestMatch != bestMatch){
-				log.info("check angle: using road segment",bestMatch.getSegment(),"instead of",closestMatch.getSegment(),"for house number element",bestMatch.getElement().toBrowseURL());
+				log.debug("check angle: using road segment",bestMatch.getSegment(),"instead of",closestMatch.getSegment(),"for house number element",bestMatch.getElement().toBrowseURL());
 			}
 		}
 		return bestMatch;
@@ -2011,11 +2027,9 @@ public class HousenumberGenerator {
 			bestMatch = checkAngle(bestMatch, matches);
 			bestMatch.calcRoadSide();
 			double bestDistRightName =  Double.MAX_VALUE;
+			if (bestMatch.getStreet() != null && bestMatch.getStreet().equals(bestMatch.getRoad().getStreet()))
+				bestDistRightName = bestMatch.getDistance();
 			
-			if (house.getElement().getId() == 1339498994){
-				long dd = 4;
-			}
-			int count = 0;
 			// safe information about other roads 
 			for (HousenumberMatch altHouse : matches){
 				if (altHouse.getDistance() >= MAX_DISTANCE_TO_ROAD)
@@ -2032,6 +2046,10 @@ public class HousenumberGenerator {
 					}
 					bestMatch.addAlternativeRoad(altHouse.getRoad());
 				}
+			}
+			if (bestMatch.getDistance() < bestDistRightName && bestDistRightName < MAX_DISTANCE_TO_ROAD){
+				log.debug("further checks needed for address", bestMatch.getStreet(), bestMatch.getSign(), bestMatch.getElement().toBrowseURL(), 
+						formatLen(bestMatch.getDistance()), formatLen(bestDistRightName));
 			}
 			return bestMatch;
 		}

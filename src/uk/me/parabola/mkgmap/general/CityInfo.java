@@ -12,9 +12,13 @@
  */
 package uk.me.parabola.mkgmap.general;
 
+import uk.me.parabola.imgfmt.app.lbl.City;
+
 public class CityInfo implements Comparable<CityInfo> {
 	private static final String UNKNOWN = "?";
 	private final String city,region,country;
+	private City imgCity;
+
 	public CityInfo (String city, String region, String country){
 		this.city = (city != null) ? city: UNKNOWN;
 		this.region = (region != null) ?  region : UNKNOWN;
@@ -39,6 +43,17 @@ public class CityInfo implements Comparable<CityInfo> {
 			return null;
 		return country;
 	}
+	
+	
+	public City getImgCity() {
+		return imgCity;
+	}
+
+
+	public void setImgCity(City imgCity) {
+		this.imgCity = imgCity;
+	}
+
 
 	@Override
 	public int hashCode() {

@@ -3,6 +3,7 @@ package uk.me.parabola.mkgmap.osmstyle.housenumber;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.general.CityInfo;
 import uk.me.parabola.mkgmap.general.MapRoad;
+import uk.me.parabola.mkgmap.general.ZipCodeInfo;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.Way;
@@ -10,13 +11,11 @@ import uk.me.parabola.util.Locatable;
 
 class HousenumberElem implements Locatable{
 	protected final Element element;
-	private boolean valid;
-	private boolean processedAsPlace;
 	private int housenumber;
 	private String sign;
 	private String place;
 	private CityInfo cityInfo;
-	private String zipCode;
+	private ZipCodeInfo zipCode;
 	private String street;
 	//cache for Way elements to prevent calling Way.getCofG() repeatedly
 	private Coord location;
@@ -28,7 +27,6 @@ class HousenumberElem implements Locatable{
 
 	public HousenumberElem(HousenumberElem he) {
 		this.element = he.element;
-		this.valid = he.valid;
 		this.housenumber = he.housenumber;
 		this.sign = he.sign;
 		this.street = he.street;
@@ -40,22 +38,6 @@ class HousenumberElem implements Locatable{
 
 	public Element getElement() {
 		return element;
-	}
-
-	public boolean isValid() {
-		return valid;
-	}
-
-	public void setValid(boolean valid) {
-		this.valid = valid;
-	}
-
-	public boolean processedAsPlace() {
-		return processedAsPlace;
-	}
-
-	public void setProcessedAsPlace(boolean processed) {
-		this.processedAsPlace = processed;
 	}
 
 	public int getHousenumber() {
@@ -98,11 +80,11 @@ class HousenumberElem implements Locatable{
 		return cityInfo;
 	}
 	
-	public void setZipCode(String zip){
+	public void setZipCode(ZipCodeInfo zip){
 		zipCode = zip;
 	}
 	
-	public String getZipCode(){
+	public ZipCodeInfo getZipCode(){
 		return zipCode;
 	}
 	

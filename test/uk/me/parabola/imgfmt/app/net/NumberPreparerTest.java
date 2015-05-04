@@ -265,7 +265,7 @@ public class NumberPreparerTest {
 
 		BitReader br = new BitReader(bytes);
 		NumberReader nr = new NumberReader(br);
-		nr.setNumberOfNodes(numbers.size());
+		nr.setNumberOfNodes(numbers.get(numbers.size()-1).getRnodNumber() + 1);
 		List<Numbers> list = nr.readNumbers(swapped);
 		for (Numbers n : list)
 			n.setNodeNumber(n.getRnodNumber());

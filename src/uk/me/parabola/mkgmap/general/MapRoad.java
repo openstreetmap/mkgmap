@@ -122,12 +122,12 @@ public class MapRoad extends MapLine {
 		return roadDef;
 	}
 
-	public void setRoadCity(City c) {
-		roadDef.setCity(c);
+	public void addRoadCity(City c) {
+		roadDef.addCityIfNotPresent(c);
 	}
 
-	public void setRoadZip(Zip z) {
-		roadDef.setZip(z);
+	public void addRoadZip(Zip z) {
+		roadDef.addZipIfNotPresent(z);
 	}
 
 	public void setRoundabout(boolean r) {

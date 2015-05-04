@@ -16,8 +16,10 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -113,8 +115,6 @@ public class RoadDef {
 
 	private final SortedMap<Integer,List<RoadIndex>> roadIndexes = new TreeMap<>();
 
-	private City city;
-	private Zip zip;
 	private boolean paved = true;
 	private boolean ferry;
 	private boolean roundabout;
@@ -151,6 +151,8 @@ public class RoadDef {
 	private final long id;
 	private final String name;
 	private List<Numbers> numbersList;
+	private List<City> cityList;
+	private List<Zip> zipList;
 	private int nodeCount;
 
 	public RoadDef(long id, String name) {
@@ -202,14 +204,13 @@ public class RoadDef {
 		if (numlabels == 0)
 			return;
 		assert numlabels > 0;
-
+		Zip zip = getZips().isEmpty() ? null : getZips().get(0);
+		City city = getCities().isEmpty() ? null: getCities().get(0);
 		offsetNet1 = writer.position();
-
 		NumberPreparer numbers = null;
 		if (numbersList != null) {
-			numbers = new NumberPreparer(numbersList);
-			numbers.fetchBitStream();
-			if (!numbers.isValid()){
+			numbers = new NumberPreparer(numbersList, zip, city, numCities, numZips);
+			if (!numbers.prepare()){
 				numbers = null;
 				log.warn("Invalid housenumbers in",this.toString());
 			}
@@ -233,31 +234,67 @@ public class RoadDef {
 			}
 			writer.put((byte) (nodeCount & 0xff)); // lo bits of node count
 
-			int code = 0xe8;     // zip and city present
-			code |= ((nodeCount >> 8) & 0x3); // top bits of node count
-			if(city == null)
-				code |= 0x10; // no city
-			if(zip == null)
-				code |= 0x04; // no zip
-			if (numbers != null) {
-				code &= ~0xc0;
-				if (numbers.fetchBitStream().getLength() > 255)
-					code |= 0x40;
-			}
+			int code = ((nodeCount >> 8) & 0x3); // top bits of node count
+			int len, flag;
+			
+			ByteArrayOutputStream zipBuf = null, cityBuf = null;
+			len = (numbers == null)  ? 0: numbers.zipWriter.getBuffer().size();
+			if (len > 0){
+				zipBuf = numbers.zipWriter.getBuffer();
+				flag = (len > 255) ? 1 : 0;
+			} else 
+				flag = (zip == null) ? 3 : 2;
+			code |= flag << 2;
+			
+			len = (numbers == null)  ? 0: numbers.cityWriter.getBuffer().size();
+			if (len > 0){
+				cityBuf = numbers.cityWriter.getBuffer();
+				flag = (len > 255) ? 1 : 0;
+			} else 
+				flag = (city == null) ? 3 : 2;
+			code |= flag << 4;
+			
+			len = (numbers == null) ? 0 : numbers.fetchBitStream().getLength();
+			if (len > 0){
+				flag = (len > 255) ? 1 : 0;
+			} else 
+				flag = 3;
+			code |= flag << 6;
+			
 			writer.put((byte)code);
-			if(zip != null) {
-				char zipIndex = (char)zip.getIndex();
-				if(numZips > 255)
-					writer.putChar(zipIndex);
+//			System.out.printf("%d %d %d\n", (code >> 2 & 0x3), (code >> 4 & 0x3), (code >> 6 & 0x3));  
+			
+			if (zipBuf != null){
+				len = zipBuf.size();
+				if (len > 255)
+					writer.putChar((char) len);
 				else
-					writer.put((byte)zipIndex);
+					writer.put((byte) len);
+				writer.put(zipBuf.toByteArray());
+			} else {
+				if(zip != null) {
+					char zipIndex = (char)zip.getIndex();
+					if(numZips > 255)
+						writer.putChar(zipIndex);
+					else
+						writer.put((byte)zipIndex);
+				}
 			}
-			if(city != null) {
-				char cityIndex = (char)city.getIndex();
-				if(numCities > 255)
-					writer.putChar(cityIndex);
+			if (cityBuf != null){
+				len = cityBuf.size();
+				if (len > 255)
+					writer.putChar((char) len);
 				else
-					writer.put((byte)cityIndex);
+					writer.put((byte) len);
+				writer.put(cityBuf.toByteArray());
+			} else {
+				if(city != null) {
+					char cityIndex = (char)city.getIndex();
+					if(numCities > 255)
+						writer.putChar(cityIndex);
+					else
+						writer.put((byte)cityIndex);
+				}
 			}
 			if (numbers != null) {
 				BitWriter bw = numbers.fetchBitStream();
@@ -509,6 +546,7 @@ public class RoadDef {
 			netFlags |= NET_FLAG_ADDRINFO;
 		}
 	}
+	
 	public List<Numbers> getNumbersList() {
 		return numbersList;
 	}
@@ -708,20 +746,45 @@ public class RoadDef {
 		return (netFlags & NET_FLAG_ONEWAY) != 0;
 	}
 
-	public void setCity(City city) {
-		this.city = city;
+	public void addCityIfNotPresent(City city) {
+		if (city == null){
+			log.error("trying to add null value to city list in road",this);
+			return;
+		}
 		netFlags |= NET_FLAG_ADDRINFO;
+		if (cityList == null){
+			cityList = new ArrayList<>(2);
+		}
+		if (cityList.contains(city) == false)
+			cityList.add(city);
 	}
 
-	public void setZip(Zip zip) {
-		this.zip = zip;
+	public void addZipIfNotPresent(Zip zip) {
+		if (zip == null){
+			log.error("trying to add null value to zip list in road",this);
+			return;
+		}
 		netFlags |= NET_FLAG_ADDRINFO;
+		if (zipList == null){
+			zipList = new ArrayList<>(2);
+		}
+		if (zipList.contains(zip) == false)
+			zipList.add(zip);
 	}
 
-	public City getCity() {
-		return city;
+	
+	public List<City> getCities(){
+		if (cityList == null)
+			return Collections.emptyList();
+		return cityList;
 	}
 
+	public List<Zip> getZips(){
+		if (zipList == null)
+			return Collections.emptyList();
+		return zipList;
+	}
+	
 	public boolean paved() {
 		return paved;
 	}

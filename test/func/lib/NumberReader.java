@@ -100,8 +100,13 @@ public class NumberReader {
 		// To do this properly we need to know the number of nodes I think, this is the
 		// best we can do: if there are more than 8 bits left, there must be another command
 		// left.  We could leave a short command at the end.
-		while (br.getBitPosition() < br.getNumberOfBits() && numbers.size() < numberOfNodes) {
+		while (nodeCounter < numberOfNodes/* + 1*/) {
+			try {
 			runCommand(numbers);
+			} catch (NumberException | ArrayIndexOutOfBoundsException e) {
+				System.out.printf("collected %d, wanted %d\n", numbers.size(), numberOfNodes+1);
+		return numbers;
+	}
 		}
 
 		return numbers;

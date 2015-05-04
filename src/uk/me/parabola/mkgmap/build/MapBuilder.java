@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
-
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Exit;
@@ -40,6 +39,7 @@ import uk.me.parabola.imgfmt.app.lbl.Zip;
 import uk.me.parabola.imgfmt.app.map.Map;
 import uk.me.parabola.imgfmt.app.net.NETFile;
 import uk.me.parabola.imgfmt.app.net.NODFile;
+import uk.me.parabola.imgfmt.app.net.Numbers;
 import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.imgfmt.app.net.RouteCenter;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
@@ -73,6 +73,7 @@ import uk.me.parabola.mkgmap.filters.RemoveObsoletePointsFilter;
 import uk.me.parabola.mkgmap.filters.RoundCoordsFilter;
 import uk.me.parabola.mkgmap.filters.ShapeMergeFilter;
 import uk.me.parabola.mkgmap.filters.SizeFilter;
+import uk.me.parabola.mkgmap.general.CityInfo;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapDataSource;
@@ -82,6 +83,7 @@ import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.general.ZipCodeInfo;
 import uk.me.parabola.imgfmt.app.net.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
@@ -401,34 +403,61 @@ public class MapBuilder implements Configurable {
 					}
 				}
 
-				if (cityName == null && (cityCountryName != null || cityRegionName != null)) {
-					// if city name is unknown and region and/or country is known 
-					// use empty name for the city
-					cityName = UNKNOWN_CITY_NAME;
-				}
-				
-				if(cityName != null) {
-
-					Country cc = (cityCountryName == null)? getDefaultCountry() : lbl.createCountry(cityCountryName, locator.getCountryISOCode(cityCountryName));
-
-					Region cr = (cityRegionName == null)? getDefaultRegion(cc) : lbl.createRegion(cc, cityRegionName, null);
-
-					if(cr != null) {
-						((MapRoad)line).setRoadCity(lbl.createCity(cr, cityName, false));
-					}
-					else {
-						((MapRoad)line).setRoadCity(lbl.createCity(cc, cityName, false));
-					}
-				}
+				MapRoad road = (MapRoad) line;
+				if(cityName != null) 
+					road.addRoadCity(calcCity(lbl, cityName, cityRegionName, cityCountryName));
 
 				if(zipStr != null) {
-					((MapRoad)line).setRoadZip(lbl.createZip(zipStr));
+					road.addRoadZip(lbl.createZip(zipStr));
 				}
 
+				List<Numbers> numbers = road.getRoadDef().getNumbersList();
+				if (numbers != null){
+					for (Numbers num : numbers){
+						for (int i = 0; i < 2; i++){
+							boolean left = (i == 0);
+							ZipCodeInfo zipInfo = num.getZipCodeInfo(left);
+							if (zipInfo != null){
+								Zip zip = zipInfo.getImgZip();
+								if (zipInfo.getImgZip() == null){
+									zip = lbl.createZip(zipInfo.getZipCode());
+									zipInfo.setImgZip(zip);
+								}
+								road.addRoadZip(zip);
+							}
+							CityInfo cityInfo = num.getCityInfo(left);
+							if (cityInfo != null ){
+								City city = cityInfo.getImgCity();
+								if (city == null){
+									city = calcCity(lbl, cityInfo.getCity(), cityInfo.getRegion(), cityInfo.getCountry());
+									cityInfo.setImgCity(city);
+								}
+								road.addRoadCity(city);
+							}
+						}
+					}
+				}
 			}
 		}	
 	}
 
+	private City calcCity(LBLFile lbl, String city, String region, String country){
+		Country cc = (country == null)? getDefaultCountry() : lbl.createCountry(country, locator.getCountryISOCode(country));
+		Region cr = (region == null)? getDefaultRegion(cc) : lbl.createRegion(cc, region, null);
+		if (city == null && (country != null || region != null)) {
+			// if city name is unknown and region and/or country is known 
+			// use empty name for the city
+			city = UNKNOWN_CITY_NAME;
+		}
+		if(cr != null) {
+			return lbl.createCity(cr, city, false);
+		}
+		else {
+			return lbl.createCity(cc, city, false);
+		}
+	}
+	
+	
 	private void processPOIs(Map map, MapDataSource src) {
 
 		LBLFile lbl = map.getLblFile();

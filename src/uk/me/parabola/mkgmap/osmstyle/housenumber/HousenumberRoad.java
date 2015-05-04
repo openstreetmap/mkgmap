@@ -31,6 +31,7 @@ import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.CityInfo;
 import uk.me.parabola.mkgmap.general.MapRoad;
+import uk.me.parabola.mkgmap.general.ZipCodeInfo;
 import uk.me.parabola.mkgmap.osmstyle.housenumber.HousenumberGenerator.HousenumberMatchByNumComparator;
 import uk.me.parabola.mkgmap.osmstyle.housenumber.HousenumberGenerator.HousenumberMatchByPosComparator;
 
@@ -43,7 +44,8 @@ public class HousenumberRoad {
 	private static final Logger log = Logger.getLogger(HousenumberRoad.class);
 	private String streetName;
 	private final MapRoad road;
-	private final CityInfo roadCityInfo;
+	private CityInfo roadCityInfo;
+	private ZipCodeInfo roadZipCode;
 	private ExtNumbers extNumbersHead;
 	private final List<HousenumberMatch> houseNumbers;
 	private boolean changed;
@@ -558,7 +560,12 @@ public class HousenumberRoad {
 				log.info("added further labels for",road,"Labels are now:",Arrays.toString(labels));
 			}
 		}
+
+		if (road.getZip() == null && roadZipCode != null){
+			road.setZip(roadZipCode.getZipCode());
+		}
 		road.setNumbers(extNumbersHead.getNumberList());
+		
 	}
 	
 	public MapRoad getRoad(){
@@ -567,6 +574,10 @@ public class HousenumberRoad {
 
 	public CityInfo getRoadCityInfo() {
 		return roadCityInfo;
+	}
+
+	public ZipCodeInfo getRoadZipCode() {
+		return roadZipCode;
 	}
 
 
@@ -638,6 +649,7 @@ public class HousenumberRoad {
 	public List<HousenumberMatch> checkStreetName(Map<MapRoad, HousenumberRoad> road2HousenumberRoadMap, Int2ObjectOpenHashMap<HashSet<MapRoad>> nodeId2RoadLists) {
 		List<HousenumberMatch> noWrongHouses = Collections.emptyList();
 		List<HousenumberMatch> wrongHouses = Collections.emptyList();
+		double minDist = Double.MAX_VALUE;
 		double maxDist = 0;
 		if (houseNumbers.isEmpty() == false){
 			HashMap<String, Integer>possibleStreetNamesFromHouses = new HashMap<>();
@@ -645,6 +657,8 @@ public class HousenumberRoad {
 			for (HousenumberMatch house : houseNumbers){
 				if (house.getDistance() > maxDist)
 					maxDist = house.getDistance();
+				if (house.getDistance() < minDist)
+					minDist = house.getDistance();
 				String potentialName = house.getStreet();
 				if (potentialName != null){
 					Integer oldCount = possibleStreetNamesFromHouses.put(potentialName, 1);
@@ -694,16 +708,21 @@ public class HousenumberRoad {
 			if (streetName == null){
 				if (possibleStreetNamesFromHouses.size() == 1){
 					String potentialName = possibleStreetNamesFromHouses.keySet().iterator().next();
-					if (connectedRoadNames.contains(potentialName) || houseNumbers.size() > 1){
-						streetName = potentialName;
-						return noWrongHouses; // all good, return empty list
-					}
-					if (road.getPoints().size() == 2 && maxDist <= 5){ 
+					boolean nameOK = false;
+					if (connectedRoadNames.contains(potentialName))
+						nameOK = true;
+					else if (houseNumbers.size() > 1){
+						nameOK = true;
+					} else if (road.getPoints().size() == 2 && maxDist <= 5){ 
 						if (road.getPoints().get(0).distance(road.getPoints().get(1)) < 10){
 							// very short road with just one house, use it
-							streetName = potentialName;
-							return noWrongHouses; // all good, return empty list
+							nameOK = true;
 						}
+					}
+					if (nameOK){
+						streetName = potentialName;
+						return noWrongHouses; // all good, return empty list
+						
 					}
 				}
 			}
@@ -765,6 +784,11 @@ public class HousenumberRoad {
 
 	public List<HousenumberMatch> getHouses() {
 		return houseNumbers;
+	}
+
+
+	public void setZipCodeInfo(ZipCodeInfo zipInfo) {
+		roadZipCode = zipInfo;
 	}
 }
 
