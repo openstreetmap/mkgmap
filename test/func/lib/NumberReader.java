@@ -295,7 +295,7 @@ public class NumberReader {
 		adjustValues();
 
 		Numbers n = new Numbers();
-		n.setRnodNumber(nodeCounter);
+		n.setIndex(nodeCounter);
 		n.setNumbers(Numbers.LEFT, leftStyle, leftStart, leftEnd);
 		n.setNumbers(Numbers.RIGHT, rightStyle, rightStart, rightEnd);
 
@@ -330,7 +330,7 @@ public class NumberReader {
 		adjustValues();
 
 		Numbers n = new Numbers();
-		n.setRnodNumber(nodeCounter);
+		n.setIndex(nodeCounter);
 		if (leftStyle == NONE) 
 			n.setNumbers(Numbers.RIGHT, rightStyle, rightStart, rightEnd);
 		else 

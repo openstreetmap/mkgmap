@@ -84,7 +84,7 @@ public class ExtNumbers {
 	private RoadSide leftSide,rightSide;
 	private Numbers numbers = null;
 	private int startInRoad, endInRoad;
-	private int rnodNumber;
+	private int nodeIndex;
 	
 	private boolean needsSplit;
 	private HousenumberMatch worstHouse;
@@ -134,10 +134,10 @@ public class ExtNumbers {
 	}
 	
 	
-	public void setRnodNumber(int rnodNumber) {
-		this.rnodNumber = rnodNumber; // what is this used for?
+	public void setNodeIndex(int nodeIndex) {
+		this.nodeIndex = nodeIndex; 
 		if (numbers != null)
-			numbers.setRnodNumber(rnodNumber);
+			numbers.setIndex(nodeIndex);
 	}
 
 
@@ -145,7 +145,7 @@ public class ExtNumbers {
 	public Numbers getNumbers() {
 		if (numbers == null){
 			numbers = new Numbers();
-			numbers.setRnodNumber(rnodNumber);
+			numbers.setIndex(nodeIndex);
 			fillNumbers(Numbers.LEFT);
 			fillNumbers(Numbers.RIGHT);
 			if (!numbers.isEmpty()){
@@ -346,8 +346,8 @@ public class ExtNumbers {
 				Numbers cn = curr.getNumbers();
 				if (curr.prev == null)
 					log.info("final numbers for",getRoad(),"in",getRoad().getCity());
-				log.info("Left: ",cn.getLeftNumberStyle(),cn.getRnodNumber(),"Start:",cn.getLeftStart(),"End:",cn.getLeftEnd(), "numbers "+curr.getHouses(Numbers.LEFT));
-				log.info("Right:",cn.getRightNumberStyle(),cn.getRnodNumber(),"Start:",cn.getRightStart(),"End:",cn.getRightEnd(), "numbers "+curr.getHouses(Numbers.RIGHT));
+				log.info("Left: ",cn.getLeftNumberStyle(),cn.getIndex(),"Start:",cn.getLeftStart(),"End:",cn.getLeftEnd(), "numbers "+curr.getHouses(Numbers.LEFT));
+				log.info("Right:",cn.getRightNumberStyle(),cn.getIndex(),"Start:",cn.getRightStart(),"End:",cn.getRightEnd(), "numbers "+curr.getHouses(Numbers.RIGHT));
 			}
 		}
 		return list;
@@ -1010,11 +1010,11 @@ public class ExtNumbers {
 		en2.next = this.next;
 		if (this.next != null)
 			next.prev = en2;
-		en1.setRnodNumber(rnodNumber);
-		en2.setRnodNumber(rnodNumber+1);
+		en1.setNodeIndex(nodeIndex);
+		en2.setNodeIndex(nodeIndex+1);
 		ExtNumbers work = en2.next;
 		while (work != null){
-			work.setRnodNumber(work.rnodNumber + 1);
+			work.setNodeIndex(work.nodeIndex + 1);
 			work = work.next;
 		}
 		return en1;

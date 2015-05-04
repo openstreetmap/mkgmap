@@ -28,9 +28,9 @@ public class Numbers {
 	private static final int MAX_DELTA = 131071; // see NumberPreparer
 
 	// The node in the road where these numbers apply.  In the polish notation it is the
-	// node in the road, whereas in the NET file it is the number of the routing node.
+	// node in the road, whereas in the NET file it is the index of the number node.
 	private int nodeNumber; // node in road index
-	private Integer rnodNumber; // routing node index
+	private Integer indexNumber; // the position in the list of Numbers (starting with 0)
 	// the data on side of the road
 	private RoadSide leftSide,rightSide;
 
@@ -198,20 +198,23 @@ public class Numbers {
 		this.nodeNumber = nodeNumber;
 	}
 
-	public int getRnodNumber() {
-		if (rnodNumber == null) {
-			log.error("WARNING: rnod not set!!");
+	public int getIndex() {
+		if (indexNumber == null) {
+			log.error("WARNING: index not set!!");
 			return nodeNumber;
 		}
-		return rnodNumber;
+		return indexNumber;
 	}
 
-	public boolean hasRnodNumber() {
-		return rnodNumber != null;
+	public boolean hasIndex() {
+		return indexNumber != null;
 	}
 
-	public void setRnodNumber(int rnodNumber) {
-		this.rnodNumber = rnodNumber;
+	/**
+	 * @param index the nth number node 
+	 */
+	public void setIndex(int index) {
+		this.indexNumber = index;
 	}
 
 	private NumDesc getNumbers(boolean left) {
@@ -238,8 +241,8 @@ public class Numbers {
 		String nodeStr = "0";
 		if (nodeNumber > 0)
 			nodeStr = String.valueOf(nodeNumber);
-		else if (getRnodNumber() > 0)
-			nodeStr = String.format("(n%d)", getRnodNumber());
+		else if (getIndex() > 0)
+			nodeStr = String.format("(n%d)", getIndex());
 
 		nodeStr = String.format("%s,%s,%d,%d,%s,%d,%d",
 				nodeStr,

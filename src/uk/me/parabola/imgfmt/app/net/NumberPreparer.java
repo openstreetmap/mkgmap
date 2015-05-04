@@ -161,11 +161,11 @@ public class NumberPreparer {
 
 		int lastNode = -1;
 		for (Numbers n : numbers) {
-			if (!n.hasRnodNumber())
+			if (!n.hasIndex())
 				throw new Abandon("no r node set");
 			// See if we need to skip some nodes
-			if (n.getRnodNumber() != lastNode + 1)
-				state.writeSkip(bw, n.getRnodNumber() - lastNode - 2);
+			if (n.getIndex() != lastNode + 1)
+				state.writeSkip(bw, n.getIndex() - lastNode - 2);
 
 			// Normal case write out the next node.
 			state.setTarget(n);
@@ -176,7 +176,7 @@ public class NumberPreparer {
 			state.writeNumbers(bw);
 			state.restoreWriters();
 
-			lastNode = n.getRnodNumber();
+			lastNode = n.getIndex();
 		}
 	}
 
@@ -899,10 +899,11 @@ class CityZipWriter {
 	}
 	public boolean compile(List<Numbers> numbers){
 		try {
-			int lastrNod = -1;
+			int lastNodeIndex = -1;
+			// left and right entry in zip or city table
 			int []prevIndexes = new int[2]; 
 			prevIndexes[0] = prevIndexes[1] = -1;
-			int []indexes = new int[2]; // entry in zip or city table
+			int []indexes = new int[2]; 
 			for (Numbers num : numbers){
 				for (int i = 0; i < 2; i++){
 					indexes[i] = -1;
@@ -932,16 +933,15 @@ class CityZipWriter {
 				}
 				if (indexes[0] < 0 && indexes[1] < 0)
 					continue;
-				if (lastrNod < 0){
-					if (num.getRnodNumber() > 0 ){ 
+				if (lastNodeIndex < 0){
+					if (num.getIndex() > 0 ){ 
 						int [] defindexes = {defaultIndex,defaultIndex};
 						write(0, defindexes, prevIndexes);
 					}
-//					lastrNod = 0;
 				}
-				int skip = num.getRnodNumber() - lastrNod - 1;
+				int skip = num.getIndex() - lastNodeIndex - 1;
 				assert defaultIndex > 0 : "bad default index";
-				lastrNod = num.getRnodNumber();
+				lastNodeIndex = num.getIndex();
 				if (indexes[0] < 0)
 					indexes[0] = defaultIndex;
 				if (indexes[1] < 0)

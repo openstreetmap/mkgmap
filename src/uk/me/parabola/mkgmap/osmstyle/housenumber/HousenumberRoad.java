@@ -133,7 +133,7 @@ public class HousenumberRoad {
 
 			// Now we have a CoordNode and it is not the first one.
 			ExtNumbers numbers = new ExtNumbers(this);
-			numbers.setRnodNumber(prevNumberNodeIndex);
+			numbers.setNodeIndex(prevNumberNodeIndex);
 			int leftUsed = numbers.setNumbers(leftNumbers, prevNodePos, currNodePos, true);
 			int rightUsed = numbers.setNumbers(rightNumbers, prevNodePos, currNodePos, false);
 			prevNodePos = currNodePos;

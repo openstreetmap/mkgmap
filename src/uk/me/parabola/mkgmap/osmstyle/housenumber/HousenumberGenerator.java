@@ -740,8 +740,8 @@ public class HousenumberGenerator {
 					for (Numbers cn : finalNumbers){
 						if (cn.isEmpty())
 							continue;
-						log.info("id:"+r.getRoadDef().getId(),", Left: ",cn.getLeftNumberStyle(),cn.getRnodNumber(),"Start:",cn.getLeftStart(),"End:",cn.getLeftEnd());
-						log.info("id:"+r.getRoadDef().getId(),", Right:",cn.getRightNumberStyle(),cn.getRnodNumber(),"Start:",cn.getRightStart(),"End:",cn.getRightEnd());
+						log.info("id:"+r.getRoadDef().getId(),", Left: ",cn.getLeftNumberStyle(),cn.getIndex(),"Start:",cn.getLeftStart(),"End:",cn.getLeftEnd());
+						log.info("id:"+r.getRoadDef().getId(),", Right:",cn.getRightNumberStyle(),cn.getIndex(),"Start:",cn.getRightStart(),"End:",cn.getRightEnd());
 					}
 				}
 			}
