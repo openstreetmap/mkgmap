@@ -204,6 +204,6 @@ public class Mdr5 extends MdrMapSection {
 	}
 
 	public void relabelMaps(Mdr1 maps) {
-		relabel(maps, cities);
+		relabel(maps, allCities);
 	}
 }
