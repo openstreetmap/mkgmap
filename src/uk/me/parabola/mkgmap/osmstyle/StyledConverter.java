@@ -135,6 +135,8 @@ public class StyledConverter implements OsmConverter {
 	private int numDriveOnSideUnknown;
 	private int numRoads;
 	
+	private String countryAbbr;
+
 	private final boolean checkRoundabouts;
 	private int reportDeadEnds; 
 	private final boolean linkPOIsToWays;
@@ -187,6 +189,9 @@ public class StyledConverter implements OsmConverter {
 		default:
 			throw new ExitException("invalid parameters for option drive-on:"+driveOn);
 		}
+		countryAbbr = props.getProperty("country-abbr", null);
+		if (countryAbbr != null)
+			countryAbbr = countryAbbr.toUpperCase();
 			
 		checkRoundabouts = props.getProperty("check-roundabouts",false);
 		reportDeadEnds = props.getProperty("report-dead-ends", 1);  
@@ -361,14 +366,21 @@ public class StyledConverter implements OsmConverter {
 		if (cw.isRoad()){
 			roads.add(cw);
 			numRoads++;
-			String country = way.getTag(countryTagKey);
-			if (country != null) {
-				if (LocatorConfig.get().getDriveOnLeftFlag(country))
-					numDriveOnLeftRoads++;
-				else
-					numDriveOnRightRoads++;
-			} else
-				numDriveOnSideUnknown++;
+			if (cw.isFerry() == false){
+				String country = way.getTag(countryTagKey);
+				if (country != null) {
+					boolean drivingSideIsLeft =LocatorConfig.get().getDriveOnLeftFlag(country); 
+					if (drivingSideIsLeft)
+						numDriveOnLeftRoads++;
+					else
+						numDriveOnRightRoads++;
+					if (driveOnLeft != null && drivingSideIsLeft != driveOnLeft)
+						log.warn("wrong driving side",way.toBrowseURL());
+					if (log.isDebugEnabled())
+						log.debug("assumed driving side is",(drivingSideIsLeft ? "left" : "right"),way.toBrowseURL());
+				} else
+					numDriveOnSideUnknown++;
+			}
 			if (cw.isRoundabout()) {
 				if (wasReversed)
 					log.warn("Roundabout", way.getId(), "has reverse oneway tag (" + way.getPoints().get(0).toOSMURL() + ")");
