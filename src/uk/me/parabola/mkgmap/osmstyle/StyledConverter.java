@@ -351,14 +351,21 @@ public class StyledConverter implements OsmConverter {
 		if (cw.isRoad()){
 			roads.add(cw);
 			numRoads++;
-			String country = way.getTag(countryTagKey);
-			if (country != null) {
-				if (LocatorConfig.get().getDriveOnLeftFlag(country))
-					numDriveOnLeftRoads++;
-				else
-					numDriveOnRightRoads++;
-			} else
-				numDriveOnSideUnknown++;
+			if (cw.isFerry() == false){
+				String country = way.getTag(countryTagKey);
+				if (country != null) {
+					boolean drivingSideIsLeft =LocatorConfig.get().getDriveOnLeftFlag(country); 
+					if (drivingSideIsLeft)
+						numDriveOnLeftRoads++;
+					else
+						numDriveOnRightRoads++;
+					if (driveOnLeft != null && drivingSideIsLeft != driveOnLeft)
+						log.warn("wrong driving side",way.toBrowseURL());
+					if (log.isDebugEnabled())
+						log.debug("assumed driving side is",(drivingSideIsLeft ? "left" : "right"),way.toBrowseURL());
+				} else
+					numDriveOnSideUnknown++;
+			}
 			if (cw.isRoundabout()) {
 				if (wasReversed)
 					log.warn("Roundabout", way.getId(), "has reverse oneway tag (" + way.getPoints().get(0).toOSMURL() + ")");
