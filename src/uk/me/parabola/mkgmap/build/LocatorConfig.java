@@ -156,9 +156,7 @@ public class LocatorConfig {
 									setPoiDispTag(iso, poiDispTag);
 								}
 								Node driveOnLeft = attr.getNamedItem("driveOnLeft");
-								if (driveOnLeft != null && "true".equals(driveOnLeft.getNodeValue())){
-									driveOnLeftFlagMap.put(iso, true);
-								}
+								driveOnLeftFlagMap.put(iso, driveOnLeft != null && "true".equals(driveOnLeft.getNodeValue()));
 							}
 
 							if (iso != null) {
@@ -350,9 +348,14 @@ public class LocatorConfig {
 	{
 		if (iso == null)
 			return false;
-		if (driveOnLeftFlagMap.containsKey(iso))
-			return true;
-		return false;
+		Boolean driveOnLeft = driveOnLeftFlagMap.get(iso);
+		if (driveOnLeft == null){
+			log.warn("Did not find iso code",iso,"in LocatorConfig.xml, assuming drive-on-right for it");
+			driveOnLeftFlagMap.put(iso,false);
+			return false;
+		}
+		else 
+			return driveOnLeft;
 	}
 }
 
