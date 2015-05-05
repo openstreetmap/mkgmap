@@ -404,6 +404,8 @@ public class MapBuilder implements Configurable {
 				}
 
 				MapRoad road = (MapRoad) line;
+				road.resetImgData();
+
 				City roadCity = calcCity(lbl, cityName, cityRegionName, cityCountryName);
 				if (roadCity != null)
 					road.addRoadCity(roadCity);

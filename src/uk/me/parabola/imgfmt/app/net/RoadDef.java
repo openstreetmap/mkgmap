@@ -34,6 +34,8 @@ import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Zip;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.CityInfo;
+import uk.me.parabola.mkgmap.general.ZipCodeInfo;
 
 /**
  * A road definition.  This ties together all segments of a single road
@@ -853,6 +855,24 @@ public class RoadDef {
 
 	public void skipAddToNOD(boolean skip) {
 		this.skipAddToNOD = skip;
+	}
+
+	public void resetImgData() {
+		zipList = null;
+		cityList = null;
+		if (numbersList != null){
+			for (Numbers num : numbersList){
+				for (int side = 0; side < 2; side++){
+					boolean left = side == 0;
+					CityInfo ci = num.getCityInfo(left);
+					if (ci != null)
+						ci.setImgCity(null);
+					ZipCodeInfo z = num.getZipCodeInfo(left);
+					if (z != null)
+						z.setImgZip(null);
+				}
+			}
+		}
 	}
 	
 }

@@ -183,4 +183,9 @@ public class MapRoad extends MapLine {
 	public String toString(){
 		return "id="+this.getRoadDef().getId() + ", " + this.getName();
 	}
+
+	public void resetImgData() {
+		roadDef.resetImgData();
+		
+	}
 }
