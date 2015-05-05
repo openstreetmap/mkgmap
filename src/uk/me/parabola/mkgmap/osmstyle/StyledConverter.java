@@ -134,6 +134,8 @@ public class StyledConverter implements OsmConverter {
 	private int numDriveOnSideUnknown;
 	private int numRoads;
 	
+	private String countryAbbr;
+
 	private final boolean checkRoundabouts;
 	private int reportDeadEnds; 
 	private final boolean linkPOIsToWays;
@@ -185,6 +187,9 @@ public class StyledConverter implements OsmConverter {
 		default:
 			throw new ExitException("invalid parameters for option drive-on:"+driveOn);
 		}
+		countryAbbr = props.getProperty("country-abbr", null);
+		if (countryAbbr != null)
+			countryAbbr = countryAbbr.toUpperCase();
 			
 		checkRoundabouts = props.getProperty("check-roundabouts",false);
 		reportDeadEnds = props.getProperty("report-dead-ends", 1);  
