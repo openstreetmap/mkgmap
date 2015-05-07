@@ -258,9 +258,6 @@ public class StyledConverter implements OsmConverter {
 	private int lineCacheId = 0;
 	private BitSet routingWarningWasPrinted = new BitSet();
 	public void convertWay(final Way way) {
-		if (way.getId() == 119144316){
-			long dd = 4;
-		}
 		if (way.getPoints().size() < 2 || way.getTagCount() == 0){
 			// no tags or no points => nothing to convert
 			removeRestrictionsWithWay(Level.WARNING, way, "is ignored");
@@ -282,7 +279,6 @@ public class StyledConverter implements OsmConverter {
 			else
 				rules = wayRules;
 		}
-		int roadsSize = roads.size(); 
 		Way cycleWay = null;
 		String cycleWayTag = way.getTag(makeCycleWayTagKey);
 		if ("yes".equals(cycleWayTag)){
@@ -328,10 +324,6 @@ public class StyledConverter implements OsmConverter {
 					break;
 			}
 		}
-		// if style adds multiple routable ways for one OSM way, mark all 
-		// subsequent ConvertedWay instances as such. 
-		for (int i = roadsSize+1; i < roads.size(); i++)
-			roads.get(i).setNotFirstRoutableWay(true); 
 	}
 
 	private int lineIndex = 0;
@@ -1589,10 +1581,6 @@ public class StyledConverter implements OsmConverter {
 		MapRoad road = new MapRoad(nextRoadId++, way.getId(), line);
 		if (routable == false)
 			road.skipAddToNOD(true);
-		
-		if (cw.isNotFirstRoutableWay()){
-			road.setSkipHousenumberProcessing(true);
-		}
 		
 		boolean doFlareCheck = true;
 		

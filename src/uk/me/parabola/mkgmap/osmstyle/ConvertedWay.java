@@ -44,7 +44,6 @@ public class ConvertedWay {
 	private boolean isRoad;
 	private boolean reversed;		// points were reversed
 	private boolean overlay;		// this is a non-routable overlay line that for a road 
-	private boolean notFirstRoutableWay; // this is another routable way for the same OSM object
 	
 
 	public ConvertedWay(int index, Way way, GType type) {
@@ -78,7 +77,6 @@ public class ConvertedWay {
 		this.roadSpeed = other.roadSpeed;
 		this.mkgmapAccess = other.mkgmapAccess;
 		this.routeFlags = other.routeFlags;
-		this.notFirstRoutableWay = other.notFirstRoutableWay;
 	}
 	
 	public int getIndex(){
@@ -283,13 +281,5 @@ public class ConvertedWay {
 
 	public boolean isOverlay() {
 		return overlay;
-	}
-
-	public boolean isNotFirstRoutableWay() {
-		return notFirstRoutableWay;
-	}
-
-	public void setNotFirstRoutableWay(boolean notFirstRoutableWay) {
-		this.notFirstRoutableWay = notFirstRoutableWay;
 	}
 }

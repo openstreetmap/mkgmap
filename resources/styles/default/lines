@@ -82,7 +82,7 @@ highway=*
 # Convert generic path to most specific
 highway=footway & snowplowing!=no
 & (bicycle=yes|bicycle=designated|bicycle=permissive|bicycle=official)
-{set highway=cycleway; set bicycle=yes}
+{set highway=cycleway; set bicycle=yes; set foot=yes}
 highway=path & snowplowing!=no
 & (bicycle=designated|bicycle=permissive|bicycle=official)
 {set highway=cycleway; set bicycle=yes}
@@ -197,6 +197,9 @@ include 'inc/access';
 
 #limit artificial cycleways to to resolution 24
 mkgmap:synthesised=yes & mkgmap:bicycle=yes { set mkgmap:highest-resolution-only = true }
+
+# don't add house numbers to unnamed or artifical bicycle ways
+mkgmap:bicycle=yes & (mkgmap:foot=no & mkgmap:car=no & mkgmap:street!=* | mkgmap:synthesised=yes) {set mkgmap:numbers=false}
 
 name=* { name '${name}' }
 

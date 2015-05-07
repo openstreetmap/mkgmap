@@ -46,7 +46,6 @@ import uk.me.parabola.mkgmap.general.LineAdder;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.ZipCodeInfo;
 import uk.me.parabola.mkgmap.reader.osm.Element;
-import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 import uk.me.parabola.mkgmap.reader.osm.HousenumberHooks;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.POIGeneratorHook;
@@ -435,7 +434,7 @@ public class HousenumberGenerator {
 			interpolationWays.add(streetName, hivl);
 	}
 
-	
+	private MapRoad firstRoadSameOSMWay = null;
 	/**
 	 * Adds a road to be processed by the house number generator.
 	 * @param osmRoad the OSM way the defines the road 
@@ -443,18 +442,23 @@ public class HousenumberGenerator {
 	 */
 	public void addRoad(Way osmRoad, MapRoad road) {
 		allRoads.add(road);
-		if (FakeIdGenerator.isFakeId(osmRoad.getId())){
-			long dd = 4;
-		}
 		if (numbersEnabled) {
-			if(road.getRoadDef().ferry() || "false".equals(osmRoad.getTag(numbersTagKey))) 
+			if("false".equals(osmRoad.getTag(numbersTagKey))) 
 				road.setSkipHousenumberProcessing(true);
+			
 			/*
 			 * If the style adds the same OSM way as two or more routable ways, we use
 			 * only the first. This ensures that we don't try to assign numbers from bad
 			 * matches to these copies.
 			 */
 			if(!road.isSkipHousenumberProcessing()){
+				if (firstRoadSameOSMWay != null){
+					if (firstRoadSameOSMWay.getRoadDef().getId() == road.getRoadDef().getId()){
+						road.setSkipHousenumberProcessing(true);
+						return;
+					}
+				} 
+				firstRoadSameOSMWay = road;
 				String name = road.getStreet(); 
 				if (name != null) {
 					if (log.isDebugEnabled())
