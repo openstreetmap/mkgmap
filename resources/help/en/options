@@ -33,7 +33,7 @@ filename
 
 --output-dir=filename
     The directory in which all output files are written. It defaults
-    to the current working directory, ie. the directory the command is
+    to the current working directory, i.e. the directory the command is
     executed from.
 
 -n name
@@ -45,7 +45,7 @@ filename
 
 --description=text
 	Sets the descriptive text for the map. This may be displayed in
-	QLandkarte, MapSource on on a GPS etc, where it is normally shown
+	QLandkarte, MapSource or on a GPS, where it is normally shown
 	below the family name. Example: --description="Germany, Denmark"
 	Please note: if you use splitter.jar to build a template.args file
 	and use -c template.args, then that file may contain a
@@ -71,14 +71,14 @@ Label options:
 	This is equivalent to --code-page=1252.
 
 --unicode
-	This is equivalent to --code-page=65001. Note that only newer devices support unicode.
+	This is equivalent to --code-page=65001. Note that only newer devices support Unicode.
 
 --code-page=number
     This option enables the use of international characters. Only 8 bit
     character sets are supported and so you have to specify which code page
     you want to use.
 
-	It is entirely dependant on the device firmware which code pages are
+	It is entirely dependent on the device firmware which code pages are
 	supported.
 	
 --charset=name
@@ -122,9 +122,9 @@ Address search options:
 	  (mkgmap:is_in - used by location-autofill=is_in)
 
   If the index is created from previously compiled .img files, then the
-  same code page and sorting options (eg. --code-page, --latin1 etc) must
+  same code page and sorting options (e.g. --code-page, --latin1) must
   be used as were used to compile the individual map tiles.
-
+  
 --x-split-name-index
     A temporary option to enable indexing each part of a street name separately.
     So for example if the street is "Aleksandra Gryglewskiego" then you will be able to
@@ -136,8 +136,8 @@ Address search options:
     any let us know!
 
 --bounds=directory|zipfile
-    A directory or a zipfile containing the preprocessed bounds files. 
-    Bounds files in a zipfile must be located in the zipfiles root directory.
+    A directory or a zip file containing the preprocessed bounds files. 
+    Bounds files in a zip file must be located in the zip file's root directory.
 
     The preprocessed boundaries are used to add special tags to all elements 
     (points, lines and polygons) containing the elements location information.
@@ -157,7 +157,7 @@ Address search options:
           <inputfile> <boundsdir>
     
     The input file must contain the boundaries that should be preprocessed. 
-    It can have OSM, PBF or O5M fileformat. It is recommended that it 
+    It can have OSM, PBF or O5M file format. It is recommended that it 
     contains the boundary data only to avoid very high memory usage.
     The boundsdir gives the directory where the processed files are stored.
     This directory can be used as --bounds parameter with mkgmap.               
@@ -188,7 +188,7 @@ Address search options:
      Way 2 - name=Main Street, mkgmap:street=Main Street
      Way 3 - mkgmap:street=Mainstreet
      Way 4 - name=Main Street [A504]
-    The node matches to way 2. It has mkgmap:street set with a value equal to
+    The node matches to Way 2. It has mkgmap:street set with a value equal to
     the addr:street tag value of the house number node.
   
 Overview map options:
@@ -236,15 +236,15 @@ Style options:
 --style=name
 	Specify a style name. Must be used if --style-file points to a 
   directory or zip file containing multiple styles. If --style-file 
-  is not used, it selects one of the builtin styles. 
+  is not used, it selects one of the built-in styles. 
 
 --list-styles
-	List the available styles. If this option is preceeded by a style-file
+	List the available styles. If this option is preceded by a style-file
 	option then it lists the styles available within that file.
 
 --check-styles
 	Perform some checks on the available styles. If this option is 
-  preceeded by a style-file option then it checks the styles 
+  preceded by a style-file option then it checks the styles 
   available within that file. If it is also preceded by the style
   option it will only check that style.
 
@@ -257,7 +257,7 @@ Style options:
 --name-tag-list
 	Get the tag that will be used to supply the name.  Useful for
 	language variations.  You can supply a list and the first one
-	will be used.  eg. --name-tag-list=name:en,int_name,name
+	will be used.  e.g. --name-tag-list=name:en,int_name,name
 
 --map-features=file
 	This option is ignored; use the --style-file option instead.
@@ -296,11 +296,11 @@ Product description options:
 --copyright-file=file
 	Specify copyright messages from a file.
 	Note that the first copyright message is not displayed on a device, but is 
-	shown in BaseCamp.
+	shown in BaseCamp. The copyright file must include at least two lines.
 
 --license-file=file
 	Specify a file which content will be added as license. 
-  All entrys of all maps will be merged in the overview map.
+  All entries of all maps will be merged in the overview map.
 
 Optimization options:
 
@@ -313,7 +313,7 @@ Optimization options:
 	(Default is 2.6, which should lead to invisible changes)
 
 --reduce-point-density-polygon=NUM
-	Allows to set the maximal allowed error distance for the DP algorythm
+	Allows to set the maximal allowed error distance for the DP algorithm
 	to be applied against polygons. Recommended setting is 8.
 
 --merge-lines
@@ -387,7 +387,7 @@ Miscellaneous options:
 
 --check-roundabout-flares
 	Sanity check roundabout flare roads - warn if they don't point
-	in the correct direction or if they are not oneway or if they
+	in the correct direction or if they are not one-way or if they
 	extend too far.
 
 --max-flare-length-ratio=NUM
@@ -451,8 +451,8 @@ Miscellaneous options:
 --report-dead-ends=LEVEL
 	Set the dead end road warning level. The value of LEVEL (which
 	defaults to 1 if this option is not specified) determines
-	those roads to report: 0 = none, 1 = multiple oneway roads
-	that join together but go nowhere, 2 = individual oneway roads
+	those roads to report: 0 = none, 1 = multiple one-way roads
+	that join together but go nowhere, 2 = individual one-way roads
 	that go nowhere.
 
 --road-name-pois[=GarminCode]
@@ -461,7 +461,7 @@ Miscellaneous options:
 	can be specified with this option.  This is a workaround for not
 	being able to search for roads.
 	0x2f15: a blue dot in the middle of the road, and if you select,
-		or 'hover' over it, the streetname appears.
+		or 'hover' over it, the street name appears.
 	
 --add-pois-to-lines
 	Generate POIs for lines. For each line (must not be closed) POIs are
@@ -485,23 +485,23 @@ Miscellaneous options:
 	   polygons: 
 	       * the first node tagged with a tag defined by the pois-to-areas-placement 
 	         option
-	       * the center point  
+	       * the centre point  
 	   multipolygons:
 	       * the node with role=label
-	       * the center point of the biggest area
+	       * the centre point of the biggest area
 
 --pois-to-areas-placement[=taglist]
     A semicolon separated list of tag=value definitions. A POI is placed at the first
     node of the polygon tagged with the first tag/value pair. If none of the nodes are
     tagged with the first tag-value pair the first node tagged with the second tag-value
     pair is used and so on. If none of the tag-value pairs matches or the taglist is empty 
-    the center of the polygon is used.
+    the centre of the polygon is used.
     It is possible to define wildcards for tag values like entrance=*.
     Default: entrance=main;entrance=yes;building=entrance
 
 --precomp-sea=directory|zipfile
     Defines the directory or a zip file that contains precompiled sea tiles. 
-    Sea files in a zipfile must be located in the zipfiles root directory or in 
+    Sea files in a zip file must be located in the zip file's root directory or in 
     a sub directory sea. When this option is defined all natural=coastline tags 
     from the input OSM tiles are removed and the precompiled data is used instead. 
     This option can be combined with the generate-sea options multipolygon, polygons 
@@ -580,7 +580,7 @@ Miscellaneous options:
 	Turn on all of the options that make cycleways.
 
 --make-opposite-cycleways
-	Some oneway streets allow bicycle traffic in the reverse
+	Some one-way streets allow bicycle traffic in the reverse
 	direction and this option makes a way with the same points as
 	the original that allows bicycle traffic (in both directions).
 
