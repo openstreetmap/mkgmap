@@ -528,6 +528,8 @@ public class HousenumberRoad {
 		String[] labels = road.getLabels();
 		boolean found = false;
 		for (String label : labels){
+			if (label == null)
+				break;
 			if (streetName.equals(label))
 				found = true;
 		}
@@ -727,9 +729,9 @@ public class HousenumberRoad {
 				}
 			}
 			// if we get here we have no usable street name
-			// if all houses have the same addr:place name, use that
 			wrongHouses  = new ArrayList<>();
-			if (streetName == null){
+			if (streetName == null && getRoad().getName() != null){
+				// road has a label, probably a ref
 				if (possibleStreetNamesFromHouses.size() > 1){
 					for (Entry<String, Integer> entry : possibleStreetNamesFromHouses.entrySet()){
 						if (entry.getValue() > houseNumbers.size() / 2){

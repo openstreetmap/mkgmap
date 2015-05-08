@@ -159,6 +159,7 @@ public class HousenumberIvl {
 				}
 			}			
 		}
+		MapRoad bestRoad = null;
 		// make sure that the closest road is one with a matching name
 		for (int i = 0; i < 2; i++){
 			while (streetName.equals(knownHouses[i].getRoad().getStreet()) == false && knownHouses[i].hasAlternativeRoad()){
@@ -178,6 +179,7 @@ public class HousenumberIvl {
 				toTest.add(r);
 		}
 		HousenumberMatch[] test = new HousenumberMatch[2];
+		HousenumberMatch[] closest = new HousenumberMatch[2];
 		boolean foundSingleRoad = false;
 		for (MapRoad r : toTest){
 			if (streetName.equals(r.getStreet()) == false)
@@ -237,12 +239,24 @@ public class HousenumberIvl {
 							}
 						}
 					}
-					
 				}
-				
 			}
-			if (foundSingleRoad)
-				break;
+			if (foundSingleRoad){
+				if (r.isNamedByHousenumberProcessing() == false)
+					break;
+				// the closest road was originally unnamed , try to find one that is named in OSM 
+				if (bestRoad == null){
+					bestRoad = r;
+					closest[0] = test[0];
+					closest[1] = test[1];
+				}
+			}
+		}
+		if (!foundSingleRoad && bestRoad != null){
+			// not matching road name in original OSM data, use the closest
+			foundSingleRoad = true;
+			test[0] = closest[0];
+			test[1] = closest[1];
 		}
 		if (!foundSingleRoad){
 			if (streetName.equals(knownHouses[0].getRoad().getStreet()) == false || streetName.equals(knownHouses[1].getRoad().getStreet()) == false){
@@ -323,6 +337,10 @@ public class HousenumberIvl {
 			house.setInterpolated(true);
 			houses.add(house);
 		}
+		if (getId() == 37881402){
+			long dd = 4;
+		}
+		
 		if (log.isDebugEnabled()){
 			String addrInterpolationMethod = interpolationWay.getTag(addrInterpolationTagKey);
 			if (hasMultipleRoads == false)

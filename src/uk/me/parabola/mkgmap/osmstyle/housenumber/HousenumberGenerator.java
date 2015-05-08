@@ -1049,6 +1049,7 @@ public class HousenumberGenerator {
 				}
 			}
 			for (MapRoad road : namedRoads){
+				road.setNamedByHousenumberProcessing(true);
 				String name = road.getStreet();
 				if (log.isDebugEnabled())
 					log.debug("pass",pass,"using unnamed road for housenumber processing,id=",road.getRoadDef().getId(),":",name);
@@ -1897,6 +1898,7 @@ public class HousenumberGenerator {
 	 */
 	class RoadSegmentIndex {
 		private final KdTree<RoadPoint> kdTree = new KdTree<>();
+		private final Map<String, KdTree<RoadPoint>> treeByName = new HashMap<>();
 		private final Int2ObjectOpenHashMap<Set<RoadPoint>> nodeId2RoadPointMap = new Int2ObjectOpenHashMap<>(); 
 		private final double range;
 		private final double maxSegmentLength;
@@ -1912,14 +1914,22 @@ public class HousenumberGenerator {
 
 		public void build(List<MapRoad> roads){
 			for (MapRoad road : roads){
+				KdTree<RoadPoint> namedTree = treeByName.get(road.getStreet());
+				if (namedTree == null){
+					namedTree = new KdTree<>();
+					treeByName.put(road.getStreet(), namedTree);
+				}
 				if (road.isSkipHousenumberProcessing())
 					continue;
 				List<Coord> points = road.getPoints();
+				RoadPoint rp;
 				for (int i = 0; i + 1 < points.size(); i++){
 					Coord c1 = points.get(i);
 					Coord c2 = points.get(i + 1);
 					int part = 0;
-					addRealRoadPoint(new RoadPoint(road, c1, i, part++));
+					rp = new RoadPoint(road, c1, i, part++);
+					addRealRoadPoint(rp);
+					namedTree.add(rp);
 					while (true){
 						double segLen = c1.distance(c2);
 						double frac = maxSegmentLength / segLen;
@@ -1927,12 +1937,16 @@ public class HousenumberGenerator {
 							break;
 						// if points are not close enough, add extra point
 						c1 = c1.makeBetweenPoint(c2, frac);
-						kdTree.add(new RoadPoint(road, c1, i, part++));
+						rp = new RoadPoint(road, c1, i, part++);
+						kdTree.add(rp);
+						namedTree.add(rp);
 						segLen -= maxSegmentLength;
 					}
 				}
 				int last = points.size() - 1;
-				addRealRoadPoint(new RoadPoint(road, points.get(last) , last, -1));
+				rp = new RoadPoint(road, points.get(last) , last, -1);
+				addRealRoadPoint(rp);
+				namedTree.add(rp);
 			}
 		}
 		
@@ -1953,7 +1967,21 @@ public class HousenumberGenerator {
 		}
 		
 		public List<RoadPoint> getCLoseRoadPoints(HousenumberElem house){
-			Set<RoadPoint> closeRoadPoints = kdTree.findNextPoint(house, kdSearchRange);
+			Set<RoadPoint> closeRoadPoints;
+			if (house.getStreet() == null)
+				closeRoadPoints = kdTree.findNextPoint(house, kdSearchRange);
+			else {
+				KdTree<RoadPoint> partKDTree = treeByName.get(house.getStreet());
+				if (partKDTree == null){
+					closeRoadPoints = new HashSet<>();
+				}
+				else
+					closeRoadPoints = partKDTree.findNextPoint(house, kdSearchRange);
+				// add unnamed roads
+				partKDTree = treeByName.get(null);
+				if (partKDTree != null)
+					closeRoadPoints.addAll(partKDTree.findNextPoint(house, kdSearchRange));
+			}
 			List<RoadPoint> result = new ArrayList<>();
 			for (RoadPoint rp : closeRoadPoints){
 				int id = rp.p.getId();
@@ -1971,10 +1999,10 @@ public class HousenumberGenerator {
 		 * @return null if no road was found, else a {@link HousenumberMatch} instance 
 		 */
 		public HousenumberMatch createHousenumberMatch(HousenumberElem house){
-			HousenumberMatch bestMatch = new HousenumberMatch(house);
+			HousenumberMatch closest = new HousenumberMatch(house);
 			List<RoadPoint> closeRoadPoints = getCLoseRoadPoints(house);
 			if (closeRoadPoints.isEmpty())
-				return bestMatch;
+				return closest;
 			Collections.sort(closeRoadPoints, new Comparator<RoadPoint>() {
 				// sort by distance (smallest first)
 				public int compare(RoadPoint o1,  RoadPoint o2) {
@@ -2014,8 +2042,8 @@ public class HousenumberGenerator {
 						checkSegment(hnm, rp.r, rp.segment);
 					}
 				} 
-				if (rp.partOfSeg == 0 && rp.segment > 0 || rp.partOfSeg < 0){
-					// rp is at end of segment, check (also) the preceding segment 
+				if (rp.partOfSeg < 0){
+					// rp is at end of road, check (also) the preceding segment 
 					if (testedSegments.get(rp.segment - 1) == false){
 						testedSegments.set(rp.segment-1);
 						checkSegment(hnm, rp.r, rp.segment-1);
@@ -2025,37 +2053,70 @@ public class HousenumberGenerator {
 					continue;
 			}
 			if (matches.isEmpty())
-				return bestMatch;
+				return closest;
 			Collections.sort(matches, new HousenumberGenerator.HousenumberMatchByDistComparator());
-			bestMatch = matches.get(0);
-			bestMatch = checkAngle(bestMatch, matches);
-			bestMatch.calcRoadSide();
-			double bestDistRightName =  Double.MAX_VALUE;
-			if (bestMatch.getStreet() != null && bestMatch.getStreet().equals(bestMatch.getRoad().getStreet()))
-				bestDistRightName = bestMatch.getDistance();
-			
-			// safe information about other roads 
+			closest = matches.get(0);
+			closest = checkAngle(closest, matches);
+			closest.calcRoadSide();
+			HousenumberMatch bestMatchingName = null; 
+			if (closest.getStreet() != null && closest.getStreet().equals(closest.getRoad().getStreet()))
+				bestMatchingName = closest;
 			for (HousenumberMatch altHouse : matches){
 				if (altHouse.getDistance() >= MAX_DISTANCE_TO_ROAD)
 					break;
-				if (altHouse.getRoad() != bestMatch.getRoad()){
-					if (house.getStreet() != null && altHouse.getDistance() > bestMatch.getDistance()){
+				if (altHouse.getRoad() != closest.getRoad()){
+					if (house.getStreet() != null && altHouse.getDistance() > closest.getDistance()){
 						if (house.getStreet().equals(altHouse.getRoad().getStreet())){
-							if (bestDistRightName > altHouse.getDistance())
-								bestDistRightName = altHouse.getDistance();
+							if (bestMatchingName == null || bestMatchingName.getDistance() > altHouse.getDistance())
+								bestMatchingName = altHouse;
 						} else {
-							if (altHouse.getDistance() > bestDistRightName)
+							if (bestMatchingName != null && altHouse.getDistance() > bestMatchingName.getDistance())
 								continue;
 						}
 					}
-					bestMatch.addAlternativeRoad(altHouse.getRoad());
+					closest.addAlternativeRoad(altHouse.getRoad());
 				}
 			}
-			if (bestMatch.getDistance() < bestDistRightName && bestDistRightName < MAX_DISTANCE_TO_ROAD){
-				log.debug("further checks needed for address", bestMatch.getStreet(), bestMatch.getSign(), bestMatch.getElement().toBrowseURL(), 
-						formatLen(bestMatch.getDistance()), formatLen(bestDistRightName));
+			HousenumberMatch best = closest;
+			HousenumberMatch m1 = closest;
+			HousenumberMatch m2 = bestMatchingName;
+			if (house.getElement().getId() == 444555266){
+				long dd = 4;
 			}
-			return bestMatch;
+			if (m2 != null && m2.getDistance() < MAX_DISTANCE_TO_ROAD) {
+				if (m1.getDistance() < m2.getDistance() && m1.getDistance() > 0){
+					boolean ignoreClosest = false;
+					if (m2.getDistance() < 50 || m1.getDistance() * 2 > m2.getDistance())
+						ignoreClosest = true;
+					else {
+						Coord c1 = m1.getClosestPointOnRoad();
+						Coord c2 = house.getLocation();
+						Coord c3 = m2.getClosestPointOnRoad();
+						// try to detect the case that the house is between the two roads
+						double angle = Utils.getAngle(c1, c2, c3);
+						if (Math.abs(angle) < 60)
+							ignoreClosest = true;
+						else {
+							long dd = 4;
+						}
+						long dd = 4;
+					}
+					if (ignoreClosest){
+						for (MapRoad r : m1.getAlternativeRoads()){
+							if (house.getStreet().equals(r.getStreet()))
+								m2.addAlternativeRoad(r);
+						}
+						best = m2;
+					} else {
+						if (log.isDebugEnabled()){
+							log.debug("further checks needed for address", m1.getStreet(), m1.getSign(), m1.getElement().toBrowseURL(), 
+									formatLen(m1.getDistance()), formatLen(m2.getDistance()));
+						}
+						
+					}
+				}
+			}
+			return best;
 		}
 	}
 }

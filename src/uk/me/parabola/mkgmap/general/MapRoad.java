@@ -41,6 +41,7 @@ public class MapRoad extends MapLine {
 	private final RoadDef roadDef;
 	private boolean segmentsFollowing;
 	private boolean skipHousenumberProcessing;
+	private boolean namedByHousenumberProcessing;
 	private final int roadId;
 	
 	public MapRoad(int roadId, long OSMid, MapLine line) {
@@ -156,6 +157,14 @@ public class MapRoad extends MapLine {
 
 	public void setSkipHousenumberProcessing(boolean skipHousenumberProcessing) {
 		this.skipHousenumberProcessing = skipHousenumberProcessing;
+	}
+
+	public boolean isNamedByHousenumberProcessing() {
+		return namedByHousenumberProcessing;
+	}
+
+	public void setNamedByHousenumberProcessing(boolean namedByHousenumberProcessing) {
+		this.namedByHousenumberProcessing = namedByHousenumberProcessing;
 	}
 
 	public boolean skipAddToNOD() {
