@@ -452,7 +452,7 @@ public class ExtNumbers {
 				}
 			}
 		} 
-		//TODO: in some cases it might be better to move a house to the prev on next interval instead of splitting
+		//TODO: in some cases it might be better to move a house to the prev or next interval instead of splitting
 		if (en == this)
 			en = tryAddNumberNode(reason);
 		boolean changedInterval = false;
@@ -494,7 +494,8 @@ public class ExtNumbers {
 		
 		Numbers origNumbers = getNumbers();
 		if (origNumbers.countMatches(badNum) == 0){
-			log.debug("badNum",badNum,"is not contained in",this);
+			if (log.isDebugEnabled())
+				log.debug("badNum",badNum,"is not contained in",this);
 			return this;
 		}
 		// create an test interval to find out which side contains the  bad number
@@ -542,7 +543,8 @@ public class ExtNumbers {
 		int splitSegment = -1; 
 		if (house1.getSegment() != house2.getSegment()){
 			// simple case: change point
-			log.debug("simple case: change point to number node between",house1,house2);
+			if (log.isDebugEnabled())
+				log.debug("simple case: change point to number node between",house1,house2);
 			// what point is best?, use beginning of 2nd for now 
 			splitSegment = house2.getSegment();
 			doSplit = true;
@@ -604,7 +606,8 @@ public class ExtNumbers {
 				log.error("cannot split",this);
 			}
 			if (toAdd != null){
-				log.debug("solution: split segment with length",formatLen(segmentLength),"at",formatLen(usedFraction * segmentLength));
+				if (log.isDebugEnabled())
+					log.debug("solution: split segment with length",formatLen(segmentLength),"at",formatLen(usedFraction * segmentLength));
 				doSplit = true;
 				splitSegment = seg+1;
 				addAsNumberNode(splitSegment, toAdd);
@@ -799,7 +802,8 @@ public class ExtNumbers {
 				if (bestDist > 0.2){
 					double angle = Utils.getDisplayedAngle(c1, toAdd, c2);
 					if (Math.abs(angle) > 3){
-						log.debug("segment too short to split without creating visible angle");
+						if (log.isDebugEnabled())
+							log.debug("segment too short to split without creating visible angle");
 						addOK = false;
 					}
 				}
@@ -813,7 +817,7 @@ public class ExtNumbers {
 				}
 				if(reason == SR_FIX_ERROR)
 					log.warn("can't fix error in interval",this);
-				else 
+				else if (log.isDebugEnabled())
 					log.debug("can't improve search result",this);
 				return this;
 			}
@@ -1072,7 +1076,8 @@ public class ExtNumbers {
 				ExtNumbers modIvl = simulateRemovalOfHouseNumber(hn, left);
 				if (modIvl.isPlausible()){
 					badNum = hn;
-					log.debug("splitpos details: single remove of",badNum,"results in plausible interval");
+					if (log.isDebugEnabled())
+						log.debug("splitpos details: single remove of",badNum,"results in plausible interval");
 					return;
 				}
 			}
@@ -1120,7 +1125,8 @@ public class ExtNumbers {
 		badNum = Math.max(firstBad[0], lastBad[0]);
 		if (badNum == -1)
 			badNum = Math.min(firstBad[1], lastBad[1]);
-		log.debug("splitpos details",Arrays.toString(firstBad), Arrays.toString(lastBad),"gives badNum",badNum);
+		if (log.isDebugEnabled())
+			log.debug("splitpos details",Arrays.toString(firstBad), Arrays.toString(lastBad),"gives badNum",badNum);
 	}
 	
 	private boolean multipleZipOrCity(boolean left) {
@@ -1632,7 +1638,8 @@ public class ExtNumbers {
 			}
 		}
 		if (worstDelta > MAX_LOCATE_ERROR){
-			log.info("trying to optimize address search for house number in road",getRoad(),worstHouse,"error before opt is",formatLen(worstDelta));
+			if (log.isInfoEnabled())
+				log.info("trying to optimize address search for house number in road",getRoad(),worstHouse,"error before opt is",formatLen(worstDelta));
 			return tryChange(SR_OPT_LEN);
 		}
 		if (log.isDebugEnabled())
