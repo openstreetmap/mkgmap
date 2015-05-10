@@ -2107,6 +2107,7 @@ public class HousenumberGenerator {
 								m2.addAlternativeRoad(r);
 						}
 						best = m2;
+						best.calcRoadSide();
 					} else {
 						if (log.isDebugEnabled()){
 							log.debug("further checks needed for address", m1.getStreet(), m1.getSign(), m1.getElement().toBrowseURL(), 
