@@ -525,36 +525,9 @@ public class MapBuilder implements Configurable {
 
 
 				POIRecord r = lbl.createPOI(p.getName());	
-
-				if (cityStr == null && (countryStr != null || regionStr != null)) {
-					// if city name is unknown and region and/or country is known 
-					// use empty name for the city
-					cityStr = UNKNOWN_CITY_NAME;
-				}
 				
-				if(cityStr != null)
-				{
-					Country thisCountry;
-
-					if(countryStr != null)
-						thisCountry = lbl.createCountry(countryStr, locator.getCountryISOCode(countryStr));
-					else
-						thisCountry = getDefaultCountry();
-
-					Region thisRegion;
-					if(regionStr != null)
-						thisRegion = lbl.createRegion(thisCountry,regionStr, null);
-					else
-						thisRegion = getDefaultRegion(thisCountry);
-
-					City city;
-					if(thisRegion != null)
-						city = lbl.createCity(thisRegion, cityStr, false);
-					else
-						city = lbl.createCity(thisCountry, cityStr, false);
-
-					r.setCity(city);
-
+				if(cityStr != null || regionStr != null || countryStr != null){
+					r.setCity(calcCity(lbl, cityStr, regionStr, countryStr));
 				}
 
 				if (zipStr != null)
