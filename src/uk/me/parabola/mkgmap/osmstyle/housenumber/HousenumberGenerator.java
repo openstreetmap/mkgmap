@@ -2080,9 +2080,6 @@ public class HousenumberGenerator {
 			HousenumberMatch best = closest;
 			HousenumberMatch m1 = closest;
 			HousenumberMatch m2 = bestMatchingName;
-			if (house.getElement().getId() == 444555266){
-				long dd = 4;
-			}
 			if (m2 != null && m2.getDistance() < MAX_DISTANCE_TO_ROAD) {
 				if (m1.getDistance() < m2.getDistance() && m1.getDistance() > 0){
 					boolean ignoreClosest = false;

@@ -220,9 +220,9 @@ public class ExtNumbers {
 			HousenumberMatch pred = null;
 			for (int i = 0; i< numHouses; i++) {
 				HousenumberMatch house = houses.get(i);
-				if (house.getCityInfo() != null)
+				if (house.getCityInfo() != null && house.getCityInfo().isEmpty() == false)
 					cityInfos.add(house.getCityInfo());
-				if (house.getZipCode() != null)
+				if (house.getZipCode() != null && house.getZipCode().getZipCode() != null)
 					zipCodes.add(house.getZipCode());
 				int num = house.getHousenumber();
 				if (!hasGaps)
@@ -1763,6 +1763,10 @@ public class ExtNumbers {
 		return HousenumberGenerator.formatLen(length);
 	}
 
+	/** 
+	 * Try to detect the case that many house numbers have no specific order.
+	 * 
+	 */
 	public void detectRandom() {
 		int countFilledIvls = 0;
 		int countFilledSides = 0;
@@ -1795,7 +1799,6 @@ public class ExtNumbers {
 
 		return true;
 	}
-
 	
 }
 
