@@ -456,6 +456,7 @@ Miscellaneous options:
 	that go nowhere.
 
 --road-name-pois[=GarminCode]
+	Now ignored, former usage:
 	Generate a POI for each named road. By default, the POIs'
 	Garmin type code is 0x640a. If desired, a different type code
 	can be specified with this option.  This is a workaround for not

@@ -455,7 +455,8 @@ those roads to report:
 
 
 ;--road-name-pois[=GarminCode]
-: 	Generate a POI for each named road. By default, the POIs'
+:   Now ignored, former meaning:   	
+		Generate a POI for each named road. By default, the POIs'
 Garmin type code is 0x640a. If desired, a different type code
 can be specified with this option.  This s a workaround for not
 being able to search for roads.

@@ -27,7 +27,6 @@ import uk.me.parabola.util.Locatable;
  */
 public class MapPoint extends MapElement implements Locatable{
 	private Coord location;
-	private boolean isRoadNamePoi;
 
 	public MapPoint() {
 	}
@@ -63,14 +62,6 @@ public class MapPoint extends MapElement implements Locatable{
 		return isCityType(getType());
 	}
 
-	public void setRoadNamePOI(boolean isRoadNamePoi) {
-		this.isRoadNamePoi = isRoadNamePoi;
-	}
-
-	public boolean isRoadNamePOI() {
-		return this.isRoadNamePoi;
-	}
-	
 	public static boolean isCityType(int type)
 	{
 		return type >= 0x0100 && type <= 0x1100;

@@ -479,7 +479,7 @@ public class MapBuilder implements Configurable {
 			// * cities (already processed)
 			// * extended types (address information not shown in MapSource and on GPS)
 			// * all POIs except roads in case the no-poi-address option is set
-			else if (!p.isCity() && !p.hasExtendedType() && (p.isRoadNamePOI() || poiAddresses))
+			else if (!p.isCity() && !p.hasExtendedType() &&  poiAddresses)
 			{
 				
 				String countryStr = p.getCountry();
@@ -523,13 +523,6 @@ public class MapBuilder implements Configurable {
 					checkedForPoiDispFlag = true;
 				}
 
-
-				if(p.isRoadNamePOI() && cityStr != null)
-				{
-					// If it is road POI add city name and street name into address info
-					p.setStreet(p.getName());
-					p.setName(p.getName() + "/" + cityStr);
-				}
 
 				POIRecord r = lbl.createPOI(p.getName());	
 
