@@ -345,8 +345,26 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 			if (r instanceof MultiPolygonRelation == false) {
 				continue;
 			}
-			
-			Coord point = ((MultiPolygonRelation)r).getCofG();
+			// boundary relations may have a node with role admin_centre, if yes, use the 
+			// location of it
+			Node existingPOI = null;
+			if ("boundary".equals(r.getTag("type")) && "administrative".equals(r.getTag("boundary"))){
+				for (Entry<String, Element> pair : r.getElements()){
+					String role = pair.getKey();
+					Element el = pair.getValue(); 
+					if ("admin_centre".equals(role)){
+						if (el instanceof Node){
+							existingPOI = (Node) el;
+							break;
+						}
+					}
+				}
+			}
+			Coord point;
+			if (existingPOI ==null)
+				point = ((MultiPolygonRelation)r).getCofG();
+			else 
+				point = existingPOI.getLocation();
 			if (point == null) {
 				continue;
 			}
