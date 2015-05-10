@@ -59,6 +59,7 @@ import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.osmstyle.housenumber.HousenumberGenerator;
 import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Node;
@@ -111,7 +112,8 @@ public class StyledConverter implements OsmConverter {
 	private IdentityHashMap<Coord, CoordNode> nodeIdMap = new IdentityHashMap<>();
 
 	public final static String WAY_POI_NODE_IDS = "mkgmap:way-poi-node-ids";
-	
+	private final HashMap<Integer, Map<String,MapPoint>> pointMap;
+
 	private List<ConvertedWay> roads = new ArrayList<>();
 	private List<ConvertedWay> lines = new ArrayList<>();
 	private HashMap<Long, ConvertedWay> modifiedRoads = new HashMap<>();
@@ -163,6 +165,7 @@ public class StyledConverter implements OsmConverter {
 		} else 
 			nameTagList = null;
 		this.style = style;
+		pointMap = new HashMap<>();
 		wayRules = style.getWayRules();
 		nodeRules = style.getNodeRules();
 		lineRules = style.getLineRules();
@@ -552,6 +555,7 @@ public class StyledConverter implements OsmConverter {
 	}
 	
 	public void end() {
+		pointMap.clear();
 		style.reportStats();
 		driveOnLeft = calcDrivingSide();
 		
@@ -1011,7 +1015,39 @@ public class StyledConverter implements OsmConverter {
 		elementSetup(mp, gt, node);
 		mp.setLocation(node.getLocation());
 
+		boolean dupPOI = checkDuplicatePOI(mp);
+		if (dupPOI){
+			if (log.isInfoEnabled()){
+				if (FakeIdGenerator.isFakeId(node.getId()))
+					log.info("ignmoring duplicate POI with type",GType.formatType(type),mp.getName(),"for generated element with id",node.getId(),"at",mp.getLocation().toDegreeString());
+				else 
+					log.info("ignmoring duplicate POI with type",GType.formatType(type),mp.getName(),"for element",node.toBrowseURL());
+			}
+			return;
+		}
+		
 		collector.addPoint(mp);
+	}
+
+	/**
+	 * Check if we already have added a point with the same type + name and equal location.
+	 * @param mp
+	 * @return
+	 */
+	private boolean checkDuplicatePOI(MapPoint mp) {
+		Map<String, MapPoint> typeMap = pointMap.get(mp.getType());
+		if (typeMap == null){
+			typeMap = new HashMap<>();
+			pointMap.put(mp.getType(), typeMap);
+		}
+		MapPoint old = typeMap.get(mp.getName());
+		if (old == null){
+			typeMap.put(mp.getName(), mp);
+		} else {
+			if (old.getLocation().equals(mp.getLocation()))
+				return true;
+		}
+		return false;
 	}
 
 	private static final short[] labelTagKeys = {
