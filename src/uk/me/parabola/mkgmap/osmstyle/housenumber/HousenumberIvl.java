@@ -204,38 +204,35 @@ public class HousenumberIvl {
 				}
 				int s0 = test[0].getSegment();
 				int s1 = test[1].getSegment();
-				if (s0 != s1){
-					// not the same segment, find out if another is better
-					// check if the road and the addr:interpolation way are nearly parallel lines
-					double angle1 = Utils.getAngle(test[0].getClosestPointOnRoad(), points.get(0),points.get(1));
-					if (Math.abs(angle1) < 30){
-						foundSingleRoad = false;
-						HousenumberMatch testx = new HousenumberMatch(test[0]);
-						for (int s = Math.min(s0,s1); s <= Math.max(s0, s1); s++){
-							if (s != test[0].getSegment()){
-								HousenumberGenerator.findClosestRoadSegment(testx, r, s,s+1);
-								angle1 = Utils.getAngle(testx.getClosestPointOnRoad(), points.get(0),points.get(1));
-								if (Math.abs(angle1) >= 30 && testx.getDistance() < 2*test[0].getDistance()){
-									test[0] = testx;
-									foundSingleRoad = true;
-									break;
-								}
+				// check if the road and the addr:interpolation way are nearly parallel lines
+				double angle1 = Utils.getAngle(test[0].getClosestPointOnRoad(), points.get(0),points.get(1));
+				if (Math.abs(angle1) < 30){
+					foundSingleRoad = false;
+					HousenumberMatch testx = new HousenumberMatch(test[0]);
+					for (int s = Math.min(s0,s1); s <= Math.max(s0, s1); s++){
+						if (s != test[0].getSegment()){
+							HousenumberGenerator.findClosestRoadSegment(testx, r, s,s+1);
+							angle1 = Utils.getAngle(testx.getClosestPointOnRoad(), points.get(0),points.get(1));
+							if (Math.abs(angle1) >= 30 && testx.getDistance() < 2*test[0].getDistance()){
+								test[0] = testx;
+								foundSingleRoad = true;
+								break;
 							}
 						}
 					}
-					double angle2 = Utils.getAngle(points.get(points.size()-2),points.get(points.size()-1),test[1].getClosestPointOnRoad());
-					if (Math.abs(angle2) < 30){
-						foundSingleRoad = false;
-						HousenumberMatch testx = new HousenumberMatch(test[1]);
-						for (int s = Math.min(s0,s1); s <= Math.max(s0, s1); s++){
-							if (s != test[1].getSegment()){
-								HousenumberGenerator.findClosestRoadSegment(testx, r, s,s+1);
-								angle2 = Utils.getAngle(points.get(points.size()-2),points.get(points.size()-1),testx.getClosestPointOnRoad());
-								if (Math.abs(angle2) >= 30 && testx.getDistance() < 2*test[1].getDistance()){
-									test[1] = testx;
-									foundSingleRoad = true;
-									break;
-								}
+				}
+				double angle2 = Utils.getAngle(points.get(points.size()-2),points.get(points.size()-1),test[1].getClosestPointOnRoad());
+				if (Math.abs(angle2) < 30){
+					foundSingleRoad = false;
+					HousenumberMatch testx = new HousenumberMatch(test[1]);
+					for (int s = Math.min(s0,s1); s <= Math.max(s0, s1); s++){
+						if (s != test[1].getSegment()){
+							HousenumberGenerator.findClosestRoadSegment(testx, r, s,s+1);
+							angle2 = Utils.getAngle(points.get(points.size()-2),points.get(points.size()-1),testx.getClosestPointOnRoad());
+							if (Math.abs(angle2) >= 30 && testx.getDistance() < 2*test[1].getDistance()){
+								test[1] = testx;
+								foundSingleRoad = true;
+								break;
 							}
 						}
 					}
