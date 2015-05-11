@@ -454,8 +454,10 @@ public class HousenumberGenerator {
 			if(!road.isSkipHousenumberProcessing()){
 				if (firstRoadSameOSMWay != null){
 					if (firstRoadSameOSMWay.getRoadDef().getId() == road.getRoadDef().getId()){
-						road.setSkipHousenumberProcessing(true);
-						return;
+						if (firstRoadSameOSMWay.getPoints().equals(road.getPoints())){
+							road.setSkipHousenumberProcessing(true);
+							return;
+						}
 					}
 				} 
 				firstRoadSameOSMWay = road;
