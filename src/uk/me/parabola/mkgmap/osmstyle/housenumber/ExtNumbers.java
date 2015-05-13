@@ -349,9 +349,14 @@ public class ExtNumbers {
 				continue;
 			list.add(curr.getNumbers());
 			if (log.isInfoEnabled()) {
+				if (curr.prev == null){
+					MapRoad road = curr.getRoad();
+					if (road.getStreet() == null && road.getName() == null)
+						log.info("final numbers for", road, curr.housenumberRoad.getName(), "in", road.getCity());
+					else 
+						log.info("final numbers for", road, "in", road.getCity());
+				}
 				Numbers cn = curr.getNumbers();
-				if (curr.prev == null)
-					log.info("final numbers for",getRoad(),"in",getRoad().getCity());
 				log.info("Left: ",cn.getLeftNumberStyle(),cn.getIndex(),"Start:",cn.getLeftStart(),"End:",cn.getLeftEnd(), "numbers "+curr.getHouses(Numbers.LEFT));
 				log.info("Right:",cn.getRightNumberStyle(),cn.getIndex(),"Start:",cn.getRightStart(),"End:",cn.getRightEnd(), "numbers "+curr.getHouses(Numbers.RIGHT));
 			}
