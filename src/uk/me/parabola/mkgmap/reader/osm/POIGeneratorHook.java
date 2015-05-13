@@ -25,6 +25,7 @@ import java.util.Set;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.build.LocatorUtil;
 import uk.me.parabola.util.EnhancedProperties;
 
 /**
@@ -67,6 +68,7 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 	
 	private boolean poisToAreas = false;
 	private boolean poisToLines = false;
+	private List<String> nameTags;
 	
 	/** Name of the bool tag that is set to true if a POI is created from an area */
 	public static final short AREA2POI_TAG = TagDict.getInstance().xlate("mkgmap:area2poi");
@@ -81,7 +83,8 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 			log.info("Disable Areas2POIHook because add-pois-to-areas and add-pois-to-lines option is not set.");
 			return false;
 		}
-		
+		nameTags = LocatorUtil.getNameTags(props);
+
 		this.poiPlacementTags = getPoiPlacementTags(props);
 		
 		this.saver = saver;
@@ -337,6 +340,24 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 		
 	}
 
+	/**
+	 * Retrieves the name of the given element based on the name-tag-list option.
+	 * @param e an OSM element
+	 * @return the name or <code>null</code> if the element has no name
+	 */
+	private String getName(Element e) {
+//		if (e.getName()!= null) {
+//			return e.getName();
+//		}
+		for (String nameTag : nameTags) {
+			String nameTagVal = e.getTag(nameTag);
+			if (nameTagVal != null) {
+				return nameTagVal;
+			}
+		}
+		return null;
+	}
+
 	private void addPOIsToMPs() {
 		int mps2POI = 0;
 		for (Relation r : saver.getRelations().values()) {
@@ -354,9 +375,12 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 					Element el = pair.getValue(); 
 					if ("admin_centre".equals(role)){
 						if (el instanceof Node){
-							existingPOI = (Node) el;
-							break;
+							String bName = getName(r);
+							String pName = getName(el);
+							if (bName != null && bName.equals(pName))
+								existingPOI = (Node) el;
 						}
+						break;
 					}
 				}
 			}
