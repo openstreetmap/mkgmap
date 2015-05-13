@@ -270,6 +270,9 @@ public class HousenumberGenerator {
 		if (numbersEnabled == false) {
 			return;
 		}
+		if("false".equals(n.getTag(numbersTagKey)))
+			return;
+		
 		if ("true".equals(n.getTag(POIGeneratorHook.AREA2POI_TAG))){
 			// ignore POI created for buildings
 			return; 		
@@ -289,6 +292,9 @@ public class HousenumberGenerator {
 		if (numbersEnabled == false) {
 			return;
 		}
+		if("false".equals(w.getTag(numbersTagKey)))
+			return;
+		
 		String ai = w.getTag(addrInterpolationTagKey);
 		if (ai != null){
 			// the way has the addr:interpolation=* tag, parse info
