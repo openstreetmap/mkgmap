@@ -102,7 +102,7 @@ public class HousenumberGenerator {
 		numbersEnabled = props.containsKey("housenumbers");
 		int n = props.getProperty("name-service-roads", 3);
 		if (n != nameSearchDepth){
-			nameSearchDepth = Math.min(25, Math.max(2, n));
+			nameSearchDepth = Math.min(25, Math.max(0, n));
 			if (nameSearchDepth != n)
 				System.err.println("name-service-roads=" + n + " was changed to name-service-roads=" + nameSearchDepth);
 		}
@@ -612,8 +612,8 @@ public class HousenumberGenerator {
 	 */
 	public void generate(LineAdder adder, int naxNodeId) {
 		if (numbersEnabled) {
-			identifyServiceRoads();
 			MultiHashMap<MapRoad,HousenumberMatch> initialHousesForRoads = findClosestRoadsToHouse();
+			identifyServiceRoads();
 			
 			handleInterpolationWays(initialHousesForRoads);
 			
@@ -2077,42 +2077,27 @@ public class HousenumberGenerator {
 					closest.addAlternativeRoad(altHouse.getRoad());
 				}
 			}
+			if (closest == bestMatchingName || bestMatchingName == null || bestMatchingName.getDistance() > MAX_DISTANCE_TO_ROAD)
+				return closest;
+			
+			double ratio = closest.getDistance() / bestMatchingName.getDistance();
+			if (ratio < 0.25)
+				return closest;
 			HousenumberMatch best = closest;
-			HousenumberMatch m1 = closest;
-			HousenumberMatch m2 = bestMatchingName;
-			if (m2 != null && m2.getDistance() < MAX_DISTANCE_TO_ROAD) {
-				if (m1.getDistance() < m2.getDistance() && m1.getDistance() > 0){
-					boolean ignoreClosest = false;
-					if (m2.getDistance() < 50 || m1.getDistance() * 2 > m2.getDistance())
-						ignoreClosest = true;
-					else {
-						Coord c1 = m1.getClosestPointOnRoad();
-						Coord c2 = house.getLocation();
-						Coord c3 = m2.getClosestPointOnRoad();
-						// try to detect the case that the house is between the two roads
-						double angle = Utils.getAngle(c1, c2, c3);
-						if (Math.abs(angle) < 60)
-							ignoreClosest = true;
-						else {
-							long dd = 4;
-						}
-						long dd = 4;
-					}
-					if (ignoreClosest){
-						for (MapRoad r : m1.getAlternativeRoads()){
-							if (house.getStreet().equals(r.getStreet()))
-								m2.addAlternativeRoad(r);
-						}
-						best = m2;
-						best.calcRoadSide();
-					} else {
-						if (log.isDebugEnabled()){
-							log.debug("further checks needed for address", m1.getStreet(), m1.getSign(), m1.getElement().toBrowseURL(), 
-									formatLen(m1.getDistance()), formatLen(m2.getDistance()));
-						}
-						
-					}
+			if (ratio > 0.75){
+				// prefer the road with the matching name
+				for (MapRoad r : closest.getAlternativeRoads()){
+					if (house.getStreet().equals(r.getStreet()))
+						bestMatchingName.addAlternativeRoad(r);
 				}
+				best = bestMatchingName;
+				best.calcRoadSide();
+			} else {
+				if (log.isDebugEnabled()){
+					log.debug("further checks needed for address", closest.getStreet(), closest.getSign(), closest.getElement().toBrowseURL(), 
+							formatLen(closest.getDistance()), formatLen(bestMatchingName.getDistance()));
+				}
+
 			}
 			return best;
 		}

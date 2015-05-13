@@ -722,32 +722,31 @@ public class HousenumberRoad {
 						nameOK = true;
 					else if (houseNumbers.size() > 1){
 						nameOK = true;
-					} else if (road.getPoints().size() == 2 && maxDist <= 5){ 
-						if (road.getPoints().get(0).distance(road.getPoints().get(1)) < 10){
-							// very short road with just one house, use it
-							nameOK = true;
-						}
+					} else if (maxDist <= 10){ 
+						nameOK = true;
 					}
 					if (nameOK){
 						streetName = potentialName;
 						return noWrongHouses; // all good, return empty list
 						
 					}
+				} else {
+					List<String> matchingNames = new ArrayList<>();
+					for (Entry<String, Integer> entry : possibleStreetNamesFromHouses.entrySet()){
+						String name = entry.getKey();
+						if (connectedRoadNames.contains(name)){
+							matchingNames.add(name);
+						}
+					}
+					if (matchingNames.size() == 1){
+						streetName = matchingNames.get(0);
+					}
 				}
+
+				
 			}
 			// if we get here we have no usable street name
 			wrongHouses  = new ArrayList<>();
-			if (streetName == null && getRoad().getName() != null){
-				// road has a label, probably a ref
-				if (possibleStreetNamesFromHouses.size() > 1){
-					for (Entry<String, Integer> entry : possibleStreetNamesFromHouses.entrySet()){
-						if (entry.getValue() > houseNumbers.size() / 2){
-							streetName = entry.getKey();
-							break;
-						}
-					}
-				}
-			}
 			Iterator<HousenumberMatch> iter = houseNumbers.iterator();
 			while (iter.hasNext()){
 				HousenumberMatch house = iter.next();
