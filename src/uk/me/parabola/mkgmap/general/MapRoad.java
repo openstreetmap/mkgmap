@@ -190,7 +190,10 @@ public class MapRoad extends MapLine {
 	}
 	
 	public String toString(){
-		return "id="+this.getRoadDef().getId() + ", " + this.getName();
+		if ((getName() == null || getName().isEmpty()) && getStreet() != null)
+			return "id="+this.getRoadDef().getId() + ", (" + this.getStreet() + ")";
+		else 
+			return "id="+this.getRoadDef().getId() + ", " + this.getName();
 	}
 
 	public void resetImgData() {

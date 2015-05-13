@@ -742,7 +742,7 @@ public class HousenumberGenerator {
 			if (log.isDebugEnabled()){
 				List<Numbers> finalNumbers = r.getRoadDef().getNumbersList();
 				if (finalNumbers != null){
-					log.info("id:"+r.getRoadDef().getId(),", final numbers");
+					log.info("id:"+r.getRoadDef().getId(),", final numbers,",r,"in",r.getCity());
 					for (Numbers cn : finalNumbers){
 						if (cn.isEmpty())
 							continue;
@@ -1238,8 +1238,6 @@ public class HousenumberGenerator {
 				findClosestRoadSegment(test, r);
 				if (test.getRoad() != null && test.getGroup() != null || test.getDistance() < MAX_DISTANCE_TO_ROAD){
 					matches.add(test);
-				} else {
-					long dd = 4;
 				}
 			}
 			if (matches.isEmpty()){
