@@ -1370,6 +1370,7 @@ public class ExtNumbers {
 							bestMoveOrig.setSegment(bestMoveMod.getSegment());
 							bestMoveOrig.setDistance(bestMoveMod.getDistance());
 							bestMoveOrig.setSegmentFrac(bestMoveMod.getSegmentFrac());
+							from.housenumberRoad.getHouses().remove(bestMoveOrig);
 							fromHouses.remove(bestMoveOrig);
 							toHouses.add(bestMoveOrig);
 							Collections.sort(toHouses, new HousenumberMatchByPosComparator());

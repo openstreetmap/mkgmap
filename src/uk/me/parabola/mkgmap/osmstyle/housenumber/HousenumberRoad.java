@@ -520,6 +520,8 @@ public class HousenumberRoad {
 	public void setNumbers() {
 		if (extNumbersHead == null)
 			return;
+		if (houseNumbers.isEmpty())
+			return;
 		// make sure that the name we used for the cluster is also attached to the road
 		if (streetName == null){
 			log.error("found no name for road with housenumbers, implement a move to the next named road ?",road);
@@ -534,7 +536,12 @@ public class HousenumberRoad {
 				found = true;
 		}
 		if (!found){
-			for (int i = 0; i < labels.length; i++){
+			if (labels[0] == null){
+				// add empty label so that the address search name doesn't appear in the map
+				// when the original road did not have any label
+				labels[0] = "";
+			}
+			for (int i = 1; i < labels.length; i++){
 				if (labels[i] == null){
 					labels[i] = streetName;
 					log.info("added label",streetName,"for",road,"Labels are now:",Arrays.toString(labels));
