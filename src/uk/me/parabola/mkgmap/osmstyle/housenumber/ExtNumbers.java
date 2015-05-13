@@ -22,6 +22,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -582,6 +584,7 @@ public class ExtNumbers {
 
 			if (toAdd == null) {
 				Coord wanted = c1.makeBetweenPoint(c2, wantedFraction);
+				
 				toAdd = rasterLineNearPoint(c1, c2, wanted, true);
 				if (toAdd != null){
 					if (toAdd.equals(c1)){
@@ -718,6 +721,9 @@ public class ExtNumbers {
 			double len1 = segmentLength * minFraction0To1; // dist to first 
 			double len2 = segmentLength * maxFraction0To1; 
 			double len3 = (1-maxFraction0To1) * segmentLength;
+			double expectedError = c1.getDisplayedCoord().distance(new Coord(c1.getLatitude()+1,c1.getLongitude()));
+			double maxDistBefore = expectedError;
+			double maxDistAfter = expectedError;
 			if (reason == SR_FIX_ERROR && worstHouse != null){
 				wantedFraction = worstHouse.getSegmentFrac();
 				if (wantedFraction < minFraction0To1 || wantedFraction > maxFraction0To1){
@@ -725,6 +731,7 @@ public class ExtNumbers {
 				}
 			}
 			boolean allowSplitBetween = true;
+			boolean forceEmpty = false;
 			if (reason == SR_OPT_LEN){
 				if (log.isDebugEnabled()){
 					if (maxFraction0To1 != minFraction0To1){
@@ -736,19 +743,17 @@ public class ExtNumbers {
 					// one house or two opposite houses  
 					// we try to split so that the house(s) are near the middle of one part
 					wantedFraction = wantedFraction * 2 - (wantedFraction > 0.5 ? 1 : 0);
-					if (wantedFraction == 0)
-						wantedFraction = 5.0 / segmentLength;
-					if (wantedFraction == 1)
-						wantedFraction = (segmentLength - 5.0) / segmentLength;
 					allowSplitBetween = false;
 				} else {
-					if (minFraction0To1 > 0.333){
+					if (len1 > MAX_LOCATE_ERROR / 2){
 						// create empty segment at start
-						wantedFraction = Math.max(0, minFraction0To1 - (10.0 / segmentLength));  
+						wantedFraction = minFraction0To1 * 0.99999;  
+						forceEmpty = true;
 					} 
-					if (maxFraction0To1 < 0.666 && 1d - maxFraction0To1 > minFraction0To1){
+					if (len3 > MAX_LOCATE_ERROR / 2 && len3 > len1){
 						// create empty segment at end
-						wantedFraction = Math.min(1, maxFraction0To1 + (10.0 / segmentLength));
+						wantedFraction = maxFraction0To1 * 1.000001;
+						forceEmpty = true;
 					}
 				}
 			}
@@ -762,52 +767,78 @@ public class ExtNumbers {
 			}
 			double usedFraction = 0;
 			double bestDist = Double.MAX_VALUE;
+			if (wantedFraction < minFraction0To1){
+				maxDistAfter = 0;
+			}
+			if (wantedFraction > maxFraction0To1){
+				maxDistBefore = 0;
+			}
 			for (;;){
 				Coord wanted = c1.makeBetweenPoint(c2, wantedFraction);
-				toAdd = rasterLineNearPoint(c1, c2, wanted, false);
-				if (toAdd == null){
-					if (wantedFraction != 0.5){
-						wantedFraction = 0.5;
-						continue;
+				Map<Double, Coord> candidates = rasterLineNearPoint2(c1, c2, wanted, maxDistBefore, maxDistAfter);
+				boolean foundGood = false;
+				for (Entry<Double, Coord> entry : candidates.entrySet()){
+					toAdd = entry.getValue();
+					bestDist = entry.getKey();
+					usedFraction = HousenumberGenerator.getFrac(c1, c2, toAdd);
+					if (usedFraction <= 0 || usedFraction >= 1)
+						toAdd = null;
+					else if (usedFraction > minFraction0To1 && wantedFraction < minFraction0To1 || usedFraction < maxFraction0To1 && wantedFraction > maxFraction0To1){
+						toAdd = null;
+					} else if (allowSplitBetween == false && usedFraction > minFraction0To1 && usedFraction < maxFraction0To1){
+						toAdd = null;
+					} else {
+						if (bestDist > 0.2){
+							double angle = Utils.getDisplayedAngle(c1, toAdd, c2);
+							if (Math.abs(angle) > 3){
+								toAdd = null;
+								continue;
+							}
+						}
+						foundGood = true;
+						break;
 					}
+				}
+				
+				if (foundGood){
 					break;
 				}
-				double foundDist = toAdd.distance(wanted);
-				usedFraction = HousenumberGenerator.getFrac(c1, c2, toAdd);
-//				log.debug(reason, minFraction0To1, maxFraction0To1, wantedFraction, usedFraction, foundDist );
-				if (wantedFraction == 0.5)
+				toAdd = null;
+				boolean tryAgain = false;
+				if (maxDistBefore > 0 && maxDistBefore < segmentLength * wantedFraction) {
+					maxDistBefore *= 2;
+					tryAgain = true;
+				}
+				if (maxDistAfter > 0 && maxDistAfter < segmentLength * (1 - wantedFraction)) {
+					maxDistAfter *= 2;
+					tryAgain = true;
+				}
+				if (!tryAgain)
 					break;
-				if (foundDist > 10 || usedFraction > minFraction0To1 && wantedFraction < minFraction0To1 || usedFraction < maxFraction0To1 && wantedFraction > maxFraction0To1){
-					wantedFraction = 0.5;
-				} else if (allowSplitBetween == false && usedFraction > minFraction0To1 && usedFraction < maxFraction0To1){
-					wantedFraction = 0.5;
-				} else 
-					break;
-			}
+			} 			
 			
 			boolean addOK = true;
 			if (toAdd == null)
 				addOK = false;
 			else {
 				toAdd.incHighwayCount();
-				bestDist = toAdd.getDisplayedCoord().distToLineSegment(c1.getDisplayedCoord(), c2.getDisplayedCoord());
 				if (log.isDebugEnabled()){
-					log.debug("trying to split road segment",startInRoad,"at",formatLen(usedFraction * segmentLength));
-				}
-				if (bestDist > 0.2){
-					double angle = Utils.getDisplayedAngle(c1, toAdd, c2);
-					if (Math.abs(angle) > 3){
-						if (log.isDebugEnabled())
-							log.debug("segment too short to split without creating visible angle");
-						addOK = false;
-					}
+					log.debug("spliting road segment",startInRoad,"at",formatLen(usedFraction * segmentLength));
 				}
 			}
 			if (!addOK){
 				if (reason == SR_FIX_ERROR && minFraction0To1 == maxFraction0To1)
 					return dupNode(midFraction, SR_FIX_ERROR);
 				if (Math.min(len1, len3) < MAX_LOCATE_ERROR ){
-					double splitFrac = (minFraction0To1 != maxFraction0To1) ? midFraction : minFraction0To1;
+					double splitFrac = -1;
+					if (reason == SR_OPT_LEN){
+						if (wantedFraction <= minFraction0To1)
+							splitFrac = minFraction0To1;
+						else if (wantedFraction >= maxFraction0To1)
+							splitFrac = maxFraction0To1;
+					}
+					if (splitFrac < 0)
+						splitFrac = (minFraction0To1 != maxFraction0To1) ? midFraction : minFraction0To1;
 					return dupNode(splitFrac, SR_OPT_LEN);
 				}
 				if(reason == SR_FIX_ERROR)
@@ -820,8 +851,20 @@ public class ExtNumbers {
 				log.info("adding number node at",toAdd.toDegreeString(),"to split, dist to line is",formatLen(bestDist));
 			action = "add";
 			this.endInRoad = addAsNumberNode(startInRoad + 1, toAdd);
-			this.recalcHousePositions(getHouses(Numbers.LEFT));
-			this.recalcHousePositions(getHouses(Numbers.RIGHT));
+			int forcedSegment = - 1;
+			if (forceEmpty){
+				if (wantedFraction < minFraction0To1)
+					forcedSegment = startInRoad + 1;
+				else if (wantedFraction > maxFraction0To1)
+					forcedSegment = startInRoad;
+			}
+			if (forcedSegment >= 0){
+				setSegment(forcedSegment, getHouses(Numbers.LEFT));
+				setSegment(forcedSegment, getHouses(Numbers.RIGHT));
+			} else {
+				this.recalcHousePositions(getHouses(Numbers.LEFT));
+				this.recalcHousePositions(getHouses(Numbers.RIGHT));
+			}
 		}
 		int splitSegment = (startInRoad + endInRoad) / 2;
 		if (worstHouse != null){
@@ -1689,7 +1732,7 @@ public class ExtNumbers {
 	 * @param c1
 	 * @param c2
 	 * @param p
-	 * @return the list of points
+	 * @return point with smallest perpendicular distance to line
 	 */
 	public static Coord rasterLineNearPoint(Coord c1, Coord c2, Coord p, boolean includeEndPoints){
 		int x0 = c1.getLongitude();
@@ -1705,7 +1748,6 @@ public class ExtNumbers {
 		double minDistLine = Double.MAX_VALUE;
 		double minDistTarget = Double.MAX_VALUE;
 		int bestX = Integer.MAX_VALUE, bestY = Integer.MAX_VALUE;
-//		List<Coord> nearLinePoints = new ArrayList<>();
 		
 		for(;;){  /* loop */
 			if (!includeEndPoints && x==x1 && y==y1)
@@ -1724,7 +1766,6 @@ public class ExtNumbers {
 							minDistTarget = distToTarget;
 						} 
 					}
-					//					nearLinePoints.add(t);
 				}
 			}
 			if (x==x1 && y==y1) break;
@@ -1735,8 +1776,92 @@ public class ExtNumbers {
 		if (minDistLine == Double.MAX_VALUE)
 			return null;
 		Coord best = new Coord(bestY, bestX);
-//		GpxCreator.createGpx("e:/ld/raster", Arrays.asList(c1,c2,best,c1), nearLinePoints);
 		return best;
+	}
+
+
+	/**
+	 * Use Bresenham algorithm to get the Garmin points which are close to the line
+	 * described by c1 and c2 and the point p.
+	 * @param c1
+	 * @param c2
+	 * @param p
+	 * @param maxBefore tolerated distance before p
+	 * @param maxAfter tolerated distance after p
+	 * @return sorted map with closest points 
+	 */
+	public static TreeMap<Double,Coord> rasterLineNearPoint2(Coord c1, Coord c2, Coord p, double maxBefore, double maxAfter){
+		int x0 = c1.getLongitude();
+		int y0 = c1.getLatitude();
+		int x1 = c2.getLongitude();
+		int y1 = c2.getLatitude();
+		Coord c1Dspl = c1.getDisplayedCoord();
+		Coord c2Dspl = c2.getDisplayedCoord();
+		int x = x0, y = y0;
+		int dx =  Math.abs(x1-x), sx = x<x1 ? 1 : -1;
+		int dy = -Math.abs(y1-y), sy = y<y1 ? 1 : -1;
+		int err = dx+dy, e2; /* error value e_xy */
+		
+		TreeMap<Double,Coord> sortedByDistToLine = new TreeMap<>();
+		boolean beforeTarget = true;
+		double lastDist = Double.NaN;
+		for(;;){  /* loop */
+			if (Math.abs(y - p.getLatitude()) <= 1  || Math.abs(x - p.getLongitude()) <= 1){
+				Coord t = new Coord(y, x);
+				double distToTarget = t.distance(p);
+
+				if (beforeTarget){
+					if (Double.isNaN(lastDist) == false && lastDist < distToTarget)
+						beforeTarget = false;
+				}
+				if (beforeTarget && distToTarget < maxBefore || !beforeTarget && distToTarget < maxAfter){ 
+					double distLine = t.distToLineSegment(c1Dspl, c2Dspl);
+					sortedByDistToLine.put(distLine, t);
+				}
+				lastDist = distToTarget;
+			}
+			if (x==x1 && y==y1) 
+				break;
+			e2 = 2*err;
+			if (e2 > dy) { err += dy; x += sx; } /* e_xy+e_x > 0 */
+			if (e2 < dx) { err += dx; y += sy; } /* e_xy+e_y < 0 */
+		}
+		return sortedByDistToLine;
+	}
+
+	/**
+	 * Use Bresemham algorithm to get the Garmin points which are close to the line
+	 * described by c1 and c2 and the point p.
+	 * @param c1
+	 * @param c2
+	 * @param p
+	 * @return the list of points
+	 */
+	public static List<Coord> rasterLineNearPoint3(Coord c1, Coord c2, double maxDistToLine){
+		int x0 = c1.getLongitude();
+		int y0 = c1.getLatitude();
+		int x1 = c2.getLongitude();
+		int y1 = c2.getLatitude();
+		Coord c1Dspl = c1.getDisplayedCoord();
+		Coord c2Dspl = c2.getDisplayedCoord();
+		int x = x0, y = y0;
+		int dx =  Math.abs(x1-x), sx = x<x1 ? 1 : -1;
+		int dy = -Math.abs(y1-y), sy = y<y1 ? 1 : -1;
+		int err = dx+dy, e2; /* error value e_xy */
+		
+		List<Coord> rendered = new ArrayList<>();
+		for(;;){  /* loop */
+			Coord t = new Coord(y, x);
+			double distLine = t.distToLineSegment(c1Dspl, c2Dspl);
+			if (distLine <= maxDistToLine)
+				rendered.add(t);
+			if (x==x1 && y==y1) 
+				break;
+			e2 = 2*err;
+			if (e2 > dy) { err += dy; x += sx; } /* e_xy+e_x > 0 */
+			if (e2 < dx) { err += dx; y += sy; } /* e_xy+e_y < 0 */
+		}
+		return rendered;
 	}
 
 	private static int countOccurence(List<HousenumberMatch> houses, int num){
@@ -1819,6 +1944,5 @@ public class ExtNumbers {
 		return getRoad().toString() + getHouses(Numbers.LEFT).toString() + getHouses(Numbers.RIGHT).toString();
 	}
 
-	
 }
 
