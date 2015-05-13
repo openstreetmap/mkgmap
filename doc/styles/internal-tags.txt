@@ -131,7 +131,8 @@ is used to assign the country location.
 | Tag | Description     
 | +mkgmap:skipSizeFilter+  | If set to +true+ the line or polygon will pass the size filter, no matter what size it has    
 | +mkgmap:highest-resolution-only+  | If set to +true+ the object will only be added for the highest resolution configured in the element type definition.
-| +mkgmap:execute_finalize_rules+  | If set to +true+ mkgmap will execute the finalize rules even if no object is created fot the element.     
+| +mkgmap:execute_finalize_rules+  | If set to +true+ mkgmap will execute the finalize rules even if no object is created fot the element.
+| +mkgmap:numbers+  | If set to +false+ for a node or way mkgmap will ignore the object in the calculations for the --housenumber option   
 |=========================================================
 
 

@@ -63,6 +63,8 @@ The tag mkgmap:execute_finalize_rules=true should be set for all objects that
 should be considered for address search but may not appear in the map:
 addr:housenumber=* {set mkgmap:execute_finalize_rules=true}
 
+You can also use the tag mkgmap:numbers=false to tell mkgmap
+that a node or way should be excluded when calculating address information.
 
 A common rule set to assign the +mkgmap:city+ tag looks like:
 ----
