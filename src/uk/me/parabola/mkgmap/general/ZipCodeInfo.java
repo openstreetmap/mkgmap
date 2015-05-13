@@ -55,10 +55,12 @@ public class ZipCodeInfo implements Comparable<ZipCodeInfo> {
 		if (!(obj instanceof ZipCodeInfo))
 			return false;
 		ZipCodeInfo other = (ZipCodeInfo) obj;
-		
-		if (zipCode == null && other.zipCode != null )
+		if (zipCode == null) {
+			if (other.zipCode != null)
+				return false;
+		} else if (!zipCode.equals(other.zipCode))
 			return false;
-		return zipCode.equals(other.zipCode);
+		return true;
 	}
 
 	@Override

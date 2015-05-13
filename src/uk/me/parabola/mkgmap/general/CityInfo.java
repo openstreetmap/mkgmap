@@ -77,10 +77,22 @@ public class CityInfo implements Comparable<CityInfo> {
 		if (!(obj instanceof CityInfo))
 			return false;
 		CityInfo other = (CityInfo) obj;
-		
-		if (city == null && other.city != null )
+		if (city == null) {
+			if (other.city != null)
+				return false;
+		} else if (!city.equals(other.city))
 			return false;
-		return city.equals(other.city) && region.equals(other.region) && country.equals(other.country);
+		if (country == null) {
+			if (other.country != null)
+				return false;
+		} else if (!country.equals(other.country))
+			return false;
+		if (region == null) {
+			if (other.region != null)
+				return false;
+		} else if (!region.equals(other.region))
+			return false;
+		return true;
 	}
 
 	@Override
