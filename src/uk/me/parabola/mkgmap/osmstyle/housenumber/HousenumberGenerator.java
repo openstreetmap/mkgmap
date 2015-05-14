@@ -992,7 +992,7 @@ public class HousenumberGenerator {
 	 */
 	private void identifyServiceRoads() {
 		Int2ObjectOpenHashMap<String> roadNamesByNodeIds = new Int2ObjectOpenHashMap<>();
-		MultiHashMap<MapRoad, Coord> coordNodesUnnamedRoads = new MultiHashMap<>();
+		HashMap<MapRoad, List<Coord>> coordNodesUnnamedRoads = new HashMap<>();
 		HashSet<Integer> unclearNodeIds = new HashSet<>();
 
 		long t1 = System.currentTimeMillis();
@@ -1007,10 +1007,12 @@ public class HousenumberGenerator {
 				// the road probably has a ref. We assume these are not service roads. 
 				if (road.getName() == null){
 					unnamedRoads.add(road);
+					List<Coord> nodes = new ArrayList<>();
 					for (Coord co : road.getPoints()){
 						if (co.getId() != 0)
-							coordNodesUnnamedRoads.add(road, co);
+							nodes.add(co);
 					}
+					coordNodesUnnamedRoads.put(road, nodes);
 				}
 			} else {
 				identifyNodes(road.getPoints(), road.getStreet(), roadNamesByNodeIds, unclearNodeIds);
