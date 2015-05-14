@@ -25,6 +25,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.tools.ant.taskdefs.compilers.Sj;
+
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Exit;
@@ -629,6 +631,8 @@ public class MapBuilder implements Configurable {
 		LevelInfo[] levels = null; 
 		if (src instanceof OverviewMapDataSource){
 			mergeLines = true;
+			prepShapesForMerge(src.getShapes());
+			mergeShapes = true;
 			levels = src.mapLevels();
 		}
 		else {
@@ -696,6 +700,29 @@ public class MapBuilder implements Configurable {
 
 			srcList = nextList;
 		}
+	}
+
+	/**
+	 * for the overview map: 
+	 * Make sure that all {@link Coord} instances are
+	 * identical when they are equal.
+	 * @param shapes the list of shapes
+	 */
+	private void prepShapesForMerge(List<MapShape> shapes) {
+		HashMap<Coord,Coord> coordMap = new HashMap<>();
+		for (MapShape s : shapes){
+			List<Coord> points = s.getPoints();
+			int n = points.size();
+			for (int i = 0; i< n; i++){
+				Coord co = points.get(i);
+				Coord repl = coordMap.get(co);
+				if (repl == null)
+					coordMap.put(co, co);
+				else 
+					points.set(i, repl);
+			}
+		}
+		return;
 	}
 
 	/**
