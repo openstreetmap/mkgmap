@@ -627,8 +627,10 @@ public class MapBuilder implements Configurable {
 		// The top level has to cover the whole map without subdividing, so
 		// do a special check to make sure.
 		LevelInfo[] levels = null; 
-		if (src instanceof OverviewMapDataSource)
+		if (src instanceof OverviewMapDataSource){
+			mergeLines = true;
 			levels = src.mapLevels();
+		}
 		else {
 			if (OverviewBuilder.isOverviewImg(map.getFilename())) {
 				levels = src.overviewMapLevels();
