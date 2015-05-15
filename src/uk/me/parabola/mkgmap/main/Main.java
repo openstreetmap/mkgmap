@@ -133,7 +133,9 @@ public class Main implements ArgumentProcessor {
 			commandArgs.setValidOptions(getValidOptions(System.err));
 			commandArgs.readArgs(args);
 		} catch (MapFailedException e) {
-			System.err.println(e.getMessage()); // should not happen
+			// one of the combiners failed
+			e.printStackTrace();
+			++numExitExceptions;
 		} catch (ExitException e) {
 			++numExitExceptions;
 			System.err.println(e.getMessage());
