@@ -92,12 +92,12 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 					// oneway => don't need the last point because the
 					// way cannot be driven standing at the last point
 					points = w.getPoints().subList(0, w.getPoints().size() - 1);
-					directedDestination = w.getTag("direction:forward");
+					directedDestination = w.getTag("destination:forward");
 				} else if (isOnewayOppositeDirection(w)) {
 					// reverse oneway => don't need the first point because the
 					// way cannot be driven standing at the first point
 					points = w.getPoints().subList(1, w.getPoints().size());
-					directedDestination = w.getTag("direction:backward");
+					directedDestination = w.getTag("destination:backward");
 				} else {
 					points = w.getPoints();
 				}
@@ -443,15 +443,17 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 		// belongs to a motorway/trunk or is a "subexit" within a motorway/trunk junction
 		Set<Coord> motorwayCoords = new HashSet<Coord>();
 		Set<Coord> trunkCoords = new HashSet<Coord>();
-		for (Way w : saver.getWays().values()) {
-			String motorwayTag = w.getTag("highway");
-			if (motorwayTag != null) {
-				if (motorwayTag.equals("motorway"))
-					motorwayCoords.addAll(w.getPoints());
-				else if (motorwayTag.equals("trunk"))
-					trunkCoords.addAll(w.getPoints());
-			}
-		}	
+		if (processExits){
+			for (Way w : saver.getWays().values()) {
+				String motorwayTag = w.getTag("highway");
+				if (motorwayTag != null) {
+					if (motorwayTag.equals("motorway"))
+						motorwayCoords.addAll(w.getPoints());
+					else if (motorwayTag.equals("trunk"))
+						trunkCoords.addAll(w.getPoints());
+				}
+			}	
+		}
 		
 		
 		// remove the adjacent links from the destinationLinkWays list
@@ -708,18 +710,22 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 	}
 
 	public Set<String> getUsedTags() {
-		if (processDestinations) {
-			// When processing destinations also load the destination:lanes,forward and backward tag 
-			// to be able to copy the value to the destination tag
-			// Do not load destination because it makes sense only if the tag is
-			// referenced in the style file
-			Set<String> tags = new HashSet<String>();
-			tags.add("destination:lanes");
-			tags.add("destination:forward");
-			tags.add("destination:backward");
-			return tags;
-		} else 
+		if (!(processDestinations || processExits))
 			return Collections.emptySet();
+		// When processing destinations also load the destination:lanes,forward and backward tag 
+		// to be able to copy the value to the destination tag
+		// Do not load destination because it makes sense only if the tag is
+		// referenced in the style file
+		Set<String> tags = new HashSet<String>();
+		tags.add("highway");
+		tags.add("destination:lanes");
+		tags.add("destination:forward");
+		tags.add("destination:backward");
+		if (processExits){
+			tags.add("exit_to");
+			tags.add("ref");
+		}
+		return tags;
 	}	
 
 	public void end() {
@@ -727,8 +733,6 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 
 		retrieveWays();
 		
-//		if (processDestinations)
-//			processDestinations();
 		if (processExits || processDestinations)
 			processWays();
 		
