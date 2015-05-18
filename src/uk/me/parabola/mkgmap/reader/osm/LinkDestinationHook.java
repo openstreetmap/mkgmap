@@ -130,9 +130,10 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 						}
 					}
 					
-					if (destinationTag == null) {
+					if (destinationTag == null && directedDestination != null) {
 						// use the destination:forward or :backward value
 						destinationTag = directedDestination;
+						w.addTag("destination", destinationTag);
 					}
 					
 					if (destinationTag != null)
@@ -464,6 +465,7 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 		while (linksWithDestination.isEmpty()== false) {
 			Way linkWay = linksWithDestination.poll();
 			String destination = linkWay.getTag("destination");
+			
 
 			if (log.isDebugEnabled())
 				log.debug("Check way",linkWay.getId(),linkWay.toTagString());
