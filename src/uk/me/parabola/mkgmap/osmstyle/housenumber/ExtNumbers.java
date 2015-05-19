@@ -747,12 +747,12 @@ public class ExtNumbers {
 				} else {
 					if (len1 > MAX_LOCATE_ERROR / 2){
 						// create empty segment at start
-						wantedFraction = minFraction0To1 * 0.99999;  
+						wantedFraction = minFraction0To1 * 0.999;  
 						forceEmpty = true;
 					} 
 					if (len3 > MAX_LOCATE_ERROR / 2 && len3 > len1){
 						// create empty segment at end
-						wantedFraction = maxFraction0To1 * 1.000001;
+						wantedFraction = maxFraction0To1 * 1.001;
 						forceEmpty = true;
 					}
 				}
@@ -765,6 +765,9 @@ public class ExtNumbers {
 				double splitFrac = len1 < len3 ? minFraction0To1 : maxFraction0To1;
 				return dupNode(splitFrac, SR_OPT_LEN);
 			}
+			if (worstHouse != null && worstHouse.getElement().getId() == 2917181493L){
+				long dd = 4;
+			}
 			double usedFraction = 0;
 			double bestDist = Double.MAX_VALUE;
 			if (wantedFraction < minFraction0To1){
@@ -775,31 +778,34 @@ public class ExtNumbers {
 			}
 			for (;;){
 				Coord wanted = c1.makeBetweenPoint(c2, wantedFraction);
-				Map<Double, Coord> candidates = rasterLineNearPoint2(c1, c2, wanted, maxDistBefore, maxDistAfter);
+				Map<Double, List<Coord>> candidates = rasterLineNearPoint2(c1, c2, wanted, maxDistBefore, maxDistAfter);
 				boolean foundGood = false;
-				for (Entry<Double, Coord> entry : candidates.entrySet()){
-					toAdd = entry.getValue();
-					bestDist = entry.getKey();
-					usedFraction = HousenumberGenerator.getFrac(c1, c2, toAdd);
-					if (usedFraction <= 0 || usedFraction >= 1)
-						toAdd = null;
-					else if (usedFraction > minFraction0To1 && wantedFraction < minFraction0To1 || usedFraction < maxFraction0To1 && wantedFraction > maxFraction0To1){
-						toAdd = null;
-					} else if (allowSplitBetween == false && usedFraction > minFraction0To1 && usedFraction < maxFraction0To1){
-						toAdd = null;
-					} else {
-						if (bestDist > 0.2){
-							double angle = Utils.getDisplayedAngle(c1, toAdd, c2);
-							if (Math.abs(angle) > 3){
-								toAdd = null;
-								continue;
-							}
-						}
-						foundGood = true;
+				for (Entry<Double, List<Coord>> entry : candidates.entrySet()){
+					if (foundGood)
 						break;
+					bestDist = entry.getKey();
+					for (Coord candidate: entry.getValue()){
+						toAdd = candidate;
+						usedFraction = HousenumberGenerator.getFrac(c1, c2, toAdd);
+						if (usedFraction <= 0 || usedFraction >= 1)
+							toAdd = null;
+						else if (usedFraction > minFraction0To1 && wantedFraction < minFraction0To1 || usedFraction < maxFraction0To1 && wantedFraction > maxFraction0To1){
+							toAdd = null;
+						} else if (allowSplitBetween == false && usedFraction > minFraction0To1 && usedFraction < maxFraction0To1){
+							toAdd = null;
+						} else {
+							if (bestDist > 0.2){
+								double angle = Utils.getDisplayedAngle(c1, toAdd, c2);
+								if (Math.abs(angle) > 3){
+									toAdd = null;
+									continue;
+								}
+							}
+							foundGood = true;
+							break;
+						}
 					}
 				}
-				
 				if (foundGood){
 					break;
 				}
@@ -836,6 +842,9 @@ public class ExtNumbers {
 							splitFrac = minFraction0To1;
 						else if (wantedFraction >= maxFraction0To1)
 							splitFrac = maxFraction0To1;
+						if (splitFrac <= 0.5 && len1 >= MAX_LOCATE_ERROR || splitFrac > 0.5 && len3 >= MAX_LOCATE_ERROR){
+							splitFrac = -1;
+						}
 					}
 					if (splitFrac < 0)
 						splitFrac = (minFraction0To1 != maxFraction0To1) ? midFraction : minFraction0To1;
@@ -1790,7 +1799,7 @@ public class ExtNumbers {
 	 * @param maxAfter tolerated distance after p
 	 * @return sorted map with closest points 
 	 */
-	public static TreeMap<Double,Coord> rasterLineNearPoint2(Coord c1, Coord c2, Coord p, double maxBefore, double maxAfter){
+	public static TreeMap<Double,List<Coord>> rasterLineNearPoint2(Coord c1, Coord c2, Coord p, double maxBefore, double maxAfter){
 		int x0 = c1.getLongitude();
 		int y0 = c1.getLatitude();
 		int x1 = c2.getLongitude();
@@ -1802,7 +1811,7 @@ public class ExtNumbers {
 		int dy = -Math.abs(y1-y), sy = y<y1 ? 1 : -1;
 		int err = dx+dy, e2; /* error value e_xy */
 		
-		TreeMap<Double,Coord> sortedByDistToLine = new TreeMap<>();
+		TreeMap<Double,List<Coord>> sortedByDistToLine = new TreeMap<>();
 		boolean beforeTarget = true;
 		double lastDist = Double.NaN;
 		for(;;){  /* loop */
@@ -1815,8 +1824,13 @@ public class ExtNumbers {
 						beforeTarget = false;
 				}
 				if (beforeTarget && distToTarget < maxBefore || !beforeTarget && distToTarget < maxAfter){ 
-					double distLine = t.distToLineSegment(c1Dspl, c2Dspl);
-					sortedByDistToLine.put(distLine, t);
+					Double distLine = t.distToLineSegment(c1Dspl, c2Dspl);
+					List<Coord> list = sortedByDistToLine.get(distLine);
+					if (list == null){
+						list = new ArrayList<>();
+						sortedByDistToLine.put(distLine, list);
+					}
+					list.add(t);
 				}
 				lastDist = distToTarget;
 			}
