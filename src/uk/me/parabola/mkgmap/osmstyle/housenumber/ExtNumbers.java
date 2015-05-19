@@ -434,7 +434,7 @@ public class ExtNumbers {
 			}
 			if (Double.isNaN(house.getDistance()) || house.getDistance() > HousenumberGenerator.MAX_DISTANCE_TO_ROAD + 10){
 				if (house.getGroup() == null)
-					log.error("distance to road too large, road",getRoad(),"house",house,house.getElement().toBrowseURL());
+					log.error("internal error, distance to road too large, road",getRoad(),"house",house,house.getElement().toBrowseURL());
 			}
 		}
 	}
@@ -618,7 +618,7 @@ public class ExtNumbers {
 				}
 			}
 			if (toAdd == null){
-				log.error("cannot split",this);
+				log.error("internal error, cannot split",this);
 			}
 			if (toAdd != null){
 				if (log.isDebugEnabled())
@@ -646,7 +646,7 @@ public class ExtNumbers {
 			ExtNumbers en2 = en1.next;
 			if (en1.getHouses(Numbers.LEFT).size() + en2.getHouses(Numbers.LEFT).size() != getHouses(Numbers.LEFT).size() ||
 					en1.getHouses(Numbers.RIGHT).size() + en2.getHouses(Numbers.RIGHT).size() != getHouses(Numbers.RIGHT).size()){
-				log.error("lost houses");
+				log.error("internal error, lost houses");
 			}
 			log.info("number node added in street",getRoad(),getNumbers(),"==>",en1.getNumbers(),"+",en2.getNumbers());		
 			return en1;
@@ -975,7 +975,7 @@ public class ExtNumbers {
 				
 			}
 		} else {
-			log.error("don't know how to split", this); 
+			log.error("internal error, don't know how to split", this); 
 		}
 		
 		assert splitSegment != startInRoad && splitSegment != endInRoad;
@@ -996,7 +996,7 @@ public class ExtNumbers {
 		
 		log.info("zero length interval added in street",getRoad(),getNumbers(),"==>",en1.getNumbers(),"+",en2.getNumbers());
 		if (atStart && !en1.hasNumbers() ||  !atStart && !en2.hasNumbers()){
-			log.error("zero length interval has no numbers in road",getRoad());
+			log.error("internal error, zero length interval has no numbers in road",getRoad());
 		}
 		return en1;	
 		
@@ -1699,7 +1699,7 @@ public class ExtNumbers {
 				int end = ivl.getEnd(left);
 				int step = style == NumberStyle.BOTH ? 1 : 2;
 				if (step != 1 && start % 2 != end % 2){
-					log.error("bad interval in optimization",this);
+					log.error("internal error, bad interval in optimization",this);
 					return false;
 				}
 				if (start == end){
