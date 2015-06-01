@@ -366,29 +366,47 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 			if (r instanceof MultiPolygonRelation == false) {
 				continue;
 			}
-			// boundary relations may have a node with role admin_centre, if yes, use the 
-			// location of it
-			Node existingPOI = null;
-			if ("boundary".equals(r.getTag("type")) && "administrative".equals(r.getTag("boundary"))){
+			Node admin_centre = null;
+			Node labelPOI = null;
+			String relName = getName(r);
+			if (relName != null){
 				for (Entry<String, Element> pair : r.getElements()){
 					String role = pair.getKey();
-					Element el = pair.getValue(); 
-					if ("admin_centre".equals(role)){
-						if (el instanceof Node){
-							String bName = getName(r);
-							String pName = getName(el);
-							if (bName != null && bName.equals(pName))
-								existingPOI = (Node) el;
+					Element el = pair.getValue();
+					if (el instanceof Node){
+						if ("admin_centre".equals(role)){
+							if ("boundary".equals(r.getTag("type")) && "administrative".equals(r.getTag("boundary"))){
+								// boundary relations may have a node with role admin_centre, if yes, use the 
+								// location of it
+								String pName = getName(el);
+								if (relName.equals(pName)){
+									admin_centre = (Node) el;
+									if (log.isDebugEnabled())
+										log.debug("using admin_centre node as location for POI for rel",r.getId(),relName,"at",((Node) el).getLocation().toDegreeString());
+								}
+							}
+						} else if ("label".equals(role)){
+							String label = getName(el);
+							if (relName.equals(label)){
+								labelPOI = (Node) el;
+								log.debug("using label node as location for POI for rel",r.getId(),relName,"at",((Node) el).getLocation().toDegreeString());
+								break;
+							} else {
+								log.warn("rel",r.toBrowseURL(),",node with role label is ignored because it has a different name");
+							}
 						}
-						break;
 					}
 				}
 			}
-			Coord point;
-			if (existingPOI ==null)
+			Coord point = null;
+			if (admin_centre == null && labelPOI == null)
 				point = ((MultiPolygonRelation)r).getCofG();
-			else 
-				point = existingPOI.getLocation();
+			else {
+				if (labelPOI != null)
+					point = labelPOI.getLocation();
+				else 
+					point = admin_centre.getLocation();
+			}
 			if (point == null) {
 				continue;
 			}
