@@ -448,6 +448,8 @@ public class MapBuilder implements Configurable {
 	}
 
 	private City calcCity(LBLFile lbl, String city, String region, String country){
+		if (city == null && region == null && country == null)
+			return null;
 		Country cc = (country == null)? getDefaultCountry() : lbl.createCountry(country, locator.getCountryISOCode(country));
 		Region cr = (region == null)? getDefaultRegion(cc) : lbl.createRegion(cc, region, null);
 		if (city == null && (country != null || region != null)) {
