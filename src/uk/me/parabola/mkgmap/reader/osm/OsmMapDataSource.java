@@ -62,6 +62,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 			new HighwayHooks(),
 			new LocationHook(),
 			new POIGeneratorHook(),
+			new HousenumberHooks(),
 	};
 	protected OsmConverter converter;
 	private final Set<String> usedTags = new HashSet<String>();

@@ -12,10 +12,17 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
+import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.BitWriter;
+import uk.me.parabola.imgfmt.app.lbl.City;
+import uk.me.parabola.imgfmt.app.lbl.Zip;
+import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.CityInfo;
+import uk.me.parabola.mkgmap.general.ZipCodeInfo;
 
 import static uk.me.parabola.imgfmt.app.net.NumberStyle.*;
 
@@ -29,7 +36,7 @@ import static uk.me.parabola.imgfmt.app.net.NumberStyle.*;
  * @author Steve Ratcliffe
  */
 public class NumberPreparer {
-
+	private static final Logger log = Logger.getLogger(NumberPreparer.class);
 	private final List<Numbers> numbers;
 	private boolean valid;
 
@@ -39,11 +46,31 @@ public class NumberPreparer {
 
 	private BitWriter bw;
 	private boolean swappedDefaultStyle;
+	CityZipWriter zipWriter;
+	CityZipWriter cityWriter;
 
 	public NumberPreparer(List<Numbers> numbers) {
 		this.numbers = numbers;
+		this.zipWriter = new CityZipWriter("zip", 0, 0);
+		this.cityWriter = new CityZipWriter("city", 0, 0);
 	}
 
+	
+	public NumberPreparer(List<Numbers> numbers, Zip zip, City city, int numCities, int numZips) {
+		this.numbers = numbers;
+		
+		zipWriter = new CityZipWriter("zip",(zip == null) ? 0: zip.getIndex(), numZips);
+		cityWriter = new CityZipWriter("city",(city == null) ? 0: city.getIndex(), numCities);
+	}
+
+	public boolean prepare(){
+		fetchBitStream();
+		if (!valid)
+			return false;
+		zipWriter.compile(numbers);
+		cityWriter.compile(numbers);
+		return true;
+	}
 	/**
 	 * Make the bit stream and return it. This is only done once, if you call this several times
 	 * the same bit writer is returned every time.
@@ -52,7 +79,6 @@ public class NumberPreparer {
 	public BitWriter fetchBitStream() {
 		if (bw != null)
 			return bw;
-
 		int initialValue = setup();
 
 		// Write the bitstream
@@ -75,13 +101,13 @@ public class NumberPreparer {
 			if (bw.getLength() > 1)
 				valid = true;
 		} catch (Abandon e) {
-			System.out.println(e.getMessage());
+			log.error(e.getMessage());
 			valid = false;
 		}
 
 		return bw;
 	}
-
+	
 	/**
 	 * Do some initial calculation and sanity checking of the numbers that we are to
 	 * write.
@@ -136,12 +162,11 @@ public class NumberPreparer {
 
 		int lastNode = -1;
 		for (Numbers n : numbers) {
-			if (!n.hasRnodNumber())
+			if (!n.hasIndex())
 				throw new Abandon("no r node set");
-
 			// See if we need to skip some nodes
-			if (n.getRnodNumber() != lastNode + 1)
-				state.writeSkip(bw, n.getRnodNumber() - lastNode - 2);
+			if (n.getIndex() != lastNode + 1)
+				state.writeSkip(bw, n.getIndex() - lastNode - 2);
 
 			// Normal case write out the next node.
 			state.setTarget(n);
@@ -152,7 +177,7 @@ public class NumberPreparer {
 			state.writeNumbers(bw);
 			state.restoreWriters();
 
-			lastNode = n.getRnodNumber();
+			lastNode = n.getIndex();
 		}
 	}
 
@@ -207,6 +232,10 @@ public class NumberPreparer {
 	 * @return True if the preparer believes that the output is valid.
 	 */
 	public boolean isValid() {
+		try {
+			fetchBitStream();
+		} catch (Exception e) {
+		}
 		return valid;
 	}
 
@@ -751,7 +780,9 @@ public class NumberPreparer {
 			}
 		}
 	}
+	
 }
+
 
 /**
  * A bit writer that can be configured with different bit width and sign properties.
@@ -848,4 +879,133 @@ class Abandon extends RuntimeException {
 	Abandon(String message) {
 		super("HOUSE NUMBER RANGE: " + message);
 	}
+}
+	
+class CityZipWriter {
+	private ByteArrayOutputStream buf; 
+	private final String type;
+	private final int numItems;
+	private final int defaultIndex;
+	
+	
+	public CityZipWriter(String type, int defIndex, int numItems) {
+		this.type = type;
+		this.defaultIndex = defIndex;
+		this.numItems = numItems;
+		buf = new ByteArrayOutputStream();
+	}
+	
+	public ByteArrayOutputStream getBuffer(){
+		return buf;
+	}
+	public boolean compile(List<Numbers> numbers){
+		try {
+			int lastNodeIndex = -1;
+			// left and right entry in zip or city table
+			int []prevIndexes = new int[2]; 
+			prevIndexes[0] = prevIndexes[1] = -1;
+			int []indexes = new int[2]; 
+			for (Numbers num : numbers){
+				for (int i = 0; i < 2; i++){
+					indexes[i] = -1;
+					boolean left = (i == 0);
+					switch (type) {
+					case "zip":
+						ZipCodeInfo zipInfo = num.getZipCodeInfo(left);
+						if (zipInfo != null){
+							if (zipInfo.getImgZip() != null)
+								indexes[i] = zipInfo.getImgZip().getIndex();
+							else 
+								indexes[i] = 0; // or default?
+						}
+						break;
+					case "city": 
+						CityInfo cityInfo = num.getCityInfo(left);
+						if (cityInfo != null){
+							if (cityInfo.getImgCity() != null)
+								indexes[i] = cityInfo.getImgCity().getIndex();
+							else 
+								indexes[i] = 0; // or default?
+						}
+						break;
+					default:
+						break;
+					}
+				}
+				if (indexes[0] < 0 && indexes[1] < 0)
+					continue;
+				if (lastNodeIndex < 0){
+					if (num.getIndex() > 0 ){ 
+						int [] defindexes = {defaultIndex,defaultIndex};
+						write(0, defindexes, prevIndexes);
+					}
+				}
+				int skip = num.getIndex() - lastNodeIndex - 1;
+				assert defaultIndex > 0 : "bad default index";
+				lastNodeIndex = num.getIndex();
+				if (indexes[0] < 0)
+					indexes[0] = defaultIndex;
+				if (indexes[1] < 0)
+					indexes[1] = defaultIndex;
+				write(skip, indexes, prevIndexes);
+			}
+		} catch (Abandon e) {
+			return false;
+		}
+		return true;
+	}
+
+	private void write(int skip, int[] indexes, int[] prevIndexes) {
+		if (Arrays.equals(indexes, prevIndexes))
+			return;
+		// we can signal new values for left and / or right side 
+		int sidesFlag = 0;  
+		if (indexes[0] <= 0 && indexes[1] <= 0){
+			sidesFlag |= 4; // signal end of a zip code/city interval
+			if (indexes[0] == 0)
+				sidesFlag |= 1;
+			if (indexes[1] == 0)
+				sidesFlag |= 2;
+		} else {
+			if (indexes[1] != indexes[0]){
+				if (indexes[0] > 0 && indexes[0] != prevIndexes[0])
+					sidesFlag |= 1;
+				if (indexes[1] > 0 && indexes[1] != prevIndexes[1])
+					sidesFlag |= 2;
+			}
+		}
+
+		int initFlag = Math.max(skip-1,0);
+		if (initFlag > 31){
+			// we have to write two bytes
+			buf.write((byte) (initFlag & 0x1f | 0x7<<5));
+			initFlag >>= 5;
+		}
+		initFlag |= sidesFlag << 5;
+		if ((initFlag & 0xff) == 4){
+			long dd = 4;
+		}
+		buf.write((byte) (initFlag & 0xff));
+		if ((sidesFlag & 4) == 0) {
+			if (indexes[0] > 0 && (sidesFlag == 0 || (sidesFlag & 1) == 1))
+				writeIndex(indexes[0]);
+			if (indexes[1] > 0 && (sidesFlag & 2) != 0)
+				writeIndex(indexes[1]);
+		} else {
+			long dd = 4;
+		}
+		System.arraycopy(indexes, 0, prevIndexes, 0, indexes.length);
+	}
+	
+	void writeIndex(int val){
+		if (val <= 0)
+			return;
+		if (numItems > 255){
+			buf.write((byte) val & 0xff);
+			buf.write((byte) (val >> 8));
+		}
+		else 
+			buf.write((byte) val);
+	}
+
 }

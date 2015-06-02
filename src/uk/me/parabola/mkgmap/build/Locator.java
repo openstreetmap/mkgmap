@@ -20,9 +20,9 @@ import java.util.Set;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapPoint;
-import uk.me.parabola.mkgmap.general.MapPointKdTree;
 import uk.me.parabola.mkgmap.reader.osm.Tags;
 import uk.me.parabola.util.EnhancedProperties;
+import uk.me.parabola.util.KdTree;
 import uk.me.parabola.util.MultiHashMap;
 
 public class Locator {
@@ -31,7 +31,7 @@ public class Locator {
     /** hash map to collect equally named MapPoints*/ 
 	private final MultiHashMap<String, MapPoint> cityMap = new MultiHashMap<String, MapPoint>();
 	
-	private final MapPointKdTree cityFinder = new MapPointKdTree();
+	private final KdTree<MapPoint> cityFinder = new KdTree<>();
 	private final List<MapPoint> placesMap  =  new ArrayList<MapPoint>();
 
 	/** Contains the tags defined by the option name-tag-list */

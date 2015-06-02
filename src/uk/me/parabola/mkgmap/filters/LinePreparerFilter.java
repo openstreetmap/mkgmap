@@ -86,7 +86,7 @@ public class LinePreparerFilter implements MapFilter {
 			lastLong = lon;
 			lastLat = lat;
 			if (dx == 0 && dy == 0){
-				if(!line.isRoad() || co.getId() == 0)
+				if(!line.isRoad() || (co.getId() == 0 && co.isNumberNode() == false))
 					continue;
 			}
 			++numPointsEncoded;

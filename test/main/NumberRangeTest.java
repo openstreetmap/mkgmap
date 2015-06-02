@@ -72,7 +72,7 @@ public class NumberRangeTest {
 		List<Numbers> numbers = new ArrayList<Numbers>();
 		for (String s : strings) {
 			Numbers n = new Numbers(s);
-			n.setRnodNumber(n.getNodeNumber());
+			n.setIndex(n.getNodeNumber());
 			numbers.add(n);
 		}
 
@@ -84,13 +84,12 @@ public class NumberRangeTest {
 		byte[] bytes = new byte[bitWriter.getLength()];
 		System.arraycopy(bitWriter.getBytes(), 0, bytes, 0, bytes.length);
 		NumberReader nr = new NumberReader(new BitReader(bytes));
-
-		nr.setNumberOfNodes(numbers.size());
+		nr.setNumberOfNodes(numbers.get(numbers.size()-1).getIndex() + 1);
 		List<Numbers> list = nr.readNumbers(np.getSwapped());
 
 		// Have to fix up the node numbers
 		for (Numbers n : list) {
-			n.setNodeNumber(n.getRnodNumber());
+			n.setNodeNumber(n.getIndex());
 		}
 
 		// Test that they are the same.

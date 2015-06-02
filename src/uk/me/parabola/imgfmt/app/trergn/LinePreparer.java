@@ -47,6 +47,8 @@ public class LinePreparer {
 	private int[] deltas;
 	private boolean[] nodes;
 
+	private boolean ignoreNumberOnlyNodes;
+
 	LinePreparer(Polyline line) {
 		if (line.isRoad() && 
 			line.getSubdiv().getZoom().getLevel() == 0 &&
@@ -55,6 +57,8 @@ public class LinePreparer {
 			// but who knows
 			extraBit = true;
 		}
+		if (!line.hasHouseNumbers())
+			ignoreNumberOnlyNodes = true;
 
 		extTypeLine = line.hasExtendedType();
 
@@ -237,21 +241,23 @@ public class LinePreparer {
 			assert (dy == 0 && lat != lastLat) == false: ("delta lat too large: " +  (lat - lastLat));
 			lastLong = lon;
 			lastLat = lat;
-
-			if (dx != 0 || dy != 0 || (extraBit && co.getId() != 0))
+			boolean isSpecialNode = false;
+			if (co.getId() > 0 || (co.isNumberNode() && ignoreNumberOnlyNodes == false))
+				isSpecialNode = true;
+			if (dx != 0 || dy != 0 || extraBit && isSpecialNode)
 				firstsame = i;
 
 			/*
 			 * Current thought is that the node indicator is set when
-			 * the point is a node. There's a separate first extra bit
+			 * the point is a routing node or a house number node. 
+			 * There's a separate first extra bit
 			 * that always appears to be false. The last points' extra bit
 			 * is set if the point is a node and this is not the last
 			 * polyline making up the road.
-			 * Todo: special case the last bit
 			 */
 			if (extraBit) {
 				boolean extra = false;
-				if (co.getId() != 0) {
+				if (isSpecialNode) {
 					if (i < nodes.length - 1)
 						// inner node of polyline
 						extra = true;

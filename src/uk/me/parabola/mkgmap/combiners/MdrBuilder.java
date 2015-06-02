@@ -310,15 +310,19 @@ public class MdrBuilder implements Combiner {
 			String name = road.getName();
 			if (name == null || name.isEmpty())
 				continue;
-
 			Mdr5Record mdrCity = null;
-			if (road.getCity() != null) {
-				mdrCity = cityList.get(road.getCity().getIndex() - 1);
-				if (mdrCity.getMapIndex() == 0)
-					mdrCity = null;
+			List<City> cities = road.getCities();
+			if (cities.isEmpty())
+				mdrFile.addStreet(road, mdrCity);
+			else {
+				for (City city : cities){
+					mdrCity = cityList.get(city.getIndex() - 1);
+					if (mdrCity.getMapIndex() == 0)
+						mdrCity = null;
+
+					mdrFile.addStreet(road, mdrCity);
+				}
 			}
-			
-			mdrFile.addStreet(road, mdrCity);
 		}
 	}
 

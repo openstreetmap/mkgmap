@@ -184,8 +184,10 @@ public class CommandArgsReader {
 
 		switch (option) {
 		case "input-file":
-			log.debug("adding filename", value);
-			add(new Filename(value));
+			if (value != null){
+				log.debug("adding filename", value);
+				add(new Filename(value));
+			}
 			break;
 		case "read-config":
 			readConfigFile(value);

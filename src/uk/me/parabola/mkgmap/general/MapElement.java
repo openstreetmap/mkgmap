@@ -28,7 +28,7 @@ import uk.me.parabola.imgfmt.app.trergn.MapObject;
  * @author Steve Ratcliffe.
  */
 public abstract class MapElement {
-	private String[] labels;
+	protected String[] labels;
 	private int type;
 
 	private int minResolution = 24;
@@ -89,6 +89,17 @@ public abstract class MapElement {
 
 	public void setLabels(String[] labels) {
 		this.labels = Arrays.copyOf(labels, 4);
+	}
+
+	public int numLabels(){
+		int count = 0;
+		for (int i = 0; i < 4; i++) {
+			if (this.labels[i] != null) 
+				count++;
+			else 
+				break;
+		}
+		return count;
 	}
 
 	public ExtTypeAttributes getExtTypeAttributes() {

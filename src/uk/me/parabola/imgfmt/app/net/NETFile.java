@@ -128,7 +128,7 @@ public class NETFile extends ImgFile {
 				SortKey<LabeledRoadDef> nameKey = sort.createSortKey(lrd, label, 0, cache);
 
 				// If there is a city add it to the sort.
-				City city = rd.getCity();
+				City city = (rd.getCities().isEmpty() ? null : rd.getCities().get(0)); // what if we more than one?
 				SortKey<LabeledRoadDef> cityKey;
 				if (city != null) {
 					int region = city.getRegionNumber();
@@ -160,7 +160,7 @@ public class NETFile extends ImgFile {
 
 			Label name = lrd.label;
 			RoadDef road = lrd.roadDef;
-			City city = road.getCity();
+			City city = (road.getCities().isEmpty() ? null : road.getCities().get(0)); // what if we more than one?
 
 			if (road.hasHouseNumbers() || !name.equals(lastName) || city != lastCity) {
 

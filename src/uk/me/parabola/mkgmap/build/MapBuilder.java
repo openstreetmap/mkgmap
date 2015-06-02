@@ -40,7 +40,9 @@ import uk.me.parabola.imgfmt.app.lbl.Zip;
 import uk.me.parabola.imgfmt.app.map.Map;
 import uk.me.parabola.imgfmt.app.net.NETFile;
 import uk.me.parabola.imgfmt.app.net.NODFile;
+import uk.me.parabola.imgfmt.app.net.Numbers;
 import uk.me.parabola.imgfmt.app.net.RoadDef;
+import uk.me.parabola.imgfmt.app.net.RoadNetwork;
 import uk.me.parabola.imgfmt.app.net.RouteCenter;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.imgfmt.app.trergn.Overview;
@@ -73,6 +75,7 @@ import uk.me.parabola.mkgmap.filters.RemoveObsoletePointsFilter;
 import uk.me.parabola.mkgmap.filters.RoundCoordsFilter;
 import uk.me.parabola.mkgmap.filters.ShapeMergeFilter;
 import uk.me.parabola.mkgmap.filters.SizeFilter;
+import uk.me.parabola.mkgmap.general.CityInfo;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapDataSource;
@@ -82,7 +85,7 @@ import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.imgfmt.app.net.RoadNetwork;
+import uk.me.parabola.mkgmap.general.ZipCodeInfo;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.util.Configurable;
@@ -401,34 +404,70 @@ public class MapBuilder implements Configurable {
 					}
 				}
 
-				if (cityName == null && (cityCountryName != null || cityRegionName != null)) {
-					// if city name is unknown and region and/or country is known 
-					// use empty name for the city
-					cityName = UNKNOWN_CITY_NAME;
-				}
-				
-				if(cityName != null) {
+				MapRoad road = (MapRoad) line;
+				road.resetImgData();
 
-					Country cc = (cityCountryName == null)? getDefaultCountry() : lbl.createCountry(cityCountryName, locator.getCountryISOCode(cityCountryName));
-
-					Region cr = (cityRegionName == null)? getDefaultRegion(cc) : lbl.createRegion(cc, cityRegionName, null);
-
-					if(cr != null) {
-						((MapRoad)line).setRoadCity(lbl.createCity(cr, cityName, false));
-					}
-					else {
-						((MapRoad)line).setRoadCity(lbl.createCity(cc, cityName, false));
-					}
-				}
+				City roadCity = calcCity(lbl, cityName, cityRegionName, cityCountryName);
+				if (roadCity != null)
+					road.addRoadCity(roadCity);
 
 				if(zipStr != null) {
-					((MapRoad)line).setRoadZip(lbl.createZip(zipStr));
+					road.addRoadZip(lbl.createZip(zipStr));
 				}
 
+				List<Numbers> numbers = road.getRoadDef().getNumbersList();
+				if (numbers != null){
+					for (Numbers num : numbers){
+						for (int i = 0; i < 2; i++){
+							boolean left = (i == 0);
+							ZipCodeInfo zipInfo = num.getZipCodeInfo(left);
+							if (zipInfo != null && zipInfo.getZipCode() != null){
+								Zip zip = zipInfo.getImgZip();
+								if (zipInfo.getImgZip() == null){
+									zip = lbl.createZip(zipInfo.getZipCode());
+									zipInfo.setImgZip(zip);
+								}
+								if (zip != null)
+									road.addRoadZip(zip);
+							}
+							CityInfo cityInfo = num.getCityInfo(left);
+							if (cityInfo != null){
+								City city = cityInfo.getImgCity();
+								if (city == null ){
+									city = calcCity(lbl, cityInfo.getCity(), cityInfo.getRegion(), cityInfo.getCountry());
+									cityInfo.setImgCity(city);
+								}
+								if (city != null)
+									road.addRoadCity(city);
+							}
+						}
+					}
+				}
 			}
 		}	
 	}
 
+	private City calcCity(LBLFile lbl, String city, String region, String country){
+		if (city == null && region == null && country == null)
+			return null;
+		Country cc = (country == null)? getDefaultCountry() : lbl.createCountry(country, locator.getCountryISOCode(country));
+		Region cr = (region == null)? getDefaultRegion(cc) : lbl.createRegion(cc, region, null);
+		if (city == null && (country != null || region != null)) {
+			// if city name is unknown and region and/or country is known 
+			// use empty name for the city
+			city = UNKNOWN_CITY_NAME;
+		}
+		if (city == null)
+			return null;
+		if(cr != null) {
+			return lbl.createCity(cr, city, false);
+		}
+		else {
+			return lbl.createCity(cc, city, false);
+		}
+	}
+	
+	
 	private void processPOIs(Map map, MapDataSource src) {
 
 		LBLFile lbl = map.getLblFile();
@@ -443,7 +482,7 @@ public class MapBuilder implements Configurable {
 			// * cities (already processed)
 			// * extended types (address information not shown in MapSource and on GPS)
 			// * all POIs except roads in case the no-poi-address option is set
-			else if (!p.isCity() && !p.hasExtendedType() && (p.isRoadNamePOI() || poiAddresses))
+			else if (!p.isCity() && !p.hasExtendedType() &&  poiAddresses)
 			{
 				
 				String countryStr = p.getCountry();
@@ -488,44 +527,10 @@ public class MapBuilder implements Configurable {
 				}
 
 
-				if(p.isRoadNamePOI() && cityStr != null)
-				{
-					// If it is road POI add city name and street name into address info
-					p.setStreet(p.getName());
-					p.setName(p.getName() + "/" + cityStr);
-				}
-
 				POIRecord r = lbl.createPOI(p.getName());	
-
-				if (cityStr == null && (countryStr != null || regionStr != null)) {
-					// if city name is unknown and region and/or country is known 
-					// use empty name for the city
-					cityStr = UNKNOWN_CITY_NAME;
-				}
 				
-				if(cityStr != null)
-				{
-					Country thisCountry;
-
-					if(countryStr != null)
-						thisCountry = lbl.createCountry(countryStr, locator.getCountryISOCode(countryStr));
-					else
-						thisCountry = getDefaultCountry();
-
-					Region thisRegion;
-					if(regionStr != null)
-						thisRegion = lbl.createRegion(thisCountry,regionStr, null);
-					else
-						thisRegion = getDefaultRegion(thisCountry);
-
-					City city;
-					if(thisRegion != null)
-						city = lbl.createCity(thisRegion, cityStr, false);
-					else
-						city = lbl.createCity(thisCountry, cityStr, false);
-
-					r.setCity(city);
-
+				if(cityStr != null || regionStr != null || countryStr != null){
+					r.setCity(calcCity(lbl, cityStr, regionStr, countryStr));
 				}
 
 				if (zipStr != null)

@@ -33,6 +33,7 @@ import uk.me.parabola.mkgmap.osmstyle.eval.LinkedOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
+import uk.me.parabola.mkgmap.reader.osm.TagDict;
 import uk.me.parabola.mkgmap.reader.osm.TypeResult;
 import uk.me.parabola.mkgmap.reader.osm.WatchableTypeResult;
 
@@ -51,6 +52,8 @@ public class RuleSet implements Rule, Iterable<Rule> {
 	// identifies cached values 
 	int cacheId;
 	boolean compiled = false;
+
+	private final static short executeFinalizeRulesTagKey = TagDict.getInstance().xlate("mkgmap:execute_finalize_rules");
 
 	private RuleIndex index = new RuleIndex();
 	private final Set<String> usedTags = new HashSet<String>();
@@ -87,11 +90,18 @@ public class RuleSet implements Rule, Iterable<Rule> {
 			if (rules != null && !rules.isEmpty() )
 				candidates.or(rules);
 		}
+		Rule lastRule = null;
 		for (int i = candidates.nextSetBit(0); i >= 0; i = candidates.nextSetBit(i + 1)) {			
 			a.reset();
-			cacheId = rules[i].resolveType(cacheId, el, a);
+			lastRule = rules[i];
+			cacheId = lastRule.resolveType(cacheId, el, a);
 			if (a.isResolved())
 				return cacheId;
+		}
+		if (lastRule != null && lastRule.getFinalizeRule() != null){
+			if ("true".equals(el.getTag(executeFinalizeRulesTagKey))){
+				cacheId = lastRule.getFinalizeRule().resolveType(cacheId, el, a);
+			}
 		}
 		return cacheId;
 	}
@@ -261,6 +271,11 @@ public class RuleSet implements Rule, Iterable<Rule> {
 		
 		compiled = false;
 		this.finalizeRule = finalizeRule;  
+	}
+
+	@Override
+	public Rule getFinalizeRule() {
+		return finalizeRule;
 	}
 
 	@Override

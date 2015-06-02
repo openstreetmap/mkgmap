@@ -19,7 +19,6 @@ package uk.me.parabola.mkgmap.reader.polish;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Coord;
@@ -44,9 +43,6 @@ class RoadHelper {
 
 	// routing node store, persistent over resets
 	private final Map<Long, CoordNode> nodeCoords = new HashMap<>();
-
-	// Next node number to use for nodes constructed for house numbers. Persists over reset.
-	private long houseNumberNodeNumber = 16000000;
 
 	private int roadId;
 	private final List<NodeIndex> nodes = new ArrayList<>();
@@ -127,7 +123,7 @@ class RoadHelper {
 		if (log.isDebugEnabled())
 			log.debug("finishing road id " + roadId);
 
-		MapRoad road = new MapRoad(roadId, l);
+		MapRoad road = new MapRoad(roadId, roadId, l);
 
 		// Set parameters.
 		road.setRoadClass(roadClass);
@@ -139,21 +135,14 @@ class RoadHelper {
 		road.setAccess(mkgmapAccess);
 
 		if (numbers != null && !numbers.isEmpty()) {
-			convertNodesForHouseNumbers();
+			convertNodesForHouseNumbers(road);
 			road.setNumbers(numbers);
 		}
 
 		List<Coord> points = road.getPoints();
-		road.setNumNodes(nodes.size());
 
-		boolean starts = false;
-		boolean intern = false;
 		for (NodeIndex ni : nodes) {
 			int n = ni.index;
-			if (n == 0)
-				starts = true;
-			else if (n < points.size() - 1)
-				intern = true;
 			if (log.isDebugEnabled())
 				log.debug("road has " + points.size() +" points");
 			Coord coord = points.get(n);
@@ -169,75 +158,23 @@ class RoadHelper {
 				log.warn("Inconsistant node ids");
 			}
 		}
-		road.setStartsWithNode(starts);
-		road.setInternalNodes(intern);
 
 		return road;
 	}
 
 	/**
-	 * Convert the node index into a routing node number.
-	 *
-	 * If necessary a new routing node is created, if there is not one already
-	 * These constructed routing nodes are not connected to any other road and so
-	 * should be marked as such in the NOD2 bit stream, but we don't appear to do that yet.
-	 *
+	 * Make sure that each node that is referenced by the house
+	 * numbers is a number node. Some of them will later be changed
+	 * to routing nodes.
 	 * Only called if numbers is non-null and not empty.
 	 */
-	private void convertNodesForHouseNumbers() {
+	private void convertNodesForHouseNumbers(MapRoad road) {
+		int rNodNumber = 0;
 		for (Numbers n : numbers) {
 			int node = n.getNodeNumber();
-
-			// This assumes that the nodes are sorted by index.
-			ListIterator<NodeIndex> iterator = nodes.listIterator();
-			while (iterator.hasNext()) {
-				NodeIndex ni = iterator.next();
-				if (ni.index == node) {
-					// It was already there (a common case)
-					n.setRnodNumber(iterator.previousIndex());
-					break;
-				} else if (ni.index > node) {
-					// there is no routing node for this node index, need to insert one.
-					break;
-				}
-			}
-
-			// If we don't have a routing node number then we have to construct one.
-			if (!n.hasRnodNumber()) {
-				NodeIndex hnNode = new NodeIndex(new String[] {
-						String.valueOf(node),
-						String.valueOf(houseNumberNodeNumber++),
-						"0"
-				});
-
-				iterator.previous();
-				iterator.add(hnNode);
-				n.setRnodNumber(iterator.previousIndex());
-				//System.out.printf("ADDING RN on %d, hn=%s, rn=%d\n", roadId, hnNode, n.getRnodNumber());
-			}
+			n.setIndex(rNodNumber++);
+			road.getPoints().get(node).setNumberNode(true);
 		}
-
-		// Sanity checking. TODO remove
-		//int lastInd = -1;
-		//for (NodeIndex n : nodes) {
-		//	assert n.index > lastInd;
-		//	lastInd = n.index;
-		//
-		//}
-		//System.out.println("start");
-		//Numbers num = null;
-		//for (Numbers n1 : numbers) {
-		//	int ncount = 0;
-		//	for (NodeIndex n : nodes) {
-		//		System.out.printf("n1.node=%d, ni=%s, ni.index=%d\n", n1.getNodeNumber(), n, n.index);
-		//		if (n1.getNodeNumber() == n.index) {
-		//			num = n1;
-		//			break;
-		//		}
-		//		ncount++;
-		//	}
-		//	assert num != null && num.getRnodNumber() == ncount;
-		//}
 	}
 
 	public boolean isRoad() {

@@ -120,6 +120,7 @@ public class StyledConverter implements OsmConverter {
 	private HashSet<Long> deletedRoads = new HashSet<>();
 
 	private int nextNodeId = 1;
+	private int nextRoadId = 1;
 	
 	private HousenumberGenerator housenumberGenerator;
 	
@@ -142,6 +143,7 @@ public class StyledConverter implements OsmConverter {
 	private int reportDeadEnds; 
 	private final boolean linkPOIsToWays;
 	private final boolean mergeRoads;
+	private final boolean routable;
 	
 
 	private LineAdder lineAdder = new LineAdder() {
@@ -204,7 +206,7 @@ public class StyledConverter implements OsmConverter {
 		
 		// undocumented option - usually used for debugging only
 		mergeRoads = props.getProperty("no-mergeroads", false) == false;
-
+		routable = props.containsKey("route");
 		
 	}
 
@@ -229,7 +231,8 @@ public class StyledConverter implements OsmConverter {
 					el = way.copy();
 			}
 			postConvertRules(el, type);
-			housenumberGenerator.addWay((Way)el);
+			if (type.isRoad() == false)
+				housenumberGenerator.addWay((Way)el);
 			addConvertedWay((Way) el, type);
 		}
 
@@ -279,7 +282,6 @@ public class StyledConverter implements OsmConverter {
 			else
 				rules = wayRules;
 		}
-
 		Way cycleWay = null;
 		String cycleWayTag = way.getTag(makeCycleWayTagKey);
 		if ("yes".equals(cycleWayTag)){
@@ -614,57 +616,61 @@ public class StyledConverter implements OsmConverter {
 			if (cw.isValid())
 				addRoad(cw);
 		}
-		housenumberGenerator.generate(lineAdder);
+		housenumberGenerator.generate(lineAdder, nextNodeId);
+		housenumberGenerator = null;
 		
-		createRouteRestrictionsFromPOI();
+		if (routable)
+			createRouteRestrictionsFromPOI();
 		poiRestrictions = null;
-		
-		for (RestrictionRelation rr : restrictions) {
-			rr.addRestriction(collector, nodeIdMap);
+		if (routable){
+			for (RestrictionRelation rr : restrictions) {
+				rr.addRestriction(collector, nodeIdMap);
+			}
 		}
 		roads = null;
+		if (routable){
+			for(Relation relation : throughRouteRelations) {
+				Node node = null;
+				Way w1 = null;
+				Way w2 = null;
+				for(Map.Entry<String,Element> member : relation.getElements()) {
+					if(member.getValue() instanceof Node) {
+						if(node == null)
+							node = (Node)member.getValue();
+						else
+							log.warn("Through route relation", relation.toBrowseURL(), "has more than 1 node");
+					}
+					else if(member.getValue() instanceof Way) {
+						Way w = (Way)member.getValue();
+						if(w1 == null)
+							w1 = w;
+						else if(w2 == null)
+							w2 = w;
+						else
+							log.warn("Through route relation", relation.toBrowseURL(), "has more than 2 ways");
+					}
+				}
 
-		for(Relation relation : throughRouteRelations) {
-			Node node = null;
-			Way w1 = null;
-			Way w2 = null;
-			for(Map.Entry<String,Element> member : relation.getElements()) {
-				if(member.getValue() instanceof Node) {
-					if(node == null)
-						node = (Node)member.getValue();
-					else
-						log.warn("Through route relation", relation.toBrowseURL(), "has more than 1 node");
+				CoordNode coordNode = null;
+				if(node == null)
+					log.warn("Through route relation", relation.toBrowseURL(), "is missing the junction node");
+				else {
+					Coord junctionPoint = node.getLocation();
+					if(bbox != null && !bbox.contains(junctionPoint)) {
+						// junction is outside of the tile - ignore it
+						continue;
+					}
+					coordNode = nodeIdMap.get(junctionPoint);
+					if(coordNode == null)
+						log.warn("Through route relation", relation.toBrowseURL(), "junction node at", junctionPoint.toOSMURL(), "is not a routing node");
 				}
-				else if(member.getValue() instanceof Way) {
-					Way w = (Way)member.getValue();
-					if(w1 == null)
-						w1 = w;
-					else if(w2 == null)
-						w2 = w;
-					else
-						log.warn("Through route relation", relation.toBrowseURL(), "has more than 2 ways");
-				}
+
+				if(w1 == null || w2 == null)
+					log.warn("Through route relation", relation.toBrowseURL(), "should reference 2 ways that meet at the junction node");
+
+				if(coordNode != null && w1 != null && w2 != null)
+					collector.addThroughRoute(coordNode.getId(), w1.getId(), w2.getId());
 			}
-
-			CoordNode coordNode = null;
-			if(node == null)
-				log.warn("Through route relation", relation.toBrowseURL(), "is missing the junction node");
-			else {
-				Coord junctionPoint = node.getLocation();
-				if(bbox != null && !bbox.contains(junctionPoint)) {
-					// junction is outside of the tile - ignore it
-					continue;
-				}
-				coordNode = nodeIdMap.get(junctionPoint);
-				if(coordNode == null)
-					log.warn("Through route relation", relation.toBrowseURL(), "junction node at", junctionPoint.toOSMURL(), "is not a routing node");
-			}
-
-			if(w1 == null || w2 == null)
-				log.warn("Through route relation", relation.toBrowseURL(), "should reference 2 ways that meet at the junction node");
-
-			if(coordNode != null && w1 != null && w2 != null)
-				collector.addThroughRoute(coordNode.getId(), w1.getId(), w2.getId());
 		}
 		// return memory to GC
 		nodeIdMap = null;
@@ -1608,8 +1614,10 @@ public class StyledConverter implements OsmConverter {
 		MapLine line = new MapLine();
 		elementSetup(line, cw.getGType(), way);
 		line.setPoints(points);
-		MapRoad road = new MapRoad(way.getId(), line);
-
+		MapRoad road = new MapRoad(nextRoadId++, way.getId(), line);
+		if (routable == false)
+			road.skipAddToNOD(true);
+		
 		boolean doFlareCheck = true;
 		
 		if (cw.isRoundabout()){
@@ -1670,14 +1678,11 @@ public class StyledConverter implements OsmConverter {
 				rr.updateViaWay(way, nodeIndices);
 			}
 		}
-		road.setNumNodes(numNodes);
+
 		if(numNodes > 0) {
 			// replace Coords that are nodes with CoordNodes
-			boolean hasInternalNodes = false;
 			for(int i = 0; i < numNodes; ++i) {
 				int n = nodeIndices.get(i);
-				if(n > 0 && n < points.size() - 1)
-					hasInternalNodes = true;
 				Coord coord = points.get(n);
 				CoordNode thisCoordNode = nodeIdMap.get(coord);
 				assert thisCoordNode != null : "Way " + debugWayName + " node " + i + " (point index " + n + ") at " + coord.toOSMURL() + " yields a null coord node";
@@ -1687,9 +1692,6 @@ public class StyledConverter implements OsmConverter {
 				}
 				points.set(n, thisCoordNode);
 			}
-
-			road.setStartsWithNode(nodeIndices.get(0) == 0);
-			road.setInternalNodes(hasInternalNodes);
 		}
 
 		if (roadLog.isInfoEnabled()) {
@@ -2044,6 +2046,7 @@ public class StyledConverter implements OsmConverter {
 		}
 	}
 
+	@Override
 	public Boolean getDriveOnLeft(){
 		assert roads == null : "getDriveOnLeft() should be called after end()";
 		return driveOnLeft;

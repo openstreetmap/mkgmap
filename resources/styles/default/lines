@@ -8,6 +8,7 @@
 # and http://wiki.openstreetmap.org/wiki/Mkgmap/help/Custom_styles
 # for more information.
 
+addr:housenumber=* {set mkgmap:execute_finalize_rules=true}
 aeroway=runway [0x27 resolution 20]
 aeroway=taxiway [0x27 resolution 24]
 
@@ -27,7 +28,7 @@ highway=* & oneway=yes & (access=private|access=no)
 {add mkgmap:dead-end-check=false}
 # Validation-like checks (uncomment to enable)
 #highway=motorway_link & oneway!=yes & oneway!=no { echo "motorway_link lacks oneway" }
-highway=motorway|highway=motorway_link { add oneway=yes }
+highway=motorway|highway=motorway_link { add oneway=yes; add mkgmap:numbers=false }
 
 # Set highway names to include the reference if there is one
 highway=motorway { name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-symbol:hbox}' | '${name}' }
@@ -196,6 +197,9 @@ include 'inc/access';
 
 #limit artificial cycleways to to resolution 24
 mkgmap:synthesised=yes & mkgmap:bicycle=yes { set mkgmap:highest-resolution-only = true }
+
+# don't add house numbers to unnamed or artifical bicycle ways
+mkgmap:bicycle=yes & (mkgmap:foot=no & mkgmap:car=no & mkgmap:street!=* | mkgmap:synthesised=yes) {set mkgmap:numbers=false}
 
 name=* { name '${name}' }
 

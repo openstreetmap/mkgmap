@@ -59,6 +59,12 @@ The style file can be used to assign the special mkgmap tags listed above.
 NOTE: All tags can be assigned without any restrictions but mkgmap performs some special processing for the +mkgmap:country+ tag. See chapter +Country names+ below.
 
 A common set of address rules is located in the +inc/address+ file in the default style of mkgmap.
+The tag mkgmap:execute_finalize_rules=true should be set for all objects that 
+should be considered for address search but may not appear in the map:
+addr:housenumber=* {set mkgmap:execute_finalize_rules=true}
+
+You can also use the tag mkgmap:numbers=false to tell mkgmap
+that a node or way should be excluded when calculating address information.
 
 A common rule set to assign the +mkgmap:city+ tag looks like:
 ----

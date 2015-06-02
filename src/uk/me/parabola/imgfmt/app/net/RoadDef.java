@@ -16,7 +16,10 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -31,6 +34,8 @@ import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Zip;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.CityInfo;
+import uk.me.parabola.mkgmap.general.ZipCodeInfo;
 
 /**
  * A road definition.  This ties together all segments of a single road
@@ -83,6 +88,9 @@ public class RoadDef {
 	private static final int TABAACCESS_FLAG_NO_BIKE    = 0x0020;
 	private static final int TABAACCESS_FLAG_NO_TRUCK   = 0x0040;
 	
+	// true if road should not be added to NOD 
+	private boolean skipAddToNOD;
+	
 	// the offset in Nod2 of our Nod2 record
 	private int offsetNod2;
 
@@ -109,8 +117,6 @@ public class RoadDef {
 
 	private final SortedMap<Integer,List<RoadIndex>> roadIndexes = new TreeMap<>();
 
-	private City city;
-	private Zip zip;
 	private boolean paved = true;
 	private boolean ferry;
 	private boolean roundabout;
@@ -120,6 +126,8 @@ public class RoadDef {
 	private Set<String> messageIssued;
 
 	private final List<Offset> rgnOffsets = new ArrayList<>();
+	// for the NOD2 bit stream   
+	private BitSet nod2BitSet;
 
 	/*
 	 * Everything that's relevant for writing out Nod 2.
@@ -145,6 +153,8 @@ public class RoadDef {
 	private final long id;
 	private final String name;
 	private List<Numbers> numbersList;
+	private List<City> cityList;
+	private List<Zip> zipList;
 	private int nodeCount;
 
 	public RoadDef(long id, String name) {
@@ -196,14 +206,13 @@ public class RoadDef {
 		if (numlabels == 0)
 			return;
 		assert numlabels > 0;
-
+		Zip zip = getZips().isEmpty() ? null : getZips().get(0);
+		City city = getCities().isEmpty() ? null: getCities().get(0);
 		offsetNet1 = writer.position();
-
 		NumberPreparer numbers = null;
 		if (numbersList != null) {
-			numbers = new NumberPreparer(numbersList);
-			numbers.fetchBitStream();
-			if (!numbers.isValid()){
+			numbers = new NumberPreparer(numbersList, zip, city, numCities, numZips);
+			if (!numbers.prepare()){
 				numbers = null;
 				log.warn("Invalid housenumbers in",this.toString());
 			}
@@ -222,33 +231,72 @@ public class RoadDef {
 
 		if((netFlags & NET_FLAG_ADDRINFO) != 0) {
 			nodeCount--;
+			if (nodeCount + 2 != nnodes){
+				log.error("internal error? The nodeCount doesn't match value calculated by RoadNetWork:",this);
+			}
 			writer.put((byte) (nodeCount & 0xff)); // lo bits of node count
 
-			int code = 0xe8;     // zip and city present
-			code |= ((nodeCount >> 8) & 0x3); // top bits of node count
-			if(city == null)
-				code |= 0x10; // no city
-			if(zip == null)
-				code |= 0x04; // no zip
-			if (numbers != null) {
-				code &= ~0xc0;
-				if (numbers.fetchBitStream().getLength() > 255)
-					code |= 0x40;
-			}
+			int code = ((nodeCount >> 8) & 0x3); // top bits of node count
+			int len, flag;
+			
+			ByteArrayOutputStream zipBuf = null, cityBuf = null;
+			len = (numbers == null)  ? 0: numbers.zipWriter.getBuffer().size();
+			if (len > 0){
+				zipBuf = numbers.zipWriter.getBuffer();
+				flag = (len > 255) ? 1 : 0;
+			} else 
+				flag = (zip == null) ? 3 : 2;
+			code |= flag << 2;
+			
+			len = (numbers == null)  ? 0: numbers.cityWriter.getBuffer().size();
+			if (len > 0){
+				cityBuf = numbers.cityWriter.getBuffer();
+				flag = (len > 255) ? 1 : 0;
+			} else 
+				flag = (city == null) ? 3 : 2;
+			code |= flag << 4;
+			
+			len = (numbers == null) ? 0 : numbers.fetchBitStream().getLength();
+			if (len > 0){
+				flag = (len > 255) ? 1 : 0;
+			} else 
+				flag = 3;
+			code |= flag << 6;
+			
 			writer.put((byte)code);
-			if(zip != null) {
-				char zipIndex = (char)zip.getIndex();
-				if(numZips > 255)
-					writer.putChar(zipIndex);
+//			System.out.printf("%d %d %d\n", (code >> 2 & 0x3), (code >> 4 & 0x3), (code >> 6 & 0x3));  
+			
+			if (zipBuf != null){
+				len = zipBuf.size();
+				if (len > 255)
+					writer.putChar((char) len);
 				else
-					writer.put((byte)zipIndex);
+					writer.put((byte) len);
+				writer.put(zipBuf.toByteArray());
+			} else {
+				if(zip != null) {
+					char zipIndex = (char)zip.getIndex();
+					if(numZips > 255)
+						writer.putChar(zipIndex);
+					else
+						writer.put((byte)zipIndex);
+				}
 			}
-			if(city != null) {
-				char cityIndex = (char)city.getIndex();
-				if(numCities > 255)
-					writer.putChar(cityIndex);
+			if (cityBuf != null){
+				len = cityBuf.size();
+				if (len > 255)
+					writer.putChar((char) len);
 				else
-					writer.put((byte)cityIndex);
+					writer.put((byte) len);
+				writer.put(cityBuf.toByteArray());
+			} else {
+				if(city != null) {
+					char cityIndex = (char)city.getIndex();
+					if(numCities > 255)
+						writer.putChar(cityIndex);
+					else
+						writer.put((byte)cityIndex);
+				}
 			}
 			if (numbers != null) {
 				BitWriter bw = numbers.fetchBitStream();
@@ -356,7 +404,7 @@ public class RoadDef {
 		l.add(new RoadIndex(pl));
 
 		if (level == 0) {
-			nodeCount += pl.getNodeCount();
+			nodeCount += pl.getNodeCount(hasHouseNumbers());
 		}
 	}
 
@@ -449,11 +497,11 @@ public class RoadDef {
 		}
 	}
 
-	private boolean internalNodes = true;
+	private boolean internalNodes;
 
 	/**
 	 * Does the road have any nodes besides start and end?
-	 *
+	 * These can be number nodes or routing nodes.
 	 * This affects whether we need to write extra bits in
 	 * the bitstream in RGN.
 	 */
@@ -472,6 +520,8 @@ public class RoadDef {
 	 * which will be pointed at from NET 1.
 	 */
 	public void setNode(RouteNode node) {
+		if (skipAddToNOD)
+			return;
 		netFlags |= NET_FLAG_NODINFO;
 		this.node = node;
 	}
@@ -498,6 +548,11 @@ public class RoadDef {
 			netFlags |= NET_FLAG_ADDRINFO;
 		}
 	}
+	
+	public List<Numbers> getNumbersList() {
+		return numbersList;
+	}
+
 
 	/**
 	 * Write this road's NOD2 entry.
@@ -510,6 +565,11 @@ public class RoadDef {
 	public void writeNod2(ImgFileWriter writer) {
 		if (!hasNodInfo())
 			return;
+		if (skipAddToNOD){
+			// should not happen
+			log.error("internal error: writeNod2 called for roaddef with skipAddToNOD=true");
+			return;
+		}
 
 		log.debug("writing nod2");
 
@@ -521,19 +581,27 @@ public class RoadDef {
 		// this is related to the number of nodes, but there
 		// is more to it...
 		// For now, shift by one if the first node is not a
-		// routing node. Supposedly, other holes are also
-		// possible.
-		// This might be unnecessary if we just make sure
-		// that every road starts with a node.
+		// routing node.
+		// If the road has house numbers, we count also
+		// the number nodes, and these get a 0 in the bit stream. 
 		int nbits = nnodes;
 		if (!startsWithNode)
 			nbits++;
 		writer.putChar((char) nbits);
 		boolean[] bits = new boolean[nbits];
-		for (int i = 0; i < bits.length; i++)
-			bits[i] = true;
-		if (!startsWithNode)
-			bits[0] = false;
+		
+		if (hasHouseNumbers()){
+			int off = startsWithNode ? 0 :1;
+			for (int i = 0; i < bits.length; i++){
+				if (nod2BitSet.get(i))
+					bits[i+off] = true;
+			}
+		} else { 
+			for (int i = 0; i < bits.length; i++)
+				bits[i] = true;
+			if (!startsWithNode)
+				bits[0] = false;
+		}
 		for (int i = 0; i < bits.length; i += 8) {
 			int b = 0;
             for (int j = 0; j < 8 && j < bits.length - i; j++)
@@ -636,6 +704,7 @@ public class RoadDef {
 
 	private int roadClass = -1;
 
+
 	// road class that goes in various places (really?)
 	public void setRoadClass(int roadClass) {
 		assert roadClass < 0x08;
@@ -679,20 +748,45 @@ public class RoadDef {
 		return (netFlags & NET_FLAG_ONEWAY) != 0;
 	}
 
-	public void setCity(City city) {
-		this.city = city;
+	public void addCityIfNotPresent(City city) {
+		if (city == null){
+			log.error("trying to add null value to city list in road",this);
+			return;
+		}
 		netFlags |= NET_FLAG_ADDRINFO;
+		if (cityList == null){
+			cityList = new ArrayList<>(2);
+		}
+		if (cityList.contains(city) == false)
+			cityList.add(city);
 	}
 
-	public void setZip(Zip zip) {
-		this.zip = zip;
+	public void addZipIfNotPresent(Zip zip) {
+		if (zip == null){
+			log.error("trying to add null value to zip list in road",this);
+			return;
+		}
 		netFlags |= NET_FLAG_ADDRINFO;
+		if (zipList == null){
+			zipList = new ArrayList<>(2);
+		}
+		if (zipList.contains(zip) == false)
+			zipList.add(zip);
 	}
 
-	public City getCity() {
-		return city;
+	
+	public List<City> getCities(){
+		if (cityList == null)
+			return Collections.emptyList();
+		return cityList;
 	}
 
+	public List<Zip> getZips(){
+		if (zipList == null)
+			return Collections.emptyList();
+		return zipList;
+	}
+	
 	public boolean paved() {
 		return paved;
 	}
@@ -749,4 +843,36 @@ public class RoadDef {
 		return previouslyIssued;
 	}
 
+	public void setNod2BitSet(BitSet bs) {
+		if (skipAddToNOD)
+			return;
+		nod2BitSet = bs;
+	}
+
+	public boolean skipAddToNOD() {
+		return skipAddToNOD;
+	}
+
+	public void skipAddToNOD(boolean skip) {
+		this.skipAddToNOD = skip;
+	}
+
+	public void resetImgData() {
+		zipList = null;
+		cityList = null;
+		if (numbersList != null){
+			for (Numbers num : numbersList){
+				for (int side = 0; side < 2; side++){
+					boolean left = side == 0;
+					CityInfo ci = num.getCityInfo(left);
+					if (ci != null)
+						ci.setImgCity(null);
+					ZipCodeInfo z = num.getZipCodeInfo(left);
+					if (z != null)
+						z.setImgZip(null);
+				}
+			}
+		}
+	}
+	
 }

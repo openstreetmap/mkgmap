@@ -265,10 +265,10 @@ public class NumberPreparerTest {
 
 		BitReader br = new BitReader(bytes);
 		NumberReader nr = new NumberReader(br);
-		nr.setNumberOfNodes(numbers.size());
+		nr.setNumberOfNodes(numbers.get(numbers.size()-1).getIndex() + 1);
 		List<Numbers> list = nr.readNumbers(swapped);
 		for (Numbers n : list)
-			n.setNodeNumber(n.getRnodNumber());
+			n.setNodeNumber(n.getIndex());
 
 		return list;
 	}
@@ -277,7 +277,7 @@ public class NumberPreparerTest {
 		List<Numbers> numbers = new ArrayList<Numbers>();
 		for (String s : specs) {
 			Numbers n = new Numbers(s);
-			n.setRnodNumber(n.getNodeNumber());
+			n.setIndex(n.getNodeNumber());
 			numbers.add(n);
 		}
 		return numbers;

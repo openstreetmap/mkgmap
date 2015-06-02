@@ -40,19 +40,30 @@ public class MapRoad extends MapLine {
 
 	private final RoadDef roadDef;
 	private boolean segmentsFollowing;
+	private boolean skipHousenumberProcessing;
+	private boolean namedByHousenumberProcessing;
+	private final int roadId;
 	
-	public MapRoad(long id, MapLine line) {
+	public MapRoad(int roadId, long OSMid, MapLine line) {
 		super(line);
+		this.roadId = roadId;
 		setPoints(line.getPoints());
-		roadDef = new RoadDef(id, getName());
+		roadDef = new RoadDef(OSMid, getName());
 	}
 
 	private MapRoad(MapRoad r) {
 		super(r);
+		roadId = r.roadId;
 		roadDef = r.roadDef;
 		segmentsFollowing = r.segmentsFollowing;
 	}
 
+	/**
+	 * @return value that can be used to sort MapRoad instances
+	 */
+	public int getRoadId(){
+		return roadId;
+	}
 	public MapRoad copy() {
 		return new MapRoad(this);
 	}
@@ -101,32 +112,23 @@ public class MapRoad extends MapLine {
 		roadDef.setNoThroughRouting();
 	}
 
-	public void setStartsWithNode(boolean s) {
-		roadDef.setStartsWithNode(s);
-	}
-
-	public void setInternalNodes(boolean s) {
-		roadDef.setInternalNodes(s);
-	}
-
-	public void setNumNodes(int n) {
-		roadDef.setNumNodes(n);
-	}
-
 	public void setNumbers(List<Numbers> numbers) {
 		roadDef.setNumbersList(numbers);
+	}
+	public List<Numbers> getNumbers() {
+		return roadDef.getNumbersList();
 	}
 
 	public RoadDef getRoadDef() {
 		return roadDef;
 	}
 
-	public void setRoadCity(City c) {
-		roadDef.setCity(c);
+	public void addRoadCity(City c) {
+		roadDef.addCityIfNotPresent(c);
 	}
 
-	public void setRoadZip(Zip z) {
-		roadDef.setZip(z);
+	public void addRoadZip(Zip z) {
+		roadDef.addZipIfNotPresent(z);
 	}
 
 	public void setRoundabout(boolean r) {
@@ -149,4 +151,53 @@ public class MapRoad extends MapLine {
 		this.segmentsFollowing = segmentsFollowing;
 	}
 
+	public boolean isSkipHousenumberProcessing() {
+		return skipHousenumberProcessing;
+	}
+
+	public void setSkipHousenumberProcessing(boolean skipHousenumberProcessing) {
+		this.skipHousenumberProcessing = skipHousenumberProcessing;
+	}
+
+	public boolean isNamedByHousenumberProcessing() {
+		return namedByHousenumberProcessing;
+	}
+
+	public void setNamedByHousenumberProcessing(boolean namedByHousenumberProcessing) {
+		this.namedByHousenumberProcessing = namedByHousenumberProcessing;
+	}
+
+	public boolean skipAddToNOD() {
+		return roadDef.skipAddToNOD();
+	}
+
+	public void skipAddToNOD(boolean skip) {
+		roadDef.skipAddToNOD(skip);
+	}
+
+	public boolean addLabel(String label){
+		if (label == null)
+			return false;
+		for (int i = 0; i < labels.length; i++){
+			if (labels[i] == null){
+				labels[i] = label;
+				return true;
+			}
+			if (labels[i].equals(label))
+				return false;
+		}
+		return false;
+	}
+	
+	public String toString(){
+		if ((getName() == null || getName().isEmpty()) && getStreet() != null)
+			return "id="+this.getRoadDef().getId() + ", (" + this.getStreet() + ")";
+		else 
+			return "id="+this.getRoadDef().getId() + ", " + this.getName();
+	}
+
+	public void resetImgData() {
+		roadDef.resetImgData();
+		
+	}
 }

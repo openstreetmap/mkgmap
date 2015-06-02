@@ -17,6 +17,7 @@ package uk.me.parabola.mkgmap.general;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.util.Locatable;
 
 /**
  * A point on the map.  This will appear as a symbol on the map and it will
@@ -24,9 +25,8 @@ import uk.me.parabola.imgfmt.app.Coord;
  *
  * @author Steve Ratcliffe
  */
-public class MapPoint extends MapElement {
+public class MapPoint extends MapElement implements Locatable{
 	private Coord location;
-	private boolean isRoadNamePoi;
 
 	public MapPoint() {
 	}
@@ -62,14 +62,6 @@ public class MapPoint extends MapElement {
 		return isCityType(getType());
 	}
 
-	public void setRoadNamePOI(boolean isRoadNamePoi) {
-		this.isRoadNamePoi = isRoadNamePoi;
-	}
-
-	public boolean isRoadNamePOI() {
-		return this.isRoadNamePoi;
-	}
-	
 	public static boolean isCityType(int type)
 	{
 		return type >= 0x0100 && type <= 0x1100;

@@ -166,6 +166,10 @@ public class ActionRule implements Rule {
 		this.finalizeRule = finalizeRule;
 	}
 
+	@Override
+	public Rule getFinalizeRule() {
+		return finalizeRule;
+	}
 
 	public Op getOp(){
 		return expression;

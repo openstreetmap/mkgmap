@@ -69,6 +69,12 @@ public class LocatorUtil {
 			autofillOptions.add("nearest");
 			autofillOptions.remove("3");
 		}	
+		final List<String> knownOptions = Arrays.asList("bounds","is_in","nearest");
+		for (String s : autofillOptions){
+			if (knownOptions.contains(s) == false){
+				throw new IllegalArgumentException(s + " is not a known sub option for option location-autofill: " + optionStr);
+			}
+		}
 		return autofillOptions;
 	}
 }
