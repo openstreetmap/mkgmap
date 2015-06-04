@@ -1922,14 +1922,16 @@ public class HousenumberGenerator {
 
 		public void build(List<MapRoad> roads){
 			for (MapRoad road : roads){
+				if (road.isSkipHousenumberProcessing())
+					continue;
+				List<Coord> points = road.getPoints();
+				if (points.size() < 2)
+					continue;
 				KdTree<RoadPoint> namedTree = treeByName.get(road.getStreet());
 				if (namedTree == null){
 					namedTree = new KdTree<>();
 					treeByName.put(road.getStreet(), namedTree);
 				}
-				if (road.isSkipHousenumberProcessing())
-					continue;
-				List<Coord> points = road.getPoints();
 				RoadPoint rp;
 				for (int i = 0; i + 1 < points.size(); i++){
 					Coord c1 = points.get(i);
@@ -2052,7 +2054,9 @@ public class HousenumberGenerator {
 				} 
 				if (rp.partOfSeg < 0){
 					// rp is at end of road, check (also) the preceding segment 
-					if (testedSegments.get(rp.segment - 1) == false){
+					if (rp.segment < 1){
+						log.error("internal error: trying to use invalid roadPoint",rp);
+					} else if (testedSegments.get(rp.segment - 1) == false){
 						testedSegments.set(rp.segment-1);
 						checkSegment(hnm, rp.r, rp.segment-1);
 					}
