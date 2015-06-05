@@ -171,20 +171,26 @@ border have less quality.
 ;--housenumbers
 : Enables house number search for OSM input files. 
 
-: All nodes and polygons having addr:housenumber and addr:street set are matched 
+: All nodes and polygons having addr:housenumber set are matched 
 to streets. A match between a house number element and a street is created if
 the street is located within a radius of 150m and the addr:street tag value of 
-the house number element equals the mgkmap:street tag value of the street. 
+the house number element equals the mgkmap:street tag value of the street
+or the addr:street tag is missing and the number is plausible for the street.
 The mkgmap:street tag must be added to the street in the style file.
-
-: Example: 
+For optimal results, the tags mkgmap:city and mkgmap:postal_code should be
+set for the housenumber element. If a street connects two or more cities
+this allows to find all addresses along the road, even they have the same
+number.
+: Example for given street name: 
 :: Node -  addr:street=Main Street addr:housenumber=2
 :: Way 1 - name=Main Street
 :: Way 2 - name=Main Street, mkgmap:street=Main Street
-:: Way 3 - mkgmap:street=Mainstreet
+:: Way 3 - mkgmap:street=Mainstreet 
 :: Way 4 - name=Main Street [A504]
-: The node matches to Way 2. It has mkgmap:street set with a value equal to
+: The node 1 matches to Way 2. It has mkgmap:street set with a value equal to
 the addr:street tag value of the house  number node.
+: If the street is not given with addr:housenumber, mkgmap uses heuristics
+to find the best match. 
 
 === Overview map options ===
 ;--overview-mapname=name
@@ -615,19 +621,20 @@ to the next junction or a length of ~25 m. The tags
 are ignored for pedestrian-only ways.
 
 ;--process-destination
-: 	Splits all motorway_link and trunk_link ways tagged with 
-destination	into two or three parts where the second part
-is additionally tagged with mkgmap:dest_hint=true. This 
-allows to use any routable Garmin type (except 0x08 and 0x09)
+: 	Splits all motorway_link, trunk_link, and primary_link 
+ways tagged with destination	into two or three parts where 
+the second part is additionally tagged with mkgmap:dest_hint=true. 
+This allows using any routable Garmin type (except 0x08 and 0x09)
 for that part so that the Garmin device tells the name of
 this part as hint which destination to follow.
+See also --process-exits.
 
 ;--process-exits
 :     Usual Garmin devices do not tell the name of the exit on motorways 
-while routing with mkgmap created maps. This option splits the each
-motorway_link and trunk_link into three parts. All parts are tagged 
-with the original tags of the link. Additionally the middle part is 
-tagged with the following tags:
+while routing with mkgmap created maps. This option splits each
+motorway_link, trunk_link and primary_link way into three parts. 
+All parts are tagged with the original tags of the link. 
+Additionally the middle part is tagged with the following tags:
   mkgmap:exit_hint=true
   mkgmap:exit_hint_ref=<ref tag value of the exit>
   mkgmap:exit_hint_name=<name tag value of the exit>
@@ -636,7 +643,8 @@ tagged with the following tags:
 : Adding a rule checking the mkgmap:exit_hint=true makes it possible
 to use any routable Garmin type (except 0x08 and 0x09) for the middle 
 part so that the Garmin device tells the name of this middle part as 
-hint where to leave the motorway/trunk. 
+hint where to leave the motorway/trunk. The first part must have type
+0x08 or 0x09 so that Garmin uses the hint. 
 
 ;--delete-tags-file=FILENAME
 : 	Names a file that should contain one or more lines of the form

@@ -33,7 +33,7 @@ highway=motorway|highway=motorway_link { add oneway=yes; add mkgmap:numbers=fals
 # Set highway names to include the reference if there is one
 highway=motorway { name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-symbol:hbox}' | '${name}' }
 
-(highway=motorway_link | highway=trunk_link) & mkgmap:exit_hint=true & mkgmap:dest_hint=true
+(highway=motorway_link | highway=trunk_link | highway=primary_link) & mkgmap:exit_hint=true & mkgmap:dest_hint=true
   { name '${destination:ref|subst: =>} ${destination|subst:;=> |subst:/=> }' | 
          '${ref|subst: =>} ${destination|subst:;=> |subst:/=> }' | 
          '${destination|subst:;=> |subst:/=> }' |
@@ -44,13 +44,13 @@ highway=motorway { name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-sy
          'Exit ${mkgmap:exit_hint_ref}'
        }
 
-(highway=motorway_link | highway=trunk_link) & mkgmap:exit_hint!=* & mkgmap:dest_hint=true
+(highway=motorway_link | highway=trunk_link | highway=primary_link) & mkgmap:exit_hint!=* & mkgmap:dest_hint=true
   { name '${destination:ref|subst: =>} ${destination|subst:;=> |subst:/=> }' |
          '${ref|subst: =>} ${destination|subst:;=> |subst:/=> }' | 
          '${destination|subst:;=> |subst:/=> }'
        }
 
-(highway=motorway_link | highway=trunk_link) & mkgmap:exit_hint=true & mkgmap:dest_hint!=*
+(highway=motorway_link | highway=trunk_link | highway=primary_link) & mkgmap:exit_hint=true & mkgmap:dest_hint!=*
   { name 'Exit ${mkgmap:exit_hint_ref} ${mkgmap:exit_hint_name}' | 
          'Exit ${mkgmap:exit_hint_ref} ${mkgmap:exit_hint_exit_to}' | 
          'Exit ${mkgmap:exit_hint_exit_to}' |
@@ -126,6 +126,7 @@ highway=trunk_link [0x09 road_class=3 road_speed=2 resolution 20]
 highway=* & highway!=proposed & motorroad=yes [0x02 road_class=4 road_speed=4 resolution 18]
 highway=primary & ( network=e-road | int_ref=* ) [0x03 resolution 17-18 continue]
 highway=primary [0x03 road_class=3 road_speed=4 resolution 19]
+highway=primary_link & (mkgmap:exit_hint=true | mkgmap:dest_hint=true)[0x06 road_class=3 road_speed=1 resolution 21]
 highway=primary_link [0x08 road_class=3 road_speed=1 resolution 21]
 highway=secondary & ( network=e-road | int_ref=* ) [0x04 resolution 18-19 continue]
 highway=secondary [0x04 road_class=2 road_speed=3 resolution 20]
