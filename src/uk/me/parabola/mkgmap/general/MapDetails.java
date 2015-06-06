@@ -47,10 +47,10 @@ public class MapDetails implements MapCollector, MapDataSource {
 	private final List<MapShape> shapes = new ArrayList<MapShape>();
 	private final List<MapPoint> points = new ArrayList<MapPoint>();
 
-	private int minLat = Utils.toMapUnit(180.0);
-	private int minLon = Utils.toMapUnit(180.0);
-	private int maxLat = Utils.toMapUnit(-180.0);
-	private int maxLon = Utils.toMapUnit(-180.0);
+	private int minLat30 = Utils.toMapUnit(180.0) << Coord.DELTA_SHIFT ;
+	private int minLon30 = Utils.toMapUnit(180.0) << Coord.DELTA_SHIFT;
+	private int maxLat30 = Utils.toMapUnit(-180.0) << Coord.DELTA_SHIFT;
+	private int maxLon30 = Utils.toMapUnit(-180.0) << Coord.DELTA_SHIFT;
 
 	// Keep lists of all items that were used.
 	private final Map<Integer, Integer> pointOverviews = new HashMap<Integer, Integer>();
@@ -141,16 +141,17 @@ public class MapDetails implements MapCollector, MapDataSource {
 	 * @param p The coordinates of the point to add.
 	 */
 	public void addToBounds(Coord p) {
-		int lat = p.getLatitude();
-		int lon = p.getLongitude();
-		if (lat < minLat)
-			minLat = lat;
-		if (lat > maxLat)
-			maxLat = lat;
-		if (lon < minLon)
-			minLon = lon;
-		if (lon > maxLon)
-			maxLon = lon;
+		int lat30 = p.getHighPrecLat(); 
+		int lon30 = p.getHighPrecLon();
+		
+		if (lat30 < minLat30)
+			minLat30 = lat30;
+		if (lat30 > maxLat30)
+			maxLat30 = lat30;
+		if (lon30 < minLon30)
+			minLon30 = lon30;
+		if (lon30 > maxLon30)
+			maxLon30 = lon30;
 	}
 
 	/**
@@ -159,6 +160,14 @@ public class MapDetails implements MapCollector, MapDataSource {
 	 * @return An area covering all the points in the map.
 	 */
 	public Area getBounds() {
+		int minLat = minLat30 >> Coord.DELTA_SHIFT;
+		int maxLat = maxLat30 >> Coord.DELTA_SHIFT;
+		int minLon = minLon30 >> Coord.DELTA_SHIFT;
+		int maxLon = maxLon30 >> Coord.DELTA_SHIFT;
+		if ((maxLat << Coord.DELTA_SHIFT) < maxLat30)
+			maxLat++;
+		if ((maxLon << Coord.DELTA_SHIFT) < maxLon30)
+			maxLon++;
 		return new Area(minLat, minLon, maxLat, maxLon);
 	}
 
