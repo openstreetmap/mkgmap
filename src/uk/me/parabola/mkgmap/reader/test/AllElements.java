@@ -24,6 +24,7 @@ import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.reader.osm.GType;
 
 
 /**
@@ -51,10 +52,10 @@ class AllElements {
 	private static final double ELEMENT_SPACING = 0.002;
 	private static final double ELEMENT_SIZE = 0.001;
 
-	// I don't know what the max types and subtypes actually are, adjust if
+	// I don't know what the max types and sub-types actually are, adjust if
 	// there seems to be more beyond.
 	private static final int MAX_POINT_TYPE = 0x7f;
-	private static final int MAX_POINT_SUB_TYPE = 0x30;
+	private static final int MAX_POINT_SUB_TYPE = 0x1f;
 
 	// we draw lines and polygons in a 16x16 square (or whatever is here).
 	private static final int MAX_LINE_TYPE_X = 8;
@@ -108,22 +109,19 @@ class AllElements {
 
 		double lat = slat + 0.004;
 		double lon = slon + 0.002;
-
-		for (int type = 0; type < MAX_POINT_TYPE; type++) {
-			for (int subtype = 0; subtype < MAX_POINT_SUB_TYPE; subtype++) {
-
+		
+		for (int maintype = 0; maintype <= MAX_POINT_TYPE; maintype++) {
+			for (int subtype = 0; subtype <= MAX_POINT_SUB_TYPE; subtype++) {
+				int type = (maintype << 8) + subtype;
 				MapPoint point = new MapPoint();
 
 				double baseLat = lat + subtype * ELEMENT_SPACING;
-				double baseLong = lon + type * ELEMENT_SPACING;
+				double baseLong = lon + maintype * ELEMENT_SPACING;
 
 				point.setMinResolution(10);
-				point.setName("0x" + Integer.toHexString(type)
-								+ ','
-								+ "0x" + Integer.toHexString(subtype));
-
+				point.setName(GType.formatType(type));
 				point.setLocation(new Coord(baseLat, baseLong));
-				point.setType((type << 8) + subtype);
+				point.setType(type);
 
 				mapper.addPoint(point);
 				mapper.addToBounds(point.getLocation()); // XXX shouldn't be needed.
@@ -135,16 +133,16 @@ class AllElements {
 
 		double lat = slat + 0.004;
 		double lon = slon + 0.002;
-
+		int type = 0;
 		for (int x = 0; x < MAX_LINE_TYPE_X; x++) {
 			for (int y = 0; y < MAX_LINE_TYPE_Y; y++) {
-				int type = x*MAX_LINE_TYPE_X + y;
-				if ((type & 0xc0) != 0)
+				type++;
+				if ((type & 0x40) != 0)
 					break;
 
 				MapLine line = new MapLine();
 				line.setMinResolution(10);
-				line.setName("0x" + Integer.toHexString(type));
+				line.setName(GType.formatType(type));
 
 				double baseLat = lat + y * ELEMENT_SPACING;
 				double baseLong = lon + x * ELEMENT_SPACING;
@@ -159,7 +157,7 @@ class AllElements {
 				coords.add(co);
 				mapper.addToBounds(co);
 
-				co = new Coord(baseLat + ELEMENT_SIZE, baseLong + ELEMENT_SIZE + ELEMENT_SIZE/2);
+				co = new Coord(baseLat + ELEMENT_SIZE, baseLong +	 ELEMENT_SIZE + ELEMENT_SIZE/2);
 				coords.add(co);
 				mapper.addToBounds(co);
 
@@ -176,10 +174,12 @@ class AllElements {
 
 		double lat = slat + 0.004;
 		double lon = slon + 0.002;
-
+		int type = 0;
 		for (int x = 0; x < MAX_SHAPE_TYPE_X; x++) {
 			for (int y = 0; y < MAX_SHAPE_TYPE_Y; y++) {
-				int type = x*16 + y;
+				type++;
+				if (type == 0x4a)
+					continue;
 				if ((type & 0x80) != 0)
 					break;
 
@@ -187,7 +187,7 @@ class AllElements {
 
 				MapShape shape = new MapShape();
 				shape.setMinResolution(10);
-				shape.setName("0x" + Integer.toHexString(type));
+				shape.setName(GType.formatType(type));
 
 				double baseLat = lat + y * ELEMENT_SPACING;
 				double baseLong = lon + x * ELEMENT_SPACING;
