@@ -18,6 +18,7 @@ package uk.me.parabola.mkgmap.reader.test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.general.MapCollector;
@@ -58,10 +59,15 @@ class AllElements {
 	private static final int MAX_POINT_SUB_TYPE = 0x1f;
 
 	// we draw lines and polygons in a 16x16 square (or whatever is here).
-	private static final int MAX_LINE_TYPE_X = 8;
-	private static final int MAX_LINE_TYPE_Y = 8;
-	private static final int MAX_SHAPE_TYPE_X = 12;
-	private static final int MAX_SHAPE_TYPE_Y = 12;
+	private static final int MAX_LINE_TYPE_X = 4;
+	private static final int MAX_LINE_TYPE_Y = 16;
+	private static final int MAX_SHAPE_TYPE_X = 8;
+	private static final int MAX_SHAPE_TYPE_Y = 16;
+	private Properties configProps;
+
+	public AllElements(Properties configProps) {
+		this.configProps = configProps;
+	}
 
 	/**
 	 * Loading the map in this case means generating it.
@@ -70,17 +76,21 @@ class AllElements {
 	 */
 	public void load(MapCollector mapper) {
 		double baseLat = 51.7;
+		double baseLong = 0.24;
 
 		String sBaseLat = System.getenv("BASE_LAT");
 		String sBaseLong = System.getenv("BASE_LONG");
+		if (sBaseLat == null)
+			sBaseLat = configProps.getProperty("base-lat");
+		if (sBaseLong == null)
+			sBaseLong = configProps.getProperty("base-long");
 
 		if (sBaseLat != null)
 			baseLat = Double.valueOf(sBaseLat);
 
-		double baseLong = 0.24;
 		if (sBaseLong != null)
 			baseLong = Double.valueOf(sBaseLong);
-
+		
 		drawTestMap(mapper, baseLat, baseLong);
 	}
 
@@ -98,7 +108,7 @@ class AllElements {
 
 		drawPoints(map, startLat, lng);
 
-		lng += MAX_POINT_TYPE * ELEMENT_SPACING;
+		lng += (MAX_POINT_TYPE + 1) * ELEMENT_SPACING;
 		drawLines(map, startLat, lng);
 
 		lng += MAX_LINE_TYPE_X * ELEMENT_SPACING;
@@ -124,20 +134,23 @@ class AllElements {
 				point.setType(type);
 
 				mapper.addPoint(point);
+				
+				if (configProps.containsKey("verbose"))
+					System.out.println("Generated POI " + GType.formatType(type) + " at " + point.getLocation().toDegreeString()); 
 				mapper.addToBounds(point.getLocation()); // XXX shouldn't be needed.
 			}
 		}
 	}
 
 	private void drawLines(MapCollector mapper, double slat, double slon) {
-
+		
 		double lat = slat + 0.004;
 		double lon = slon + 0.002;
 		int type = 0;
 		for (int x = 0; x < MAX_LINE_TYPE_X; x++) {
 			for (int y = 0; y < MAX_LINE_TYPE_Y; y++) {
 				type++;
-				if ((type & 0x40) != 0)
+				if (type >= 0x40)
 					break;
 
 				MapLine line = new MapLine();
@@ -146,12 +159,13 @@ class AllElements {
 
 				double baseLat = lat + y * ELEMENT_SPACING;
 				double baseLong = lon + x * ELEMENT_SPACING;
-
 				List<Coord> coords = new ArrayList<Coord>();
 
 				Coord co = new Coord(baseLat, baseLong);
 				coords.add(co);
 				mapper.addToBounds(co);
+				if (configProps.containsKey("verbose"))
+					System.out.println("Generated line " + GType.formatType(type) + " at " + co.toDegreeString());
 
 				co = new Coord(baseLat + ELEMENT_SIZE, baseLong + ELEMENT_SIZE);
 				coords.add(co);
@@ -178,9 +192,7 @@ class AllElements {
 		for (int x = 0; x < MAX_SHAPE_TYPE_X; x++) {
 			for (int y = 0; y < MAX_SHAPE_TYPE_Y; y++) {
 				type++;
-				if (type == 0x4a)
-					continue;
-				if ((type & 0x80) != 0)
+				if (type >= 0x80)
 					break;
 
 				//Polygon pg = div.createPolygon("0x" + Integer.toHexString(type));
@@ -191,13 +203,15 @@ class AllElements {
 
 				double baseLat = lat + y * ELEMENT_SPACING;
 				double baseLong = lon + x * ELEMENT_SPACING;
-
+				
 				List<Coord> coords = new ArrayList<Coord>();
 
 				Coord co = new Coord(baseLat, baseLong);
 				//pg.addCoord(co);
 				coords.add(co);
-
+				if (configProps.containsKey("verbose"))
+					System.out.println("Generated polygon " + GType.formatType(type) + " at " + co.toDegreeString());
+				
 				co = new Coord(baseLat + ELEMENT_SIZE, baseLong);
 				coords.add(co);
 				mapper.addToBounds(co);

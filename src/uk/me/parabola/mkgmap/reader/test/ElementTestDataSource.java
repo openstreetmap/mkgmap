@@ -49,7 +49,7 @@ public class ElementTestDataSource extends MapperBasedMapDataSource implements L
 	 */
 	public void load(String name) throws FileNotFoundException {
 		if ("test-map:all-elements".equals(name)) {
-			AllElements all = new AllElements();
+			AllElements all = new AllElements(configProps);
 			all.load(mapper);
 		} else if ("test-map:test-points".equals(name)) {
 			TestPoints test = new TestPoints();
