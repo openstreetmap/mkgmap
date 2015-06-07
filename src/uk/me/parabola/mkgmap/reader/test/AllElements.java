@@ -210,9 +210,7 @@ class AllElements {
 				coords.add(co);
 				mapper.addToBounds(co);
 
-				co = new Coord(baseLat, baseLong);
-				coords.add(co);
-				mapper.addToBounds(co);
+				coords.add(coords.get(0));
 
 				shape.setType(type);
 				shape.setPoints(coords);
