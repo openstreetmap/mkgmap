@@ -1,4 +1,5 @@
-landuse=basin|landuse=reservoir [0x3f resolution 20]
+landuse=basin [0x3f resolution 20]
+(landuse=reservoir | (natural=water & water=reservoir)) [0x3f resolution 20]
 
 natural=bay [0x3d resolution 18]
 natural=glacier [0x4d resolution 18]
