@@ -1906,7 +1906,6 @@ public class HousenumberGenerator {
 	 */
 	class RoadSegmentIndex {
 		private final KdTree<RoadPoint> kdTree = new KdTree<>();
-		private final Map<String, KdTree<RoadPoint>> treeByName = new HashMap<>();
 		private final Int2ObjectOpenHashMap<Set<RoadPoint>> nodeId2RoadPointMap = new Int2ObjectOpenHashMap<>(); 
 		private final double range;
 		private final double maxSegmentLength;
@@ -1927,19 +1926,15 @@ public class HousenumberGenerator {
 				List<Coord> points = road.getPoints();
 				if (points.size() < 2)
 					continue;
-				KdTree<RoadPoint> namedTree = treeByName.get(road.getStreet());
-				if (namedTree == null){
-					namedTree = new KdTree<>();
-					treeByName.put(road.getStreet(), namedTree);
-				}
+
+				List<RoadPoint> roadPoints = new ArrayList<>();
 				RoadPoint rp;
 				for (int i = 0; i + 1 < points.size(); i++){
 					Coord c1 = points.get(i);
 					Coord c2 = points.get(i + 1);
 					int part = 0;
 					rp = new RoadPoint(road, c1, i, part++);
-					addRealRoadPoint(rp);
-					namedTree.add(rp);
+					roadPoints.add(rp);
 					while (true){
 						double segLen = c1.distance(c2);
 						double frac = maxSegmentLength / segLen;
@@ -1948,50 +1943,35 @@ public class HousenumberGenerator {
 						// if points are not close enough, add extra point
 						c1 = c1.makeBetweenPoint(c2, frac);
 						rp = new RoadPoint(road, c1, i, part++);
-						kdTree.add(rp);
-						namedTree.add(rp);
+						roadPoints.add(rp);
 						segLen -= maxSegmentLength;
 					}
 				}
 				int last = points.size() - 1;
 				rp = new RoadPoint(road, points.get(last) , last, -1);
-				addRealRoadPoint(rp);
-				namedTree.add(rp);
+				roadPoints.add(rp);
+				
+				Collections.shuffle(roadPoints);
+				for (RoadPoint toAdd : roadPoints){
+					int id = toAdd.p.getId();
+					if (id == 0)
+						kdTree.add(toAdd);
+					else {
+						// Coord node, add only once to KD-tree with all roads
+						Set<RoadPoint> set = nodeId2RoadPointMap.get(id);
+						if (set == null){
+							set = new LinkedHashSet<>();
+							nodeId2RoadPointMap.put(id, set);
+							kdTree.add(toAdd);
+						}
+						set.add(toAdd);
+					}  		
+				}
 			}
-		}
-		
-		private void addRealRoadPoint(RoadPoint rp){
-			int id = rp.p.getId();
-			if (id == 0){
-				kdTree.add(rp);
-				return;
-			}
-			// Coord node, add only once to KD-tree 
-			Set<RoadPoint> rpOld = nodeId2RoadPointMap.get(id);
-			if (rpOld == null){
-				rpOld = new LinkedHashSet<>();
-				nodeId2RoadPointMap.put(id, rpOld);
-				kdTree.add(rp);
-			}
-			rpOld.add(rp);
 		}
 		
 		public List<RoadPoint> getCLoseRoadPoints(HousenumberElem house){
-			Set<RoadPoint> closeRoadPoints;
-			if (house.getStreet() == null)
-				closeRoadPoints = kdTree.findNextPoint(house, kdSearchRange);
-			else {
-				KdTree<RoadPoint> partKDTree = treeByName.get(house.getStreet());
-				if (partKDTree == null){
-					closeRoadPoints = new HashSet<>();
-				}
-				else
-					closeRoadPoints = partKDTree.findNextPoint(house, kdSearchRange);
-				// add unnamed roads
-				partKDTree = treeByName.get(null);
-				if (partKDTree != null)
-					closeRoadPoints.addAll(partKDTree.findNextPoint(house, kdSearchRange));
-			}
+			Set<RoadPoint> closeRoadPoints = kdTree.findNextPoint(house, kdSearchRange);
 			List<RoadPoint> result = new ArrayList<>();
 			for (RoadPoint rp : closeRoadPoints){
 				int id = rp.p.getId();
