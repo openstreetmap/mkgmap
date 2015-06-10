@@ -1518,26 +1518,27 @@ public class StyledConverter implements OsmConverter {
 			if((i + 1) < points.size()) {
 				Coord nextP = points.get(i + 1);
 				double d = p.distance(nextP);
-				// get arc size as a proportion of the max allowed - a
-				// value greater than 1.0 indicate that the bbox is
-				// too large in at least one dimension
-				double arcProp = LineSizeSplitterFilter.testDims(nextP.getLatitude() -
-																 p.getLatitude(),
-																 nextP.getLongitude() -
-																 p.getLongitude());
-				if(arcProp >= 1.0 || d > MAX_ARC_LENGTH) {
-					nextP = p.makeBetweenPoint(nextP, 0.95 * Math.min(1 / arcProp, MAX_ARC_LENGTH / d));
-					nextP.incHighwayCount();
-					points.add(i + 1, nextP);
-					double newD = p.distance(nextP);
-					if (log.isInfoEnabled())
-						log.info("Way", debugWayName, "contains a segment that is", (int)d + "m long but I am adding a new point to reduce its length to", (int)newD + "m");
-					d = newD;
+				for (;;){
+					int dlat = Math.abs(nextP.getLatitude() - p.getLatitude());
+					int dlon = Math.abs(nextP.getLongitude() - p.getLongitude());
+					if (d > MAX_ARC_LENGTH || Math.max(dlat,  dlon) >= LineSizeSplitterFilter.MAX_SIZE){
+						double frac = Math.min(0.5,	 0.95 * (MAX_ARC_LENGTH / d));
+						nextP = p.makeBetweenPoint(nextP, frac);
+						nextP.incHighwayCount();
+						points.add(i + 1, nextP);
+						double newD = p.distance(nextP);
+						if (log.isInfoEnabled())
+							log.info("Way", debugWayName, "contains a segment that is", (int)d + "m long but I am adding a new point to reduce its length to", (int)newD + "m");
+						d = newD;
+					} else 
+						break;
 				}
-
+				
 				wayBBox.addPoint(nextP);
 
 				if((arcLength + d) > MAX_ARC_LENGTH) {
+					if (i <= 0)
+						log.error("internal error: long arc segment was not split", debugWayName);
 					assert i > 0 : "long arc segment was not split";
 					assert trailingWay == null : "trailingWay not null #1";
 					trailingWay = splitWayAt(way, i);
@@ -1547,6 +1548,8 @@ public class StyledConverter implements OsmConverter {
 						log.info("Splitting way", debugWayName, "at", points.get(i).toOSMURL(), "to limit arc length to", (long)arcLength + "m");
 				}
 				else if(wayBBox.tooBig()) {
+					if (i <= 0)
+						log.error("internal error: arc segment with big bbox not split", debugWayName);
 					assert i > 0 : "arc segment with big bbox not split";
 					assert trailingWay == null : "trailingWay not null #2";
 					trailingWay = splitWayAt(way, i);

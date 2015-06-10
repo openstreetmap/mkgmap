@@ -36,7 +36,7 @@ import uk.me.parabola.mkgmap.general.MapShape;
 public class LineSizeSplitterFilter implements MapFilter {
 	private static final Logger log = Logger.getLogger(LineSizeSplitterFilter.class);
 
-	private static final int MAX_SIZE = 0x7fff;
+	public static final int MAX_SIZE = 0x7fff;
 
 	private int maxSize;
 
