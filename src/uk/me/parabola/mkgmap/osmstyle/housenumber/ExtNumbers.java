@@ -216,7 +216,8 @@ public class ExtNumbers {
 			boolean even = false;
 			boolean odd = false;
 			boolean inOrder = true;
-			int lastDiff = 0;
+			boolean inc = false;
+			boolean dec = false;
 			HousenumberMatch highest, lowest;
 			lowest = highest = houses.get(0);
 			Int2IntOpenHashMap distinctNumbers = new Int2IntOpenHashMap();
@@ -243,11 +244,10 @@ public class ExtNumbers {
 				
 				if (pred != null){
 					int diff = num - pred.getHousenumber();
-					if(lastDiff * diff < 0){
-						// sign changed
-						inOrder = false;
-					}
-					lastDiff = diff;
+					if(diff > 0)
+						inc = true;
+					else if (diff < 0)
+						dec = true;
 				}
 				pred = house;
 			}
@@ -264,6 +264,8 @@ public class ExtNumbers {
 			int start = houses.get(0).getHousenumber();
 			int end = houses.get(numHouses-1).getHousenumber();
 			boolean increasing = false; // from low to high
+			if (dec & inc)
+				inOrder = false;
 			if (start == end && highestNum - lowestNum != 0){
 				if (prev != null){
 					int lastEnd = prev.getNumbers().getEnd(left );
@@ -430,7 +432,7 @@ public class ExtNumbers {
 			if (house.isIgnored())
 				continue;
 			if (house.getSegment() < startInRoad || house.getSegment() >= endInRoad){
-				log.error("internal error, house has wrong segment",getRoad(),"house",house,house.getElement().toBrowseURL());
+				log.error("internal error, house has wrong segment, road",getRoad(),"house",house,house.getElement().toBrowseURL());
 			}
 			if (Double.isNaN(house.getDistance()) || house.getDistance() > HousenumberGenerator.MAX_DISTANCE_TO_ROAD + 10){
 				if (house.getGroup() == null)
@@ -505,7 +507,6 @@ public class ExtNumbers {
 		if (log.isDebugEnabled())
 			log.debug("trying to split",this,"so that",badNum,"is not contained");
 		boolean doSplit = false;
-		
 		Numbers origNumbers = getNumbers();
 		if (origNumbers.countMatches(badNum) == 0){
 			if (log.isDebugEnabled())
@@ -764,9 +765,6 @@ public class ExtNumbers {
 					return dupNode(midFraction, SR_FIX_ERROR);
 				double splitFrac = len1 < len3 ? minFraction0To1 : maxFraction0To1;
 				return dupNode(splitFrac, SR_OPT_LEN);
-			}
-			if (worstHouse != null && worstHouse.getElement().getId() == 2917181493L){
-				long dd = 4;
 			}
 			double usedFraction = 0;
 			double bestDist = Double.MAX_VALUE;
