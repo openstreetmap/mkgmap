@@ -39,12 +39,20 @@
     <orderEntry type="module-library">
       <library name="IvyIDEA">
         <CLASSES>
-          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.protobuf/protobuf-java/jars/protobuf-java-2.4.1.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/crosby/osmpbf/jars/osmpbf-1.1.1-754a33af.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/com.ibm.icu/icu4j/jars/icu4j-4.8.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.protobuf/protobuf-java/bundles/protobuf-java-2.5.0.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/crosby/osmpbf/jars/osmpbf-1.3.3.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/it.unimi.dsi/fastutil/jars/fastutil-6.5.15-mkg.1b.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/junit/junit/jars/junit-4.11.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.hamcrest/hamcrest-core/jars/hamcrest-core-1.3.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.ibm.icu/icu4j/jars/icu4j-53.1.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/org.apache.ant/ant/jars/ant-1.8.2.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/javax.media.jai/com.springsource.javax.media.jai.codec/jars/com.springsource.javax.media.jai.codec-1.1.3.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/javax.media.jai/com.springsource.javax.media.jai.core/jars/com.springsource.javax.media.jai.core-1.1.3.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/uk.org.mkgmap/splitter/jars/splitter-412.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/xpp3/xpp3/jars/xpp3-1.1.4c.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.testng/testng/jars/testng-6.8.8.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.beanshell/bsh/jars/bsh-2.0b4.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.beust/jcommander/jars/jcommander-1.27.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/org.geotools/gt-api/jars/gt-api-2.7.5.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/com.vividsolutions/jts/jars/jts-1.11.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/xerces/xercesImpl/jars/xercesImpl-2.7.1.jar!/" />
@@ -57,33 +65,36 @@
           <root url="jar://$USER_HOME$/.ivy2/cache/org.geotools/gt-cql/jars/gt-cql-2.7.5.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/org.geotools/gt-main/jars/gt-main-2.7.5.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/jdom/jdom/jars/jdom-1.0.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.geotools/gt-shapefile/jars/gt-shapefile-2.7.5.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.geotools/gt-data/jars/gt-data-2.7.5.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/innig/macker/jars/macker-0.4.2.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/commons-lang/commons-lang/jars/commons-lang-1.0.1.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/innig/innig-util/jars/innig-util-0.4.2.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/bcel/bcel/jars/bcel-5.1.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/regexp/regexp/jars/regexp-1.2.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/jdom/jdom/jars/jdom-b9.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/it.unimi.dsi/fastutil/jars/fastutil-6.5.2-mkg.1.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/org.geotools/gt-shapefile/jars/gt-shapefile-2.7.5.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/org.geotools/gt-data/jars/gt-data-2.7.5.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/junit/junit/jars/junit-4.11.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/org.hamcrest/hamcrest-core/jars/hamcrest-core-1.3.jar!/" />
         </CLASSES>
         <JAVADOC>
-          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.protobuf/protobuf-java/javadocs/protobuf-java-2.4.1-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.protobuf/protobuf-java/javadocs/protobuf-java-2.5.0-javadoc.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/junit/junit/javadocs/junit-4.11-javadoc.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/org.hamcrest/hamcrest-core/javadocs/hamcrest-core-1.3-javadoc.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/com.ibm.icu/icu4j/javadocs/icu4j-4.8-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.ibm.icu/icu4j/javadocs/icu4j-53.1-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/xpp3/xpp3/javadocs/xpp3-1.1.4c-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.testng/testng/javadocs/testng-6.8.8-javadoc.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.beust/jcommander/javadocs/jcommander-1.27-javadoc.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/com.vividsolutions/jts/javadocs/jts-1.11-javadoc.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/commons-pool/commons-pool/javadocs/commons-pool-1.5.4-javadoc.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/net.java.dev.jsr-275/jsr-275/javadocs/jsr-275-1.0-beta-2-javadoc.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/commons-lang/commons-lang/javadocs/commons-lang-1.0.1-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
-          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.protobuf/protobuf-java/sources/protobuf-java-2.4.1-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.protobuf/protobuf-java/sources/protobuf-java-2.5.0-sources.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/junit/junit/sources/junit-4.11-sources.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/org.hamcrest/hamcrest-core/sources/hamcrest-core-1.3-sources.jar!/" />
-          <root url="jar://$USER_HOME$/.ivy2/cache/com.ibm.icu/icu4j/sources/icu4j-4.8-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.ibm.icu/icu4j/sources/icu4j-53.1-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/xpp3/xpp3/sources/xpp3-1.1.4c-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/org.testng/testng/sources/testng-6.8.8-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.beust/jcommander/sources/jcommander-1.27-sources.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/org.geotools/gt-api/sources/gt-api-2.7.5-sources.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/com.vividsolutions/jts/sources/jts-1.11-sources.jar!/" />
           <root url="jar://$USER_HOME$/.ivy2/cache/org.geotools/gt-referencing/sources/gt-referencing-2.7.5-sources.jar!/" />
@@ -102,4 +113,3 @@
     </orderEntry>
   </component>
 </module>
-
