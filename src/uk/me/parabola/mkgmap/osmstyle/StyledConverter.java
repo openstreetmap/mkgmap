@@ -264,6 +264,7 @@ public class StyledConverter implements OsmConverter {
 		if (way.getPoints().size() < 2 || way.getTagCount() == 0){
 			// no tags or no points => nothing to convert
 			removeRestrictionsWithWay(Level.WARNING, way, "is ignored");
+			return;
 		}
 		preConvertRules(way);
 
