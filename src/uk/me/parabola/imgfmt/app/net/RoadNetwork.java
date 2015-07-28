@@ -149,7 +149,7 @@ public class RoadNetwork {
 				if(co.equals(reverseBearingPoint)) {
 					// bearing point is too close to this node to be
 					// useful - try some more points
-					for(int bi = index - 2; bi > lastIndex; --bi) {
+					for(int bi = index - 2; bi >= lastIndex; --bi) {
 						if(!co.equals(coordList.get(bi))) {
 							reverseBearingPoint = coordList.get(bi);
 							break;
