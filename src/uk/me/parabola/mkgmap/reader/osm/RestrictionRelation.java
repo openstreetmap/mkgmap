@@ -320,12 +320,6 @@ public class RestrictionRelation extends Relation {
 			log.warn(messagePrefix, "'via' way(s) are not supported with multiple 'from' or 'to' ways");
 			valid = false;
 		}
-		if (toWays.size() == 1 && fromWays.size() == 1 && viaWays.isEmpty()){
-			if ("no_u_turn".equals(restriction) && fromWays.get(0).equals(toWays.get(0))){
-				log.warn(messagePrefix,"no_u_turn with equal 'from' and 'to' way and via node is ignored");
-				valid = false;
-			}
-		}
 		if (!valid)
 			return;
 		for (List<Way> ways : Arrays.asList(fromWays,viaWays,toWays)){
