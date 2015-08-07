@@ -480,8 +480,6 @@ public class HousenumberGenerator {
 	 * Evaluate type=associatedStreet relations.
 	 */
 	public void addRelation(Relation r) {
-		if (numbersEnabled == false) 
-			return;
 		String relType = r.getTag("type");
 		// the wiki says that we should also evaluate type=street
 		if ("associatedStreet".equals(relType) || "street".equals(relType)){
@@ -571,6 +569,7 @@ public class HousenumberGenerator {
 				}
 				for (Element street : unnamedStreetElems) {
 					street.addTag(streetTagKey, streetName);
+					street.addTag("name", streetName);
 				}
 			}
 			if (log.isInfoEnabled()){
