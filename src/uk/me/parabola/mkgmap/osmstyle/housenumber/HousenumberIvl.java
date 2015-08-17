@@ -334,9 +334,6 @@ public class HousenumberIvl {
 			house.setInterpolated(true);
 			houses.add(house);
 		}
-		if (getId() == 37881402){
-			long dd = 4;
-		}
 		
 		if (log.isDebugEnabled()){
 			String addrInterpolationMethod = interpolationWay.getTag(addrInterpolationTagKey);
