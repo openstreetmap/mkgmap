@@ -840,10 +840,9 @@ public class HousenumberGenerator {
 				for (HousenumberMatch house : placeHouses){
 					if (house.getStreet() != null ){
 						++housesWithStreet;
-						if (house.getStreet().equals(house.getRoad().getStreet())){
+						if (house.getStreet().equalsIgnoreCase(house.getRoad().getStreet())){
 							++housesWithMatchingStreet;
 						}
-						
 					} else {
 						if (house.getRoad().getStreet() == null)
 							++unnamedCloseRoads;
@@ -1818,10 +1817,10 @@ public class HousenumberGenerator {
 			MapRoad lastRoad = null;
 			HousenumberMatch hnm = null;
 			for (RoadPoint rp : closeRoadPoints){
-				if (house.getStreet() != null && house.getStreet().equals(rp.r.getStreet()) == false){
-					if (rp.r.getStreet() != null){
+				if (house.getStreet() != null){
+					// we have a given street name, accept only roads with similar name or no name
+					if (rp.r.getStreet() != null && house.getStreet().equalsIgnoreCase(rp.r.getStreet()) == false)
 						continue;
-					}
 				}
 				if (rp.r != lastRoad){
 					hnm = new HousenumberMatch(house);
@@ -1850,28 +1849,38 @@ public class HousenumberGenerator {
 					continue;
 			}
 			if (matches.isEmpty())
-				return closest;
+				return closest; // closest has not yet a road
+			
 			Collections.sort(matches, new HousenumberGenerator.HousenumberMatchByDistComparator());
 			closest = matches.get(0);
 			closest = checkAngle(closest, matches);
 			closest.calcRoadSide();
 			HousenumberMatch bestMatchingName = null; 
-			if (closest.getStreet() != null && closest.getStreet().equals(closest.getRoad().getStreet()))
+			if (closest.getStreet() != null && closest.getStreet().equalsIgnoreCase(closest.getRoad().getStreet()))
 				bestMatchingName = closest;
+			
 			for (HousenumberMatch altHouse : matches){
 				if (altHouse.getDistance() >= MAX_DISTANCE_TO_ROAD)
 					break;
 				if (altHouse.getRoad() != closest.getRoad()){
 					if (house.getStreet() != null && altHouse.getDistance() > closest.getDistance()){
-						if (house.getStreet().equals(altHouse.getRoad().getStreet())){
-							if (bestMatchingName == null || bestMatchingName.getDistance() > altHouse.getDistance())
+						if (house.getStreet().equalsIgnoreCase(altHouse.getRoad().getStreet())){
+							if (bestMatchingName == null || bestMatchingName.getDistance() > altHouse.getDistance()){
 								bestMatchingName = altHouse;
+							}
 						} else {
 							if (bestMatchingName != null && altHouse.getDistance() > bestMatchingName.getDistance())
 								continue;
 						}
 					}
 					closest.addAlternativeRoad(altHouse.getRoad());
+				}
+			}
+			if (bestMatchingName != null){
+				if (house.getStreet().equals(bestMatchingName.getRoad().getStreet()) == false){
+					log.warn("accepting match in spite of different capitalisation" , house.getStreet(),house.getSign(), bestMatchingName.getRoad().getRoadDef(), "house:",house.getElement().toBrowseURL());
+					bestMatchingName.setStreet(bestMatchingName.getRoad().getStreet());
+					closest.setStreet(bestMatchingName.getStreet());
 				}
 			}
 			if (closest == bestMatchingName || bestMatchingName == null || bestMatchingName.getDistance() > MAX_DISTANCE_TO_ROAD)
@@ -1884,7 +1893,7 @@ public class HousenumberGenerator {
 			if (ratio > 0.75){
 				// prefer the road with the matching name
 				for (MapRoad r : closest.getAlternativeRoads()){
-					if (house.getStreet().equals(r.getStreet()))
+					if (house.getStreet().equalsIgnoreCase(r.getStreet()))
 						bestMatchingName.addAlternativeRoad(r);
 				}
 				best = bestMatchingName;
@@ -1898,7 +1907,9 @@ public class HousenumberGenerator {
 			}
 			return best;
 		}
+
 	}
+	
 }
 
 

@@ -751,7 +751,7 @@ public class HousenumberRoad {
 			while (iter.hasNext()){
 				HousenumberMatch house = iter.next();
 				if (streetName != null){
-					if (house.getStreet() == null || streetName.equals(house.getStreet()))
+					if (house.getStreet() == null || streetName.equalsIgnoreCase(house.getStreet()))
 						continue;
 				} else if (house.getPlace() != null)
 					continue;
