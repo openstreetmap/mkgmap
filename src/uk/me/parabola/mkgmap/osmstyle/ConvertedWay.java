@@ -134,21 +134,22 @@ public class ConvertedWay {
 			} else {
 				roadClass = Byte.decode(val);
 			}
-			val = el.getTag("mkgmap:road-class-max");
-			byte roadClassMax = 4;
-			if (val != null)
-				roadClassMax = Byte.decode(val);
-			val = el.getTag("mkgmap:road-class-min");
-
-			byte roadClassMin = 0;
-			if (val != null)
-				roadClassMin = Byte.decode(val);
-			if (roadClass > roadClassMax)
-				roadClass = roadClassMax;
-			else if (roadClass < roadClassMin)
-				roadClass = roadClassMin;
-
 		}
+		val = el.getTag("mkgmap:road-class-max");
+		byte roadClassMax = 4;
+		if (val != null)
+			roadClassMax = Byte.decode(val);
+
+		val = el.getTag("mkgmap:road-class-min");
+		byte roadClassMin = 0;
+		if (val != null)
+			roadClassMin = Byte.decode(val);
+
+		if (roadClass > roadClassMax)
+			roadClass = roadClassMax;
+		else if (roadClass < roadClassMin)
+			roadClass = roadClassMin;
+
 		return (roadClass != oldRoadClass);
 	}
 	
@@ -202,20 +203,21 @@ public class ConvertedWay {
 			else {
 				roadSpeed = Byte.decode(val);
 			}
-			val = el.getTag("mkgmap:road-speed-max");
-			byte roadSpeedMax = 7;
-			if(val != null)
-				roadSpeedMax = Byte.decode(val);
-			val = el.getTag("mkgmap:road-speed-min");
-
-			byte roadSpeedMin = 0;
-			if(val != null)
-				roadSpeedMin = Byte.decode(val);
-			if(roadSpeed > roadSpeedMax)
-				roadSpeed = roadSpeedMax;
-			else if(roadSpeed < roadSpeedMin)
-				roadSpeed = roadSpeedMin;
 		}
+		val = el.getTag("mkgmap:road-speed-max");
+		byte roadSpeedMax = 7;
+		if(val != null)
+			roadSpeedMax = Byte.decode(val);
+
+		val = el.getTag("mkgmap:road-speed-min");
+		byte roadSpeedMin = 0;
+		if(val != null)
+			roadSpeedMin = Byte.decode(val);
+
+		if(roadSpeed > roadSpeedMax)
+			roadSpeed = roadSpeedMax;
+		else if(roadSpeed < roadSpeedMin)
+			roadSpeed = roadSpeedMin;
 		return (oldRoadSpeed != roadSpeed);
 	}
 
