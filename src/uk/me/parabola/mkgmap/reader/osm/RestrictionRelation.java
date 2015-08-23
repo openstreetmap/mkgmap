@@ -662,7 +662,27 @@ public class RestrictionRelation extends Relation {
 		if (viaWayIds.contains(way.getId()) == false)
 			return;
 		if(updatedViaWays.contains(way.getId())){
-			log.error(messagePrefix, "internal error: via way is updated again");
+			// we may get here when the style adds multiple routable ways for the
+			// OSM way
+			if (viaPoints.size() != nodeIndices.size())
+				valid = false;
+			else {
+				Iterator<Coord> iter = viaPoints.iterator();
+				for (int pos : nodeIndices){
+					if (iter.hasNext()){
+						if (way.getPoints().get(pos).equals(iter.next()))
+							continue;
+					}
+					valid = false;
+					break;
+				}
+			}
+			if (!valid)
+				log.error(messagePrefix, "internal error: via way is updated again with different nodes");
+			else {
+				// already up to date
+				return;
+			}
 		}
 		Coord first = way.getPoints().get(nodeIndices.get(0));
 		Coord last = way.getPoints().get(
