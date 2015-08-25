@@ -393,9 +393,6 @@ public class RoadNetwork {
 		}
 		
 		// a bit more complex: determine the to-node and arc(s) 
-		RouteNode uTurnNode = (viaNodes.size() > 1) ? viaNodes.get(viaNodes.size()-2): fn;
-		long uTurnWay = (viaNodes.size() > 1) ? grr.getViaWayIds().get(grr.getViaWayIds().size()-1) : grr.getFromWayId(); 
-		
 		RouteNode tn = null;
 		int toId = 0; 
 		List<RouteArc> toArcs = new ArrayList<>();
@@ -470,23 +467,13 @@ public class RoadNetwork {
 		}
 		else if (grr.getType() == GeneralRouteRestriction.RestrType.TYPE_ONLY){
 			// this is the inverse logic, grr gives the allowed path, we have to find the others
-			int uTurns = 0;
-			
 			for (RouteArc badArc : lastViaNode.arcsIteration()){
 				if (!badArc.isDirect() || toArcs.contains(badArc))
 					continue;
-				if (badArc.getDest() == uTurnNode && badArc.getRoadDef().getId() == uTurnWay){
-					// ignore u-turn
-					++uTurns;
-					continue;
-				}
 				badArcs.add(badArc);
 			}
 			if (badArcs.isEmpty()){
-				if (uTurns > 0)
-					log.warn(sourceDesc, "restriction ignored because it forbids only u-turn");
-				else
-					log.warn(sourceDesc, "restriction ignored because it has no effect");
+				log.warn(sourceDesc, "restriction ignored because it has no effect");
 				return 0;
 			}
 		}
