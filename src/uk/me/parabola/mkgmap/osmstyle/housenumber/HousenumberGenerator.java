@@ -1182,8 +1182,10 @@ public class HousenumberGenerator {
 						}
 					}
 				}
-				if (foundDup)
+				if (foundDup){
+					log.warn("addr:interpolation way",hivl,"produces duplicate numbers which are too far from existing nodes, is ignored");
 					badIvls.add(hivl);
+				}
 				else
 					housesToAdd.put(hivl, interpolatedHouses);
 			}
