@@ -93,7 +93,7 @@ public class HousenumberRoad {
 				continue;
 			}
 			if (house.getHousenumberRoad() != this || house.getHousenumberRoad().getRoad() != house.getRoad()){
-				log.error("internal error, road links are not correct",house.getElement().toBrowseURL());
+				log.error("internal error, road links are not correct",house.toBrowseURL());
 			}
 			if (house.isLeft()) {
 				leftNumbers.add(house);
@@ -294,7 +294,7 @@ public class HousenumberRoad {
 				if (sameSide && (distBetweenHouses < 100 || distToUsed < 100)){
 					HousenumberMatch obsolete = house1 == usedForCalc ? house2 : house1;
 					if (log.isDebugEnabled())
-						log.debug("house",obsolete,obsolete.getElement().toBrowseURL(),"is close to other element and on the same road side, is ignored");
+						log.debug("house",obsolete,obsolete.toBrowseURL(),"is close to other element and on the same road side, is ignored");
 					toIgnore.add(obsolete);
 					continue;
 				}
@@ -320,7 +320,7 @@ public class HousenumberRoad {
 					}
 					if (wrongSide != null){
 						if (log.isDebugEnabled())
-							log.debug("house",streetName,wrongSide.getSign(),"from",wrongSide.getElement().toBrowseURL(),"seems to be wrong, is ignored");
+							log.debug("house",streetName,wrongSide.getSign(),"from",wrongSide.toBrowseURL(),"seems to be wrong, is ignored");
 						toIgnore.add(wrongSide);
 						continue;
 					}
@@ -395,8 +395,8 @@ public class HousenumberRoad {
 					found[k] = TO_SEARCH - 1 - stillToFind; 
 				}
 				if (log.isDebugEnabled()){
-					log.debug("dup check 1:", streetName, house1, house1.getElement().toBrowseURL());
-					log.debug("dup check 2:", streetName, house2, house2.getElement().toBrowseURL());
+					log.debug("dup check 1:", streetName, house1, house1.toBrowseURL());
+					log.debug("dup check 2:", streetName, house2, house2.toBrowseURL());
 					log.debug("confirmed",Arrays.toString(confirmed),"falsified",Arrays.toString(falsified),"sum-dist",Arrays.toString(sumDist),"sum-dist-same-side",Arrays.toString(sumDistSameSide));
 				}
 				HousenumberMatch bad = null;
@@ -422,7 +422,7 @@ public class HousenumberRoad {
 		} 
 		for (HousenumberMatch house : toIgnore){
 			if (log.isInfoEnabled())
-				log.info("duplicate housenumber",streetName,house.getSign(),"is ignored for road with id",house.getRoad().getRoadDef().getId(),",house:",house.getElement().toBrowseURL());
+				log.info("duplicate housenumber",streetName,house.getSign(),"is ignored for road with id",house.getRoad().getRoadDef().getId(),",house:",house.toBrowseURL());
 			houseNumbers.remove(house);
 		}
 	}
@@ -774,7 +774,7 @@ public class HousenumberRoad {
 					best.calcRoadSide();
 					wrongHouses.add(best);
 				} else {
-					log.warn("found no plausible road for address",house.getStreet(),house,house.getElement().toBrowseURL());
+					log.warn("found no plausible road for address",house.getStreet(),house,house.toBrowseURL());
 				}
 			}
 			

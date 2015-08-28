@@ -432,11 +432,11 @@ public class ExtNumbers {
 			if (house.isIgnored())
 				continue;
 			if (house.getSegment() < startInRoad || house.getSegment() >= endInRoad){
-				log.error("internal error, house has wrong segment, road",getRoad(),"house",house,house.getElement().toBrowseURL());
+				log.error("internal error, house has wrong segment, road",getRoad(),"house",house,house.toBrowseURL());
 			}
 			if (Double.isNaN(house.getDistance()) || house.getDistance() > HousenumberGenerator.MAX_DISTANCE_TO_ROAD + 10){
 				if (house.getGroup() == null)
-					log.error("internal error, distance to road too large, road",getRoad(),"house",house,house.getElement().toBrowseURL());
+					log.error("internal error, distance to road too large, road",getRoad(),"house",house,house.toBrowseURL());
 			}
 		}
 	}
@@ -1014,7 +1014,7 @@ public class ExtNumbers {
 			HousenumberGenerator.findClosestRoadSegment(house, getRoad(), segment,segment+1);
 			if (house.getRoad() == null || house.getSegment() != segment){
 				// should not happen
-				log.error("internal error, house too far from forced segment in road",getRoad(),house,house.getElement().toBrowseURL());
+				log.error("internal error, house too far from forced segment in road",getRoad(),house,house.toBrowseURL());
 				house.setIgnored(true);
 			}
 		}
@@ -1390,7 +1390,7 @@ public class ExtNumbers {
 					}
 					if (bestMoveMod != null){
 						if (bestMoveOrig.isDuplicate()){
-							log.warn("duplicate number causes problems",streetName,bestMoveOrig.getSign(),bestMoveOrig.getElement().toBrowseURL() );
+							log.warn("duplicate number causes problems",streetName,bestMoveOrig.getSign(),bestMoveOrig.toBrowseURL() );
 						}
 						List<HousenumberMatch> fromHouses, toHouses;
 						ExtNumbers from,to;

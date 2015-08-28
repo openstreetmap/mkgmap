@@ -20,13 +20,12 @@ import java.util.List;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.reader.osm.Way;
-import uk.me.parabola.util.Locatable;
 
 /**
  * Stores the matching data between a housenumber and its road.
  * @author WanMil
  */
-public class HousenumberMatch extends HousenumberElem implements Locatable {
+public class HousenumberMatch extends HousenumberElem {
 	private MapRoad road;
 	private HousenumberRoad housenumberRoad;
 	

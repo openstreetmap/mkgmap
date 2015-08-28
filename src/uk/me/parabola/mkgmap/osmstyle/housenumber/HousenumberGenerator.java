@@ -669,7 +669,7 @@ public class HousenumberGenerator {
 				if (hnr.getName() == null){
 					iter.remove();
 					for (HousenumberMatch house : hnr.getHouses()){
-						log.warn("found no plausible road name for address",house.getElement().toBrowseURL(),", closest road id:",house.getRoad());
+						log.warn("found no plausible road name for address",house.toBrowseURL(),", closest road id:",house.getRoad());
 					}
 				}
 			}
@@ -737,9 +737,9 @@ public class HousenumberGenerator {
 			for (HousenumberElem house : houseElems){
 				if (house.getRoad() == null){
 					if (house.getStreet() != null)
-						log.info("found no plausible road for house number element",house.getElement().toBrowseURL(),house.getStreet(),house.getSign());
+						log.info("found no plausible road for house number element",house.toBrowseURL(),house.getStreet(),house.getSign());
 					else 
-						log.info("found no plausible road for house number element",house.getElement().toBrowseURL());
+						log.info("found no plausible road for house number element",house.toBrowseURL());
 				}
 			}
 		}
@@ -1123,13 +1123,19 @@ public class HousenumberGenerator {
 		HashSet<String> simpleDupCheckSet = new HashSet<>();
 		HashSet<HousenumberIvl> badIvls = new HashSet<>();
 		Long2ObjectOpenHashMap<HousenumberIvl> id2IvlMap = new Long2ObjectOpenHashMap<>();
-		Int2ObjectOpenHashMap<HousenumberMatch> interpolatedNumbers = new Int2ObjectOpenHashMap<>();
-		Int2ObjectOpenHashMap<HousenumberMatch> existingNumbers = new Int2ObjectOpenHashMap<>();
+		LinkedHashMap<CityInfo,Int2ObjectOpenHashMap<HousenumberMatch>> interpolatedNumbers = new LinkedHashMap<>();
+		LinkedHashMap<CityInfo,Int2ObjectOpenHashMap<HousenumberMatch>> existingNumbers = new LinkedHashMap<>();
 		HashMap<HousenumberIvl, List<HousenumberMatch>> housesToAdd = new LinkedHashMap<>();
 		
 		for (HousenumberRoad hnr : roadsInCluster){
-			for (HousenumberMatch house : hnr.getHouses())
-				existingNumbers.put(house.getHousenumber(), house);
+			Int2ObjectOpenHashMap<HousenumberMatch> map = existingNumbers.get(hnr.getRoadCityInfo());
+			if (map == null){
+				map = new Int2ObjectOpenHashMap<>();
+				existingNumbers.put(hnr.getRoadCityInfo(), map);
+			}
+			for (HousenumberMatch house : hnr.getHouses()){
+				map.put(house.getHousenumber(), house);
+			}
 		}
 		
 		int inCluster = 0;
@@ -1156,22 +1162,31 @@ public class HousenumberGenerator {
 					// the interpolated houses are not all along one road
 					findRoadForInterpolatedHouses(streetName, interpolatedHouses, roadsInCluster);
 				}
-
-				boolean foundDup = false;
+				
+				int dupCount = 0;
 				for (HousenumberMatch house : interpolatedHouses){
 					if (house.getRoad() == null || house.getDistance() > HousenumberIvl.MAX_INTERPOLATION_DISTANCE_TO_ROAD)
 						continue;
 					boolean ignoreGenOnly = false;
-					HousenumberMatch old = interpolatedNumbers.put(house.getHousenumber(), house);
+					Int2ObjectOpenHashMap<HousenumberMatch> interpolatedMap = interpolatedNumbers.get(house.getCityInfo());
+					if (interpolatedMap == null){
+						interpolatedMap = new Int2ObjectOpenHashMap<>();
+						interpolatedNumbers.put(house.getCityInfo(), interpolatedMap);
+					}
+					HousenumberMatch old = interpolatedMap.put(house.getHousenumber(), house);
 					if (old == null){
 						ignoreGenOnly = true;
-						old = existingNumbers.get(house.getHousenumber());
+						Int2ObjectOpenHashMap<HousenumberMatch> existingMap = existingNumbers.get(house.getCityInfo());
+						if (existingMap != null)
+							old = existingMap.get(house.getHousenumber());
 					}
 					if (old != null){
 						// forget both or only one ? Which one?
 						house.setIgnored(true);
-						if (old.getLocation().distance(house.getLocation()) > 5){
-							foundDup = true;
+						double distToOld = old.getLocation().distance(house.getLocation()); 
+						if (distToOld > 40 && distToOld < MAX_DISTANCE_TO_ROAD){
+							log.info("conflict caused by addr:interpolation way",hivl,"and address element",house.toBrowseURL());
+							dupCount++;
 							if (!ignoreGenOnly){
 								old.setIgnored(true);
 								long ivlId = old.getElement().getOriginalId();
@@ -1182,8 +1197,8 @@ public class HousenumberGenerator {
 						}
 					}
 				}
-				if (foundDup){
-					log.warn("addr:interpolation way",hivl,"produces duplicate numbers which are too far from existing nodes, is ignored");
+				if (dupCount > 0){
+					log.warn("addr:interpolation way",hivl,"is ignored, it produces duplicate number(s) too far from existing nodes");
 					badIvls.add(hivl);
 				}
 				else
@@ -1206,7 +1221,7 @@ public class HousenumberGenerator {
 				if (house.getRoad() != null && house.isIgnored() == false){
 					HousenumberRoad hnr = road2HousenumberRoadMap.get(house.getRoad());
 					if (hnr == null){
-						log.error("internal error: found no housenumber road for interpolated house",house.getElement().toBrowseURL());
+						log.error("internal error: found no housenumber road for interpolated house",house.toBrowseURL());
 						continue;
 					}
 					hnr.addHouse(house);
@@ -1290,7 +1305,7 @@ public class HousenumberGenerator {
 			
 			if (house.getRoad() == null) {
 				if (house.isIgnored() == false)
-					log.warn("found no plausible road for house number element",house.getElement().toBrowseURL(),"(",streetName,house.getSign(),")");
+					log.warn("found no plausible road for house number element",house.toBrowseURL(),"(",streetName,house.getSign(),")");
 			}
 			if (!house.isIgnored())
 				prev = house;
@@ -1353,7 +1368,7 @@ public class HousenumberGenerator {
 				house2.setIgnored(true);
 				if (log.isDebugEnabled()){
 					if (house1.getSign().equals(house2.getSign()))
-						log.debug("duplicate number is ignored",streetName,house2.getSign(),house2.getElement().toBrowseURL() );
+						log.debug("duplicate number is ignored",streetName,house2.getSign(),house2.toBrowseURL() );
 					else 
 						log.info("using",streetName,house1.getSign(), "in favor of",house2.getSign(),"as target for address search");
 				}
@@ -1593,9 +1608,9 @@ public class HousenumberGenerator {
 		}
 		if (log.isDebugEnabled()){
 			if (closestMatch.getRoad() != bestMatch.getRoad()){
-				log.debug("check angle: using road",bestMatch.getRoad().getRoadDef().getId(),"instead of",closestMatch.getRoad().getRoadDef().getId(),"for house number",bestMatch.getSign(),bestMatch.getElement().toBrowseURL());
+				log.debug("check angle: using road",bestMatch.getRoad().getRoadDef().getId(),"instead of",closestMatch.getRoad().getRoadDef().getId(),"for house number",bestMatch.getSign(),bestMatch.toBrowseURL());
 			} else if (closestMatch != bestMatch){
-				log.debug("check angle: using road segment",bestMatch.getSegment(),"instead of",closestMatch.getSegment(),"for house number element",bestMatch.getElement().toBrowseURL());
+				log.debug("check angle: using road segment",bestMatch.getSegment(),"instead of",closestMatch.getSegment(),"for house number element",bestMatch.toBrowseURL());
 			}
 		}
 		return bestMatch;
@@ -1880,7 +1895,7 @@ public class HousenumberGenerator {
 			}
 			if (bestMatchingName != null){
 				if (house.getStreet().equals(bestMatchingName.getRoad().getStreet()) == false){
-					log.warn("accepting match in spite of different capitalisation" , house.getStreet(),house.getSign(), bestMatchingName.getRoad().getRoadDef(), "house:",house.getElement().toBrowseURL());
+					log.warn("accepting match in spite of different capitalisation" , house.getStreet(),house.getSign(), bestMatchingName.getRoad().getRoadDef(), "house:",house.toBrowseURL());
 					bestMatchingName.setStreet(bestMatchingName.getRoad().getStreet());
 					closest.setStreet(bestMatchingName.getStreet());
 				}
@@ -1902,7 +1917,7 @@ public class HousenumberGenerator {
 				best.calcRoadSide();
 			} else {
 				if (log.isDebugEnabled()){
-					log.debug("further checks needed for address", closest.getStreet(), closest.getSign(), closest.getElement().toBrowseURL(), 
+					log.debug("further checks needed for address", closest.getStreet(), closest.getSign(), closest.toBrowseURL(), 
 							formatLen(closest.getDistance()), formatLen(bestMatchingName.getDistance()));
 				}
 

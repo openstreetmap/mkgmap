@@ -5,6 +5,7 @@ import uk.me.parabola.mkgmap.general.CityInfo;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.ZipCodeInfo;
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.util.Locatable;
@@ -107,4 +108,12 @@ class HousenumberElem implements Locatable{
 			return place + " " + sign;
 		return "?" + " " + sign;
 	}
+	
+	public String toBrowseURL(){
+		if (FakeIdGenerator.isFakeId(element.getId())){
+			return getLocation().toOSMURL();
+		}
+		return element.toBrowseURL();
+	}
+
 }
