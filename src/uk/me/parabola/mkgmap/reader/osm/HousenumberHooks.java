@@ -35,7 +35,6 @@ public class HousenumberHooks extends OsmReadingHooksAdaptor {
 	private final List<Node> nodes = new ArrayList<>();
 	private boolean clearNodes;
 	
-	private static final short addrStreetTagKey = TagDict.getInstance().xlate("addr:street");
 	private static final short addrHousenumberTagKey = TagDict.getInstance().xlate("addr:housenumber");
 	private static final short addrInterpolationTagKey = TagDict.getInstance().xlate("addr:interpolation");
 	

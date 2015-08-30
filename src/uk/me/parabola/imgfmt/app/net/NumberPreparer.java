@@ -982,17 +982,12 @@ class CityZipWriter {
 			initFlag >>= 5;
 		}
 		initFlag |= sidesFlag << 5;
-		if ((initFlag & 0xff) == 4){
-			long dd = 4;
-		}
 		buf.write((byte) (initFlag & 0xff));
 		if ((sidesFlag & 4) == 0) {
 			if (indexes[0] > 0 && (sidesFlag == 0 || (sidesFlag & 1) == 1))
 				writeIndex(indexes[0]);
 			if (indexes[1] > 0 && (sidesFlag & 2) != 0)
 				writeIndex(indexes[1]);
-		} else {
-			long dd = 4;
 		}
 		System.arraycopy(indexes, 0, prevIndexes, 0, indexes.length);
 	}
