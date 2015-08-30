@@ -68,6 +68,8 @@ public class HousenumberGenerator {
 
 	/** Gives the maximum distance between house number element and the matching road */
 	public static final double MAX_DISTANCE_TO_ROAD = 150d;
+	/** Gives the maximum distance for different elements with the same address */
+	public static final double MAX_DISTANCE_SAME_NUM = 100d;
 	
 	private boolean numbersEnabled;
 
@@ -280,6 +282,7 @@ public class HousenumberGenerator {
 		HousenumberElem houseElem = handleElement(n);
 		if (houseElem == null)
 			return;
+		
 		if (n.getTag(HousenumberHooks.partOfInterpolationTagKey) != null)
 			interpolationNodes.put(n.getId(),houseElems.size()-1);
 	}
@@ -695,11 +698,10 @@ public class HousenumberGenerator {
 			
 			for (Entry<String, TreeMap<CityInfo, List<HousenumberRoad>>> streetNameEntry : streetnameCityRoadMap.entrySet()){
 				String streetName = streetNameEntry.getKey();
-				List<HousenumberRoad> roadsWithStreetName = new ArrayList<>();
+				
 				for (Entry<CityInfo, List<HousenumberRoad>> clusterEntry : streetNameEntry.getValue().entrySet()){
-					roadsWithStreetName.addAll(clusterEntry.getValue());
+					useInterpolationInfo(streetName, clusterEntry.getValue(), road2HousenumberRoadMap);
 				}
-				useInterpolationInfo(streetName, roadsWithStreetName, road2HousenumberRoadMap);
 				
 				for (Entry<CityInfo, List<HousenumberRoad>> clusterEntry : streetNameEntry.getValue().entrySet()){
 					List<HousenumberRoad> roadsInCluster = clusterEntry.getValue();
@@ -1100,7 +1102,6 @@ public class HousenumberGenerator {
 	 *  XXX: Known problem: Doesn't work well when the road was
 	 *  clipped at the tile boundary.
 	 * @param streetName
-	 * @param housesNearCluster
 	 * @param roadsInCluster
 	 * @param road2HousenumberRoadMap 
 	 * @param interpolationInfos 
@@ -1120,24 +1121,17 @@ public class HousenumberGenerator {
 		if (housesWithIvlInfo.isEmpty())
 			return;
 		
-		HashSet<String> simpleDupCheckSet = new HashSet<>();
+		HashMap<String, HousenumberIvl> simpleDupCheckSet = new HashMap<>();
 		HashSet<HousenumberIvl> badIvls = new HashSet<>();
 		Long2ObjectOpenHashMap<HousenumberIvl> id2IvlMap = new Long2ObjectOpenHashMap<>();
-		LinkedHashMap<CityInfo,Int2ObjectOpenHashMap<HousenumberMatch>> interpolatedNumbers = new LinkedHashMap<>();
-		LinkedHashMap<CityInfo,Int2ObjectOpenHashMap<HousenumberMatch>> existingNumbers = new LinkedHashMap<>();
+		Int2ObjectOpenHashMap<HousenumberMatch> interpolatedNumbers = new Int2ObjectOpenHashMap<>();
+		Int2ObjectOpenHashMap<HousenumberMatch> existingNumbers = new Int2ObjectOpenHashMap<>();
 		HashMap<HousenumberIvl, List<HousenumberMatch>> housesToAdd = new LinkedHashMap<>();
 		
 		for (HousenumberRoad hnr : roadsInCluster){
-			Int2ObjectOpenHashMap<HousenumberMatch> map = existingNumbers.get(hnr.getRoadCityInfo());
-			if (map == null){
-				map = new Int2ObjectOpenHashMap<>();
-				existingNumbers.put(hnr.getRoadCityInfo(), map);
-			}
-			for (HousenumberMatch house : hnr.getHouses()){
-				map.put(house.getHousenumber(), house);
-			}
+			for (HousenumberMatch house : hnr.getHouses())
+				existingNumbers.put(house.getHousenumber(), house);
 		}
-		
 		int inCluster = 0;
 		boolean allOK = true;
 		for (HousenumberIvl hivl : interpolationInfos){
@@ -1145,15 +1139,16 @@ public class HousenumberGenerator {
 				continue;
 			++inCluster;
 			String hivlDesc = hivl.getDesc();
-			if (simpleDupCheckSet.contains(hivlDesc)){
+			HousenumberIvl hivlTest = simpleDupCheckSet.get(hivlDesc);
+			if (hivlTest != null){
 				// happens often in Canada (CanVec imports): two or more addr:interpolation ways with similar meaning
 				// sometimes at completely different road parts, sometimes at exactly the same
-				log.warn("found additional addr:interpolation way with same meaning, is ignored:",streetName, hivl);
+				log.warn("found additional addr:interpolation way with same meaning, is ignored:",streetName, hivl, hivlTest);
 				badIvls.add(hivl);
 				allOK = false;
 				continue;
 			}
-			simpleDupCheckSet.add(hivlDesc);
+			simpleDupCheckSet.put(hivlDesc, hivl);
 
 			id2IvlMap.put(hivl.getId(), hivl);
 			List<HousenumberMatch> interpolatedHouses = hivl.getInterpolatedHouses();
@@ -1168,24 +1163,17 @@ public class HousenumberGenerator {
 					if (house.getRoad() == null || house.getDistance() > HousenumberIvl.MAX_INTERPOLATION_DISTANCE_TO_ROAD)
 						continue;
 					boolean ignoreGenOnly = false;
-					Int2ObjectOpenHashMap<HousenumberMatch> interpolatedMap = interpolatedNumbers.get(house.getCityInfo());
-					if (interpolatedMap == null){
-						interpolatedMap = new Int2ObjectOpenHashMap<>();
-						interpolatedNumbers.put(house.getCityInfo(), interpolatedMap);
-					}
-					HousenumberMatch old = interpolatedMap.put(house.getHousenumber(), house);
+					HousenumberMatch old = interpolatedNumbers.put(house.getHousenumber(), house);
 					if (old == null){
 						ignoreGenOnly = true;
-						Int2ObjectOpenHashMap<HousenumberMatch> existingMap = existingNumbers.get(house.getCityInfo());
-						if (existingMap != null)
-							old = existingMap.get(house.getHousenumber());
+						old = existingNumbers.get(house.getHousenumber());
 					}
 					if (old != null){
 						// forget both or only one ? Which one?
 						house.setIgnored(true);
 						double distToOld = old.getLocation().distance(house.getLocation()); 
-						if (distToOld > 40 && distToOld < MAX_DISTANCE_TO_ROAD){
-							log.info("conflict caused by addr:interpolation way",hivl,"and address element",house.toBrowseURL());
+						if (distToOld > MAX_DISTANCE_SAME_NUM){
+							log.info("conflict caused by addr:interpolation way",streetName,hivl,"and address element",old,"at",old.getLocation().toDegreeString());
 							dupCount++;
 							if (!ignoreGenOnly){
 								old.setIgnored(true);
@@ -1198,7 +1186,7 @@ public class HousenumberGenerator {
 					}
 				}
 				if (dupCount > 0){
-					log.warn("addr:interpolation way",hivl,"is ignored, it produces duplicate number(s) too far from existing nodes");
+					log.warn("addr:interpolation way",streetName,hivl,"is ignored, it produces",dupCount,"duplicate number(s) too far from existing nodes");
 					badIvls.add(hivl);
 				}
 				else
@@ -1335,7 +1323,7 @@ public class HousenumberGenerator {
 			// check if they should be treated alike
 			boolean markFarDup = false;
 			double dist = house1.getLocation().distance(house2.getLocation());
-			if (dist > 100)
+			if (dist > MAX_DISTANCE_SAME_NUM)
 				markFarDup = true;
 			else {
 				CityInfo city1 = house1.getCityInfo();

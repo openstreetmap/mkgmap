@@ -20,7 +20,9 @@ import java.util.Map;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.CityInfo;
 import uk.me.parabola.mkgmap.general.MapRoad;
+import uk.me.parabola.mkgmap.general.ZipCodeInfo;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.TagDict;
 import uk.me.parabola.mkgmap.reader.osm.Way;
@@ -305,6 +307,13 @@ public class HousenumberIvl {
 		int usedStep = (start < end) ? step : -step;
 		int hn = start;
 		boolean distanceWarningIssued = false;
+		CityInfo ci = knownHouses[0].getCityInfo();
+		ZipCodeInfo zip = knownHouses[0].getZipCode();
+		if (ci != null && ci.equals(knownHouses[1].getCityInfo()) == false)
+			log.warn("addr:interpolation way connects houses in different cities",streetName,this,"using city",ci,"for all interpolated adresses");
+		if (zip != null && zip.equals(knownHouses[1].getZipCode()) == false)
+			log.warn("addr:interpolation way connects houses with differnt zip codes",streetName,this,"using zip code",zip,"for all interpolated adresses");
+		
 		for (Coord co : interpolatedPoints){
 			hn += usedStep;
 			Node generated = new Node(interpolationWay.getId(), co);
@@ -314,9 +323,9 @@ public class HousenumberIvl {
 			generated.addTag(housenumberTagKey, number);
 			// TODO: maybe add check that city info and zip code of both houses is equal ?
 			// what if not ?
-			HousenumberElem houseElem = new HousenumberElem(generated, knownHouses[0].getCityInfo());
+			HousenumberElem houseElem = new HousenumberElem(generated, ci);
 			houseElem.setHousenumber(hn);
-			houseElem.setZipCode(knownHouses[0].getZipCode());
+			houseElem.setZipCode(zip);
 			houseElem.setStreet(streetName);
 			houseElem.setSign(number);
 			HousenumberMatch house = new HousenumberMatch(houseElem);
