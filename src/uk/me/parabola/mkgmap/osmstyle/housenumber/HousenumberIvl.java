@@ -71,8 +71,8 @@ public class HousenumberIvl {
 	private static final short addrInterpolationTagKey = TagDict.getInstance().xlate("addr:interpolation");
 
 	
-	public HousenumberIvl(String steetName, Way interpolationWay, Node n1, Node n2) {
-		this.streetName = steetName;
+	public HousenumberIvl(String streetName, Way interpolationWay, Node n1, Node n2) {
+		this.streetName = streetName;
 		this.interpolationWay = interpolationWay;
 		this.n1 = n1;
 		this.n2 = n2;
@@ -100,8 +100,12 @@ public class HousenumberIvl {
 	public int getEnd() {
 		return end;
 	}
-	public void setSteps(int steps) {
-		this.steps = steps;
+	public void calcSteps() {
+		if (start < end){
+			steps = (end - start) / step - 1;
+		} else {
+			steps = (start - end) / step - 1;
+		}
 	}
 
 
@@ -504,5 +508,79 @@ public class HousenumberIvl {
 	
 	public HousenumberMatch[] getHouseNodes (){
 		return knownHouses;
+	}
+
+	/**
+	 * Check if an address node can be used to calculate new intervals 
+	 * @param houseToAdd a single address from OSM data 
+	 * @return null in case of error or an array with two new {@link HousenumberIvl} instances  
+	 */
+	public HousenumberIvl[] trySplitAt(HousenumberMatch houseToAdd) {
+		if (houseToAdd.isInterpolated())
+			return null;
+		if (houseToAdd.getRoad() != knownHouses[0].getRoad() && houseToAdd.getRoad() != knownHouses[1].getRoad())
+			return null;
+		HousenumberMatch s = knownHouses[0];
+		HousenumberMatch e = knownHouses[1];
+		if (s.getSegment() > e.getSegment() || s.getSegment() == e.getSegment() && s.getSegmentFrac() > e.getSegmentFrac()){
+			s = knownHouses[1];
+			e = knownHouses[0];
+		}
+		if (houseToAdd.getSegment() < s.getSegment() || houseToAdd.getSegment() > e.getSegment())
+			return null;
+		if (houseToAdd.getSegment() == s.getSegment() && houseToAdd.getSegmentFrac() < s.getSegmentFrac())
+			return null;
+		if (houseToAdd.getSegment() == e.getSegment()  && houseToAdd.getSegmentFrac() > e.getSegmentFrac())
+			return null;
+		
+		for (int i = 0; i+1 < points.size(); i++){
+			Coord c1 = points.get(i);
+			Coord c2 = points.get(i + 1);
+			double frac = HousenumberGenerator.getFrac(c1, c2, houseToAdd.getLocation());
+			if (frac < 0 || frac > 1)
+				continue;
+			HousenumberIvl[] ivls = new HousenumberIvl[2];
+			HousenumberMatch hnm = null;
+			if (houseToAdd.element instanceof Node){
+				hnm = houseToAdd;
+			}
+			else {
+				// create a Node instance 
+				Node toAdd = new Node(houseToAdd.getElement().getId(), houseToAdd.getLocation());
+				toAdd.setFakeId();
+				toAdd.copyTags(houseToAdd.element);
+				HousenumberElem hnElem = new HousenumberElem(toAdd, houseToAdd.getCityInfo());
+				hnm = new HousenumberMatch(hnElem);
+				hnm.setZipCode(houseToAdd.getZipCode());
+				HousenumberGenerator.findClosestRoadSegment(hnm, houseToAdd.getRoad(), houseToAdd.getSegment(), houseToAdd.getSegment());
+			}
+			
+			List<Coord> points1 = new ArrayList<>();
+			List<Coord> points2 = new ArrayList<>();
+			points1.addAll(points.subList(0, i+1));
+			points1.add(houseToAdd.getLocation());
+			points2.add(houseToAdd.getLocation());
+			points2.addAll(points.subList(i+1, points.size()));
+			
+			ivls[0] = new HousenumberIvl(streetName, interpolationWay, n1, (Node)hnm.element);
+			ivls[0].setStart(knownHouses[0].getHousenumber());
+			ivls[0].setEnd(houseToAdd.getHousenumber());
+			ivls[0].setStep(step);
+			ivls[0].calcSteps();
+			ivls[0].setPoints(points1);
+			ivls[0].addHousenumberMatch(knownHouses[0]);
+			ivls[0].addHousenumberMatch(hnm);
+
+			ivls[1] = new HousenumberIvl(streetName, interpolationWay, (Node) hnm.element, n2);
+			ivls[1].setStart(houseToAdd.getHousenumber());
+			ivls[1].setEnd(knownHouses[1].getHousenumber());
+			ivls[1].setStep(step);
+			ivls[1].calcSteps();
+			ivls[1].setPoints(points2);
+			ivls[1].addHousenumberMatch(knownHouses[1]);
+			ivls[1].addHousenumberMatch(hnm);
+			return ivls;
+		}
+		return null;
 	}
 }

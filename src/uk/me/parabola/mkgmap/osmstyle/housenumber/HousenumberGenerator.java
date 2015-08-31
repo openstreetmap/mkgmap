@@ -399,17 +399,11 @@ public class HousenumberGenerator {
 				
 				int start = he1.getHousenumber();
 				int end = he2.getHousenumber();
-				int steps;
-				if (start < end){
-					steps = (end - start) / step - 1;
-				} else {
-					steps = (start - end) / step - 1;
-				}
 				HousenumberIvl hivl = new HousenumberIvl(street, w, (Node)he1.element, (Node)he2.element);
 				hivl.setStart(start);
 				hivl.setEnd(end);
 				hivl.setStep(step);
-				hivl.setSteps(steps);
+				hivl.calcSteps();
 				hivl.setPoints(w.getPoints().subList(pos1, pos2+1));
 //				if (pos1 > 0){
 //					double angle = Utils.getAngle(w.getPoints().get(pos1-1), w.getPoints().get(pos1), w.getPoints().get(pos1+1));
@@ -1134,7 +1128,9 @@ public class HousenumberGenerator {
 		}
 		int inCluster = 0;
 		boolean allOK = true;
-		for (HousenumberIvl hivl : interpolationInfos){
+		// for loop may change the list 
+		for (int i = 0; i < interpolationInfos.size(); i++){
+			HousenumberIvl hivl = interpolationInfos.get(i);
 			if (hivl.inCluster(housesWithIvlInfo) == false || hivl.ignoreForInterpolation())
 				continue;
 			++inCluster;
@@ -1163,17 +1159,29 @@ public class HousenumberGenerator {
 					if (house.getRoad() == null || house.getDistance() > HousenumberIvl.MAX_INTERPOLATION_DISTANCE_TO_ROAD)
 						continue;
 					boolean ignoreGenOnly = false;
-					HousenumberMatch old = interpolatedNumbers.put(house.getHousenumber(), house);
+					HousenumberMatch old = interpolatedNumbers.get(house.getHousenumber());
 					if (old == null){
 						ignoreGenOnly = true;
 						old = existingNumbers.get(house.getHousenumber());
 					}
 					if (old != null){
+						// try to build new intervals using existing node
+						HousenumberIvl[] splitIvls = hivl.trySplitAt(old);
+						if (splitIvls != null){
+							log.info("adding address",streetName,old,old.toBrowseURL(),"to addr:interpolation way, replacing", hivl,"by",Arrays.deepToString(splitIvls));
+							interpolationInfos.add(splitIvls[0]);
+							interpolationInfos.add(splitIvls[1]);
+							hivl.setIgnoreForInterpolation(true);
+							break;
+						}
 						// forget both or only one ? Which one?
 						house.setIgnored(true);
 						double distToOld = old.getLocation().distance(house.getLocation()); 
 						if (distToOld > MAX_DISTANCE_SAME_NUM){
-							log.info("conflict caused by addr:interpolation way",streetName,hivl,"and address element",old,"at",old.getLocation().toDegreeString());
+							if (old.isInterpolated())
+								log.info("conflict caused by addr:interpolation way",streetName,hivl,"and interpolated address",old,"at",old.getLocation().toDegreeString());
+							else 
+								log.info("conflict caused by addr:interpolation way",streetName,hivl,"and address element",old,"at",old.getLocation().toDegreeString());
 							dupCount++;
 							if (!ignoreGenOnly){
 								old.setIgnored(true);
@@ -1185,12 +1193,17 @@ public class HousenumberGenerator {
 						}
 					}
 				}
+				if (hivl.ignoreForInterpolation())
+					continue;
 				if (dupCount > 0){
 					log.warn("addr:interpolation way",streetName,hivl,"is ignored, it produces",dupCount,"duplicate number(s) too far from existing nodes");
 					badIvls.add(hivl);
 				}
-				else
+				else {
 					housesToAdd.put(hivl, interpolatedHouses);
+					for (HousenumberMatch hnm : interpolatedHouses)
+						interpolatedNumbers.put(hnm.getHousenumber(), hnm);
+				}
 			}
 		}
 		if (inCluster == 0)
