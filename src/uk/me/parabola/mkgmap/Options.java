@@ -76,8 +76,10 @@ public class Options {
 			return;
 		}
 
-		Reader r = new FileReader(filename);
-		readOptionFile(r, filename);
+		try (Reader r = new FileReader(filename)) {
+			readOptionFile(r, filename);
+		}
+		
 	}
 
 	public void readOptionFile(Reader r, String filename) {

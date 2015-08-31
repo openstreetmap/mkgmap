@@ -20,8 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import uk.me.parabola.imgfmt.Utils;
-
 import func.lib.TestUtils;
 import org.junit.Test;
 
@@ -202,12 +200,8 @@ public class CommandArgsTest {
 
 	private void createFile(String name, String content) throws IOException {
 		TestUtils.registerFile(name);
-		Writer w = null;
-		try {
-			w = new FileWriter(name);
+		try (Writer w = new FileWriter(name)){
 			w.append(content);
-		} finally {
-			Utils.closeFile(w);
 		}
 	}
 

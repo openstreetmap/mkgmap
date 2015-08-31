@@ -80,6 +80,8 @@ public class ArgsTest extends Base {
 
 	@Test
 	public void testDisplayPriority() throws FileNotFoundException {
+		TestUtils.registerFile("osmmap.img");
+		 
 		int pri = 42;
 		Outputs op = TestUtils.run("--draw-priority=" + pri,
 				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz");
