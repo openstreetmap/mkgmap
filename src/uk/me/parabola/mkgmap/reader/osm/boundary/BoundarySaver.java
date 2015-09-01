@@ -13,8 +13,6 @@
 package uk.me.parabola.mkgmap.reader.osm.boundary;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntStack;
-
 import java.awt.Shape;
 import java.awt.geom.PathIterator;
 import java.io.BufferedOutputStream;
@@ -30,7 +28,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;

@@ -1233,6 +1233,7 @@ public class WrongAngleFixer {
 		}
 
 		// TODO: remove this debugging aid
+		@SuppressWarnings("unused")
 		private void createGPX(String gpxName, Map<Coord, Coord> replacements) {
 			if (gpxName == null || gpxPath == null)
 				return;

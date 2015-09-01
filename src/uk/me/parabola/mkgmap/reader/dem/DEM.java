@@ -84,7 +84,7 @@ public abstract class DEM {
 
 		try {
 			String dataPath;
-			Class demClass;
+			Class<?> demClass ;
 			switch (demType) {
 			case "ASTER":
 				dataPath = config.getProperty("dem-path", "ASTER");
@@ -99,7 +99,7 @@ public abstract class DEM {
 				demClass = Class.forName("uk.me.parabola.mkgmap.reader.dem.HGTDEM");
 				break;
 			}
-			Constructor<DEM> constructor = demClass.getConstructor(String.class,
+			Constructor<DEM> constructor = (Constructor<DEM>) demClass.getConstructor(String.class,
 					Double.TYPE, Double.TYPE,
 					Double.TYPE, Double.TYPE);
 			data = constructor.newInstance(dataPath, minLat, minLon, maxLat, maxLon);

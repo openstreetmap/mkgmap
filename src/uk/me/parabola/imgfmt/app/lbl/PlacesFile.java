@@ -35,7 +35,7 @@ import uk.me.parabola.imgfmt.app.trergn.Subdivision;
  * This is really part of the LBLFile.  We split out all the parts of the file
  * that are to do with location to here.
  */
-@SuppressWarnings({"RawUseOfParameterizedType", "unchecked", "rawtypes"})
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class PlacesFile {
 	private final Map<String, Country> countries = new LinkedHashMap<>();
 	private final List<Country> countryList = new ArrayList<>();

@@ -16,7 +16,6 @@ package uk.me.parabola.imgfmt.app.mdr;
  * This is an index into mdr11 (pois).
  * @author Steve Ratcliffe
  */
-@SuppressWarnings({"EmptyClass"})
 public class Mdr12Record extends Mdr8Record {
 	// This is exactly the same as mdr8
 }
