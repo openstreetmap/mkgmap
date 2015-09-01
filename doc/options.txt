@@ -406,7 +406,8 @@ completely reliable heuristic.
 When reading OSM files, ignore any "maxspeed" tags.
 
 ;--ignore-builtin-relations
-: 	When reading OSM files, skip the built-in processing of
+:	Now ignored, former usage:
+When reading OSM files, skip the built-in processing of
 relations. This speeds up the processing non-routable map
 layers that do not contain multipolygons. This implies
 --ignore-turn-restrictions.

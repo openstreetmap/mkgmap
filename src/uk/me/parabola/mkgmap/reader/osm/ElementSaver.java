@@ -65,7 +65,6 @@ public class ElementSaver {
 	private int maxLon = Utils.toMapUnit(-180.0);
 
 	// Options
-	private final boolean ignoreBuiltinRelations;
 	private final boolean ignoreTurnRestrictions;
 
 	/** name of the tag that contains a ;-separated list of tagnames that should be removed after all elements have been processed */
@@ -84,7 +83,6 @@ public class ElementSaver {
 			relationMap = new HashMap<Long, Relation>();
 		}
 
-		ignoreBuiltinRelations = args.getProperty("ignore-builtin-relations", false);
 		ignoreTurnRestrictions = args.getProperty("ignore-turn-restrictions", false);
 	}
 
@@ -145,19 +143,17 @@ public class ElementSaver {
 	 * @param rel The osm relation.
 	 */
 	public void addRelation(Relation rel) {
-		if (!ignoreBuiltinRelations) {
-			String type = rel.getTag("type");
-			if (type == null) {
-			} else if ("multipolygon".equals(type) || "boundary".equals(type)) {
-				rel = createMultiPolyRelation(rel); 
-			} else if("restriction".equals(type) || type.startsWith("restriction:")) {
-				if (ignoreTurnRestrictions)
-					rel = null;
-				else if (rel.getTag("restriction") == null && rel.getTagsWithPrefix("restriction:", false).isEmpty())
-					log.warn("ignoring unspecified/unsupported restriction " + rel.toBrowseURL());
-				else
-					rel = new RestrictionRelation(rel);
-			}
+		String type = rel.getTag("type");
+		if (type == null) {
+		} else if ("multipolygon".equals(type) || "boundary".equals(type)) {
+			rel = createMultiPolyRelation(rel); 
+		} else if("restriction".equals(type) || type.startsWith("restriction:")) {
+			if (ignoreTurnRestrictions)
+				rel = null;
+			else if (rel.getTag("restriction") == null && rel.getTagsWithPrefix("restriction:", false).isEmpty())
+				log.warn("ignoring unspecified/unsupported restriction " + rel.toBrowseURL());
+			else
+				rel = new RestrictionRelation(rel);
 		}
 
 		if(rel != null) {
