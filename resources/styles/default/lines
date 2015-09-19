@@ -20,6 +20,8 @@ highway=* & (toll=yes|toll=true) { set mkgmap:toll=yes }
 
 # Hide proposed ways
 highway=proposed {delete highway;delete junction}
+# Hide removed ways
+highway=razed {deletealltags}
 # Hide unaccessible tunnels
 highway=* & tunnel=yes & (access=private|access=no)
 & foot!=* & bicycle!=* {delete highway;delete junction}
@@ -123,7 +125,7 @@ highway=trunk & ( network=e-road | int_ref=* ) [0x02 resolution 15-17 continue]
 highway=trunk [0x02 road_class=4 road_speed=5 resolution 18]
 highway=trunk_link & (mkgmap:exit_hint=true | mkgmap:dest_hint=true) [0x06 road_class=3 road_speed=2 resolution 20]
 highway=trunk_link [0x09 road_class=3 road_speed=2 resolution 20]
-highway=* & highway!=proposed & motorroad=yes [0x02 road_class=4 road_speed=4 resolution 18]
+highway=* & motorroad=yes [0x02 road_class=4 road_speed=4 resolution 18]
 highway=primary & ( network=e-road | int_ref=* ) [0x03 resolution 17-18 continue]
 highway=primary [0x03 road_class=3 road_speed=4 resolution 19]
 highway=primary_link & (mkgmap:exit_hint=true | mkgmap:dest_hint=true)[0x06 road_class=3 road_speed=1 resolution 21]
@@ -158,7 +160,7 @@ highway=unsurfaced [0x0a road_class=0 road_speed=1 resolution 22]
 highway=road { add mkgmap:dead-end-check = false} [0x06 road_class=0 road_speed=1 resolution 22]
 
 # Mop up any unrecognised highway types
-highway=* & highway!=proposed & area!=yes [0x07 road_class=0 road_speed=0 resolution 23] 
+highway=* & area!=yes [0x07 road_class=0 road_speed=0 resolution 23] 
 
 natural=coastline [0x15 resolution 12]
 power=line [0x29 resolution 21]
