@@ -147,9 +147,10 @@
 		<variant>BV</variant>
 		<variant>BVT</variant>
 	</country>
-	<country name="Brazil" abr="BRA" streetBeforeHousenumber="true">
+	<country name="Brasil" abr="BRA" streetBeforeHousenumber="true">
 		<variant>BR</variant>
 		<variant>BRA</variant>
+		<variant>Brazil</variant>
 	</country>
 	<country name="British Indian Ocean Territory" abr="IOT">
 		<variant>IO</variant>
