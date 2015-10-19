@@ -207,7 +207,7 @@ public class Osm5XmlHandler extends OsmHandler {
 	private void startInNode(String qName, Attributes attributes) {
 		if (qName.equals("tag")) {
 			String key = attributes.getValue("k");
-			String val = attributes.getValue("v").trim();
+			String val = attributes.getValue("v");
 
 			// We only want to create a full node for nodes that are POI's
 			// and not just one point of a way.  Only create if it has tags that
@@ -219,7 +219,7 @@ public class Osm5XmlHandler extends OsmHandler {
 					currentNode = new Node(currentElementId, co);
 				}
 
-				currentNode.addTag(key, val.intern());
+				currentNode.addTagFromRawOSM(key, val);
 			}
 		}
 	}
@@ -235,10 +235,10 @@ public class Osm5XmlHandler extends OsmHandler {
 			addCoordToWay(currentWay, id);
 		} else if (qName.equals("tag")) {
 			String key = attributes.getValue("k");
-			String val = attributes.getValue("v").trim();
+			String val = attributes.getValue("v");
 			key = keepTag(key, val);
 			if (key != null)
-				currentWay.addTag(key, val.intern());
+				currentWay.addTagFromRawOSM(key, val);
 		}
 	}
 
@@ -276,7 +276,7 @@ public class Osm5XmlHandler extends OsmHandler {
 				currentRelation.addElement(attributes.getValue("role"), el);
 		} else if (qName.equals("tag")) {
 			String key = attributes.getValue("k");
-			String val = attributes.getValue("v").trim();
+			String val = attributes.getValue("v");
 			// the type tag is required for relations - all other tags are filtered
 			if ("type".equals(key))
 				// intern the key
@@ -286,7 +286,7 @@ public class Osm5XmlHandler extends OsmHandler {
 			if (key == null) {
 				currentRelation.addTag(TAGS_INCOMPLETE_TAG, "true");
 			} else {
-				currentRelation.addTag(key, val.intern());
+				currentRelation.addTagFromRawOSM(key, val);
 			}
 		}
 	}

@@ -54,4 +54,27 @@ public class ElementTest {
 				new String[] {"1", "2", "3"},
 				values.toArray());
 	}
+
+	@Test
+	public void testaddTagFromRawOSM() {
+		Element el = new Way(1);
+
+		el.addTagFromRawOSM("a", "1");
+		el.addTagFromRawOSM("b", "1 ");
+		el.addTagFromRawOSM("c", " 1");
+		el.addTagFromRawOSM("d", "1  2");
+		el.addTagFromRawOSM("e", "1  2  3");
+		el.addTagFromRawOSM("f", "   1  2  3 4  ");
+		el.addTagFromRawOSM("g", " ");
+		el.addTagFromRawOSM("h", "   ");
+
+		assertEquals("1", el.getTag("a"));
+		assertEquals("1", el.getTag("b"));
+		assertEquals("1", el.getTag("c"));
+		assertEquals("1 2", el.getTag("d"));
+		assertEquals("1 2 3", el.getTag("e"));
+		assertEquals("1 2 3 4", el.getTag("f"));
+		assertEquals("", el.getTag("g"));
+		assertEquals("", el.getTag("h"));
+	}
 }

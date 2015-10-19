@@ -19,10 +19,16 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 
+import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.log.Logger;
+
+
 /**
  * Superclass of the node, segment and way OSM elements.
  */
 public abstract class Element {
+	private static final Logger log = Logger.getLogger(Element.class);
+	
 	private Tags tags;
 	private long id;
 	private long originalId;
@@ -32,7 +38,30 @@ public abstract class Element {
 	}
 	
 	/**
-	 * Add a tag to the way.  Some tags are recognised separately and saved in
+	 * Add a tag to the element. This method should be called by OSM readers
+	 * because it trims obsolete spaces from the value.
+	 *
+	 * @param key The tag name.
+	 * @param val Its value.
+	 */
+	public void addTagFromRawOSM(String key, String val) {
+		if (val != null){
+			val = val.trim();
+			if (val.isEmpty() == false){
+				// remove duplicated spaces within value
+				String squashed = Label.squashSpaces(val);
+				if (val.equals(squashed) == false) {
+					if (log.isInfoEnabled())
+						log.info(this.toBrowseURL(),"obsolete blanks removed from tag", key, " '" + val + "' -> '" + squashed + "'");
+					val = squashed;
+				}
+			}
+		}
+		addTag(key, val.intern());
+	}
+
+	/**
+	 * Add a tag to the element.  Some tags are recognised separately and saved in
 	 * separate fields.
 	 *
 	 * @param key The tag name.
@@ -45,7 +74,7 @@ public abstract class Element {
 	}
 
 	/**
-	 * Add a tag to the way.  Some tags are recognised separately and saved in
+	 * Add a tag to the element.  Some tags are recognised separately and saved in
 	 * separate fields.
 	 *
 	 * @param tagKey The tag id created by TagDict
