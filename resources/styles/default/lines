@@ -18,10 +18,13 @@ highway=* & name=* { set mkgmap:street='${name}' }
 # Mark highways with the toll flag
 highway=* & (toll=yes|toll=true) { set mkgmap:toll=yes }
 
-# Hide proposed ways
-highway=proposed {delete highway;delete junction}
+# Hide proposed ways 
+(highway=proposed | highway=proposal | highway=planned | highway ~ '.*proposed.*') {delete highway;delete junction}
 # Hide removed ways
-highway=razed {deletealltags}
+(highway=razed | highway=dismantled) {deletealltags}
+# Hide other non-existent ways
+(highway=unbuilt | highway=neverbuilt | highway=rejected | highway ~ 'x-.*') {delete highway;delete junction}
+
 # Hide unaccessible tunnels
 highway=* & tunnel=yes & (access=private|access=no)
 & foot!=* & bicycle!=* {delete highway;delete junction}
