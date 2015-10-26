@@ -171,9 +171,11 @@ public class HousenumberIvl {
 			while (streetName.equals(knownHouses[i].getRoad().getStreet()) == false && knownHouses[i].hasAlternativeRoad()){
 				HousenumberMatch testx = new HousenumberMatch(knownHouses[i]);
 				MapRoad r = knownHouses[i].getAlternativeRoads().remove(0);
-				HousenumberGenerator.findClosestRoadSegment(testx, r);
-				if (testx.getDistance() < MAX_INTERPOLATION_DISTANCE_TO_ROAD){
-					copyRoadData(testx, knownHouses[i]);
+				if (streetName.equals(r.getStreet())){
+					HousenumberGenerator.findClosestRoadSegment(testx, r);
+					if (testx.getDistance() < MAX_INTERPOLATION_DISTANCE_TO_ROAD){
+						copyRoadData(testx, knownHouses[i]);
+					}
 				}
 			}
 		}
