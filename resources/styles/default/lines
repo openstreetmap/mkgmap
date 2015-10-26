@@ -109,7 +109,7 @@ junction=roundabout [0x0c road_class=0 road_speed=1 resolution 22]
 
 # Ways that may or may not be useable
 
-# Treat ways under construction almost as highway=path
+# Treat ways under construction almost as highway=path, see also extra rule in inc/access
 highway=construction { add mkgmap:dead-end-check = false; }
 [0x16 road_class=0 road_speed=0 resolution 23]
 
