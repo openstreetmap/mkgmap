@@ -43,7 +43,6 @@ public class RouteArc {
 
 	// heading / bearing: 
 	private float initialHeading; // degrees (A-> B in an arc ABCD) 
-	private final float finalHeading; // degrees (C-> D in an arc ABCD)
 	private final float directHeading; // degrees (A-> D in an arc ABCD)
 
 	private final RoadDef roadDef;
@@ -81,7 +80,6 @@ public class RouteArc {
 	 * @param source The source node. (A)
 	 * @param dest The destination node (E).
 	 * @param initialBearing The initial heading (signed degrees) (A->B)
-	 * @param finalBearing The final heading (signed degrees) (D->E)
 	 * @param directBearing The direct heading (signed degrees) (A->E)
 	 * @param arcLength the length of the arc in meter (A->B->C->D->E)
 	 * @param pathLength the length of the arc in meter (summed length for additional arcs)
@@ -90,7 +88,7 @@ public class RouteArc {
 	 */
 	public RouteArc(RoadDef roadDef,
 					RouteNode source, RouteNode dest,
-					double initialBearing, double finalBearing, double directBearing,
+					double initialBearing, double directBearing,
 					double arcLength,
 					double pathLength,
 					double directLength,
@@ -100,7 +98,6 @@ public class RouteArc {
 		this.source = source;
 		this.dest = dest;
 		this.initialHeading = (float) initialBearing;
-		this.finalHeading = (float) finalBearing;
 		this.directHeading = (directBearing < 180) ? (float) directBearing : -180.0f;
 		int len = NODHeader.metersToRaw(arcLength);
 		if (len >= (1 << 22)) {
@@ -129,12 +126,21 @@ public class RouteArc {
 		return initialHeading;
 	}
 
+	public float getDirectHeading() {
+		return directHeading;
+	}
+
 	public void setInitialHeading(float ih) {
 		initialHeading = ih;
 	}
 
 	public float getFinalHeading() {
-		return finalHeading;
+		float fh = 0;
+		if (lengthInMeter != 0){
+			fh = getReverseArc().getInitialHeading();
+			fh = (fh <= 0) ? 180.0f + fh : -(180.0f - fh) % 180.0f;
+		}
+		return fh;
 	}
 
 	public RouteNode getSource() {
@@ -224,7 +230,7 @@ public class RouteArc {
 		return lengthInMeter;
 	}
 	
-	public static byte directionFromDegrees(double dir) {
+	public static byte directionFromDegrees(float dir) {
 		return (byte) Math.round(dir * 256.0 / 360) ;
 	}
 

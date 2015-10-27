@@ -49,6 +49,7 @@ public class Coord implements Comparable<Coord> {
 	private final static short PART_OF_SHAPE2 = 0x0100; // use only in ShapeMerger
 	private final static short END_OF_WAY = 0x0200; // use only in WrongAngleFixer
 	private final static short HOUSENUMBER_NODE = 0x0400; // start/end of house number interval
+	private final static short ADDED_HOUSENUMBER_NODE = 0x0800; // node was added for house numbers
 	
 	public final static int HIGH_PREC_BITS = 30;
 	public final static int DELTA_SHIFT = 6;
@@ -88,7 +89,7 @@ public class Coord implements Comparable<Coord> {
 		int lon30 = toBit30(longitude);
 		this.latDelta = (byte) ((this.latitude << 6) - lat30); 
 		this.lonDelta = (byte) ((this.longitude << 6) - lon30);
-		
+
 		// verify math
 		assert (this.latitude << 6) - latDelta == lat30;
 		assert (this.longitude << 6) - lonDelta == lon30;
@@ -340,7 +341,6 @@ public class Coord implements Comparable<Coord> {
 	}
 	
 	/**
-	 * Set or unset flag for {@link WrongAngleFixer} 
 	 * @param b true or false
 	 */
 	public void setNumberNode(boolean b) {
@@ -348,6 +348,23 @@ public class Coord implements Comparable<Coord> {
 			this.flags |= HOUSENUMBER_NODE;
 		else 
 			this.flags &= ~HOUSENUMBER_NODE; 
+	}
+	
+	/**
+	 * @return if this is the beginning/end of a house number interval 
+	 */
+	public boolean isAddedNumberNode(){
+		return (flags & ADDED_HOUSENUMBER_NODE) != 0;
+	}
+	
+	/**
+	 * @param b true or false
+	 */
+	public void setAddedNumberNode(boolean b) {
+		if (b) 
+			this.flags |= ADDED_HOUSENUMBER_NODE;
+		else 
+			this.flags &= ~ADDED_HOUSENUMBER_NODE; 
 	}
 	
 	public int hashCode() {

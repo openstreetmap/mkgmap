@@ -1070,6 +1070,7 @@ public class ExtNumbers {
 	 */
 	private int addAsNumberNode(int pos, Coord toAdd){
 		toAdd.setNumberNode(true);
+		toAdd.setAddedNumberNode(true);
 		getRoad().getPoints().add(pos, toAdd);
 		
 		ExtNumbers work = next;

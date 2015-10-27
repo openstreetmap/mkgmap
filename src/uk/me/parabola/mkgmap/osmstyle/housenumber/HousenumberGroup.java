@@ -164,9 +164,11 @@ public class HousenumberGroup {
 		if (timesToAdd == 2){
 			// add two new points between c1 and c2
 			points.add(seg + 1, pointToUse);
+			pointToUse.setAddedNumberNode(true);
 			pointToUse = new Coord (pointToUse);
 			pointToUse.setNumberNode(true);
 			points.add(seg + 1, pointToUse);
+			pointToUse.setAddedNumberNode(true);
 			linkNode = pointToUse;
 		} else {
 		// copy it
@@ -174,6 +176,7 @@ public class HousenumberGroup {
 			pointToUse.setNumberNode(true);
 			// add copy before c2 
 			points.add(seg + 1, pointToUse);
+			pointToUse.setAddedNumberNode(true);
 			if (pointToUse.highPrecEquals(c1)){
 				linkNode = c1;
 			} else { 

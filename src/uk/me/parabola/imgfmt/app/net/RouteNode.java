@@ -17,14 +17,12 @@ package uk.me.parabola.imgfmt.app.net;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.log.Logger;
 
 /**
@@ -52,10 +50,6 @@ public class RouteNode implements Comparable<RouteNode> {
 	private static final int F_ARCS = 0x40;
 	// only used internally in mkgmap
 	private static final int F_DISCARDED = 0x100; // node has been discarded
-
-	private static final int MAX_MAIN_ROAD_HEADING_CHANGE = 120;
-	private static final int MIN_DIFF_BETWEEN_OUTGOING_AND_OTHER_ARCS = 45;
-	private static final int MIN_DIFF_BETWEEN_INCOMING_AND_OTHER_ARCS = 50;
 
 	private int offsetNod1 = -1;
 
@@ -350,310 +344,6 @@ public class RouteNode implements Comparable<RouteNode> {
 	 */
 	public int compareTo(RouteNode otherNode) {
 		return coord.compareTo(otherNode.getCoord());
-	}
-
-	private static boolean possiblySameRoad(RouteArc raa, RouteArc rab) {
-
-		RoadDef rda = raa.getRoadDef();
-		RoadDef rdb = rab.getRoadDef();
-
-		if(rda.getId() == rdb.getId()) {
-			// roads have the same (OSM) id
-			return true;
-		}
-
-		boolean bothArcsNamed = false;
-		for(Label laba : rda.getLabels()) {
-			if(laba != null && laba.getOffset() != 0) {
-				for(Label labb : rdb.getLabels()) {
-					if(labb != null && labb.getOffset() != 0) {
-						bothArcsNamed = true;
-						if(laba.equals(labb)) {
-							// the roads have the same label
-							if(rda.isLinkRoad() == rdb.isLinkRoad()) {
-								// if both are a link road or both are
-								// not a link road, consider them the
-								// same road
-								return true;
-							}
-							// One is a link road and the other isn't
-							// so consider them different roads - this
-							// is because people often give a link
-							// road that's leaving some road the same
-							// ref as that road but it suits us better
-							// to consider them as different roads
-							return false;
-						}
-					}
-				}
-			}
-		}
-
-		if(bothArcsNamed) {
-			// both roads have names and they don't match
-			return false;
-		}
-
-		// at least one road is unnamed
-		if(rda.isRoundabout() && rdb.isRoundabout()) {
-			// hopefully, segments of the same (unnamed) roundabout
-			return true;
-		}
-
-		return false;
-	}
-
-	private static boolean rightTurnRequired(float inHeading, float outHeading, float otherHeading) {
-		// given the headings of the incoming, outgoing and side
-		// roads, decide whether a side road is to the left or the
-		// right of the main road
-
-		outHeading -= inHeading;
-		while(outHeading < -180)
-			outHeading += 360;
-		while(outHeading > 180)
-			outHeading -= 360;
-
-		otherHeading -= inHeading;
-		while(otherHeading < -180)
-			otherHeading += 360;
-		while(otherHeading > 180)
-			otherHeading -= 360;
-
-		return otherHeading > outHeading;
-	}
-
-	private static final int ATH_OUTGOING = 1;
-	private static final int ATH_INCOMING = 2;
-
-	public static final int ATH_DEFAULT_MASK = ATH_OUTGOING | ATH_INCOMING;
-
-	public void tweezeArcs(int mask) {
-		if(arcs.size() >= 3) {
-
-			// detect the "shallow turn" scenario where at a junction
-			// on some "main" road, the side road leaves the main
-			// road at a very shallow angle and the GPS says "keep
-			// right/left" when it would be better if it said "turn
-			// right/left"
-
-			// also helps to produce a turn instruction when the main
-			// road bends sharply but the side road keeps close to the
-			// original heading
-
-			// the code tries to detect a pair of arcs (the "incoming"
-			// arc and the "outgoing" arc) that are the "main road"
-			// and the remaining arc (called the "other" arc) which is
-			// the "side road"
-
-			// having worked out the roles for the arcs, the heuristic
-			// applied is that if the main road doesn't change its
-			// heading by more than maxMainRoadHeadingChange, ensure
-			// that the side road heading differs from the outgoing
-			// heading by at least
-			// minDiffBetweenOutgoingAndOtherArcs and the side road
-			// heading differs from the incoming heading by at least
-			// minDiffBetweenIncomingAndOtherArcs
-
-			// list of outgoing arcs discovered at this node
-			List<RouteArc> outgoingArcs = new ArrayList<RouteArc>();
-
-			// sort incoming arcs by decreasing class/speed
-			List<RouteArc> inArcs = new ArrayList<RouteArc>();
-			for (RouteArc arc : arcs){
-				if (arc.isDirect())
-					inArcs.add(arc.getReverseArc());
-			}
-
-			Collections.sort(inArcs, new Comparator<RouteArc>() {
-					public int compare(RouteArc ra1, RouteArc ra2) {
-						int c1 = ra1.getRoadDef().getRoadClass();
-						int c2 = ra2.getRoadDef().getRoadClass();
-						if(c1 == c2)
-							return (ra2.getRoadDef().getRoadSpeed() - 
-									ra1.getRoadDef().getRoadSpeed());
-						return c2 - c1;
-					}
-				});
-
-			// look at incoming arcs in order of decreasing class/speed
-			for(RouteArc inArc : inArcs) {
-
-				RoadDef inRoadDef = inArc.getRoadDef();
-
-				if(!inArc.isForward() && inRoadDef.isOneway()) {
-					// ignore reverse arc if road is oneway
-					continue;
-				}
-
-				float inHeading = inArc.getFinalHeading();
-				// determine the outgoing arc that is likely to be the
-				// same road as the incoming arc
-				RouteArc outArc = null;
-
-				if(throughRoutes != null) {
-					// through_route relations have the highest precedence
-					for(RouteArc[] pair : throughRoutes) {
-						if(pair[0] == inArc) {
-							outArc = pair[1];
-							log.info("Found through route from " + inRoadDef + " to " + outArc.getRoadDef());
-							break;
-						}
-					}
-				}
-
-				if(outArc == null) {
-					// next, if oa has the same RoadDef as inArc, it's
-					// definitely the same road
-					for(RouteArc oa : arcs) {
-						if (oa.isDirect() == false)
-							continue;
-						if(oa.getDest() != inArc.getSource()) {
-							// this arc is not going to the same node as
-							// inArc came from
-							if(oa.getRoadDef() == inRoadDef) {
-								outArc = oa;
-								break;
-							}
-						}
-					}
-				}
-
-				if(outArc == null) {
-					// next, although the RoadDefs don't match, use
-					// possiblySameRoad() to see if the roads' id or
-					// labels (names/refs) match
-					for(RouteArc oa : arcs) {
-						if (oa.isDirect() == false)
-							continue;
-						if(oa.getDest() != inArc.getSource()) {
-							// this arc is not going to the same node as
-							// inArc came from
-							if((oa.isForward() || !oa.getRoadDef().isOneway()) &&
-							   possiblySameRoad(inArc, oa)) {
-								outArc = oa;
-								break;
-							}
-						}
-					}
-				}
-
-				// if we did not find the outgoing arc, give up with
-				// this incoming arc
-				if(outArc == null) {
-					//log.info("Can't continue road " + inRoadDef + " at " + coord.toOSMURL());
-					continue;
-				}
-
-				// remember that this arc is an outgoing arc
-				outgoingArcs.add(outArc);
-
-				float outHeading = outArc.getInitialHeading();
-				float mainHeadingDelta = outHeading - inHeading;
-				while(mainHeadingDelta > 180)
-					mainHeadingDelta -= 360;
-				while(mainHeadingDelta < -180)
-					mainHeadingDelta += 360;
-				//log.info(inRoadDef + " continues to " + outArc.getRoadDef() + " with a heading change of " + mainHeadingDelta + " at " + coord.toOSMURL());
-
-				if(Math.abs(mainHeadingDelta) > MAX_MAIN_ROAD_HEADING_CHANGE) {
-					// if the continuation road heading change is
-					// greater than maxMainRoadHeadingChange don't
-					// adjust anything
-					continue;
-				}
-
-				for(RouteArc otherArc : arcs) {
-					if (otherArc.isDirect() == false)
-						continue;
-
-					// for each other arc leaving this node, tweeze
-					// its heading if its heading change from the
-					// outgoing heading is less than
-					// minDiffBetweenOutgoingAndOtherArcs or its
-					// heading change from the incoming heading is
-					// less than minDiffBetweenIncomingAndOtherArcs
-
-					if(otherArc.getDest() == inArc.getSource() ||
-					   otherArc == outArc) {
-						// we're looking at the incoming or outgoing
-						// arc, ignore it
-						continue;
-					}
-
-					if(!otherArc.isForward() &&
-					   otherArc.getRoadDef().isOneway()) {
-						// ignore reverse arc if road is oneway
-						continue;
-					}
-
-					if(inRoadDef.isLinkRoad() &&
-					   otherArc.getRoadDef().isLinkRoad()) {
-						// it's a link road leaving a link road so
-						// leave the angle unchanged to avoid
-						// introducing a time penalty by increasing
-						// the angle (this stops the router using link
-						// roads that "cut the corner" at roundabouts)
-						continue;
-					}
-
-					if(outgoingArcs.contains(otherArc)) {
-						// this arc was previously matched as an
-						// outgoing arc so we don't want to change its
-						// heading now
-						continue;
-					}
-
-					float otherHeading = otherArc.getInitialHeading();
-					float outToOtherDelta = otherHeading - outHeading;
-					while(outToOtherDelta > 180)
-						outToOtherDelta -= 360;
-					while(outToOtherDelta < -180)
-						outToOtherDelta += 360;
-					float inToOtherDelta = otherHeading - inHeading;
-					while(inToOtherDelta > 180)
-						inToOtherDelta -= 360;
-					while(inToOtherDelta < -180)
-						inToOtherDelta += 360;
-
-					float newHeading = otherHeading;
-					if(rightTurnRequired(inHeading, outHeading, otherHeading)) {
-						// side road to the right
-						if((mask & ATH_OUTGOING) != 0 &&
-						   Math.abs(outToOtherDelta) < MIN_DIFF_BETWEEN_OUTGOING_AND_OTHER_ARCS)
-							newHeading = outHeading + MIN_DIFF_BETWEEN_OUTGOING_AND_OTHER_ARCS;
-						if((mask & ATH_INCOMING) != 0 &&
-						   Math.abs(inToOtherDelta) < MIN_DIFF_BETWEEN_INCOMING_AND_OTHER_ARCS) {
-							float nh = inHeading + MIN_DIFF_BETWEEN_INCOMING_AND_OTHER_ARCS;
-							if(nh > newHeading)
-								newHeading = nh;
-						}
-
-						if(newHeading > 180)
-							newHeading -= 360;
-					}
-					else {
-						// side road to the left
-						if((mask & ATH_OUTGOING) != 0 &&
-						   Math.abs(outToOtherDelta) < MIN_DIFF_BETWEEN_OUTGOING_AND_OTHER_ARCS)
-							newHeading = outHeading - MIN_DIFF_BETWEEN_OUTGOING_AND_OTHER_ARCS;
-						if((mask & ATH_INCOMING) != 0 &&
-						   Math.abs(inToOtherDelta) < MIN_DIFF_BETWEEN_INCOMING_AND_OTHER_ARCS) {
-							float nh = inHeading - MIN_DIFF_BETWEEN_INCOMING_AND_OTHER_ARCS;
-							if(nh < newHeading)
-								newHeading = nh;
-						}
-
-						if(newHeading < -180)
-							newHeading += 360;
-					}
-					if(Math.abs(newHeading - otherHeading) > 0.0000001) {
-						otherArc.setInitialHeading(newHeading);
-						log.info("Adjusting turn heading from " + otherHeading + " to " + newHeading + " at junction of " + inRoadDef + " and " + otherArc.getRoadDef() + " at " + coord.toOSMURL());
-					}
-				}
-			}
-		}
 	}
 
 	public void checkRoundabouts() {
@@ -1010,7 +700,6 @@ public class RouteNode implements Comparable<RouteNode> {
 								sourceNode, 
 								destNode, 
 								roadArcs.get(i).getInitialHeading(), // not used
-								arcToDest.getFinalHeading(),  // not used
 								c1.bearingTo(c2),
 								partialArcLength, // from stepNode to destNode on road
 								pathLength, // from sourceNode to destNode on road
@@ -1111,4 +800,16 @@ public class RouteNode implements Comparable<RouteNode> {
 	public int hashCode(){
 		return getCoord().getId();
 	}
+
+	public List<RouteArc> getDirectArcsBetween(RouteNode otherNode) {
+		List<RouteArc> result = new ArrayList<>();
+		for(RouteArc a : arcs){
+			if(a.isDirect() && a.getDest() == otherNode){
+				result.add(a);
+			}
+		}
+		return result;
+	}
+
+	
 }

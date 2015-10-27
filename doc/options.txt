@@ -434,7 +434,8 @@ specified, only zero-length arcs will be removed.
  
 
 ;--adjust-turn-headings[=BITMASK]
-: 	Where possible, ensure that turns off to side roads change
+:  now ignored, former explanation:
+Where possible, ensure that turns off to side roads change
 heading sufficiently so that the GPS believes that a turn is
 required rather than a fork. This also avoids spurious
 instructions to "keep right/left" when the road doesn't
@@ -445,6 +446,13 @@ adjustments are to be made (where necessary):
 :* 1 = increase angle between side road and outgoing main road
 :* 2 = increase angle between side road and incoming main road
 
+;--cycle-map
+:  Tells mkgmap that the map is for cyclists. This assumes that
+different vehicles are different kinds of bicycles, e.g. a way
+with mkgmap:car=yes and mkgmap:bicycle=no may be a road that is 
+good for racing bikes, but not for other cyclists.
+This allows to optimise sharp angles at junctions of those roads. 
+Don't use with the default style as that is a general style!
 
 ;--report-similar-arcs
 : 	Issue a warning when more than one arc connects two nodes and

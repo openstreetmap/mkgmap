@@ -49,25 +49,19 @@ public class RoadNetwork {
 	private final List<RouteNode> boundary = new ArrayList<>();
 	private final List<RoadDef> roadDefs = new ArrayList<>();
 	private List<RouteCenter> centers = new ArrayList<>();
-	private int adjustTurnHeadings ;
+	private AngleChecker angleChecker = new AngleChecker();
+
 	private boolean checkRoundabouts;
 	private boolean checkRoundaboutFlares;
 	private int maxFlareLengthRatio ;
 	private boolean reportSimilarArcs;
 
 	public void config(EnhancedProperties props) {
-		String ath = props.getProperty("adjust-turn-headings");
-		if(ath != null) {
-			if(ath.length() > 0)
-				adjustTurnHeadings = Integer.decode(ath);
-			else
-				adjustTurnHeadings = RouteNode.ATH_DEFAULT_MASK;
-		}
 		checkRoundabouts = props.getProperty("check-roundabouts", false);
 		checkRoundaboutFlares = props.getProperty("check-roundabout-flares", false);
 		maxFlareLengthRatio = props.getProperty("max-flare-length-ratio", 0);
-
 		reportSimilarArcs = props.getProperty("report-similar-arcs", false);
+		angleChecker.config(props);
 	}
 
 	public void addRoad(RoadDef roadDef, List<Coord> coordList) {
@@ -128,32 +122,33 @@ public class RoadNetwork {
 
 				RouteNode node1 = getOrAddNode(lastId, lastCoord);
 				RouteNode node2 = getOrAddNode(id, co);
-
 				if(node1 == node2)
 					log.error("Road " + roadDef + " contains consecutive identical nodes at " + co.toOSMURL() + " - routing will be broken");
 				else if(arcLength == 0)
 					log.warn("Road " + roadDef + " contains zero length arc at " + co.toOSMURL());
 
 				Coord forwardBearingPoint = coordList.get(lastIndex + 1);
-				if(lastCoord.equals(forwardBearingPoint)) {
+				if(lastCoord.equals(forwardBearingPoint) || forwardBearingPoint.isAddedNumberNode()) {
 					// bearing point is too close to last node to be
 					// useful - try some more points
 					for(int bi = lastIndex + 2; bi <= index; ++bi) {
-						if(!lastCoord.equals(coordList.get(bi))) {
-							forwardBearingPoint = coordList.get(bi);
-							break;
-						}
+						Coord coTest = coordList.get(bi);
+						if (coTest.isAddedNumberNode() || lastCoord.equals(coTest))
+							continue;
+						forwardBearingPoint = coTest;
+						break;
 					}
 				}
 				Coord reverseBearingPoint = coordList.get(index - 1);
-				if(co.equals(reverseBearingPoint)) {
+				if(co.equals(reverseBearingPoint) || reverseBearingPoint.isAddedNumberNode()) {
 					// bearing point is too close to this node to be
 					// useful - try some more points
 					for(int bi = index - 2; bi >= lastIndex; --bi) {
-						if(!co.equals(coordList.get(bi))) {
-							reverseBearingPoint = coordList.get(bi);
-							break;
-						}
+						Coord coTest = coordList.get(bi);
+						if (coTest.isAddedNumberNode() || co.equals(coTest))
+							continue;
+						reverseBearingPoint = coTest;
+						break;
 					}
 				}
 				
@@ -162,24 +157,16 @@ public class RoadNetwork {
 
 				double reverseInitialBearing = co.bearingTo(reverseBearingPoint);
 				double directLength = (lastIndex + 1 == index) ? arcLength : lastCoord.distance(co);
-				double reverseFinalBearing, forwardFinalBearing, reverseDirectBearing;
+				double reverseDirectBearing = 0;
 				if (directLength > 0){
 					// bearing on rhumb line is a constant, so we can simply revert
 					reverseDirectBearing = (forwardDirectBearing <= 0) ? 180 + forwardDirectBearing: -(180 - forwardDirectBearing) % 180.0;
-					forwardFinalBearing = (reverseInitialBearing <= 0) ? 180 + reverseInitialBearing : -(180 - reverseInitialBearing) % 180.0;
-					reverseFinalBearing = (forwardInitialBearing <= 0) ? 180 + forwardInitialBearing : -(180 - forwardInitialBearing) % 180.0;
-				}
-				else {
-					reverseDirectBearing = 0;
-					forwardFinalBearing = 0;
-					reverseFinalBearing = 0;
 				}
 				// Create forward arc from node1 to node2
 				RouteArc arc = new RouteArc(roadDef,
 											node1,
 											node2,
 											forwardInitialBearing,
-											forwardFinalBearing,
 											forwardDirectBearing,
 											arcLength,
 											arcLength,
@@ -192,7 +179,6 @@ public class RoadNetwork {
 				RouteArc reverseArc = new RouteArc(roadDef,
 								   node2, node1,
 								   reverseInitialBearing,
-								   reverseFinalBearing,
 								   reverseDirectBearing,
 								   arcLength,
 								   arcLength,
@@ -269,8 +255,7 @@ public class RoadNetwork {
 					if(reportSimilarArcs)
 						node.reportSimilarArcs();
 				}
-				if(adjustTurnHeadings != 0)
-					node.tweezeArcs(adjustTurnHeadings);
+				
 				nod1.addNode(node);
 				n++;
 			}
@@ -281,6 +266,7 @@ public class RoadNetwork {
 
 	public List<RouteCenter> getCenters() {
 		if (centers.isEmpty()){
+			angleChecker.check(nodes);
 			addArcsToMajorRoads();
 			splitCenters();
 		}
