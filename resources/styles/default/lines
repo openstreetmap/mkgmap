@@ -18,10 +18,14 @@ highway=* & name=* { set mkgmap:street='${name}' }
 # Mark highways with the toll flag
 highway=* & (toll=yes|toll=true) { set mkgmap:toll=yes }
 
-# Hide proposed ways 
+# Hide proposed ways
 (highway=proposed | highway=proposal | highway=planned | highway ~ '.*proposed.*') {delete highway;delete junction}
 # Hide removed ways
 (highway=razed | highway=dismantled) {deletealltags}
+# Hide abandoned ways. Abandoned highways have some evidence of their former existence but are no longer used. These
+# abandoned highways could be useful in topographical maps.
+# https://wiki.openstreetmap.org/wiki/Key:abandoned:
+((abandoned:highway=* & highway!=*) | highway=abandoned) {deletealltags}
 # Hide other non-existent ways
 (highway=unbuilt | highway=neverbuilt | highway=rejected | highway ~ 'x-.*') {delete highway;delete junction}
 
