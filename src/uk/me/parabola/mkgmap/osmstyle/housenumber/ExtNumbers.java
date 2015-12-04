@@ -320,7 +320,7 @@ public class ExtNumbers {
 				if (zipCodeInfo.getZipCode() != null){
 					if (zipCodeInfo.equals(housenumberRoad.getRoadZipCode()) == false){
 						// we found a zip code and the road doesn't yet have one, use it for the whole road
-						if (getRoad().getZip() == null){
+						if (housenumberRoad.getRoadZipCode() == null){ 
 							housenumberRoad.setZipCodeInfo(zipCodeInfo);
 						} else
 							numbers.setZipCode(left, zipCodeInfo);
