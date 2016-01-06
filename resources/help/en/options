@@ -478,7 +478,7 @@ Miscellaneous options:
 	can be specified with this option.  This is a workaround for not
 	being able to search for roads.
 	0x2f15: a blue dot in the middle of the road, and if you select,
-		or 'hover' over it, the street name appears.
+	or 'hover' over it, the street name appears.
 	
 --add-pois-to-lines
 	Generate POIs for lines. For each line (must not be closed) POIs are
@@ -640,8 +640,8 @@ Miscellaneous options:
     Usual Garmin devices do not tell the name of the exit on motorways 
     while routing with mkgmap created maps. This option splits each
     motorway_link, trunk_link and primary_link way into three parts. 
-		All parts are tagged with the original tags of the link. 
-		Additionally the middle part is tagged with the following tags:
+	All parts are tagged with the original tags of the link. 
+	Additionally the middle part is tagged with the following tags:
       mkgmap:exit_hint=true
       mkgmap:exit_hint_ref=<ref tag value of the exit>
       mkgmap:exit_hint_name=<name tag value of the exit>
@@ -650,12 +650,12 @@ Miscellaneous options:
     to use any routable Garmin type (except 0x08 and 0x09) for the middle 
     part so that the Garmin device tells the name of this middle part as 
     hint where to leave the motorway/trunk.
-		The first part must have type 0x08 or 0x09 so that Garmin uses the hint. 
+	The first part must have type 0x08 or 0x09 so that Garmin uses the hint. 
 	
 --delete-tags-file=FILENAME
 	Names a file that should contain one or more lines of the form
 	TAG=VALUE or TAG=*. Blank lines and lines that start with
-	# or ; are ignored. All tag/value pairs in the OSM input are
+	a # or ; are ignored. All tag/value pairs in the OSM input are
 	compared with these patterns and those that match are deleted.
 
 --tdbfile

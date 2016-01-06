@@ -18,6 +18,9 @@ do
 	mwtext -t text $f > ../dist/doc/$f
 done
 
+# Use the actual options help file.
+cp resources/help/en/options ../dist/doc/options.txt
+
 DOC=~/www/web/mkgmap/content/doc
 WEB_DOC_PDF=~/www/mkgmap.org.uk/docroot/doc/pdf
 cp *.txt $DOC
