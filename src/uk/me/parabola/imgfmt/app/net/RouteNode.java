@@ -550,11 +550,16 @@ public class RouteNode implements Comparable<RouteNode> {
 	public void reportSimilarArcs() {
 		for(int i = 0; i < arcs.size(); ++i) {
 			RouteArc arci = arcs.get(i);
+			if (arci.isDirect() == false)
+				continue;
 			for(int j = i + 1; j < arcs.size(); ++j) {
 				RouteArc arcj = arcs.get(j);
+				if (arcj.isDirect() == false)
+					continue;
 				if(arci.getDest() == arcj.getDest() &&
 				   arci.getLength() == arcj.getLength() &&
 				   arci.getPointsHash() == arcj.getPointsHash()) {
+					log.error(arci.isForward(),arcj.isForward());
 					log.warn("Similar arcs (" + arci.getRoadDef() + " and " + arcj.getRoadDef() + ") from " + coord.toOSMURL());
 				}
 			}
