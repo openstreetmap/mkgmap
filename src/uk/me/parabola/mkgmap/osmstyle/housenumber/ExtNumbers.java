@@ -348,17 +348,19 @@ public class ExtNumbers {
 			return null;
 		
 		List<Numbers> list = new ArrayList<>();
+		boolean headerWasReported = false;
 		for (ExtNumbers curr = this; curr != null; curr = curr.next){
 			if (curr.hasNumbers() == false)
 				continue;
 			list.add(curr.getNumbers());
 			if (log.isInfoEnabled()) {
-				if (curr.prev == null){
+				if (headerWasReported == false){
 					MapRoad road = curr.getRoad();
 					if (road.getStreet() == null && road.getName() == null)
 						log.info("final numbers for", road, curr.housenumberRoad.getName(), "in", road.getCity());
 					else 
 						log.info("final numbers for", road, "in", road.getCity());
+					headerWasReported = true;
 				}
 				Numbers cn = curr.getNumbers();
 				log.info("Left: ",cn.getLeftNumberStyle(),cn.getIndex(),"Start:",cn.getLeftStart(),"End:",cn.getLeftEnd(), "numbers "+curr.getHouses(Numbers.LEFT));
@@ -585,7 +587,7 @@ public class ExtNumbers {
 
 			if (toAdd == null) {
 				Coord wanted = c1.makeBetweenPoint(c2, wantedFraction);
-				
+				log.debug("possible solution: split segment with length",formatLen(segmentLength),"near",formatLen(wantedFraction * segmentLength));
 				toAdd = rasterLineNearPoint(c1, c2, wanted, true);
 				if (toAdd != null){
 					if (toAdd.equals(c1)){
@@ -622,8 +624,11 @@ public class ExtNumbers {
 				log.error("internal error, cannot split",this);
 			}
 			if (toAdd != null){
-				if (log.isDebugEnabled())
+				if (log.isDebugEnabled()){
 					log.debug("solution: split segment with length",formatLen(segmentLength),"at",formatLen(usedFraction * segmentLength));
+					double distToLine = toAdd.getDisplayedCoord().distToLineSegment(c1.getDisplayedCoord(), c2.getDisplayedCoord());					
+					log.info("adding number node at",toAdd.toDegreeString(),"to split, dist to line is",formatLen(distToLine));
+				}
 				doSplit = true;
 				splitSegment = seg+1;
 				addAsNumberNode(splitSegment, toAdd);

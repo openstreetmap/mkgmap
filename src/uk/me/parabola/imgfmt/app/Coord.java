@@ -780,6 +780,8 @@ public class Coord implements Comparable<Coord> {
 		double ap = a.distance(this);
 		double ab = a.distance(b);
 		double bp = b.distance(this);
+		if (ap == 0 || bp == 0)
+			return 0;
 		double abpa = (ab+ap+bp)/2;
 		double dx = abpa-ab;
 		double dist;

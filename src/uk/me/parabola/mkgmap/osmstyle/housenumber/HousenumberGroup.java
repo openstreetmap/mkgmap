@@ -155,6 +155,10 @@ public class HousenumberGroup {
 				pointToUse = (opt1Dist < opt2Dist) ? c1 : c2;
 			}
 			else {
+				if (log.isInfoEnabled()){
+					double distLine = pointToUse.distToLineSegment(c1.getDisplayedCoord(), c2.getDisplayedCoord());
+					log.info("adding number nodes at",pointToUse.toDegreeString(),"to optimize address search", "dist to line is", HousenumberGenerator.formatLen(distLine));
+				}
 				timesToAdd = 2;
 			}
 		}
