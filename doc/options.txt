@@ -1,6 +1,5 @@
-= List of options =
-Note that option order is significant:  An option only applies to
-subsequent input files.  (So if you are using splitter, you probably
+= List of options = Note that option order is significant: An option only 
+applies to subsequent input files. (So if you are using splitter, you probably 
 want to put most of your options before '-c template.args'.)
 
 === General options ===
@@ -632,9 +631,14 @@ to the next junction or a length of ~25 m. The tags
 are ignored for pedestrian-only ways.      
 <p>
 ;--process-destination
-: 	Splits all motorway_link, trunk_link, and primary_link 
-ways tagged with destination into two or three parts where 
-the second part is additionally tagged with mkgmap:dest_hint=true. 
+: 	Splits all motorway_link, trunk_link, primary_link, secondary_link,
+and tertiary_link ways tagged with destination into two or three parts where 
+the second part is additionally tagged with mkgmap:dest_hint=true.
+The code checks for the tags destination, destination:lanes, 
+destination:street and some variants with :forward/:backward like
+destination:forward or destination:lanes:backward. If a value for
+destination is found, the tag destination is set to it and the way is split.
+This happens before the style rules are processed.
 This allows to use any routable Garmin type (except 0x08 and 0x09)
 for that part so that the Garmin device tells the name of
 this part as hint which destination to follow.
@@ -643,7 +647,8 @@ See also --process-exits.
 ;--process-exits
 :     Usual Garmin devices do not tell the name of the exit on motorways 
 while routing with mkgmap created maps. This option splits each
-motorway_link, trunk_link and primary_link way into three parts. 
+motorway_link, trunk_link, primary_link, secondary_link, and 
+tertiary_link way into three parts. 
 All parts are tagged with the original tags of the link. 
 Additionally the middle part is tagged with the following tags:
 <pre>

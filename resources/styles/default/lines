@@ -46,31 +46,31 @@ highway=motorway|highway=motorway_link { add oneway=yes; add mkgmap:numbers=fals
 # Set highway names to include the reference if there is one
 highway=motorway { name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-symbol:hbox}' | '${name}' }
 
-(highway=motorway_link | highway=trunk_link | highway=primary_link) & mkgmap:exit_hint=true & mkgmap:dest_hint=true
-  { name '${destination:ref|subst: =>} ${destination|subst:;=> |subst:/=> }' | 
+# start of rules for process-exits and process-destination options
+# which may add info to a part of these highway=*_link roads:
+# motorway_link, trunk_link, primary_link, secondary_link, tertiary_link
+# build destination hint 
+dest_hint=* { delete dest_hint }
+mkgmap:dest_hint=true
+  { set dest_hint = '${destination:ref|subst: =>} ${destination|subst:;=> |subst:/=> }' |
          '${ref|subst: =>} ${destination|subst:;=> |subst:/=> }' | 
-         '${destination|subst:;=> |subst:/=> }' |
-         'Exit ${mkgmap:exit_hint_ref} ${mkgmap:exit_hint_name}' | 
+         '${destination|subst:;=> |subst:/=> }';
+       }
+# build exit hint 
+exit_hint=* { delete exit_hint }
+mkgmap:exit_hint=true 
+  { set exit_hint = 'Exit ${mkgmap:exit_hint_ref} ${mkgmap:exit_hint_name}' | 
          'Exit ${mkgmap:exit_hint_ref} ${mkgmap:exit_hint_exit_to}' | 
          'Exit ${mkgmap:exit_hint_exit_to}' |
          'Exit ${mkgmap:exit_hint_name}' |
-         'Exit ${mkgmap:exit_hint_ref}'
+         'Exit ${mkgmap:exit_hint_ref}';
        }
-
-(highway=motorway_link | highway=trunk_link | highway=primary_link) & mkgmap:exit_hint!=* & mkgmap:dest_hint=true
-  { name '${destination:ref|subst: =>} ${destination|subst:;=> |subst:/=> }' |
-         '${ref|subst: =>} ${destination|subst:;=> |subst:/=> }' | 
-         '${destination|subst:;=> |subst:/=> }'
-       }
-
-(highway=motorway_link | highway=trunk_link | highway=primary_link) & mkgmap:exit_hint=true & mkgmap:dest_hint!=*
-  { name 'Exit ${mkgmap:exit_hint_ref} ${mkgmap:exit_hint_name}' | 
-         'Exit ${mkgmap:exit_hint_ref} ${mkgmap:exit_hint_exit_to}' | 
-         'Exit ${mkgmap:exit_hint_exit_to}' |
-         'Exit ${mkgmap:exit_hint_name}' |
-         'Exit ${mkgmap:exit_hint_ref}'
-       }
-              
+  
+# use destination hint and/or exit hint to build name              
+(mkgmap:exit_hint=true | mkgmap:dest_hint=true)
+  {	name '${exit_hint} ${dest_hint}' | 	'${dest_hint}' | 		'${exit_hint}' }
+# end of rules for process-exits and process-destination options	
+  
 highway=trunk {name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-symbol:hbox}' | '${name}'; addlabel '${name} (${ref})' }
 highway=primary {name '${ref|highway-symbol:box} ${name}' | '${ref|highway-symbol:box}' | '${name}'; addlabel '${name} (${ref})' }
 highway=secondary | highway=tertiary {name '${ref|highway-symbol:oval} ${name}' | '${ref|highway-symbol:oval}' | '${name}'; addlabel '${name} (${ref})' }
