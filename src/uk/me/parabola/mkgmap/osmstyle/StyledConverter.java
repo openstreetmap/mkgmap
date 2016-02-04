@@ -1475,6 +1475,10 @@ public class StyledConverter implements OsmConverter {
 		GType gt = cw.getGType();
 		List<Integer> nodeIndices = new ArrayList<>();
 		List<Coord> points = way.getPoints();
+		if (points.size() < 2){
+			log.warn("road has < 2 points",way.getId(),"(discarding)");
+			return;
+		}
 		Way trailingWay = null;
 		String debugWayName = way.getDebugName();
 
