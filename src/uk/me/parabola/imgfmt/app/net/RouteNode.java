@@ -559,7 +559,6 @@ public class RouteNode implements Comparable<RouteNode> {
 				if(arci.getDest() == arcj.getDest() &&
 				   arci.getLength() == arcj.getLength() &&
 				   arci.getPointsHash() == arcj.getPointsHash()) {
-					log.error(arci.isForward(),arcj.isForward());
 					log.warn("Similar arcs (" + arci.getRoadDef() + " and " + arcj.getRoadDef() + ") from " + coord.toOSMURL());
 				}
 			}
