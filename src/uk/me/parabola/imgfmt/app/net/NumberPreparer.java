@@ -886,7 +886,7 @@ class CityZipWriter {
 	private final String type;
 	private final int numItems;
 	private final int defaultIndex;
-	
+	int []lastEncodedIndexes = {-1, -1};
 	
 	public CityZipWriter(String type, int defIndex, int numItems) {
 		this.type = type;
@@ -898,67 +898,69 @@ class CityZipWriter {
 	public ByteArrayOutputStream getBuffer(){
 		return buf;
 	}
+
 	public boolean compile(List<Numbers> numbers){
 		try {
-			int lastNodeIndex = -1;
 			// left and right entry in zip or city table
-			int []prevIndexes = new int[2]; 
-			prevIndexes[0] = prevIndexes[1] = -1;
-			int []indexes = new int[2]; 
+			int []indexes = {defaultIndex, defaultIndex}; // current num 
+			int []refIndexes = {defaultIndex, defaultIndex}; // previous num 
+			int lastEncodedNodeIndex = -1;
+			boolean needsWrite = false;
 			for (Numbers num : numbers){
-				for (int i = 0; i < 2; i++){
-					indexes[i] = -1;
-					boolean left = (i == 0);
+				for (int side = 0; side < 2; side++){
+					indexes[side] = defaultIndex;
+					boolean left = (side == 0);
 					switch (type) {
 					case "zip":
 						ZipCodeInfo zipInfo = num.getZipCodeInfo(left);
 						if (zipInfo != null){
-							if (zipInfo.getImgZip() != null)
-								indexes[i] = zipInfo.getImgZip().getIndex();
-							else 
-								indexes[i] = 0; // or default?
+							if (zipInfo.getImgZip() != null){
+								indexes[side] = zipInfo.getImgZip().getIndex();
+							}
 						}
 						break;
 					case "city": 
 						CityInfo cityInfo = num.getCityInfo(left);
 						if (cityInfo != null){
-							if (cityInfo.getImgCity() != null)
-								indexes[i] = cityInfo.getImgCity().getIndex();
-							else 
-								indexes[i] = 0; // or default?
+							if (cityInfo.getImgCity() != null){
+								indexes[side] = cityInfo.getImgCity().getIndex();
+							}
 						}
 						break;
 					default:
 						break;
 					}
 				}
-				if (indexes[0] < 0 && indexes[1] < 0)
+				if (indexes[0] == refIndexes[0] && indexes[1] == refIndexes[1])
 					continue;
-				if (lastNodeIndex < 0){
-					if (num.getIndex() > 0 ){ 
-						int [] defindexes = {defaultIndex,defaultIndex};
-						write(0, defindexes, prevIndexes);
-					}
+				needsWrite = true;
+				if (num.getIndex() > 0){
+					int range = num.getIndex() - 1;
+					if (lastEncodedNodeIndex > 0)
+						range -= lastEncodedNodeIndex;
+					encode(range, refIndexes);
 				}
-				int skip = num.getIndex() - lastNodeIndex - 1;
-				assert defaultIndex > 0 : "bad default index";
-				lastNodeIndex = num.getIndex();
-				if (indexes[0] < 0)
-					indexes[0] = defaultIndex;
-				if (indexes[1] < 0)
-					indexes[1] = defaultIndex;
-				write(skip, indexes, prevIndexes);
+				refIndexes[0] = indexes[0];
+				refIndexes[1] = indexes[1];
+				lastEncodedNodeIndex = num.getIndex(); 
+			}
+			if (needsWrite){
+				int lastIndexWithNumbers = numbers.get(numbers.size()-1).getIndex();
+				int range = lastIndexWithNumbers - lastEncodedNodeIndex;
+				encode(range, indexes);
+			}
+			else {
+				buf.reset(); // probably not needed
 			}
 		} catch (Abandon e) {
 			return false;
 		}
 		return true;
 	}
-
-	private void write(int skip, int[] indexes, int[] prevIndexes) {
-		if (Arrays.equals(indexes, prevIndexes))
-			return;
+	
+	private void encode(int skip, int[] indexes) {
 		// we can signal new values for left and / or right side 
+		
 		int sidesFlag = 0;  
 		if (indexes[0] <= 0 && indexes[1] <= 0){
 			sidesFlag |= 4; // signal end of a zip code/city interval
@@ -968,14 +970,14 @@ class CityZipWriter {
 				sidesFlag |= 2;
 		} else {
 			if (indexes[1] != indexes[0]){
-				if (indexes[0] > 0 && indexes[0] != prevIndexes[0])
+				if (indexes[0] > 0 && indexes[0] != lastEncodedIndexes[0])
 					sidesFlag |= 1;
-				if (indexes[1] > 0 && indexes[1] != prevIndexes[1])
+				if (indexes[1] > 0 && indexes[1] != lastEncodedIndexes[1])
 					sidesFlag |= 2;
 			}
 		}
 
-		int initFlag = Math.max(skip-1,0);
+		int initFlag = skip;
 		if (initFlag > 31){
 			// we have to write two bytes
 			buf.write((byte) (initFlag & 0x1f | 0x7<<5));
@@ -989,7 +991,8 @@ class CityZipWriter {
 			if (indexes[1] > 0 && (sidesFlag & 2) != 0)
 				writeIndex(indexes[1]);
 		}
-		System.arraycopy(indexes, 0, prevIndexes, 0, indexes.length);
+		lastEncodedIndexes[0] = indexes[0];
+		lastEncodedIndexes[1] = indexes[1];
 	}
 	
 	void writeIndex(int val){
