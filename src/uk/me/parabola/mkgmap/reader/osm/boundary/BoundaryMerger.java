@@ -40,13 +40,11 @@ public class BoundaryMerger {
 	
 	private void copy(File file, File to) {
 		String filename = file.getName();
-		
-		try {
-	      FileChannel in = (new FileInputStream(file)).getChannel();
-	      FileChannel out = (new FileOutputStream(new File(to,filename))).getChannel();
-	      in.transferTo(0, file.length(), out);
-	      in.close();
-	      out.close();
+		try (FileChannel in = (new FileInputStream(file)).getChannel();
+				FileChannel out = (new FileOutputStream(new File(to, filename))).getChannel()) {
+			in.transferTo(0, file.length(), out);
+			in.close();
+			out.close();
 		} catch (IOException exp) {
 			System.err.println(exp);
 		}

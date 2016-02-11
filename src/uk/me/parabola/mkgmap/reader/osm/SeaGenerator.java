@@ -38,6 +38,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Utils;
@@ -181,13 +182,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 							if (indexFileName.endsWith(".gz")) {
 								indexStream = new GZIPInputStream(indexStream);
 							}
-							try{
-								precompData = loadIndex(indexStream);
-							} catch (IOException exp) {
-								log.error("Cannot read index file " + indexFileName,
-										exp);
-							}
-							
+							precompData = loadIndex(indexStream);
 							if (precompData != null){
 								if (zipFile != null){
 									precompData.precompZipFileInternalPath = internalPath;
@@ -198,9 +193,9 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 							indexStream.close();
 						}
 					} catch (IOException exp) {
-						log.error("Cannot read index file " + indexFileName,
-								exp);
-
+						log.error("Cannot read index file", indexFileName, "in", precompSea, exp);
+//						exp.printStackTrace();
+						throw new ExitException("Failed to read required index file in " + precompSeaDir); 
 					}
 					precompIndex.set(precompData);
 				}

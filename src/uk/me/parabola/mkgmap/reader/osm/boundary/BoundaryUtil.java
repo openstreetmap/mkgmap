@@ -40,6 +40,7 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
@@ -381,9 +382,9 @@ public class BoundaryUtil {
 						log.error("boundary zip file contains directories. Files in directories will be ignored." + dirName);			
 					}
 				} catch (IOException ioe) {
-					System.err.println("Unhandled exception:");
-					ioe.printStackTrace();
-				}
+					log.error("Cannot read",dirName,ioe);
+//					ioe.printStackTrace();
+					throw new ExitException("Failed to read required file " + dirName);				}
 			}
 		}
 		return names;
