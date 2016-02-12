@@ -397,6 +397,8 @@ public class RuleFileReader {
 	 * is indexable or it is indexable itself.
 	 */
 	private static boolean isSolved(Op op) {
+		if (op.isType(NOT))
+			return false;
 		return isIndexable(op) || isIndexable(op.getFirst());
 	}
 

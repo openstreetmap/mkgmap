@@ -56,10 +56,12 @@ public class RuleFileReaderTest {
 		el.addTag("highway", "footway");
 
 		GType type = getFirstType(rs, el);
+		assertNotNull(type);
 		assertEquals("plain footway", "[0x3 level 0]", type.toString());
 
 		el.addTag("type", "rough");
 		type = getFirstType(rs, el);
+		assertNotNull(type);
 		assertEquals("rough footway", "[0x2 level 2]", type.toString());
 	}
 
@@ -77,6 +79,7 @@ public class RuleFileReaderTest {
 		el.addTag("highway", "primary");
 
 		GType type = getFirstType(rs, el);
+		assertNotNull(type);
 		assertEquals("min level", 1, type.getMinLevel());
 		assertEquals("max level", 3, type.getMaxLevel());
 	}
@@ -95,6 +98,7 @@ public class RuleFileReaderTest {
 		el.addTag("x", "11");
 
 		GType type = getFirstType(rs, el);
+		assertNotNull(type);
 		assertEquals("expression ok", 1, type.getType());
 
 		// fails with x less than 10
@@ -111,6 +115,7 @@ public class RuleFileReaderTest {
 		el.addTag("x", "100");
 		el.addTag("e", "f");
 		type = getFirstType(rs, el);
+		assertNotNull(type);
 		assertEquals("c and e set", 1, type.getType());
 
 		el.addTag("c", "");
@@ -120,6 +125,7 @@ public class RuleFileReaderTest {
 
 		el.addTag("e", "f");
 		type = getFirstType(rs, el);
+		assertNotNull(type);
 		assertEquals("e is set to f", 1, type.getType());
 	}
 
@@ -146,25 +152,31 @@ public class RuleFileReaderTest {
 		el.addTag("layer", "-1");
 
 		GType type = getFirstType(rs, el);
+		assertNotNull(type);
 		assertEquals("9902 layer = -1", 0x1, type.getType());
 
 		// 9912
 		el.addTag("layer", "0");
 		type = getFirstType(rs, el);
+		assertNotNull(type);
 		assertEquals("9912 layer = 0", 0x2, type.getType());
 
 		// 9922
 		el.deleteTag("layer");
 		type = getFirstType(rs, el);
+		assertNotNull(type);
 		assertEquals("9922 no layer tag", 0x8, type.getType());
 
 		// 9932
 		el.addTag("layer", "1");
 		type = getFirstType(rs, el);
+		assertNotNull(type);
 		assertEquals("9932 layer is 1", 0x3, type.getType());
 
 		// 9952
 		el.addTag("layer", "+1");
+		type = getFirstType(rs, el);
+		assertNotNull(type);
 		assertEquals("9952 layer is +1", 0x3, type.getType());
 	}
 
@@ -263,6 +275,7 @@ public class RuleFileReaderTest {
 		Element el = new Way(1);
 		el.addTag("highway", "motorway");
 		GType type = getFirstType(rs, el);
+		assertNotNull(type);
 
 		// Check that the correct class and speed are returned.
 		assertEquals("class", 4, type.getRoadClass());
@@ -710,6 +723,7 @@ public class RuleFileReaderTest {
 
 		for (int i = 0; i < 3; i++) {
 			GType type = getFirstType(rs, el);
+			assertNotNull(type);
 			assertEquals("first type", 1, type.getType());
 			assertEquals("continue search", true, type.isContinueSearch());
 		}
@@ -787,6 +801,7 @@ public class RuleFileReaderTest {
 		way.addTag("include", "yes");
 
 		GType type = getFirstType(rs, way);
+		assertNotNull(type);
 		assertEquals(2, type.getType());
 	}
 
@@ -798,6 +813,7 @@ public class RuleFileReaderTest {
 		way.addTag("include", "yes");
 
 		GType type = getFirstType(rs, way);
+		assertNotNull(type);
 		assertEquals(2, type.getType());
 	}
 
@@ -856,11 +872,13 @@ public class RuleFileReaderTest {
 		el = new Way(2);
 		el.addTag("c", "1");
 		type = getFirstType(rs, el);
+		assertNotNull(type);
 		assertEquals(1, type.getType());
 
 		el = new Way(2);
 		el.addTag("c", "2");
 		type = getFirstType(rs, el);
+		assertNotNull(type);
 		assertEquals(2, type.getType());
 	}
 
@@ -889,11 +907,13 @@ public class RuleFileReaderTest {
 		el = new Way(2);
 		el.addTag("c", "1");
 		type = getFirstType(rs, el);
+		assertNotNull(type);
 		assertEquals(1, type.getType());
 
 		el = new Way(2);
 		el.addTag("c", "2");
 		type = getFirstType(rs, el);
+		assertNotNull(type);
 		assertEquals(2, type.getType());
 	}
 
@@ -1065,6 +1085,7 @@ public class RuleFileReaderTest {
 
 		w.addTag("c", "x");
 		type = getFirstType(rs, w);
+		assertNotNull(type);
 		assertEquals(6, type.getType());
 	}
 
@@ -1075,6 +1096,7 @@ public class RuleFileReaderTest {
 		w.addTag("a", "b");
 		w.addTag("b", "50");
 		GType type = getFirstType(rs, w);
+		assertNotNull(type);
 		assertEquals(6, type.getType());
 	}
 
@@ -1085,7 +1107,30 @@ public class RuleFileReaderTest {
 		w.addTag("a", "1");
 		w.addTag("b", "2");
 		GType type = getFirstType(rs, w);
+		assertNotNull(type);
 		assertEquals(5, type.getType());
+	}
+
+	@Test
+	public void test_X3NOT_Error() {
+		// Bug caused an Error: X3:NOT syntax exception to be thrown.
+		RuleSet rs = makeRuleSet("(a=1 | b=2) & !(c=1) & d!=3 [0x8]");
+		Way w = new Way(1);
+		w.addTag("b", "1");
+		GType type = getFirstType(rs, w);
+		assertNull(type);
+
+		w.addTag("b", "2");
+		type = getFirstType(rs, w);
+		assertNotNull(type);
+
+		w.addTag("d", "3");
+		type = getFirstType(rs, w);
+		assertNull(type);
+
+		w.addTag("d", "2");
+		type = getFirstType(rs, w);
+		assertNotNull(type);
 	}
 
 	/**
