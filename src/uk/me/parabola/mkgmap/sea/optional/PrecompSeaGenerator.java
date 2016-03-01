@@ -256,26 +256,6 @@ public class PrecompSeaGenerator {
 		shapeIterator = null;
 	}
 
-	/**
-	 * Reads the next polygon from the shape file.
-	 * @return the next polygon (WGS84 projection)
-	 */
-	private Geometry readNextPolygon() {
-		if (shapeIterator.hasNext()) {
-			Feature feature = shapeIterator.next();
-			GeometryAttribute geom = feature.getDefaultGeometryProperty();
-			Geometry poly = (Geometry) geom.getValue();
-			try {
-				return transformToWGS84(poly);
-			} catch (Exception exp) {
-				System.err.println(exp);
-				return null;
-			}
-		} else {
-			return null;
-		}
-	}
-
 	public void runSeaGeneration() throws MismatchedDimensionException,
 			TransformException, IOException, InterruptedException {
 		createShapefileAccess();
@@ -328,7 +308,20 @@ public class PrecompSeaGenerator {
 			// read all polygons from the shape file and add them to the queues of the
 			// merger threads
 			Geometry wgs84Poly = null;
-			while ((wgs84Poly = readNextPolygon()) != null) {
+			while (shapeIterator.hasNext()) {
+				Feature feature = shapeIterator.next();
+				GeometryAttribute geom = feature.getDefaultGeometryProperty();
+				Geometry poly = (Geometry) geom.getValue();
+				if (poly == null){
+					continue;
+				}
+
+				try {
+					wgs84Poly = transformToWGS84(poly);
+				} catch (Exception exp) {
+					System.err.println(exp);
+					continue;
+				}
 
 				if (wgs84Poly.getNumGeometries() != 1) {
 					// only simple polygons are supported by now
