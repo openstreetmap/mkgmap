@@ -272,7 +272,7 @@
 
 	<target name="test" depends="build-test, obtain-test-input-files" description="Run the junit tests">
 		<mkdir dir="tmp/report"/>
-		<junit printsummary="yes" failureproperty="junit.failure">
+		<junit printsummary="yes" failureproperty="junit.failure" forkmode="once">
 
 			<classpath refid="test"/>
 			<formatter type="xml"/>
