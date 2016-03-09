@@ -1133,6 +1133,27 @@ public class RuleFileReaderTest {
 		assertNotNull(type);
 	}
 
+	@Test
+	public void testBugOrWithAndOnLeft() {
+		RuleSet rs = makeRuleSet("((a=1&b=2) | a=2) & c!=4 [0x2]");
+		Way w = new Way(1);
+		w.addTag("a", "2");
+
+		GType type = getFirstType(rs, w);
+		assertNotNull(type);
+	}
+
+	@Test
+	public void testBugOrWithAndOnLeft2() {
+		RuleSet rs = makeRuleSet("(((a=1 | a=5)&b=2) | a=2) & c!=4 [0x2]");
+		Way w = new Way(1);
+		w.addTag("a", "2");
+
+		GType type = getFirstType(rs, w);
+		assertNotNull(type);
+		assertEquals(type.getType(), 2);
+	}
+
 	/**
 	 * Get a way with a few points for testing length.
 	 *

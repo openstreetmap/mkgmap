@@ -272,6 +272,9 @@ public class RuleFileReader {
 		if (isFinished(op))
 			return op;
 
+		if (op.getFirst().isType(OR))
+			op = distribute(op.getFirst(), op.getSecond());
+
 		if (op.isType(AND)) {
 			// Recursively re-arrange the child nodes
 			rearrangeExpression(op.getFirst());
@@ -352,7 +355,7 @@ public class RuleFileReader {
 			// Transform ((first | second) & topSecond)
 			// into (first & topSecond) | (second & topSecond)
 
-			return distrubute(op1, top.getSecond());
+			return distribute(op1, top.getSecond());
 		} else {
 			// This shouldn't happen
 			throw new SyntaxException("X3:" + op1.getType());
@@ -360,7 +363,7 @@ public class RuleFileReader {
 		return top;
 	}
 
-	private static OrOp distrubute(Op op1, Op topSecond) {
+	private static OrOp distribute(Op op1, Op topSecond) {
 		Op first = op1.getFirst();
 		OrOp orOp = new OrOp();
 
@@ -371,7 +374,7 @@ public class RuleFileReader {
 		BinaryOp and2 = new AndOp();
 		Op second = rearrangeExpression(op1.getSecond());
 		if (second.isType(OR)) {
-			and2 = distrubute(second, topSecond);
+			and2 = distribute(second, topSecond);
 		} else {
 			and2.setFirst(second);
 			and2.setSecond(topSecond);
