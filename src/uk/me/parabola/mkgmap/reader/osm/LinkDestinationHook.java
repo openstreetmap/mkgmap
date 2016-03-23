@@ -50,7 +50,7 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 	/** Maps which ways can be driven from a given Coord */
 	private IdentityHashMap<Coord, Set<Way>> adjacentWays = new IdentityHashMap<Coord, Set<Way>>();
 	/** Contains all _link ways that have to be processed */
-	private Map<Long, Way> destinationLinkWays = new HashMap<Long, Way>();
+	private Map<Long, Way> destinationLinkWays = new LinkedHashMap<Long, Way>();
 	
 	private final static Set<String> highwayTypes = new LinkedHashSet<String>(Arrays.asList(
 			"motorway", "trunk", "primary", "secondary", "tertiary", 
@@ -143,15 +143,15 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 							// use this tag as destination tag 
 							destinationTag = destLanesTag;
 						}
-						if (destinationTag == null){
-							// try to use the destination:street value
-							destSourceTagKey = "destination:street";
-							destinationTag = w.getTag(destSourceTagKey);
-						}
 						if (destinationTag == null && directedDestination != null) {
 							// use the destination:forward or :backward value
 							destinationTag = directedDestination;
 							destSourceTagKey = "destination:" + directionSuffix; 
+						}
+						if (destinationTag == null){
+							// try to use the destination:street value
+							destSourceTagKey = "destination:street";
+							destinationTag = w.getTag(destSourceTagKey);
 						}
 						if (destinationTag != null && "destination".equals(destSourceTagKey) == false){
 							w.addTag("destination", destinationTag);
