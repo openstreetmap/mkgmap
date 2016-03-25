@@ -88,8 +88,4 @@ public class Mdr6 extends MdrMapSection {
 	public int getExtraValue() {
 		return  ((getSizes().getZipSize()-1)&0x03) | (isForDevice() ? 0 : 0x04);
 	}
-
-	public void relabelMaps(Mdr1 maps) {
-		relabel(maps, zips);
-	}
 }

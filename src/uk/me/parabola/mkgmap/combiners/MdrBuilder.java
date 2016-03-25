@@ -310,13 +310,12 @@ public class MdrBuilder implements Combiner {
 			String name = road.getName();
 			if (name == null || name.isEmpty())
 				continue;
-			Mdr5Record mdrCity = null;
 			List<City> cities = road.getCities();
 			if (cities.isEmpty())
-				mdrFile.addStreet(road, mdrCity);
+				mdrFile.addStreet(road, null);
 			else {
 				for (City city : cities){
-					mdrCity = cityList.get(city.getIndex() - 1);
+					Mdr5Record mdrCity = cityList.get(city.getIndex() - 1);
 					if (mdrCity.getMapIndex() == 0)
 						mdrCity = null;
 
@@ -378,7 +377,7 @@ public class MdrBuilder implements Combiner {
 	 * These are only held for a single map at a time, which is
 	 * sufficient to link them all up.
 	 */
-	class AreaMaps {
+	private class AreaMaps {
 		private final Map<Integer, Mdr5Record> cities = new HashMap<>();
 		private Map<Integer, Mdr13Record> regions;
 		private Map<Integer, Mdr14Record> countries;

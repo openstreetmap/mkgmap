@@ -12,8 +12,6 @@
  */
 package uk.me.parabola.imgfmt.app.mdr;
 
-import java.util.List;
-
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
@@ -70,26 +68,5 @@ public abstract class MdrMapSection extends MdrSection implements HasHeaderFlags
 
 	protected boolean hasFlag(int val) {
 		return (getExtraValue() & val) != 0;
-	}
-
-	public abstract void relabelMaps(Mdr1 maps);
-
-	/**
-	 * Relabel every map-index in the given set of records.
-	 *
-	 * The maps must be in sorted order, but because of the incremental way that we build the
-	 * index, this isn't known until the end.  So we get rewrite the mapIndex from the
-	 * initial to the final ordering.
-	 *
-	 * @param maps The final ordering of the maps.
-	 * @param records The set of records to be relabeled.
-	 * @param <T> The type of the record. Must be a subclass of RecordBase.
-	 */
-	protected <T extends RecordBase> void relabel(Mdr1 maps, List<T> records) {
-		for (T r : records) {
-			int n = r.getMapIndex();
-			int newIndex = maps.sortedMapIndex(n);
-			r.setMapIndex(newIndex);
-		}
 	}
 }

@@ -331,8 +331,4 @@ public class Mdr7 extends MdrMapSection {
 	public List<Mdr7Record> getSortedStreets() {
 		return Collections.unmodifiableList(streets);
 	}
-
-	public void relabelMaps(Mdr1 maps) {
-		relabel(maps, allStreets);
-	}
 }

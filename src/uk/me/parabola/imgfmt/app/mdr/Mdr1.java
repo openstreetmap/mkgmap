@@ -13,8 +13,6 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -46,7 +44,6 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  */
 public class Mdr1 extends MdrSection implements HasHeaderFlags {
 	private final List<Mdr1Record> maps = new ArrayList<>();
-	private int[] mapping;
 
 	public Mdr1(MdrConfig config) {
 		setConfig(config);
@@ -67,30 +64,6 @@ public class Mdr1 extends MdrSection implements HasHeaderFlags {
 		if (!isForDevice()) {
 			Mdr1MapIndex mapIndex = new Mdr1MapIndex();
 			rec.setMdrMapIndex(mapIndex);
-		}
-	}
-
-	/**
-	 * The maps must be sorted in numerical order.
-	 */
-	public void finish() {
-		Collections.sort(maps, new Comparator<Mdr1Record>() {
-			public int compare(Mdr1Record o1, Mdr1Record o2) {
-				if (o1.getMapNumber() == o2.getMapNumber())
-					return 0;
-				else if (o1.getMapNumber() < o2.getMapNumber())
-					return -1;
-				else
-					return 1;
-			}
-		});
-
-		// Used to renumber all the existing (pre-sorted) map index numbers.
-		mapping = new int[maps.size()];
-		int count = 1;
-		for (Mdr1Record r : maps) {
-			mapping[r.getMapIndex()-1] = count;
-			count++;
 		}
 	}
 
@@ -165,9 +138,5 @@ public class Mdr1 extends MdrSection implements HasHeaderFlags {
 		if (!isForDevice())
 			magic |= 1;
 		return magic;
-	}
-
-	public int sortedMapIndex(int n) {
-		return mapping[n-1];
 	}
 }

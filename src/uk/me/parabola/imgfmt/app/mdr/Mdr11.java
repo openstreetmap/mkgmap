@@ -173,8 +173,4 @@ public class Mdr11 extends MdrMapSection {
 	public List<Mdr11Record> getPois() {
 		return new ArrayList<>(pois);
 	}
-
-	public void relabelMaps(Mdr1 maps) {
-		relabel(maps, pois);
-	}
 }

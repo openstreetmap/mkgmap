@@ -21,6 +21,8 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -74,14 +76,14 @@ public class Main implements ArgumentProcessor {
 	private static final Logger log = Logger.getLogger(Main.class);
 
 	// Final .img file combiners.
-	private final List<Combiner> combiners = new ArrayList<Combiner>();
+	private final List<Combiner> combiners = new ArrayList<>();
 
-	private final Map<String, MapProcessor> processMap = new HashMap<String, MapProcessor>();
+	private final Map<String, MapProcessor> processMap = new HashMap<>();
 	private String styleFile = "classpath:styles";
 	private String styleOption;
 	private boolean verbose;
 
-	private final List<FilenameTask> futures = new LinkedList<FilenameTask>();
+	private final List<FilenameTask> futures = new LinkedList<>();
 	private ExecutorService threadPool;
 	// default number of threads
 	private int maxJobs = 1;
@@ -95,7 +97,6 @@ public class Main implements ArgumentProcessor {
 
 	/**
 	 * Used for unit tests
-	 * @param args
 	 */
 	public static void mainNoSystemExit(String[] args) {
 		Main.mainStart(args);
@@ -194,7 +195,7 @@ public class Main implements ArgumentProcessor {
 		if (stream == null)
 			return null;
 
-		Set<String> result = new HashSet<String>();
+		Set<String> result = new HashSet<>();
 		try {
 			BufferedReader r = new BufferedReader(new InputStreamReader(stream, "utf-8"));
 
@@ -276,7 +277,8 @@ public class Main implements ArgumentProcessor {
 	public void processOption(String opt, String val) {
 		log.debug("option:", opt, val);
 
-		if (opt.equals("number-of-files")) {
+		switch (opt) {
+		case "number-of-files":
 
 			// This option always appears first.  We use it to turn on/off
 			// generation of the overview files if there is only one file
@@ -285,28 +287,37 @@ public class Main implements ArgumentProcessor {
 			if (n > 0) // TODO temporary, this option will become properly default of on.
 				createTdbFiles = true;
 
-		} else if (opt.equals("help")) {
+			break;
+		case "help":
 			printHelp(System.out, getLang(), (!val.isEmpty()) ? val : "help");
-		} else if (opt.equals("style-file") || opt.equals("map-features")) {
+			break;
+		case "style-file":
+		case "map-features":
 			styleFile = val;
-		} else if (opt.equals("style")) {
+			break;
+		case "style":
 			styleOption = val;
-		} else if (opt.equals("verbose")) {
+			break;
+		case "verbose":
 			verbose = true;
-		} else if (opt.equals("list-styles")) {
+			break;
+		case "list-styles":
 			listStyles();
-		} else if (opt.equals("check-styles")) {
+			break;
+		case "check-styles":
 			checkStyles();
-		} else if (opt.equals("max-jobs")) {
+			break;
+		case "max-jobs":
 			if (val.isEmpty())
 				maxJobs = Runtime.getRuntime().availableProcessors();
 			else
 				maxJobs = Integer.parseInt(val);
-			if(maxJobs < 1) {
+			if (maxJobs < 1) {
 				log.warn("max-jobs has to be at least 1");
 				maxJobs = 1;
 			}
-		} else if (opt.equals("version")) {
+			break;
+		case "version":
 			System.err.println(Version.VERSION);
 			System.exit(0);
 		}
@@ -365,7 +376,6 @@ public class Main implements ArgumentProcessor {
 	 */
 	private void checkStyles() {
 		String[] names;
-		int checked = 0;
 		try {
 			StyleFileLoader loader = StyleFileLoader.createStyleLoader(styleFile, null);
 			names = loader.list();
@@ -383,15 +393,16 @@ public class Main implements ArgumentProcessor {
 			else 
 				System.out.println("Found one style in " + styleFile);
 		}
+		int checked = 0;
 		for (String name : names) {
-			if (styleOption != null && name.equals(styleOption) == false)
+			if (styleOption != null && !name.equals(styleOption))
 				continue;
 			if (names.length > 1){
 				System.out.println("checking style: " + name);
 			}
 			++checked;
 			boolean performChecks = true;
-			if ("classpath:styles".equals(styleFile) && "default".equals(name) == false){ 
+			if ("classpath:styles".equals(styleFile) && !"default".equals(name)){
 					performChecks = false;
 			}
 			Style style = readOneStyle(name, performChecks);
@@ -411,8 +422,8 @@ public class Main implements ArgumentProcessor {
 	 * @return the style or null in case of errors
 	 */
 	private Style readOneStyle(String name, boolean performChecks){
-		Style style = null;
 		searchedStyleName = name;
+		Style style = null;
 		try {
 			style = new StyleImpl(styleFile, name, new EnhancedProperties(), performChecks);
 		} catch (SyntaxException e) {
@@ -454,7 +465,7 @@ public class Main implements ArgumentProcessor {
 		}
 
 
-		List<FilenameTask> filenames = new ArrayList<FilenameTask>();
+		List<FilenameTask> filenames = new ArrayList<>();
 		
 		int numMapFailedExceptions = 0;
 		
@@ -525,8 +536,30 @@ public class Main implements ArgumentProcessor {
 		for (Combiner c : combiners)
 			c.init(args);
 
-		// will contain img files for which an additional ovm file was found  
-		HashSet<String> foundOvmFiles = new HashSet<String>();
+		Collections.sort(filenames, new Comparator<FilenameTask>() {
+			public int compare(FilenameTask o1, FilenameTask o2) {
+				if (!o1.getFilename().endsWith(".img") || !o2.getFilename().endsWith(".img"))
+					return o1.getFilename().compareTo(o2.getFilename());
+
+				// Both end in .img
+				try {
+					int id1 = FileInfo.getFileInfo(o1.getFilename()).getHexname();
+					int id2 = FileInfo.getFileInfo(o2.getFilename()).getHexname();
+					if (id1 == id2)
+						return 0;
+					else if (id1 < id2)
+						return -1;
+					else
+						return 1;
+				} catch (FileNotFoundException ignored) {
+				}
+				return 0;
+			}
+
+		});
+
+		// will contain img files for which an additional ovm file was found
+		HashSet<String> foundOvmFiles = new HashSet<>();
 		// try OverviewBuilder with special files  
 		if (tdbBuilderAdded){
 			for (FilenameTask file : filenames) {
@@ -535,7 +568,7 @@ public class Main implements ArgumentProcessor {
 
 				try {
 					String fileName = file.getFilename();
-					if (fileName.endsWith(".img") == false)
+					if (!fileName.endsWith(".img"))
 						continue;
 					fileName = OverviewBuilder.getOverviewImgName(fileName);
 					log.info("  " + fileName);
@@ -547,7 +580,7 @@ public class Main implements ArgumentProcessor {
 						if (c instanceof OverviewBuilder)
 							c.onMapEnd(fileInfo);
 					}
-				} catch (FileNotFoundException e) {
+				} catch (FileNotFoundException ignored) {
 				}
 			} 
 		}

@@ -266,8 +266,6 @@ public class MDRFile extends ImgFile {
 	private void writeSections(ImgFileWriter writer) {
 		sizes = new MdrMapSection.PointerSizes(sections);
 
-		mdr1.finish();
-
 		// Deal with the dependencies between the sections. The order of the following
 		// statements is sometimes important.
 		mdr28.buildFromRegions(mdr13.getRegions());
@@ -383,7 +381,6 @@ public class MDRFile extends ImgFile {
 			MdrMapSection mapSection = (MdrMapSection) section;
 			mapSection.setMapIndex(mdr1);
 			mapSection.initIndex(sectionNumber);
-			mapSection.relabelMaps(mdr1);
 		}
 
 		if (section instanceof HasHeaderFlags)
