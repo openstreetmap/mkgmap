@@ -153,8 +153,11 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 							destSourceTagKey = "destination:street";
 							destinationTag = w.getTag(destSourceTagKey);
 						}
-						if (destinationTag != null && "destination".equals(destSourceTagKey) == false){
-							w.addTag("destination", destinationTag);
+						
+					}
+					if (destinationTag != null){
+						w.addTag("mkgmap:dest_hint_work", destinationTag);
+						if ("destination".equals(destSourceTagKey) == false){
 							if (log.isDebugEnabled()){
 								if (destSourceTagKey.startsWith("destination:lanes"))
 									log.debug("Use",destSourceTagKey,"as destination tag because there is one lane information only. Way ",w.getId(),w.toTagString());
@@ -162,9 +165,6 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 									log.debug("Use",destSourceTagKey,"as destination tag. Way ",w.getId(),w.toTagString());
 							}
 						}
-						
-					}
-					if (destinationTag != null){
 						destinationLinkWays.put(w.getId(), w);
 					}
 				}
@@ -453,7 +453,7 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 	 * and/or the option process-destination is set and the destination tag is
 	 * set. The mid part way is tagged additionally with the following tags:
 	 * <ul>
-	 * <li>mkgmap:dest_hint=true (for destinations)</li>
+	 * <li>mkgmap:dest_hint=* (for destinations)</li>
 	 * <li>mkgmap:exit_hint=true (for exits)</li>
 	 * <li>mkgmap:exit_hint_ref: Tagged with the ref tag value of the motorway
 	 * junction node</li>
@@ -464,7 +464,7 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 	 * </ul>
 	 * Style implementors can use the common Garmin code 0x09 for motorway_links
 	 * and any other routable id (except 0x08 and 0x09) for the links with
-	 * mkgmap:exit_hint=true and/or mkgmap:dest_hint=true. The naming of this
+	 * mkgmap:exit_hint=true and/or mkgmap:dest_hint=*. The naming of this
 	 * middle way can be typically assigned from destination, ref, destination:ref, 
 	 * mkgmap:exit_hint_ref, mkgmap:exit_hint_name and/or mkgmap:exit_hint_exit_to.
 	 */
@@ -476,8 +476,7 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 		log.debug(destinationLinkWays.size(),"links with destination tag");
 		while (linksWithDestination.isEmpty()== false) {
 			Way linkWay = linksWithDestination.poll();
-			String destination = linkWay.getTag("destination");
-
+			String destination = linkWay.getTag("mkgmap:dest_hint_work");
 			if (log.isDebugEnabled())
 				log.debug("Check way",linkWay.getId(),linkWay.toTagString());
 			
@@ -490,7 +489,8 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 			Set<Way> nextWays = adjacentWays.get(c);
 			if (nextWays != null) {
 				for (Way connectedWay : nextWays) {
-					String nextDest = connectedWay.getTag("destination");
+					String nextDest = connectedWay.getTag("mkgmap:dest_hint_work");
+					
 					if (log.isDebugEnabled())
 						log.debug("Followed by",connectedWay.getId(),connectedWay.toTagString());
 
@@ -615,9 +615,12 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 								log.info("Way", w, "is too short to cut at least 20m from it. Cannot create exit hint.");
 							} else {
 								hintWay.addTag("mkgmap:exit_hint", "true");
-								
-								if (processDestinations && hintWay.getTag("destination") != null) {
-									hintWay.addTag("mkgmap:dest_hint", "true");
+								if (processDestinations) {
+									String hint = hintWay.getTag("mkgmap:dest_hint_work");
+									if (hint != null){
+										hintWay.deleteTag("mkgmap:dest_hint_work");
+										hintWay.addTag("mkgmap:dest_hint", hint);
+									}
 								}
 								if (exitNode.getTag("ref") != null)
 									hintWay.addTag("mkgmap:exit_hint_ref", exitNode.getTag("ref"));
@@ -705,7 +708,13 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 					if (hintWay == null) {
 						log.info("Way", w, "is too short to cut at least 20m from it. Cannot create destination hint.");
 					} else {
-						hintWay.addTag("mkgmap:dest_hint", "true");
+						String hint = hintWay.getTag("mkgmap:dest_hint_work");
+						if (hint != null){
+							hintWay.deleteTag("mkgmap:dest_hint_work");
+							hintWay.addTag("mkgmap:dest_hint", hint);
+						} else {
+							log.error("Internal error in process_destination with way",hintWay);
+						}
 						
 						if (log.isInfoEnabled())
 							log.info("Cut off exit hint way", hintWay, hintWay.toTagString());
@@ -758,6 +767,7 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 		// referenced in the style file
 		Set<String> tags = new HashSet<String>();
 		tags.add("highway");
+		tags.add("destination");
 		tags.add("destination:lanes");
 		tags.add("destination:lanes:forward");
 		tags.add("destination:lanes:backward");

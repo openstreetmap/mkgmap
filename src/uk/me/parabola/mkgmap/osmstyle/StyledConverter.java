@@ -172,7 +172,11 @@ public class StyledConverter implements OsmConverter {
 		nodeRules = style.getNodeRules();
 		lineRules = style.getLineRules();
 		polygonRules = style.getPolygonRules();
-		
+		// perform legacy test, older versions of mkgmap used to set mkgmap:dest_hint=true
+		// newer version will set it to a reasonable destination string
+		if (lineRules.containsExpression("$mkgmap:dest_hint='true'")){
+			log.error("At least one 'lines' rule in the style contains the expression mkgmap:dest_hint=true, it should be changed to mkgmap:dest_hint=*");
+		}
 		housenumberGenerator = new HousenumberGenerator(props);
 		
 		driveOn = props.getProperty("drive-on", null);

@@ -288,5 +288,24 @@ public class RuleSet implements Rule, Iterable<Rule> {
 		if (finalizeRule != null)
 			finalizeRule.printStats(header);
 	}
+	
+	@Override
+	public boolean containsExpression(String exp) {
+		if (rules == null) {
+			// this method must be called after prepare() is called so
+			// that we have rules to which the finalize rules can be applied
+			throw new IllegalStateException("First call prepare() before setting the finalize rules");
+		}
+		for (Rule rule : rules){
+			if (rule.containsExpression(exp))
+				return true;
+		}
+		if (finalizeRule != null){
+			if (finalizeRule.containsExpression(exp))
+				return true;
+		}
+		return false;
+	}
 
+	
 } 

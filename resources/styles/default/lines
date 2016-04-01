@@ -50,14 +50,12 @@ highway=motorway { name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-sy
 # which may add info to a part of these highway=*_link roads:
 # motorway_link, trunk_link, primary_link, secondary_link, tertiary_link
 # build destination hint 
-dest_hint=* { delete dest_hint }
-mkgmap:dest_hint=true
-  { set dest_hint = '${destination:ref|subst: =>} ${destination|subst:;=> |subst:/=> }' |
-         '${ref|subst: =>} ${destination|subst:;=> |subst:/=> }' | 
-         '${destination|subst:;=> |subst:/=> }';
+mkgmap:dest_hint=*
+  { set dest_hint = '${destination:ref|subst: =>} ${mkgmap:dest_hint|subst:;=> |subst:/=> }' |
+         '${ref|subst: =>} ${mkgmap:dest_hint|subst:;=> |subst:/=> }' | 
+         '${mkgmap:dest_hint|subst:;=> |subst:/=> }';
        }
 # build exit hint 
-exit_hint=* { delete exit_hint }
 mkgmap:exit_hint=true 
   { set exit_hint = 'Exit ${mkgmap:exit_hint_ref} ${mkgmap:exit_hint_name}' | 
          'Exit ${mkgmap:exit_hint_ref} ${mkgmap:exit_hint_exit_to}' | 
@@ -67,7 +65,7 @@ mkgmap:exit_hint=true
        }
   
 # use destination hint and/or exit hint to build name              
-(mkgmap:exit_hint=true | mkgmap:dest_hint=true)
+(mkgmap:exit_hint=true | mkgmap:dest_hint=*)
   {	name '${exit_hint} ${dest_hint}' | 	'${dest_hint}' | 		'${exit_hint}' }
 # end of rules for process-exits and process-destination options	
   
@@ -129,12 +127,12 @@ highway=* & disused=yes & maxspeed!=* { add mkgmap:road-speed = '-2' }
 # Ways sorted roughly by descending order of class
 highway=motorway & network=e-road [0x01 resolution 14-14 continue]
 highway=motorway  [0x01 road_class=4 road_speed=7 resolution 15]
-highway=motorway_link & (mkgmap:exit_hint=true | mkgmap:dest_hint=true) [0x06 road_class=3 road_speed=2 resolution 20]
+highway=motorway_link & (mkgmap:exit_hint=true | mkgmap:dest_hint=*) [0x06 road_class=3 road_speed=2 resolution 20]
 highway=motorway_link [0x09 road_class=3 road_speed=2 resolution 20]
 
 highway=trunk & ( network=e-road | int_ref=* ) [0x02 resolution 15-17 continue]
 highway=trunk [0x02 road_class=4 road_speed=5 resolution 18]
-highway=trunk_link & (mkgmap:exit_hint=true | mkgmap:dest_hint=true) [0x06 road_class=3 road_speed=2 resolution 20]
+highway=trunk_link & (mkgmap:exit_hint=true | mkgmap:dest_hint=*) [0x06 road_class=3 road_speed=2 resolution 20]
 highway=trunk_link [0x09 road_class=3 road_speed=2 resolution 20]
 highway=* & motorroad=yes [0x02 road_class=4 road_speed=4 resolution 18]
 highway=primary & ( network=e-road | int_ref=* ) [0x03 resolution 17-18 continue]

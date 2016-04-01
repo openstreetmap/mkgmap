@@ -113,4 +113,9 @@ public class ExpressionRule implements Rule {
 		if (statsLog.isInfoEnabled())
 			statsLog.info(header,"stats (rule/evals/true)", this.toString() + "/" + numEval + "/" + numTrue);
 	}
+
+	@Override
+	public boolean containsExpression(String exp) {
+		return expression.toString().contains(exp);
+	}
 }

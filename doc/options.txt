@@ -633,11 +633,12 @@ are ignored for pedestrian-only ways.
 ;--process-destination
 : 	Splits all motorway_link, trunk_link, primary_link, secondary_link,
 and tertiary_link ways tagged with destination into two or three parts where 
-the second part is additionally tagged with mkgmap:dest_hint=true.
+the second part is additionally tagged with mkgmap:dest_hint=*.
 The code checks for the tags destination, destination:lanes, 
 destination:street and some variants with :forward/:backward like
 destination:forward or destination:lanes:backward. If a value for
-destination is found, the tag destination is set to it and the way is split.
+destination is found, the special tag mkgmap:dest_hint is set to  
+it  and the way is split.
 This happens before the style rules are processed.
 This allows to use any routable Garmin type (except 0x08 and 0x09)
 for that part so that the Garmin device tells the name of

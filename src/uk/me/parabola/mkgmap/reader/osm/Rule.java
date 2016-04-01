@@ -56,5 +56,7 @@ public interface Rule {
 	public void printStats(String header);
 
 	public Rule getFinalizeRule();
+
+	public boolean containsExpression(String exp);
 	
 }
