@@ -172,7 +172,14 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	
 	@Override
 	public LevelInfo[] overviewMapLevels() {
-		return null;
+		String levelSpec = getConfig().getProperty("overview-levels");
+		
+		if (levelSpec == null)
+			return null;
+		LevelInfo[] levels = LevelInfo.createFromString(levelSpec); 
+		for (int i = 0; i < levels.length; i++)
+			levels[i] = new LevelInfo(levels.length-i-1,levels[i].getBits());
+		return levels;
 	}
 
 	/**
