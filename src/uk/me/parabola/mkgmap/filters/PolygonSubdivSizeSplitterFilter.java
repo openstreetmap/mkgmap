@@ -89,6 +89,10 @@ public class PolygonSubdivSizeSplitterFilter extends PolygonSplitterBase impleme
 	}
 
 	private boolean isSizeOk(MapShape shape) {
+		// do not cut the background shape
+		if (shape.getType() == 0x4a)
+			return true;
+		
 		// Estimate the size taken by lines and shapes as a constant plus
 		// a factor based on the number of points.
 		int numPoints = shape.getPoints().size();
