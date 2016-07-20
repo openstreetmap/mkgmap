@@ -76,6 +76,9 @@ public class LinePreparer {
 	 */
 	public BitWriter makeShortestBitStream(int minPointsRequired) {
 		BitWriter bs = makeBitStream(minPointsRequired, xBase, yBase);
+		if (bs == null)
+			return bs;
+		
 		int xBestBase = xBase;
 		int yBestBase = yBase;
 		if (xBase > 0 ||  yBase > 0){
