@@ -69,25 +69,81 @@ public class LinePreparer {
 
 	/**
 	 * Write the bit stream to a BitWriter and return it.
+	 * Try different values for xBase and yBase to find the one
+	 * that results in the shortest bit stream.
+	 * 
+	 * @return A class containing the written byte stream.
+	 */
+	public BitWriter makeShortestBitStream(int minPointsRequired) {
+		BitWriter bs = makeBitStream(minPointsRequired, xBase, yBase);
+		int xBestBase = xBase;
+		int yBestBase = yBase;
+		if (xBase > 0 ||  yBase > 0){
+			if (log.isDebugEnabled())
+				log.debug("start opt:", xBase, yBase, xSameSign, xSignNegative, ySameSign, ySignNegative);
+		}
+		int origBytes = bs.getLength();
+		int origBits = bs.getBitPosition();
+		if (xBase > 0){
+			boolean xSameSignBak = xSameSign;
+			xSameSign = false;
+			for (int xTestBase = xBase-1; xTestBase >= 0; xTestBase--){
+				BitWriter bstest = makeBitStream(minPointsRequired, xTestBase, yBase);
+//				System.out.println(xBase + " "  + xTestBase + " -> " + bs.getBitPosition() + " " + bstest.getBitPosition());
+				if (bstest.getBitPosition() >= bs.getBitPosition() ){
+					if (xBestBase - xTestBase > 1)
+						break; // give up
+				} else {
+					xBestBase = xTestBase;
+					bs = bstest;
+					xSameSignBak = false;
+				}
+			}
+			xSameSign = xSameSignBak;
+		}
+		if (yBase > 0){
+			boolean ySameSignBak = ySameSign;
+			ySameSign = false;
+			for (int yTestBase = yBase-1; yTestBase >= 0; yTestBase--){
+				BitWriter bstest = makeBitStream(minPointsRequired, xBestBase, yTestBase);
+//				System.out.println(yBase + " "  + yTestBase + " -> " + bs.getBitPosition() + " " + bstest.getBitPosition());
+				if (bstest.getBitPosition() >= bs.getBitPosition()){
+					if (yBestBase - yTestBase > 1)
+					break; // give up
+				} else {
+					yBestBase = yTestBase;
+					bs = bstest;
+					ySameSignBak = false;
+				}
+			}
+			ySameSign = ySameSignBak;
+		}
+		if (log.isInfoEnabled()){
+			if (xBase != xBestBase || yBestBase != yBase){
+				if (origBytes > bs.getLength())
+					log.info("optimizer reduced bit stream byte length from",origBytes,"->",bs.getLength(),"(" + (origBytes-bs.getLength()), " byte(s)) for",polyline.getClass().getSimpleName(),"with",polyline.getPoints().size(),"points");
+				else
+					log.info("optimizer reduced bit stream bit length from",origBits,"->",bs.getBitPosition(),"bits for",polyline.getClass().getSimpleName(),"with",polyline.getPoints().size(),"points");
+			}
+		}
+		return bs;
+	}
+	/**
+	 * Write the bit stream to a BitWriter and return it.
 	 *
 	 * @return A class containing the written byte stream.
 	 */
-	public BitWriter makeBitStream(int minPointsRequired) {
+	public BitWriter makeBitStream(int minPointsRequired, int xb, int yb) {
+		assert xb >= 0 && yb >= 0;
+		
+		int xbits = base2Bits(xb);
+		if (!xSameSign)
+			xbits++;
+		int ybits = base2Bits(yb);
+		if (!ySameSign)
+			ybits++;
 
-		assert xBase >= 0 && yBase >= 0;
-
-		int xbits = 2;
-		if (xBase < 10)
-			xbits += xBase;
-		else
-			xbits += (2 * xBase) - 9;
-
-		int ybits = 2;
-		if (yBase < 10)
-			ybits += yBase;
-		else
-			ybits += (2 * yBase) - 9;
-
+			
 		// Note no sign included.
 		if (log.isDebugEnabled())
 			log.debug("xbits", xbits, ", y=", ybits);
@@ -96,8 +152,8 @@ public class LinePreparer {
 		BitWriter bw = new BitWriter();
 
 		// Pre bit stream info
-		bw.putn(xBase, 4);
-		bw.putn(yBase, 4);
+		bw.putn(xb, 4);
+		bw.putn(yb, 4);
 
 		bw.put1(xSameSign);
 		if (xSameSign)
@@ -133,28 +189,18 @@ public class LinePreparer {
 
 			if (log.isDebugEnabled())
 				log.debug("x delta", dx, "~", xbits);
-			assert dx >> xbits == 0 || dx >> xbits == -1;
 			if (xSameSign) {
 				bw.putn(Math.abs(dx), xbits);
 			} else {
-				// catch inadvertent output of "magic" value that has
-				// sign bit set but other bits all 0
-				assert dx >= 0 || (dx & ((1 << xbits) - 1)) != 0;
-				bw.putn(dx, xbits);
-				bw.put1(dx < 0);
+				bw.sputn(dx, xbits);
 			}
 
 			if (log.isDebugEnabled())
 				log.debug("y delta", dy, ybits);
-			assert dy >> ybits == 0 || dy >> ybits == -1;
 			if (ySameSign) {
 				bw.putn(Math.abs(dy), ybits);
 			} else {
-				// catch inadvertent output of "magic" value that has
-				// sign bit set but other bits all 0
-				assert dy >= 0 || (dy & ((1 << ybits) - 1)) != 0;
-				bw.putn(dy, ybits);
-				bw.put1(dy < 0);
+				bw.sputn(dy, ybits);
 			}
 			if (extraBit)
 				bw.put1(nodes[i/2+1]);
@@ -209,10 +255,6 @@ public class LinePreparer {
 		// OK go through the points
 		int lastLat = 0;
 		int lastLong = 0;
-		boolean xDiffSign = false; // The long values have different sign
-		boolean yDiffSign = false; // The lat values have different sign
-		int xSign = 0;  // If all the same sign, then this 1 or -1 depending on +ve or -ve
-		int ySign = 0;  // As above for lat.
 		int minDx = Integer.MAX_VALUE, maxDx = 0;
 		int minDy = Integer.MAX_VALUE, maxDy = 0;
 		// index of first point in a series of identical coords (after shift)
@@ -280,26 +322,6 @@ public class LinePreparer {
 				nodes[firstsame] = nodes[firstsame] || extra;
 			}
 
-			// See if they can all be the same sign.
-			if (!xDiffSign) {
-				int thisSign = (dx >= 0)? 1: -1;
-				if (xSign == 0) {
-					xSign = thisSign;
-				} else if (thisSign != xSign) {
-					// The signs are different
-					xDiffSign = true;
-				}
-			}
-			if (!yDiffSign) {
-				int thisSign = (dy >= 0)? 1: -1;
-				if (ySign == 0) {
-					ySign = thisSign;
-				} else if (thisSign != ySign) {
-					// The signs are different
-					yDiffSign = true;
-				}
-			}
-
 			// find largest delta values
 			if (dx < minDx)
 				minDx = dx;
@@ -323,43 +345,25 @@ public class LinePreparer {
 		// adjustments to get the final value.  We need to try and work
 		// backwards from this.
 		//
-		// I don't care about getting the smallest possible file size so
-		// err on the side of caution.
-		//
 		// Note that the sign bit is already not included so there is
 		// no adjustment needed for it.
 
 		if (log.isDebugEnabled())
 			log.debug("initial xBits, yBits", xBits, yBits);
 
-		if (xBits < 2)
-			xBits = 2;
-		int tmp = xBits - 2;
-		if (tmp > 10) {
-			if ((tmp & 0x1) == 0)
-				tmp++;
-			tmp = 9 + (tmp - 9) / 2;
-		}
-		this.xBase = tmp;
-
-		if (yBits < 2)
-			yBits = 2;
-		tmp = yBits - 2;
-		if (tmp > 10) {
-			if ((tmp & 0x1) == 0)
-				tmp++;
-			tmp = 9 + (tmp - 9) / 2;
-		}
-		this.yBase = tmp;
+		this.xBase = bits2Base(xBits);
+		this.yBase = bits2Base(yBits);
 
 		if (log.isDebugEnabled())
 			log.debug("initial xBase, yBase", xBase, yBase);
 
 		// Set flags for same sign etc.
-		this.xSameSign = !xDiffSign;
-		this.ySameSign = !yDiffSign;
-		this.xSignNegative = xSign < 0;
-		this.ySignNegative = ySign < 0;
+		this.xSameSign = !(minDx < 0 && maxDx > 0);
+		this.ySameSign = !(minDy < 0 && maxDy > 0);
+		if (this.xSameSign)
+			this.xSignNegative = minDx < 0;
+		if (this.ySameSign)
+			this.ySignNegative = minDy < 0;
 	}
 
 	/**
@@ -371,16 +375,35 @@ public class LinePreparer {
 	public static int bitsNeeded(int val) {
 		int n = Math.abs(val);
 
-		int count = val < 0? 1: 0;
+		int count = 0;
 		while (n != 0) {
 			n >>>= 1;
 			count++;
 		}
 		return count;
+//		count should be equal to Integer.SIZE - Integer.numberOfLeadingZeros(Math.abs(val));
+
 	}
 
 	public boolean isExtraBit() {
 		return extraBit;
 	}
 
+	private static int base2Bits(int base){
+		int bits = 2;
+		if (base < 10)
+			return bits + base;
+		else
+			return bits + (2 * base) - 9;
+	}
+	
+	private static int bits2Base(int bits){
+		int base = Math.max(0, bits - 2);
+		if (base > 10) {
+			if ((base & 0x1) == 0)
+				base++;
+			base = 9 + (base - 9) / 2;
+		}
+		return base;
+	}
 }

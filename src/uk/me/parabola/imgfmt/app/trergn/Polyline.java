@@ -91,7 +91,7 @@ public class Polyline extends MapObject {
 		}
 
 		int minPointsRequired = (this instanceof Polygon)? 3 : 2;
-		BitWriter bw = w.makeBitStream(minPointsRequired);
+		BitWriter bw = w.makeShortestBitStream(minPointsRequired);
 		if(bw == null) {
 			log.error("Level " + getSubdiv().getZoom().getLevel() + " " + ((this instanceof Polygon)? "polygon" : "polyline") + " has less than " + minPointsRequired + " points, discarding");
 			return;
@@ -171,7 +171,7 @@ public class Polyline extends MapObject {
 			return;
 		}
 		int minPointsRequired = (this instanceof Polygon)? 3 : 2;
-		BitWriter bw = w.makeBitStream(minPointsRequired);
+		BitWriter bw = w.makeShortestBitStream(minPointsRequired);
 		if(bw == null) {
 			log.error("Level " + getSubdiv().getZoom().getLevel() + " " + ((this instanceof Polygon)? "polygon" : "polyline") + " has less than " + minPointsRequired + " points, discarding");
 			return;

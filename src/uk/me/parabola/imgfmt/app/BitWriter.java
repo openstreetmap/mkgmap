@@ -110,11 +110,34 @@ public class BitWriter {
 
 		buflen = (bitoff+7)/8;
 	}
+	
+	/**
+	 * Write a signed value. If the value doesn't fit into nb bits, write one or more 1 << (nb-1)  
+	 * as a flag for extended range.
+	 */
 
+	public void sputn(int bval, int nb) {
+		int top = 1 << (nb - 1);
+		int mask = top - 1;
+		int val = Math.abs(bval);
+		while (val > mask) {
+			putn(top, nb);
+			val -= mask;
+		}
+		if (bval < 0) {
+			putn((top - val) | top, nb);
+		} else {
+			putn(val, nb);
+		}
+	}
+	
 	public byte[] getBytes() {
 		return buf;
 	}
 
+	public int getBitPosition() {
+		return bitoff;
+	}
 	/**
 	 * Get the number of bytes actually used to hold the bit stream. This therefore can be and usually
 	 * is less than the length of the buffer returned by {@link #getBytes()}.

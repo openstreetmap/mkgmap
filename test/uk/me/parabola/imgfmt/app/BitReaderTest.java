@@ -46,6 +46,13 @@ public class BitReaderTest {
 		int s = br.sget2(3);
 		assertEquals(-12, s);
 	}
+	@Test
+	public void testSpecialNegative2() {
+		BitReader br = new BitReader(new byte[]{0x2c, 0x0});
+
+		int s = br.sget2(3);
+		assertEquals(-6, s);
+	}
 
 	@Test
 	public void testSpecialPositive() {
@@ -54,4 +61,18 @@ public class BitReaderTest {
 		int s = br.sget2(3);
 		assertEquals(8, s);
 	}
+	
+	@Test
+	public void testWriteRead() {
+		for (int i = -20; i <= 20; i++){
+			BitWriter bw = new BitWriter();
+			bw.sputn(i,3);
+			BitReader br = new BitReader(bw.getBytes());
+
+			int s = br.sget2(3);
+			assertEquals(i, s);
+		}
+	}
+	
+	
 }
