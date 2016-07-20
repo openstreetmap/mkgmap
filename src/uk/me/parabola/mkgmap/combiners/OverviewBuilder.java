@@ -55,12 +55,12 @@ public class OverviewBuilder implements Combiner {
 	private String areaName;
 	private String overviewMapname;
 	private String overviewMapnumber;
-	private Zoom[] levels;
 	private String outputDir;		
 	private Integer codepage;
 	private Integer encodingType;
 	private List<String[]> copyrightMsgs = new ArrayList<String[]>();
 	private List<String[]> licenseInfos = new ArrayList<String[]>();
+	private LevelInfo[] wantedLevels;
 
 
 	public OverviewBuilder(OverviewMap overviewSource) {
@@ -87,9 +87,57 @@ public class OverviewBuilder implements Combiner {
 
 	public void onFinish() {
 		addBackground();
+		calcLevels();
 		writeOverviewMap();
 	}
 	
+	private void calcLevels() {
+		List<MapShape> shapes = overviewSource.getShapes();
+		int maxRes = 16; // we can write a 0x4a polygon for planet in res 16
+		if (wantedLevels != null)
+			maxRes = wantedLevels[wantedLevels.length-1].getBits();
+		int maxSize = 0xffff << (24 - maxRes); 
+		for (MapShape s : shapes){
+			if (s.getType() != 0x4a)
+				continue;
+			int maxDimPoly = s.getBounds().getMaxDimension();
+			if (maxDimPoly > maxSize){
+				int oldMaxRes = maxRes; 
+				while (maxDimPoly > maxSize){
+					maxRes--;
+					maxSize = 0xffff << (24 - maxRes);
+				}
+				String[] name = s.getName().split("\u001d");
+				String msg = "Tile selection (0x4a) polygon for "; 
+				if (name != null && name.length == 2)
+					msg += "tile " + name[1].trim();
+				else 
+					msg += s.getBounds(); 
+				log.error(msg,"cannot be written in level 0 resolution",oldMaxRes + ", using",maxRes,"instead");
+				
+			}
+		}
+		if (wantedLevels == null)
+			setRes(maxRes);
+		else {
+			// make sure that the wanted levels for the overview map
+			// can store the largest 0x4a polygon at level 0
+			int n = wantedLevels.length-1;
+			while (n > 0 && wantedLevels[n].getBits() > maxRes)
+				n--;
+			if (n > 0){
+				int l = 0;
+				while (n >= 0){
+					wantedLevels[n] = new LevelInfo(l++, wantedLevels[n].getBits());
+					n--;
+				}
+				wantedLevels = Arrays.copyOfRange(wantedLevels, 0, l);
+				overviewSource.setMapLevels(wantedLevels);
+			} else
+				setRes(maxRes);	
+		}
+	}
+
 	/**
 	 * Add background polygon that covers the whole area of the overview map. 
 	 */
@@ -187,8 +235,8 @@ public class OverviewBuilder implements Combiner {
 				licenseInfos.add(msgs);
 			
 			
-			levels = mapReader.getLevels();
-			if (overviewSource.mapLevels() == null){
+			Zoom[] levels = mapReader.getLevels();
+			if (wantedLevels == null){
 				LevelInfo[] mapLevels;
 				if (isOverviewImg(filename)){
 					mapLevels = new LevelInfo[levels.length-1]; 
@@ -199,7 +247,7 @@ public class OverviewBuilder implements Combiner {
 					mapLevels = new LevelInfo[1];
 					mapLevels[0] = new LevelInfo(levels[1].getLevel(), levels[1].getResolution());
 				}
-				overviewSource.setMapLevels(mapLevels);
+				wantedLevels = mapLevels;
 			}
 			if (isOverviewImg(filename)){
 				readPoints(mapReader);
@@ -221,6 +269,7 @@ public class OverviewBuilder implements Combiner {
 	 */
 	private void readPoints(MapReader mapReader) {
 		Area bounds = overviewSource.getBounds();
+		Zoom[] levels = mapReader.getLevels();
 		for (int l = 1; l < levels.length; l++){
 			int min = levels[l].getLevel();
 			int res = levels[l].getResolution();
@@ -251,6 +300,7 @@ public class OverviewBuilder implements Combiner {
 	 * @param mapReader Map reader on the detailed .img file.
 	 */
 	private void readLines(MapReader mapReader) {
+		Zoom[] levels = mapReader.getLevels();
 		for (int l = 1; l < levels.length; l++){
 			int min = levels[l].getLevel();
 			int res = levels[l].getResolution();
@@ -286,6 +336,7 @@ public class OverviewBuilder implements Combiner {
 	 * @param mapReader Map reader on the detailed .img file.
 	 */
 	private void readShapes(MapReader mapReader) {
+		Zoom[] levels = mapReader.getLevels();
 		for (int l = 1; l < levels.length; l++){
 			int min = levels[l].getLevel();
 			int res = levels[l].getResolution();
@@ -332,7 +383,7 @@ public class OverviewBuilder implements Combiner {
 		for (Coord co: points){
 			overviewSource.addToBounds(co);
 		}
-		// Create the background rectangle
+		// Create the tile coverage rectangle
 		MapShape bg = new MapShape();
 		bg.setType(0x4a);
 		bg.setPoints(points);
@@ -385,4 +436,15 @@ public class OverviewBuilder implements Combiner {
 		}
 		return list;
 	}
+
+	/**
+	 * Set the highest resolution
+	 * @param resolution
+	 */
+	private void setRes(int resolution) {
+		LevelInfo[] mapLevels = new LevelInfo[1];
+		mapLevels[0] = new LevelInfo(0, resolution);
+		overviewSource.setMapLevels(mapLevels); 
+	}
+
 }
