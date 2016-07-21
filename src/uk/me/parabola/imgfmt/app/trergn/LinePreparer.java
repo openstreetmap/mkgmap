@@ -75,61 +75,68 @@ public class LinePreparer {
 	 * @return A class containing the written byte stream.
 	 */
 	public BitWriter makeShortestBitStream(int minPointsRequired) {
-		BitWriter bs = makeBitStream(minPointsRequired, xBase, yBase);
-		if (bs == null)
-			return bs;
-		
+		BitWriter bsSimple = makeBitStream(minPointsRequired, xBase, yBase);
+		if (bsSimple == null)
+			return bsSimple;
+		BitWriter bsBest = bsSimple; 
 		int xBestBase = xBase;
 		int yBestBase = yBase;
 		if (xBase > 0 ||  yBase > 0){
 			if (log.isDebugEnabled())
 				log.debug("start opt:", xBase, yBase, xSameSign, xSignNegative, ySameSign, ySignNegative);
 		}
-		int origBytes = bs.getLength();
-		int origBits = bs.getBitPosition();
 		if (xBase > 0){
+			int notBetter = 0;
 			boolean xSameSignBak = xSameSign;
 			xSameSign = false;
 			for (int xTestBase = xBase-1; xTestBase >= 0; xTestBase--){
 				BitWriter bstest = makeBitStream(minPointsRequired, xTestBase, yBase);
-//				System.out.println(xBase + " "  + xTestBase + " -> " + bs.getBitPosition() + " " + bstest.getBitPosition());
-				if (bstest.getBitPosition() >= bs.getBitPosition() ){
-					if (xBestBase - xTestBase > 1)
+//				System.out.println(xBase + " "  + xTestBase + " -> " + bsBest.getBitPosition() + " " + bstest.getBitPosition());
+				if (bstest.getBitPosition() >= bsBest.getBitPosition() ){
+					if (++notBetter >= 2)
 						break; // give up
 				} else {
 					xBestBase = xTestBase;
-					bs = bstest;
+					bsBest = bstest;
 					xSameSignBak = false;
 				}
 			}
 			xSameSign = xSameSignBak;
 		}
 		if (yBase > 0){
+			int notBetter = 0;
 			boolean ySameSignBak = ySameSign;
 			ySameSign = false;
 			for (int yTestBase = yBase-1; yTestBase >= 0; yTestBase--){
 				BitWriter bstest = makeBitStream(minPointsRequired, xBestBase, yTestBase);
-//				System.out.println(yBase + " "  + yTestBase + " -> " + bs.getBitPosition() + " " + bstest.getBitPosition());
-				if (bstest.getBitPosition() >= bs.getBitPosition()){
-					if (yBestBase - yTestBase > 1)
-					break; // give up
+//				System.out.println(yBase + " "  + yTestBase + " -> " + bsBest.getBitPosition() + " " + bstest.getBitPosition());
+				if (bstest.getBitPosition() >= bsBest.getBitPosition()){
+					if (++notBetter >= 2)
+						break; // give up
 				} else {
 					yBestBase = yTestBase;
-					bs = bstest;
+					bsBest = bstest;
 					ySameSignBak = false;
 				}
 			}
 			ySameSign = ySameSignBak;
 		}
-		if (log.isInfoEnabled()){
-			if (xBase != xBestBase || yBestBase != yBase){
-				if (origBytes > bs.getLength())
-					log.info("optimizer reduced bit stream byte length from",origBytes,"->",bs.getLength(),"(" + (origBytes-bs.getLength()), " byte(s)) for",polyline.getClass().getSimpleName(),"with",polyline.getPoints().size(),"points");
-				else
-					log.info("optimizer reduced bit stream bit length from",origBits,"->",bs.getBitPosition(),"bits for",polyline.getClass().getSimpleName(),"with",polyline.getPoints().size(),"points");
+		if (xBase != xBestBase || yBestBase != yBase){
+			if (log.isInfoEnabled()){
+				if (bsSimple.getLength() > bsBest.getLength())
+					log.info("optimizer reduced bit stream byte length from",bsSimple.getLength(),"->",bsBest.getLength(),"(" + (bsSimple.getLength()-bsBest.getLength()), " byte(s)) for",polyline.getClass().getSimpleName(),"with",polyline.getPoints().size(),"points");
+				else 
+					log.info("optimizer only reduced bit stream bit length from",bsSimple.getBitPosition(),"->",bsBest.getBitPosition(),"bits for",polyline.getClass().getSimpleName(),"with",polyline.getPoints().size(),"points, using original bit stream");
 			}
 		}
-		return bs;
+		if (bsSimple.getLength() == bsBest.getLength()){
+			// if the (byte) length was not improved, 
+			// prefer the bit stream that doesn't need the special "trick"
+			// to encode large values, it is assumed that this can safe a  
+			// few CPU cycles when reading the map
+			return bsSimple;
+		}
+		return bsBest;
 	}
 	/**
 	 * Write the bit stream to a BitWriter and return it.
@@ -240,7 +247,6 @@ public class LinePreparer {
 		Subdivision subdiv = polyline.getSubdiv();
 		if(log.isDebugEnabled())
 			log.debug("label offset", polyline.getLabel().getOffset());
-		int shift = subdiv.getShift();
 		List<Coord> points = polyline.getPoints();
 
 		// Space to hold the deltas
@@ -276,14 +282,8 @@ public class LinePreparer {
 				continue;
 			}
 
-			// compute normalized differences
-			//   -2^(shift-1) <= dx, dy < 2^(shift-1)
-			// XXX: relies on the fact that java integers are 32 bit signed
-			final int offset = 8+shift;
-			int dx = (lon - lastLong) << offset >> offset;
-			int dy = (lat - lastLat) << offset >> offset;
-			assert (dx == 0 && lon != lastLong) == false: ("delta lon too large: " +  (lon - lastLong));
-			assert (dy == 0 && lat != lastLat) == false: ("delta lat too large: " +  (lat - lastLat));
+			int dx = lon - lastLong;
+			int dy = lat - lastLat;
 			lastLong = lon;
 			lastLat = lat;
 			boolean isSpecialNode = false;
