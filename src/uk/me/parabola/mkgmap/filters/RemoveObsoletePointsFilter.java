@@ -105,13 +105,25 @@ public class RemoveObsoletePointsFilter implements MapFilter {
 			points = newPoints;
 			newPoints = new ArrayList<Coord>(points.size());
 		}
-		if (line instanceof MapShape && newPoints.size() > 3){
-			// check special case: shape starts with spike
-			if (Utils.isStraight(newPoints.get(0), newPoints.get(1), newPoints.get(newPoints.size()-2)) == Utils.STRICTLY_STRAIGHT){
-				newPoints.remove(0);
-				newPoints.set(newPoints.size()-1, newPoints.get(0));
-				if (newPoints.get(newPoints.size()-2).equals(newPoints.get(newPoints.size()-1)))
+		if (line instanceof MapShape){
+			// Check special cases caused by the fact that the first and last point 
+			// in a shape are identical. 
+			while (newPoints.size() > 3){
+				int nPoints = newPoints.size();
+				switch(Utils.isStraight(newPoints.get(newPoints.size()-2), newPoints.get(0), newPoints.get(1))){
+				case Utils.STRAIGHT_SPIKE:
+					newPoints.remove(0);
+					newPoints.set(newPoints.size()-1, newPoints.get(0));
+					if (newPoints.get(newPoints.size()-2).equals(newPoints.get(newPoints.size()-1)))
+						newPoints.remove(newPoints.size()-1);
+					break;
+				case Utils.STRICTLY_STRAIGHT:
 					newPoints.remove(newPoints.size()-1);
+					newPoints.set(0, newPoints.get(newPoints.size()-1));
+					break;
+				}
+				if (nPoints == newPoints.size())
+					break;
 			}
 		}
 		
