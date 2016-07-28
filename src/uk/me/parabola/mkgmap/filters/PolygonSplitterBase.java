@@ -28,7 +28,7 @@ import uk.me.parabola.util.Java2DConverter;
  * @author Steve Ratcliffe
  */
 public class PolygonSplitterBase extends BaseFilter {
-	protected static final int MAX_SIZE = 0x7fff;
+	protected static final int MAX_SIZE = 0xffff; // larger value causes problem in delta encoding of lines
 	private int shift;
 	
 	public void init(FilterConfig config) {
