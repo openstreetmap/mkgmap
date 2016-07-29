@@ -2071,11 +2071,11 @@ public class MultiPolygonRelation extends Relation {
 	 */
 	private boolean linesCutEachOther(Coord p1_1, Coord p1_2, Coord p2_1,
 			Coord p2_2) {
-		int width1 = p1_2.getLongitude() - p1_1.getLongitude();
-		int width2 = p2_2.getLongitude() - p2_1.getLongitude();
+		int width1 = p1_2.getHighPrecLon() - p1_1.getHighPrecLon();
+		int width2 = p2_2.getHighPrecLon() - p2_1.getHighPrecLon();
 
-		int height1 = p1_2.getLatitude() - p1_1.getLatitude();
-		int height2 = p2_2.getLatitude() - p2_1.getLatitude();
+		int height1 = p1_2.getHighPrecLat() - p1_1.getHighPrecLat();
+		int height2 = p2_2.getHighPrecLat() - p2_1.getHighPrecLat();
 
 		int denominator = ((height2 * width1) - (width2 * height1));
 		if (denominator == 0) {
@@ -2084,8 +2084,8 @@ public class MultiPolygonRelation extends Relation {
 			return false;
 		}
 		
-		int x1Mx3 = p1_1.getLongitude() - p2_1.getLongitude();
-		int y1My3 = p1_1.getLatitude() - p2_1.getLatitude();
+		int x1Mx3 = p1_1.getHighPrecLon() - p2_1.getHighPrecLon();
+		int y1My3 = p1_1.getHighPrecLat() - p2_1.getHighPrecLat();
 
 		double isx = (double)((width2 * y1My3) - (height2 * x1Mx3))
 				/ denominator;
