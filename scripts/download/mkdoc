@@ -23,6 +23,7 @@ cp resources/help/en/options ../dist/doc/options.txt
 
 DOC=~/www/web/mkgmap/content/doc
 WEB_DOC_PDF=~/www/mkgmap.org.uk/docroot/doc/pdf
+mkdir -p $WEB_DOC_PDF
 cp *.txt $DOC
 cp styles/style-manual.pdf $WEB_DOC_PDF
 )
