@@ -19,7 +19,6 @@ import java.util.List;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
-import uk.me.parabola.mkgmap.general.MapShape;
 
 /**
  * This is a filter that smooths out lines at low resolutions. If the element
@@ -33,7 +32,6 @@ public class DouglasPeuckerFilter implements MapFilter {
 	private final double filterDistance;
 	private double maxErrorDistance;
 	private int resolution;
-	private int level;
 
 	public DouglasPeuckerFilter(double filterDistance) {
 		this.filterDistance = filterDistance;
@@ -41,7 +39,6 @@ public class DouglasPeuckerFilter implements MapFilter {
 
 	public void init(FilterConfig config) {
 		this.resolution = config.getResolution();
-		this.level = config.getLevel();
 		this.maxErrorDistance = filterDistance * (1<< config.getShift());
 	}
 
@@ -69,18 +66,16 @@ public class DouglasPeuckerFilter implements MapFilter {
 		coords.addAll(points);
 		// Loop runs downwards, as the list length gets modified while running
 		int endIndex = coords.size()-1;
-		if (level == 0 || line instanceof MapShape){
-			for(int i = endIndex-1; i > 0; i--) {
-				Coord p = coords.get(i);
-				//int highwayCount = p.getHighwayCount();
+		for(int i = endIndex-1; i > 0; i--) {
+			Coord p = coords.get(i);
+			//int highwayCount = p.getHighwayCount();
 
-				// If a node in the line use the douglas peucker algorithm for upper segment
-				// TODO: Should consider only nodes connected to roads visible at current resolution.
-				if (p.preserved()) {
-					// point is "preserved", don't remove it
-					douglasPeucker(coords, i, endIndex, maxErrorDistance);
-					endIndex = i;
-				}
+			// If a node in the line use the douglas peucker algorithm for upper segment
+			// TODO: Should consider only nodes connected to roads visible at current resolution.
+			if (p.preserved()) {
+				// point is "preserved", don't remove it
+				douglasPeucker(coords, i, endIndex, maxErrorDistance);
+				endIndex = i;
 			}
 		}
 		// Simplify the rest

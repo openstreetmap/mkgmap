@@ -66,6 +66,12 @@ public class MapLine extends MapElement {
 		assert !points.isEmpty() : "trying to set points with zero length";
 
 		this.points = points;
+		// preserve first and last point, so that points which are shared by
+		// different ways are kept
+		if (points.size() > 0 && this instanceof MapShape == false){
+			points.get(0).preserved(true);
+			points.get(points.size()-1).preserved(true);
+		}
 		testForConsecutivePoints(points);
 	}
 	
@@ -84,13 +90,11 @@ public class MapLine extends MapElement {
 	public void insertPointsAtStart(List<Coord> additionalPoints) {
 		assert points.get(0).equals(additionalPoints.get(additionalPoints.size()-1));
 		testForConsecutivePoints(additionalPoints);
-		points.get(0).preserved(true);
 		points.addAll(0, additionalPoints.subList(0, additionalPoints.size()-1));
 	}
 
 	public void insertPointsAtEnd(List<Coord> additionalPoints) {
 		testForConsecutivePoints(additionalPoints);
-		additionalPoints.get(0).preserved(true);
 		points.remove(points.size()-1); 
 		points.addAll(additionalPoints);
 	}

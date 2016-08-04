@@ -57,7 +57,7 @@ public class SimpleRouteTest extends Base {
 			case "RGN":
 				count++;
 				System.out.println("RGN size " + size);
-				assertThat("RGN size", size, new RangeMatcher(124785));
+				assertThat("RGN size", size, new RangeMatcher(127586));
 				break;
 			case "TRE":
 				count++;
@@ -71,7 +71,7 @@ public class SimpleRouteTest extends Base {
 				break;
 			case "NET":
 				count++;
-				assertEquals("NET size", 66851, size);
+				assertEquals("NET size", 66859, size);
 				break;
 			case "NOD":
 				count++;
@@ -94,7 +94,7 @@ public class SimpleRouteTest extends Base {
 			case "RGN":
 				count++;
 				System.out.println("RGN size " + size);
-				assertThat("RGN size", size, new RangeMatcher(2670));
+				assertThat("RGN size", size, new RangeMatcher(2727));
 				break;
 			case "TRE":
 				count++;

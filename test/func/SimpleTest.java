@@ -103,7 +103,7 @@ public class SimpleTest extends Base {
 			case "RGN":
 				count++;
 				System.out.println("RGN size " + size);
-				assertThat("RGN size", size, new RangeMatcher(2647));
+				assertThat("RGN size", size, new RangeMatcher(2704));
 				break;
 			case "TRE":
 				count++;

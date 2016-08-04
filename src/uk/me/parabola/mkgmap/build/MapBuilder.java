@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -69,7 +70,6 @@ import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
 import uk.me.parabola.mkgmap.filters.MapFilter;
 import uk.me.parabola.mkgmap.filters.MapFilterChain;
 import uk.me.parabola.mkgmap.filters.PolygonSplitterFilter;
-import uk.me.parabola.mkgmap.filters.PreserveHorizontalAndVerticalLinesFilter;
 import uk.me.parabola.mkgmap.filters.RemoveEmpty;
 import uk.me.parabola.mkgmap.filters.RemoveObsoletePointsFilter;
 import uk.me.parabola.mkgmap.filters.RoundCoordsFilter;
@@ -1120,9 +1120,10 @@ public class MapBuilder implements Configurable {
 			shapes = mergedShapes;
 		}
 		
+		preserveHorizontalAndVerticalLines(res, shapes);
+		
 		LayerFilterChain filters = new LayerFilterChain(config);
 		if (enableLineCleanFilters && (res < 24)) {
-			filters.addFilter(new PreserveHorizontalAndVerticalLinesFilter());
 			filters.addFilter(new RoundCoordsFilter());
 			int sizefilterVal =  getMinSizePolygonForResolution(res);
 			if (sizefilterVal > 0)
@@ -1143,6 +1144,59 @@ public class MapBuilder implements Configurable {
 				continue;
 
 			filters.startFilter(shape);
+		}
+	}
+
+	/**
+	 * Preserve shape points which a) lie on the shape boundary or
+	 * b) which appear multiple times in the shape (excluding the start
+	 * point which should always be identical to the end point).
+	 * The preserved points are kept treated specially in the 
+	 * Line-Simplification-Filters, this should avoid artifacts like
+	 * white triangles in the sea for lower resolutions.     
+	 * @param res the current resolution
+	 * @param shapes list of shapes
+	 */
+	private void preserveHorizontalAndVerticalLines(int res, List<MapShape> shapes) {
+		if (res == 24)
+			return;
+		for (MapShape shape : shapes) {
+			if (shape.getMinResolution() > res || shape.getMaxResolution() < res)
+				continue;
+			int minLat = shape.getBounds().getMinLat();
+			int maxLat = shape.getBounds().getMaxLat();
+			int minLon = shape.getBounds().getMinLong();
+			int maxLon = shape.getBounds().getMaxLong();
+			
+			List<Coord> points = shape.getPoints();
+			int n = shape.getPoints().size();
+			IdentityHashMap<Coord, Coord> coords = new IdentityHashMap<>(n);
+			Coord first = points.get(0);
+			Coord prev = first;
+			Coord last = first;
+			for(int i = 1; i < points.size(); ++i) {
+				last = points.get(i);
+				// preserve coord instances which are used more than once,
+				// these are typically produced by the ShapeMergerFilter 
+				// to connect holes
+				if (coords.get(last) == null){
+					coords.put(last, last);
+				}
+				else {
+					if (!last.preserved()){
+						last.preserved(true);
+					}
+				}
+
+				// preserve the end points of horizontal and vertical lines that lie
+				// on the bbox of the shape. 
+				if(last.getLatitude() == prev.getLatitude() && (last.getLatitude() == minLat || last.getLatitude() == maxLat) ||
+				   last.getLongitude() == prev.getLongitude()&& (last.getLongitude() == minLon || last.getLongitude() == maxLon)){
+					last.preserved(true);
+					prev.preserved(true);
+				}
+				prev = last;
+			}
 		}
 	}
 
