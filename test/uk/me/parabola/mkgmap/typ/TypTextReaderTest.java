@@ -269,9 +269,8 @@ public class TypTextReaderTest {
 	 */
 	@Test
 	public void testFromFile() throws IOException {
-		TestUtils.registerFile("test.typ");
 		Reader r = new BufferedReader(new FileReader("test/resources/typ/test.txt"));
-		TypTextReader tr = new TypTextReader();
+		tr = new TypTextReader();
 		tr.read("test.typ", r);
 
 		TestUtils.registerFile("ts__test.typ");
@@ -279,11 +278,12 @@ public class TypTextReaderTest {
 		FileChannel channel = raf.getChannel();
 		channel.truncate(0);
 		FileImgChannel w = new FileImgChannel(channel);
-		TYPFile typ = new TYPFile(w);
-
-		typ.setData(tr.getData());
-		typ.write();
-		typ.close();
+		try (TYPFile typ = new TYPFile(w)) {
+			typ.setData(tr.getData());
+			typ.write();
+		}
+		
+		
 	}
 
 	/**

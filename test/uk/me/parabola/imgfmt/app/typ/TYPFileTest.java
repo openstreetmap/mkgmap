@@ -23,16 +23,20 @@ import uk.me.parabola.imgfmt.sys.ImgFS;
 
 import org.junit.Test;
 
+import func.lib.TestUtils;
+
 import static org.junit.Assert.*;
 
 public class TYPFileTest {
 	
 	@Test
 	public void testWrite() throws Exception {
+		TestUtils.registerFile("test.typ");
 		FileSystemParam params = new FileSystemParam();
-		FileSystem fs = ImgFS.createFs("test.typ", params);
-		ImgChannel channel = fs.create("XXX.TYP");
-		TYPFile typFile = new TYPFile(channel);
-		assertNotNull("typ file is created", typFile);
+		try (FileSystem fs = ImgFS.createFs("test.typ", params)) {
+			ImgChannel channel = fs.create("XXX.TYP");
+			TYPFile typFile = new TYPFile(channel);
+			assertNotNull("typ file is created", typFile);
+		}
 	}
 }
