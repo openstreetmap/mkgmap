@@ -347,24 +347,39 @@ public class RouteNode implements Comparable<RouteNode> {
 	}
 
 	public void checkRoundabouts() {
-
 		List<RouteArc> roundaboutArcs = new ArrayList<RouteArc>();
-
+		int countNonRoundaboutRoads = 0;
+		int countNonRoundaboutOtherHighways = 0;
+		RouteArc roundaboutArc = null;
 		for(RouteArc a : arcs) {
 			// ignore ways that have been synthesised by mkgmap
-			if(!a.getRoadDef().isSynthesised() && a.isDirect() && 
-			   a.getRoadDef().isRoundabout()) {
-				roundaboutArcs.add(a);
+			RoadDef r = a.getRoadDef();
+			if (!r.isSynthesised() && a.isDirect()){
+				if(r.isRoundabout())
+				{
+					roundaboutArcs.add(a);
+					if (roundaboutArc == null)
+						roundaboutArc = a;
+				}
+				else {
+					// ignore footpaths and ways with no access
+					byte access = r.getAccess();
+					if ((access & AccessTagsAndBits.CAR) != 0)
+						countNonRoundaboutRoads++;
+					else if ((access & (AccessTagsAndBits.BIKE | AccessTagsAndBits.BUS | AccessTagsAndBits.TAXI | AccessTagsAndBits.TRUCK)) != 0)
+						countNonRoundaboutOtherHighways++;
+				}
 			}
 		}
 			
-		if(arcs.size() > 1 && roundaboutArcs.size() == 1) {
-			if(roundaboutArcs.get(0).isForward())
-				log.warn("Roundabout " + roundaboutArcs.get(0).getRoadDef() + " starts at " + coord.toOSMURL());
-			else
-				log.warn("Roundabout " + roundaboutArcs.get(0).getRoadDef() + " ends at " + coord.toOSMURL());
+		if(arcs.size() > 1 && roundaboutArcs.size() == 1)
+			log.warn("Roundabout",roundaboutArc.getRoadDef(),roundaboutArc.isForward() ? "starts at" : "ends at", coord.toOSMURL());
+		if (roundaboutArcs.size() > 0) {
+			if (countNonRoundaboutRoads > 1)
+				log.warn("Roundabout",roundaboutArc.getRoadDef(),"is connected to more than one road at",coord.toOSMURL());
+			else if ((countNonRoundaboutRoads == 1) && (countNonRoundaboutOtherHighways > 0))
+				log.warn("Roundabout",roundaboutArc.getRoadDef(),"is connected to a road and",countNonRoundaboutOtherHighways,"other highways at",coord.toOSMURL());
 		}
-
 		if(roundaboutArcs.size() > 2) {
 			for(RouteArc fa : arcs) {
 				if(fa.isForward() && fa.isDirect()) {
