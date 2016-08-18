@@ -1154,6 +1154,22 @@ public class RuleFileReaderTest {
 		assertEquals(type.getType(), 2);
 	}
 
+	@Test
+	public void testBugOr() {
+		String s = "maxspeed=*\n" +
+				"  & ( maxspeedkmh()>120 | maxspeed = none )\n" +
+				"  & ( highway = motorway | highway = trunk )\n" +
+				"[0x4]\n";
+		RuleSet rs = makeRuleSet(s);
+
+		Way w = new Way(1);
+		w.addTag("highway", "trunk");
+		w.addTag("maxspeed", "122");
+
+		GType type = getFirstType(rs, w);
+		assertNotNull(type);
+	}
+
 	/**
 	 * Get a way with a few points for testing length.
 	 *

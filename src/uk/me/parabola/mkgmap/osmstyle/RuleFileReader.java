@@ -447,7 +447,7 @@ public class RuleFileReader {
 			return 10;
 
 		case AND:
-			return Math.min(selectivity(op.getFirst()), selectivity(op.getSecond()));
+			return Math.max(selectivity(op.getFirst()), selectivity(op.getSecond()));
 
 		case OR:
 			return Math.max(selectivity(op.getFirst()), selectivity(op.getSecond()));
