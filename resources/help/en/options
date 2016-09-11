@@ -685,6 +685,11 @@ Miscellaneous options:
 	lower map too.  Useful for contour line maps among other
 	things.
 
+--hide-gmapsupp-on-pc
+  Set a bit in the gmapsupp.img that tells PC software that the file is
+	already installed on the PC and therefore there is no need to read it 
+	from the device.
+
 --poi-address
 	Enable address / phone information to POIs. Address info is
 	read according to the "Karlsruhe" tagging schema. Automatic

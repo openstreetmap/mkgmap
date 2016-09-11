@@ -84,6 +84,7 @@ public class GmapsuppBuilder implements Combiner {
 	private final Map<Integer, MdrBuilder> mdrBuilderMap = new LinkedHashMap<Integer, MdrBuilder>();
 	private final Map<Integer, Sort> sortMap = new LinkedHashMap<Integer, Sort>();
 	private boolean splitName;
+	private boolean hideGmapsuppOnPC;
 
 
 	public void init(CommandArgs args) {
@@ -92,6 +93,7 @@ public class GmapsuppBuilder implements Combiner {
 		overallDescription = args.getDescription();
 		outputDir = args.getOutputDir();
 		splitName = args.get("split-name-index", false);
+		hideGmapsuppOnPC = args.get("hide-gmapsupp-on-pc", false);
 	}
 
 	/**
@@ -421,11 +423,13 @@ public class GmapsuppBuilder implements Combiner {
 		params.setMapDescription(overallDescription);
 		params.setDirectoryStartEntry(DIRECTORY_OFFSET_ENTRY);
 		params.setGmapsupp(true);
+		params.setHideGmapsuppOnPC(hideGmapsuppOnPC);
 
 		int reserveBlocks = (int) Math.ceil(bi.reserveEntries * 512.0 / blockSize);
 		params.setReservedDirectoryBlocks(reserveBlocks);
 
 		FileSystem outfs = ImgFS.createFs(Utils.joinPath(outputDir, GMAPSUPP), params);
+		
 		mpsFile = createMpsFile(outfs);
 		mpsFile.setMapsetName(mapsetName);
 

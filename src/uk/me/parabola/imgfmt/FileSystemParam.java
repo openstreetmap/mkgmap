@@ -25,6 +25,7 @@ public class FileSystemParam {
 	private int directoryStartEntry = 2; // Always in terms of entries of 512 bytes
 	private int reservedDirectoryBlocks = 202;
 	private boolean gmapsupp;
+	private boolean hideGmapsuppOnPC;
 
 	public String getFilename() {
 		return filename;
@@ -74,5 +75,13 @@ public class FileSystemParam {
 
 	public void setGmapsupp(boolean gmapsupp) {
 		this.gmapsupp = gmapsupp;
+	}
+
+	public boolean isHideGmapsuppOnPC() {
+		return hideGmapsuppOnPC;
+	}
+
+	public void setHideGmapsuppOnPC(boolean hideGmapsuppOnPC) {
+		this.hideGmapsuppOnPC = hideGmapsuppOnPC;
 	}
 }

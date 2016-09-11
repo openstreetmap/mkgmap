@@ -161,6 +161,7 @@ class ImgHeader {
 		setCreationTime(date);
 		setUpdateTime(date);
 		setDescription(params.getMapDescription());
+		header.put(OFF_SUPP, (byte) (fsParams.isGmapsupp() && fsParams.isHideGmapsuppOnPC() ? 1: 0));
 
 		// Checksum is not checked.
 		header.put(OFF_CHECKSUM, (byte) 0);
@@ -337,7 +338,7 @@ class ImgHeader {
 	 * @param s The string
 	 * @return A byte array.
 	 */
-	private byte[] toByte(String s) {
+	private static byte[] toByte(String s) {
 		// NB: what character set should be used?
 		return s.getBytes();
 	}
@@ -350,7 +351,7 @@ class ImgHeader {
 	 * @param y The year in real-world format eg 2006.
 	 * @return A one byte code representing the year.
 	 */
-	private byte toYearCode(int y) {
+	private static byte toYearCode(int y) {
 		return (byte) (y - 1900);
 	}
 
@@ -367,6 +368,10 @@ class ImgHeader {
 		this.numBlocks = numBlocks;
 	}
 
+	public void hideGmapsuppOnPC (boolean b) {
+		header.put(OFF_SUPP, (byte) (fsParams.isGmapsupp() && b ? 1: 0));
+	}
+	
 	/**
 	 * Represent a block number in the chs format.
 	 *
