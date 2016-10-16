@@ -505,7 +505,7 @@ surrounded by curly braces like so `${name}`.
 
 The most obvious use for variables is in setting the name of the element.
 You are able to use any combination of tags to make the name from.
-Here we name a fuel station by its brand and the name in brackets following.
+Here we name a fuel station by its brand and the operator in brackets following.
 [source]
   amenity=fuel { name '${brand} (${operator})' } [ 0x2f01 ]
 
