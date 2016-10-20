@@ -57,7 +57,7 @@ If a polygon type is not listed in this section, then it will not be displayed a
 == Element sections ==
 The main part of the file consists of descriptions of how elements are to be displayed so that you can change the colours and style of the displayed elements.
 
-Each style definition starts with the name of the section in brackets and ends with the line "[end]". For example:
+Each style definition starts with the name of the section in square brackets and ends with the line "[end]". For example:
  [_polygon]
  Type=0x02
  String1=0x04,Residential
