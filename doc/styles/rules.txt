@@ -20,7 +20,7 @@ A rule is made up of two or three parts.
 The three possible parts are: 
 
 * The first part is *required*: this is a set of <<Tag_tests,tests>> that are performed on the tags of the item to be converted. 
-* The second part is the <<Action_block,action block>> that can be used to do things with the tags of objects that match the tests and is contained in curly brackets `{...}`.
+* The second part is the <<Action_block,action block>> that can be used to do things with the tags of objects that match the tests and is contained in curly braces `{...}`.
 * The third part is the <<Element_type,element type definition>> and sets
 the Garmin type and sometimes other parameters that will be used if the tests match. This part is contained
 in square brackets `[...]`.
@@ -144,7 +144,7 @@ For example `name ~ '.*[Ll]ane'` would match every name that ended in
 
 | ! (expr) |
 The 'not' operator ('!') reverses the truth of the expression following.
-That expression must be in brackets.
+That expression must be in parentheses.
 
 |====
 
@@ -453,7 +453,7 @@ The substitution `${route_ref}` takes the value of the tag on the *relation* and
 it to each of the ways in the relation.
 
 The substitution `$(route_ref)` (with parenthesis, rather than curly
-brackets) can be used for accessing the value of the tag on
+braces) can be used for accessing the value of the tag on
 the actually processed *member* of the relation, e.g.
 
 [source]
@@ -505,14 +505,14 @@ surrounded by curly braces like so `${name}`.
 
 The most obvious use for variables is in setting the name of the element.
 You are able to use any combination of tags to make the name from.
-Here we name a fuel station by its brand and the operator in brackets following.
+Here we name a fuel station by its brand and the operator in parentheses following.
 [source]
   amenity=fuel { name '${brand} (${operator})' } [ 0x2f01 ]
 
 If the operator tag was not set, then the name would not be set because *all*
 substitutions in a string must exist for the result to be valid.
 This is why the "name" command takes a list of possibilities, if operator
-was simply replaced with a blank, then you would have an empty pair of brackets.
+was simply replaced with a blank, then you would have an empty pair of parentheses.
 So you would fix the previous rule by adding another name option.
 
 [source]

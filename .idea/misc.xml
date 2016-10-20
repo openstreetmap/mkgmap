@@ -43,9 +43,6 @@
       </ArtifactTypeSettings>
     </option>
     <option name="ivySettingsFile" value="$PROJECT_DIR$/ivysettings.xml" />
-    <option name="propertiesSettings">
-      <PropertiesSettings />
-    </option>
   </component>
   <component name="IvyProjectSettings">
     <dependencies />
@@ -123,4 +120,3 @@
   </component>
   <component name="WebServicesPlugin" addRequiredLibraries="true" />
 </project>
-

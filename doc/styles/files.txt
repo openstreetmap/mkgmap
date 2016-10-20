@@ -63,7 +63,7 @@ You can see it uses both equal and colon as separators, normally you
 would just pick one and use it consistently, but it doesn't make any
 difference which one you use.
 The description is written over several lines surrounded in curly
-brackets.
+braces.
 Lines beginning with a hash symbol '#' are comments and are ignored.
 ----
 #

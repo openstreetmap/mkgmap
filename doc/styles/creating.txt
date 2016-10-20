@@ -77,7 +77,7 @@ style with the options
 
 === Simple file archive
 This is formed by appending all of the files of a style into a single
-file separated by lines that contain the file name in triple angled
+file separated by lines that contain the file name in triple angle
 brackets.
 
 .Single file archive
