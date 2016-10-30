@@ -35,12 +35,14 @@ public class UnitConversions {
 
 	private static final Map<String, Double> LENGTH_FACTORS = new HashMap<>();
 	private static final Map<String, Double> SPEED_FACTORS = new HashMap<>();
+	private static final Map<String, Double> WEIGHT_FACTORS = new HashMap<>();
 
 	static {
 		Map<String, Double> m = LENGTH_FACTORS;
 		m.put("m", 1.0);
 		m.put("km", 1000.0);
 		m.put("ft", 0.3048);
+		m.put("feet", 0.3048);
 		m.put("mi", 1_609.344);
 		CONVERSIONS.put(UnitType.LENGTH, LENGTH_FACTORS);
 
@@ -51,6 +53,13 @@ public class UnitConversions {
 		m.put("mph", 1.60934);
 		m.put("knots", 1.852);
 		CONVERSIONS.put(UnitType.SPEED, SPEED_FACTORS);
+
+		m = WEIGHT_FACTORS;
+		m.put("t", 1.0);
+		m.put("kg", 0.001);
+		m.put("lb", 0.00045359237);
+		m.put("lbs", 0.00045359237);
+		CONVERSIONS.put(UnitType.WEIGHT, WEIGHT_FACTORS);
 	}
 
 	/** The type of unit, speed, length etc. */
@@ -179,5 +188,6 @@ public class UnitConversions {
 	public static enum UnitType {
 		LENGTH,
 		SPEED,
+		WEIGHT,
 	}
 }

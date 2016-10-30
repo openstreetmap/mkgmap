@@ -26,8 +26,9 @@ then the result is 10, as it is already in feet.
 
 The possible units are:
 
-* Length: m, km, ft (feet), mi (miles).
-* Speed: mph; km/h (or kmh, kmph), knots
+* Length: m, km, ft (feet), feet, mi (miles).
+* Speed: mph, km/h (or kmh, kmph), knots
+* Weight: t, kg, lb (or lbs)
 
 | subst | `from=>to` +
 `from~>to`|
