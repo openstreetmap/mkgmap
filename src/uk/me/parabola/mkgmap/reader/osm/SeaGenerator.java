@@ -103,7 +103,18 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	private static final int MIN_LON = Utils.toMapUnit(-180.0);
 	private static final int MAX_LON = Utils.toMapUnit(180.0);
 	private final static Pattern keySplitter = Pattern.compile(Pattern.quote("_"));
-	
+
+	/**
+	 * When order-by-decreasing-area we need all bit of sea to be output consistently.
+	 * Unless _draworder changes things, having seaSize as BIG causes polygons beyond the
+	 * coastline to be shown. To hide these and have the sea show up to the high-tide
+	 * coastline, can set this to be very small instead (or use _draworder).
+	 * <p>
+	 * Maybe this could be a mkgmap:variable specified in the style something like:
+	 * natural=sea {add mkgmap:skipSizeFilter=true;set mkgmap:drawLevel=6} [0x32 resolution 10]
+	 * and mkgmap:drawLevel is suitably scaled and used as the fullArea.
+	 */
+	private static final long seaSize = Long.MAX_VALUE-2; // sea is BIG
 
 	private static final List<Class<? extends LoadableMapDataSource>> precompSeaLoader;
 
@@ -709,6 +720,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				saver.addWay(w);
 			}
 			for (Way w : seaWays) {
+				w.setFullArea(seaSize);
 				saver.addWay(w);
 			}
 		} else {
@@ -718,6 +730,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			// first add the complete bounding box as sea
 			Way sea = new Way(FakeIdGenerator.makeFakeId(),bounds.toCoords());
 			sea.addTag("natural", "sea");
+			sea.setFullArea(seaSize);
 			
 			for (Way w : landWays) {
 				saver.addWay(w);
@@ -991,6 +1004,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 					ne.getLongitude() + 1));
 			sea.addPoint(sea.getPoints().get(0)); // close shape
 			sea.addTag("natural", "sea");
+			sea.setFullArea(seaSize);
 
 			log.info("sea: ", sea);
 			saver.addWay(sea);

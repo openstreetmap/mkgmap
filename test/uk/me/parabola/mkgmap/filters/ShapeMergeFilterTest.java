@@ -365,7 +365,7 @@ public class ShapeMergeFilterTest {
 	}
 	
 	void testOneVariant(String testId, MapShape s1, MapShape s2, int expectedNumShapes, int expectedNumPoints){
-		ShapeMergeFilter smf = new ShapeMergeFilter(24);
+		ShapeMergeFilter smf = new ShapeMergeFilter(24, false);
 		List<MapShape> res = smf.merge(Arrays.asList(s1,s2));
 		assertTrue(testId, res != null);
 		assertEquals(testId,expectedNumShapes, res.size() );

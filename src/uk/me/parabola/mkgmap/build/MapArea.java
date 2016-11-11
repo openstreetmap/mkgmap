@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import uk.me.parabola.util.Java2DConverter;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.trergn.Overview;
@@ -175,15 +176,49 @@ public class MapArea implements MapDataSource {
 	 * Split this area into several pieces. All the map elements are reallocated
 	 * to the appropriate subarea.  Usually this instance would now be thrown
 	 * away and the new sub areas used instead.
+	 * <p>
+	 * if orderByDecreasingArea, the split is forced onto boundaries that can
+	 * be represented exactly with the relevant shift for the level.
+	 * This can cause the split to fail because all the lines/shapes that need
+	 * to be put at this level are here, but represented at the highest resolution
+	 * without any filtering relevant to the resolution and the logic to request
+	 * splitting considers this too much for a subDivision, even though it will
+	 * mostly will disappear when we come to write it and look meaningless -
+	 * the subDivision has been reduced to a single point at its shift level.
+	 * <p>
+	 * The lines/shapes should have been simplified much earlier in the process,
+	 * then they could appear as such in reasonably size subDivision.
+	 * The logic of levels, lines and shape placement, simplification, splitting and
+	 * other filtering, subDivision splitting etc needs a re-think and re-organisation.
 	 *
 	 * @param nx The number of pieces in the x (longitude) direction.
 	 * @param ny The number of pieces in the y direction.
 	 * @param resolution The resolution of the level.
 	 * @param bounds the bounding box that is used to create the areas.  
-	 * @return An array of the new MapArea's.
+	 * @param orderByDecreasingArea aligns subareas as powerOf2 and splits polygons into the subareas.
+	 * @return An array of the new MapArea's or null if can't split.
 	 */
-	public MapArea[] split(int nx, int ny, int resolution, Area bounds) {
-		Area[] areas = bounds.split(nx, ny);
+	public MapArea[] split(int nx, int ny, int resolution, Area bounds, boolean orderByDecreasingArea) {
+		int resolutionShift = orderByDecreasingArea ? (24 - resolution) : 0;
+		Area[] areas = bounds.split(nx, ny, resolutionShift);
+		if (areas == null) { //  Failed to split!
+			if (log.isDebugEnabled()) { // see what is here
+				for (MapLine e : this.lines)
+					if (e.getMinResolution() <= areaResolution)
+						log.debug("line. locn=", e.getPoints().get(0).toOSMURL(),
+							 " type=", uk.me.parabola.mkgmap.reader.osm.GType.formatType(e.getType()),
+							 " name=", e.getName(), " min=", e.getMinResolution(), " max=", e.getMaxResolution());
+				for (MapShape e : this.shapes)
+					if (e.getMinResolution() <= areaResolution)
+						log.debug("shape. locn=", e.getPoints().get(0).toOSMURL(),
+							 " type=", uk.me.parabola.mkgmap.reader.osm.GType.formatType(e.getType()),
+							 " name=", e.getName(), " min=", e.getMinResolution(), " max=", e.getMaxResolution(),
+							 " full=", e.getFullArea(),
+							 " calc=", uk.me.parabola.mkgmap.filters.ShapeMergeFilter.calcAreaSizeTestVal(e.getPoints()));
+				// the main culprits are lots of bits of sea and coastline in an overview map (res 12)
+			}
+			return null;
+		}
 		MapArea[] mapAreas = new MapArea[nx * ny];
 		log.info("Splitting area " + bounds + " into " + nx + "x" + ny + " pieces at resolution " + resolution);
 		boolean useNormalSplit = true;
@@ -237,6 +272,10 @@ public class MapArea implements MapDataSource {
 			}
 
 			for (MapShape e : this.shapes) {
+				if (orderByDecreasingArea) { // need to treat shapes consistently, regardless of useNormalSplit
+					splitIntoAreas(mapAreas, e, used);
+					continue;
+				}
 				if (useNormalSplit){
 					areaIndex = pickArea(mapAreas, e, xbase30, ybase30, nx, ny, dx30, dy30);
 					if (e.getBounds().getHeight() > maxHeight || e.getBounds().getWidth() > maxWidth){
@@ -260,6 +299,7 @@ public class MapArea implements MapDataSource {
 				 * them equally to the two areas.  
 				 */
 				useNormalSplit = false;
+				log.warn("useNormalSplit false");
 				continue;
 			} 
 			
@@ -608,6 +648,46 @@ public class MapArea implements MapDataSource {
 		}
 		return xcell * ny + ycell;
 	}
+
+	/**
+	 * Spit the polygon into areas
+	 *
+	 * Using .intersect() here is expensive. The code should be changed to
+	 * use a simple rectangle clipping algorithm as in, say, 
+	 * util/ShapeSplitter.java
+	 *
+	 * @param areas The available areas to choose from.
+	 * @param e The map element.
+	 * @param used flag vector to say area has been added to.
+	 */
+	private static void splitIntoAreas(MapArea[] areas, MapShape e, boolean[] used)
+	{
+		// quick check if bbox of shape lies fully inside one of the areas
+		Area shapeBounds = e.getBounds();
+		for (int areaIndex = 0; areaIndex < areas.length; ++areaIndex) {
+			if (areas[areaIndex].getBounds().contains(shapeBounds)) {
+				used[areaIndex] = true;
+				areas[areaIndex].addShape(e);
+				return;
+			}
+		}
+		// Shape crosses area(s), we have to split it
+		// Convert to a awt area
+		java.awt.geom.Area area = Java2DConverter.createArea(e.getPoints());
+
+		for (int areaIndex = 0; areaIndex < areas.length; ++areaIndex) {
+			java.awt.geom.Area clipper = Java2DConverter.createBoundsArea(areas[areaIndex].getBounds());
+			clipper.intersect(area);
+			List<List<Coord>> subShapePoints = Java2DConverter.areaToShapes(clipper);
+			for (List<Coord> subShape : subShapePoints) {
+				used[areaIndex] = true;
+				MapShape s = e.copy();
+				s.setPoints(subShape);
+				areas[areaIndex].addShape(s);
+			}
+		}
+	}
+
 
 	/**
 	 * @return true if this area contains any data

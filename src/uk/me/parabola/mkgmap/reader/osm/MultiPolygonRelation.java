@@ -846,6 +846,8 @@ public class MultiPolygonRelation extends Relation {
 		
 		int wi = 0;
 		for (Way w : polygons) {
+			w.setFullArea(w.getFullArea()); // trigger setting area before start cutting...
+			// do like this to disguise function with side effects
 			String role = getRole(w);
 			if ("inner".equals(role)) {
 				innerPolygons.set(wi);
@@ -1034,12 +1036,14 @@ public class MultiPolygonRelation extends Relation {
 						outmostPolygonProcessing = false;
 					}
 					
+					long fullArea = currentPolygon.polygon.getFullArea();
 					for (Way mpWay : singularOuterPolygons) {
 						// put the cut out polygons to the
 						// final way map
 						if (log.isDebugEnabled())
 							log.debug(mpWay.getId(),mpWay.toTagString());
 					
+						mpWay.setFullArea(fullArea);
 						// mark this polygons so that only polygon style rules are applied
 						mpWay.addTag(STYLE_FILTER_TAG, STYLE_FILTER_POLYGON);
 						mpWay.addTag(MP_CREATED_TAG, "true");

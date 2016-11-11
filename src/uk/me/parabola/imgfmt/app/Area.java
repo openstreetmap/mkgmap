@@ -19,6 +19,7 @@ package uk.me.parabola.imgfmt.app;
 import java.util.ArrayList;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.log.Logger;
 
@@ -104,43 +105,72 @@ public class Area {
 	}
 
 	/**
+	 * Round integer to nearest power of 2.
+	 *
+	 * @param val The number of be rounded.
+	 * @param shift The power of 2.
+	 * @return The rounded number (binary half rounds up).
+	 */
+	private static int roundPof2(int val, int shift) {
+		if (shift <= 0)
+			return val;
+		return (((val >> (shift-1)) + 1) >> 1) << shift;
+	}
+
+	/**
 	 * Split this area up into a number of smaller areas.
 	 *
 	 * @param xsplit The number of pieces to split this area into in the x
 	 * direction.
 	 * @param ysplit The number of pieces to split this area into in the y
 	 * direction.
-	 * @return An area containing xsplit*ysplit areas.
+	 * @param resolutionShift round to this power of 2.
+	 * @return An array containing xsplit*ysplit areas or null if can't split in half.
+	 * @throws MapFailedException if more complex split operation couldn't be honoured.
 	 */
-	public Area[] split(int xsplit, int ysplit) {
+	public Area[] split(int xsplit, int ysplit, int resolutionShift) {
 		Area[] areas =  new Area[xsplit * ysplit];
 
+		int xstart;
+		int xend;
+		int ystart;
+		int yend;
+		int nAreas = 0;
 
-		int xsize = getWidth() / xsplit;
-		int ysize = getHeight() / ysplit;
-
-		int xextra = getWidth() - xsize * xsplit;
-		int yextra = getHeight() - ysize * ysplit;
-		
+		xstart = minLong;
 		for (int x = 0; x < xsplit; x++) {
-			int xstart = minLong + x * xsize;
-			int xend = xstart + xsize;
 			if (x == xsplit - 1)
-				xend += xextra;
-
+				xend = maxLong;
+			else
+				xend = roundPof2(xstart + (maxLong - xstart) / (xsplit - x),
+						 resolutionShift);
+			ystart = minLat;
 			for (int y = 0; y < ysplit; y++) {
-				int ystart = minLat + y * ysize;
-				int yend = ystart + ysize;
 				if (y == ysplit - 1)
-					yend += yextra;
-				Area a = new Area(ystart, xstart, yend, xend);
-				log.debug(x, y, a);
-				areas[x * ysplit + y] = a;
+					yend = maxLat;
+				else
+					yend = roundPof2(ystart + (maxLat - ystart) / (ysplit - y),
+							 resolutionShift);
+				if (xstart < xend && ystart < yend) {
+					Area a = new Area(ystart, xstart, yend, xend);
+//					log.debug(x, y, a);
+					log.debug("Area.split", minLat, minLong, maxLat, maxLong, "res", resolutionShift, "to", ystart, xstart, yend, xend);
+					areas[nAreas++] = a;
+				} else
+					log.warn("Area.split", minLat, minLong, maxLat, maxLong, "res", resolutionShift, "can't", xsplit, ysplit);
+				ystart = yend;
 			}
+			xstart = xend;
 		}
 
-		assert areas.length == xsplit * ysplit;
-		return areas;
+//		assert areas.length == xsplit * ysplit;
+		if (nAreas == areas.length) // no problem
+			return areas;
+// beware - MapSplitter.splitMaxSize requests split of 1/1 if the original area wasn't too big
+		else if (nAreas == 1) // failed to split in half
+			return null;  
+		else
+			throw new MapFailedException("Area split shift align problems");
 	}
 
 	/**

@@ -15,6 +15,9 @@
  */
 package uk.me.parabola.mkgmap.general;
 
+import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.mkgmap.filters.ShapeMergeFilter;
+
 /**
  * A shape or polygon is just the same as a line really as far as I can tell.
  * There are some things that you cannot do with them semantically.
@@ -23,6 +26,7 @@ package uk.me.parabola.mkgmap.general;
  */
 public class MapShape extends MapLine {// So top code can link objects from here
 	private long osmid; //TODO: remove debug aid
+	private long fullArea = Long.MAX_VALUE; // meaning unset
 	public MapShape() {
 		osmid = 0;
 	}
@@ -32,6 +36,7 @@ public class MapShape extends MapLine {// So top code can link objects from here
 	MapShape(MapShape s) {
 		super(s);
 		this.osmid = s.osmid;
+		this.fullArea = s.getFullArea();
 	}
 
 	public MapShape copy() {
@@ -50,4 +55,18 @@ public class MapShape extends MapLine {// So top code can link objects from here
 	public long getOsmid() {
 		return osmid;
 	}
+
+	public void setFullArea(long fullArea) {
+		this.fullArea = fullArea;
+	}
+
+	public long getFullArea() { // this is unadulterated size, +ve if clockwise
+		if (this.fullArea == Long.MAX_VALUE) {
+			java.util.List<Coord> points = this.getPoints();
+			if (points.size() >= 4 && points.get(0).highPrecEquals(points.get(points.size()-1)))
+				this.fullArea = ShapeMergeFilter.calcAreaSizeTestVal(points);
+		}
+		return this.fullArea;
+	}
+
 }

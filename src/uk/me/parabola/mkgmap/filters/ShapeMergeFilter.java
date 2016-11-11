@@ -41,9 +41,11 @@ public class ShapeMergeFilter{
 	private static final Logger log = Logger.getLogger(ShapeMergeFilter.class);
 	private final int resolution;
 	private final ShapeHelper dupShape = new ShapeHelper(new ArrayList<Coord>(0)); 
+	private final boolean orderByDecreasingArea;
 
-	public ShapeMergeFilter(int resolution) {
+	public ShapeMergeFilter(int resolution, boolean orderByDecreasingArea) {
 		this.resolution = resolution;
+		this.orderByDecreasingArea = orderByDecreasingArea;
 	}
 
 	public List<MapShape> merge(List<MapShape> shapes) {
@@ -84,6 +86,9 @@ public class ShapeMergeFilter{
 			for (Map<MapShape, List<ShapeHelper>> lowMap : sameTypeList){
 				boolean added = false;
 				for (MapShape ms: lowMap.keySet()){
+					if (orderByDecreasingArea && ms.getFullArea() != shape.getFullArea())
+						// must not merge areas unless derived from same thing
+						continue;
 					// we do not use isSimilar() here, as it compares minRes and maxRes as well
 					String s1 = ms.getName();
 					String s2 = shape.getName();

@@ -21,12 +21,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+
 import uk.me.parabola.imgfmt.ExitException;
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.Label;
@@ -147,6 +151,8 @@ public class MapBuilder implements Configurable {
 
 	private String licenseFileName;
 
+	private boolean orderByDecreasingArea;
+
 	public MapBuilder() {
 		regionName = null;
 		locationAutofill = Collections.emptySet();
@@ -188,6 +194,7 @@ public class MapBuilder implements Configurable {
 			driveOnLeft = true;
 		if ("right".equals(driveOn))
 			driveOnLeft = false;
+		orderByDecreasingArea = props.getProperty("order-by-decreasing-area", false);
 	}
 
 	/**
@@ -685,7 +692,7 @@ public class MapBuilder implements Configurable {
 			for (SourceSubdiv srcDivPair : srcList) {
 
 				MapSplitter splitter = new MapSplitter(srcDivPair.getSource(), zoom);
-				MapArea[] areas = splitter.split();
+				MapArea[] areas = splitter.split(orderByDecreasingArea);
 				log.info("Map region", srcDivPair.getSource().getBounds(), "split into", areas.length, "areas at resolution", zoom.getResolution());
 
 				for (MapArea area : areas) {
@@ -712,16 +719,16 @@ public class MapBuilder implements Configurable {
 	 * @param shapes the list of shapes
 	 */
 	private void prepShapesForMerge(List<MapShape> shapes) {
-		HashMap<Coord,Coord> coordMap = new HashMap<>();
+		Long2ObjectOpenHashMap<Coord> coordMap = new Long2ObjectOpenHashMap<>();
 		for (MapShape s : shapes){
 			List<Coord> points = s.getPoints();
 			int n = points.size();
 			for (int i = 0; i< n; i++){
 				Coord co = points.get(i);
-				Coord repl = coordMap.get(co);
+				Coord repl = coordMap.get(Utils.coord2Long(co));
 				if (repl == null)
-					coordMap.put(co, co);
-				else 
+					coordMap.put(Utils.coord2Long(co), co);
+				else
 					points.set(i, repl);
 			}
 		}
@@ -1115,11 +1122,23 @@ public class MapBuilder implements Configurable {
 		config.setRoutable(doRoads);
 		
 		if (mergeShapes){
-			ShapeMergeFilter shapeMergeFilter = new ShapeMergeFilter(res);
+			if (orderByDecreasingArea)  // splitIntoAreas destroyed the shared coord, so redo
+				prepShapesForMerge(shapes);
+
+			ShapeMergeFilter shapeMergeFilter = new ShapeMergeFilter(res, orderByDecreasingArea);
 			List<MapShape> mergedShapes = shapeMergeFilter.merge(shapes);
 			shapes = mergedShapes;
 		}
 		
+		if (orderByDecreasingArea && shapes.size() > 1) {
+			// sort so that the shape with the largest area is processed first
+			Collections.sort(shapes, new Comparator<MapShape>() {
+				public int compare(MapShape s1, MapShape s2) {
+					return Long.compare(Math.abs(s2.getFullArea()), Math.abs(s1.getFullArea()));
+				}
+			});
+		}
+
 		preserveHorizontalAndVerticalLines(res, shapes);
 		
 		LayerFilterChain filters = new LayerFilterChain(config);

@@ -705,3 +705,8 @@ Default is enabled, use --no-poi-address to disable.
 <p>
 ;--verbose
 : 	Makes some operations more verbose. Mostly used with --list-styles.
+<p>
+;--order-by-decreasing-area
+:	Puts area/polygons into the mapfile in decreasing size so
+that smaller features are rendered over larger ones
+(assuming _drawOrder is equal).

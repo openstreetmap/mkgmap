@@ -699,3 +699,8 @@ Miscellaneous options:
 
 --verbose
 	Makes some operations more verbose. Mostly used with --list-styles.
+
+--order-by-decreasing-area
+	Puts polygons/areas into the mapfile in decreasing size so that
+	smaller features are rendered over larger ones (assuming _drawOrder
+	is equal)

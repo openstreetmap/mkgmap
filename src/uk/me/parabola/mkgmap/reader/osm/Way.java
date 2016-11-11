@@ -24,6 +24,7 @@ import java.util.List;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.filters.ShapeMergeFilter;
 
 /**
  * Represent a OSM way in the 0.5 api.  A way consists of an ordered list of
@@ -34,6 +35,7 @@ import uk.me.parabola.log.Logger;
 public class Way extends Element {
 	private static final Logger log = Logger.getLogger(Way.class);
 	private final List<Coord> points;
+	private long fullArea = Long.MAX_VALUE; // meaning unset
 
 	// This will be set if a way is read from an OSM file and the first node is the same node as the last
 	// one in the way. This can be set to true even if there are missing nodes and so the nodes that we
@@ -63,6 +65,7 @@ public class Way extends Element {
 		dup.closedInOSM = this.closedInOSM;
 		dup.complete = this.complete;
 		dup.isViaWay = this.isViaWay;
+		dup.fullArea = this.getFullArea();
 		return dup;
 	}
 
@@ -252,4 +255,16 @@ public class Way extends Element {
 	public void setViaWay(boolean isViaWay) {
 		this.isViaWay = isViaWay;
 	}
+
+	public void setFullArea(long fullArea) {
+		this.fullArea = fullArea;
+	}
+
+	public long getFullArea() { // this is unadulterated size, +ve if clockwise
+		if (this.fullArea == Long.MAX_VALUE && points.size() >= 4 && points.get(0).highPrecEquals(points.get(points.size()-1))) {
+			this.fullArea = ShapeMergeFilter.calcAreaSizeTestVal(points);
+		}
+		return this.fullArea;
+	}
+
 }

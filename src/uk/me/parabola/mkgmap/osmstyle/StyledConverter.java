@@ -989,6 +989,7 @@ public class StyledConverter implements OsmConverter {
 		final MapShape shape = new MapShape(way.getId());
 		elementSetup(shape, gt, way);
 		shape.setPoints(way.getPoints());
+		shape.setFullArea(way.getFullArea());
 
 		clipper.clipShape(shape, collector);
 	}
