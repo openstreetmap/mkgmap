@@ -102,8 +102,10 @@ public class TypeReader {
 		if (performChecks){
 			boolean fromOverlays = false;
 			List<Integer> usedTypes = null;
-			if (gt.getMaxResolution() < levels[0].getBits()){
+			if (gt.getMaxResolution() < levels[0].getBits() || gt.getMaxResolution() > 24){
 				System.out.println("Warning: Object with max resolution of " + gt.getMaxResolution() + " is ignored. Check levels option and style file "+ ts.getFileName() + ", line " + ts.getLinenumber());
+			} else if (gt.getMinResolution() > 24) {
+				System.out.println("Warning: Object with min resolution of " + gt.getMinResolution() + " is ignored. Check levels option and style file "+ ts.getFileName() + ", line " + ts.getLinenumber());
 			}
 			if (overlays != null && kind == FeatureKind.POLYLINE){
 				usedTypes = overlays.get(gt.getType());
