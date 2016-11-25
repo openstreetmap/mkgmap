@@ -110,9 +110,9 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	 * coastline to be shown. To hide these and have the sea show up to the high-tide
 	 * coastline, can set this to be very small instead (or use _draworder).
 	 * <p>
-	 * Maybe this could be a mkgmap:variable specified in the style something like:
-	 * natural=sea {add mkgmap:skipSizeFilter=true;set mkgmap:drawLevel=6} [0x32 resolution 10]
-	 * and mkgmap:drawLevel is suitably scaled and used as the fullArea.
+	 * mkgmap:drawLevel can be used to override this value in the style - the default style has:
+	 * natural=sea { add mkgmap:skipSizeFilter=true; set mkgmap:drawLevel=2 } [0x32 resolution 10]
+	 * which is equivalent to Long.MAX_VALUE-2.
 	 */
 	private static final long seaSize = Long.MAX_VALUE-2; // sea is BIG
 

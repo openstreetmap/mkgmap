@@ -63,7 +63,7 @@ historic=museum | historic=memorial [0x1e resolution 21]
 historic=archaeological_site | historic=ruins [0x1e resolution 21]
 
 # building tag should be last
-(building=* | amenity=*) & area!=no & amenity!=grave_yard [0x13 resolution 24]
+(building=* | amenity=*) & area!=no & amenity!=grave_yard {set mkgmap:drawLevel=98} [0x13 resolution 24]
 tourism=* & area!=no & waterway!=* [0x1f resolution 24]
 # man_made can be used on areas or lines
 man_made=* & area!=no

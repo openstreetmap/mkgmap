@@ -20,6 +20,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.util.Java2DConverter;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -89,6 +92,8 @@ public class MapArea implements MapDataSource {
 
 	/** The resolution that this area is at */
 	private final int areaResolution;
+
+	private Long2ObjectOpenHashMap<Coord> areasHashMap;
 
 	/**
 	 * Create a map area from the given map data source.  This map
@@ -660,10 +665,19 @@ public class MapArea implements MapDataSource {
 	 * @param e The map element.
 	 * @param used flag vector to say area has been added to.
 	 */
-	private static void splitIntoAreas(MapArea[] areas, MapShape e, boolean[] used)
+	private void splitIntoAreas(MapArea[] areas, MapShape e, boolean[] used)
 	{
 		// quick check if bbox of shape lies fully inside one of the areas
 		Area shapeBounds = e.getBounds();
+
+		// this is worked out at standard precision, along with Area.contains() and so can get
+		// tricky problems as it might not really be fully within the area.
+		// so: pretend the shape is a touch bigger. Will get the optimisation most of the time
+		// and in the boundary cases will fall into the precise code.
+		shapeBounds = new Area(shapeBounds.getMinLat()-2,
+				       shapeBounds.getMinLong()-2,
+				       shapeBounds.getMaxLat()+2,
+				       shapeBounds.getMaxLong()+2);
 		for (int areaIndex = 0; areaIndex < areas.length; ++areaIndex) {
 			if (areas[areaIndex].getBounds().contains(shapeBounds)) {
 				used[areaIndex] = true;
@@ -672,18 +686,64 @@ public class MapArea implements MapDataSource {
 			}
 		}
 		// Shape crosses area(s), we have to split it
+
 		// Convert to a awt area
-		java.awt.geom.Area area = Java2DConverter.createArea(e.getPoints());
+		List<Coord> coords = e.getPoints();
+		java.awt.geom.Area area = Java2DConverter.createArea(coords);
+		// remember actual coord, so can re-use
+		int origSize = coords.size();
+		Long2ObjectOpenHashMap<Coord> shapeHashMap = new Long2ObjectOpenHashMap<>(origSize);
+		for (int i = 0; i < origSize; ++i) {
+			Coord co = coords.get(i);
+			shapeHashMap.put(Utils.coord2Long(co), co);
+		}
+		if (areasHashMap == null)
+			areasHashMap = new Long2ObjectOpenHashMap<>();
 
 		for (int areaIndex = 0; areaIndex < areas.length; ++areaIndex) {
 			java.awt.geom.Area clipper = Java2DConverter.createBoundsArea(areas[areaIndex].getBounds());
 			clipper.intersect(area);
 			List<List<Coord>> subShapePoints = Java2DConverter.areaToShapes(clipper);
 			for (List<Coord> subShape : subShapePoints) {
-				used[areaIndex] = true;
+				// Use original or share newly created coords on clipped edge.
+				// NB: .intersect()/areaToShapes can output flattened shapes,
+				// normally triangles, in any orientation; check we haven't got one by calc area.
+				long signedAreaSize = 0;
+				int subSize = subShape.size();
+				int c1_highPrecLat = 0, c1_highPrecLon = 0;
+				int c2_highPrecLat, c2_highPrecLon;
+				for (int i = 0; i < subSize; ++i) {
+					Coord co = subShape.get(i);
+					c2_highPrecLat = co.getHighPrecLat();
+					c2_highPrecLon = co.getHighPrecLon();
+					if (i > 0)
+						signedAreaSize += (long)(c2_highPrecLon + c1_highPrecLon) *
+									(c1_highPrecLat - c2_highPrecLat);
+					c1_highPrecLat = c2_highPrecLat;
+					c1_highPrecLon = c2_highPrecLon;
+					long hashVal = Utils.coord2Long(co);
+					Coord replCoord = shapeHashMap.get(hashVal);
+					if (replCoord != null)
+						subShape.set(i, replCoord);
+					else { // not an original coord
+						replCoord = areasHashMap.get(hashVal);
+						if (replCoord != null)
+							subShape.set(i, replCoord);
+						else
+							areasHashMap.put(hashVal, co);
+					}
+				}
+				if (signedAreaSize == 0) {
+					log.warn("splitIntoAreas flat shape. id", e.getOsmid(),
+						 "type", uk.me.parabola.mkgmap.reader.osm.GType.formatType(e.getType()), subSize,
+						 "points, at", subShape.get(0).toOSMURL());
+					continue;
+				}
 				MapShape s = e.copy();
 				s.setPoints(subShape);
+				s.setClipped(true);
 				areas[areaIndex].addShape(s);
+				used[areaIndex] = true;
 			}
 		}
 	}

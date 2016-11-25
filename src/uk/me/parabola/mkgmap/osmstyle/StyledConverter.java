@@ -989,7 +989,26 @@ public class StyledConverter implements OsmConverter {
 		final MapShape shape = new MapShape(way.getId());
 		elementSetup(shape, gt, way);
 		shape.setPoints(way.getPoints());
-		shape.setFullArea(way.getFullArea());
+
+		long areaVal = 0;
+		String tagStringVal = way.getTag(drawLevelTagKey);
+		if (tagStringVal != null) {
+			try {
+				areaVal = Integer.parseInt(tagStringVal);
+				if (areaVal < 1 || areaVal > 100) {
+					log.error("mkgmap:drawLevel must be in range 1..100, not", areaVal);
+					areaVal = 0;
+				} else if (areaVal <= 50)
+					areaVal = Long.MAX_VALUE - areaVal; // 1 => MAX_VALUE-1, 50 => MAX_VALUE-50
+				else
+					areaVal = 101 - areaVal; // 51 => 50, 100 => 1
+			} catch (NumberFormatException e) {
+				log.error("mkgmap:drawLevel invalid integer:", tagStringVal);
+			}
+		}
+		if (areaVal == 0)
+			areaVal = way.getFullArea();
+		shape.setFullArea(areaVal);
 
 		clipper.clipShape(shape, collector);
 	}
@@ -1071,6 +1090,7 @@ public class StyledConverter implements OsmConverter {
 	};
 	private static final short highResOnlyTagKey = TagDict.getInstance().xlate("mkgmap:highest-resolution-only");
 	private static final short skipSizeFilterTagKey = TagDict.getInstance().xlate("mkgmap:skipSizeFilter");
+	private static final short drawLevelTagKey = TagDict.getInstance().xlate("mkgmap:drawLevel");
 
 	private static final short countryTagKey = TagDict.getInstance().xlate("mkgmap:country");
 	private static final short regionTagKey = TagDict.getInstance().xlate("mkgmap:region");

@@ -1122,9 +1122,6 @@ public class MapBuilder implements Configurable {
 		config.setRoutable(doRoads);
 		
 		if (mergeShapes){
-			if (orderByDecreasingArea)  // splitIntoAreas destroyed the shared coord, so redo
-				prepShapesForMerge(shapes);
-
 			ShapeMergeFilter shapeMergeFilter = new ShapeMergeFilter(res, orderByDecreasingArea);
 			List<MapShape> mergedShapes = shapeMergeFilter.merge(shapes);
 			shapes = mergedShapes;

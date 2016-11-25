@@ -703,4 +703,5 @@ Miscellaneous options:
 --order-by-decreasing-area
 	Puts polygons/areas into the mapfile in decreasing size so that
 	smaller features are rendered over larger ones (assuming _drawOrder
-	is equal)
+	is equal). The tag mkgmap:drawLevel can be used to override the
+	natural area of a polygon, so forcing changes to the rendering order. 
