@@ -49,6 +49,7 @@ import uk.me.parabola.mkgmap.CommandArgsReader;
 import uk.me.parabola.mkgmap.Version;
 import uk.me.parabola.mkgmap.combiners.Combiner;
 import uk.me.parabola.mkgmap.combiners.FileInfo;
+import uk.me.parabola.mkgmap.combiners.GmapiBuilder;
 import uk.me.parabola.mkgmap.combiners.GmapsuppBuilder;
 import uk.me.parabola.mkgmap.combiners.MdrBuilder;
 import uk.me.parabola.mkgmap.combiners.MdxBuilder;
@@ -638,6 +639,10 @@ public class Main implements ArgumentProcessor {
 		if (indexOpt && (tdbOpt || !gmapOpt)) {
 			addCombiner(new MdrBuilder());
 			addCombiner(new MdxBuilder());
+		}
+
+		if (true) {
+			addCombiner(new GmapiBuilder());
 		}
 	}
 
