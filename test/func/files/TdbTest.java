@@ -36,12 +36,9 @@ public class TdbTest extends Base {
 	 */
 	@Test
 	public void testBasic() throws IOException {
-		Main.mainNoSystemExit(new String[]{
-				Args.TEST_STYLE_ARG,
-				"--tdbfile",
+		Main.mainNoSystemExit(Args.TEST_STYLE_ARG, "--tdbfile",
 				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz",
-				Args.TEST_RESOURCE_OSM + "uk-test-2.osm.gz"
-		});
+				Args.TEST_RESOURCE_OSM + "uk-test-2.osm.gz");
 
 		File f = new File(TDBNAME);
 		assertTrue("TDB was created", f.exists());
@@ -58,16 +55,7 @@ public class TdbTest extends Base {
 	public void testOptions() {
 		int thisMapname = 11112222;
 		TestUtils.registerFile(thisMapname + ".img", thisMapname + ".tdb");
-		Main.mainNoSystemExit(new String[]{
-				Args.TEST_STYLE_ARG,
-				"--tdbfile",
-				"--overview-mapname=" + thisMapname,
-				"--family-id=198",
-				"--product-id=2",
-				"--series-name=Test series",
-				"--family-name=Test family",
-				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz"
-		});
+		Main.mainNoSystemExit(Args.TEST_STYLE_ARG, "--tdbfile", "--overview-mapname=" + thisMapname, "--family-id=198", "--product-id=2", "--series-name=Test series", "--family-name=Test family", Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz");
 
 		File f = new File(thisMapname + ".tdb");
 		assertTrue("TDB was created", f.exists());

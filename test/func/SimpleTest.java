@@ -53,11 +53,8 @@ public class SimpleTest extends Base {
 	@Test
 	public void testBasic() throws FileNotFoundException {
 
-		Main.mainNoSystemExit(new String[]{
-				Args.TEST_STYLE_ARG,
-				"--preserve-element-order",
-				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz"
-		});
+		Main.mainNoSystemExit(Args.TEST_STYLE_ARG, "--preserve-element-order",
+				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz");
 
 		MapReader mr = new MapReader(Args.DEF_MAP_ID + ".img");
 		TestUtils.registerFile(mr);
@@ -77,18 +74,13 @@ public class SimpleTest extends Base {
 
 	@Test
 	public void testNoSuchFile() {
-		Main.mainNoSystemExit(new String[]{
-				"no-such-file-xyz.osm",
-		});
+		Main.mainNoSystemExit("no-such-file-xyz.osm");
 		assertFalse("no file generated", new File(Args.DEF_MAP_FILENAME).exists());
 	}
 
 	@Test
 	public void testPolish() throws FileNotFoundException {
-		Main.mainNoSystemExit(new String[]{
-				Args.TEST_STYLE_ARG,
-				Args.TEST_RESOURCE_MP + "test1.mp"
-		});
+		Main.mainNoSystemExit(Args.TEST_STYLE_ARG, Args.TEST_RESOURCE_MP + "test1.mp");
 
 		FileSystem fs = openFs(Args.DEF_MAP_FILENAME);
 		assertNotNull("file exists", fs);

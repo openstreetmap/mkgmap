@@ -36,13 +36,8 @@ public class SimpleRouteTest extends Base {
 	 */
 	@Test
 	public void testSize() throws FileNotFoundException {
-		Main.mainNoSystemExit(new String[]{
-				Args.TEST_STYLE_ARG,
-				"--preserve-element-order",
-				"--route",
-				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz",
-				Args.TEST_RESOURCE_MP + "test1.mp"
-		});
+		Main.mainNoSystemExit(Args.TEST_STYLE_ARG, "--preserve-element-order",
+				"--route", Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz", Args.TEST_RESOURCE_MP + "test1.mp");
 
 		FileSystem fs = openFs(Args.DEF_MAP_ID + ".img");
 		assertNotNull("file exists", fs);
