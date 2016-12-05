@@ -66,6 +66,7 @@ clean:
 	rm -f g?.img
 	rm -f styletester.style
 	rm -f test.*
+	rm -rf *.gmapi
 
 load:
 	sleep 2

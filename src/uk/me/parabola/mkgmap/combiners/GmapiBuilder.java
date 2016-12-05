@@ -19,6 +19,7 @@ import java.nio.channels.ByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -33,7 +34,6 @@ import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.mkgmap.CommandArgs;
-import uk.me.parabola.util.EnhancedProperties;
 
 import static java.nio.file.StandardOpenOption.*;
 
@@ -47,10 +47,12 @@ public class GmapiBuilder implements Combiner {
 	private final static String NS = "http://www.garmin.com/xmlschemas/MapProduct/v1";
 
 	private final Map<String, Combiner> combinerMap;
-	private EnhancedProperties initArgs;
 
 	private Path gmapDir;
 	private final Map<Integer, ProductInfo> productMap = new HashMap<>();
+
+	private String familyName;
+	private int familyId;
 
 	public GmapiBuilder(Map<String, Combiner> combinerMap) {
 		this.combinerMap = combinerMap;
@@ -64,10 +66,9 @@ public class GmapiBuilder implements Combiner {
 	 * @param args The command line arguments.
 	 */
 	public void init(CommandArgs args) {
-		initArgs = args.getProperties();
 		String overviewMapname = args.get("overview-mapname", "osmmap");
 
-		Path base = Paths.get(args.getOutputDir(), overviewMapname + ".gmapi");
+		Path base = Paths.get(args.getOutputDir(), String.format("%s.gmapi", overviewMapname));
 		gmapDir = base.resolve(overviewMapname + ".gmap");
 	}
 
@@ -78,12 +79,21 @@ public class GmapiBuilder implements Combiner {
 	 */
 	public void onMapEnd(FileInfo info) {
 
+		if (familyName == null) {
+			familyName = info.getFamilyName();
+			familyId = info.getFamilyId();
+		}
+
 		String fn = info.getFilename();
 		String mapname = info.getMapname();
 
+		int productId = info.getProductId();
+		if (!productMap.containsKey(productId))
+			productMap.put(productId, new ProductInfo(productId, info.getSeriesName(), info.getOverviewName()));
+
 		// Unzip the image into the product tile directory.
 		try {
-			unzipImg(fn, mapname, info.getProductId());
+			unzipImg(fn, mapname, productId);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -95,9 +105,10 @@ public class GmapiBuilder implements Combiner {
 	 */
 	public void onFinish() {
 		try {
-			String overviewMapname = finishTdbFile();
-
-			unzipImg(getFilenameFor("img"), overviewMapname, 1);
+			for (ProductInfo info : productMap.values()) {
+				finishTdbFile(info);
+				unzipImg(getFilenameFor("img"), info.overviewName, info.id);
+			}
 
 			writeXmlFile(gmapDir);
 
@@ -106,14 +117,12 @@ public class GmapiBuilder implements Combiner {
 		}
 	}
 
-	private String finishTdbFile() throws IOException {
+	private void finishTdbFile(ProductInfo info) throws IOException {
 		Path tdbPath = Paths.get(getFilenameFor("tdb"));
-		String overviewMapname = initArgs.getProperty("overview-mapname", "osmmap");
 
-		Files.copy(tdbPath, gmapDir.resolve("Product1").resolve(overviewMapname + ".tdb"));
-
-
-		return overviewMapname;
+		Files.copy(tdbPath, gmapDir
+				.resolve(String.format("Product%d", info.id))
+				.resolve(String.format("%s.tdb", info.overviewName)), StandardCopyOption.REPLACE_EXISTING);
 	}
 
 	private void unzipImg(String fn, String mapname, int productId) throws IOException {
@@ -127,11 +136,9 @@ public class GmapiBuilder implements Combiner {
 				if (Objects.equals(name, "."))
 					continue;
 
-				System.out.format("Copying %-15s %d\n", name, ent.getSize());
 				Path imgPath = Paths.get(gmapDir.toString(),"Product" + productId, mapname, name);
 				Files.createDirectories(imgPath.getParent());
 				copyToFile(f, imgPath);
-
 			}
 		}
 	}
@@ -149,13 +156,14 @@ public class GmapiBuilder implements Combiner {
 		}
 	}
 
+	private String getFilenameFor(String kind) {
+		return combinerMap.get(kind).getFilename();
+	}
+
 	private String displayName(String fullname) {
 		return fullname.trim().replace("\000", "");
 	}
 
-	private String getFilenameFor(String kind) {
-		return combinerMap.get(kind).getFilename();
-	}
 	/**
 	 * An xml file contains similar information that is contained in the windows registry.
 	 *
@@ -176,18 +184,20 @@ public class GmapiBuilder implements Combiner {
 			writer.writeStartElement(NS,"MapProduct");
 			writer.writeDefaultNamespace(NS);
 
-			xmlElement(writer, "Name", "OSM map");
+			xmlElement(writer, "Name", familyName);
 			xmlElement(writer, "DataVersion", "100");
 			xmlElement(writer, "DataFormat", "Original");
-			xmlElement(writer, "ID", "6324");
+			xmlElement(writer, "ID", String.valueOf(familyId));
 
-			writer.writeStartElement(NS, "SubProduct");
-			xmlElement(writer, "Name", "OSM map");
-			xmlElement(writer, "ID", "1");
-			xmlElement(writer, "BaseMap", "osmmap");
-			xmlElement(writer, "TDB", "osmmap.tdb");
-			xmlElement(writer, "Directory", "Product1");
-			writer.writeEndElement();
+			for (ProductInfo prod : productMap.values()) {
+				writer.writeStartElement(NS, "SubProduct");
+				xmlElement(writer, "Name", prod.seriesName);
+				xmlElement(writer, "ID", String.valueOf(prod.id));
+				xmlElement(writer, "BaseMap", prod.overviewName);
+				xmlElement(writer, "TDB", String.format("%s.tdb", prod.overviewName));
+				xmlElement(writer, "Directory", String.format("Product%s", prod.id));
+				writer.writeEndElement();
+			}
 
 			writer.writeEndElement();
 			writer.writeEndDocument();
@@ -201,9 +211,19 @@ public class GmapiBuilder implements Combiner {
 		writer.writeStartElement(NS, name);
 		writer.writeCharacters(value);
 		writer.writeEndElement();
+		writer.writeCharacters("\n");
 	}
 
 	private static class ProductInfo {
 
+		private final String seriesName;
+		private final String overviewName;
+		private final int id;
+
+		public ProductInfo(int id, String seriesName, String overviewName) {
+			this.id = id;
+			this.seriesName = seriesName;
+			this.overviewName = overviewName;
+		}
 	}
 }

@@ -490,4 +490,8 @@ public class FileInfo {
 	public boolean hasSortOrder() {
 		return sortOrderId != 0;
 	}
+
+	public String getOverviewName() {
+		return args.get("overview-mapname", "osmmap");
+	}
 }
