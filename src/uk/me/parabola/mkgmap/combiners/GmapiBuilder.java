@@ -54,6 +54,7 @@ public class GmapiBuilder implements Combiner {
 
 	private String familyName;
 	private int familyId;
+	private String typFile;
 
 	public GmapiBuilder(Map<String, Combiner> combinerMap) {
 		this.combinerMap = combinerMap;
@@ -94,7 +95,11 @@ public class GmapiBuilder implements Combiner {
 
 		// Unzip the image into the product tile directory.
 		try {
-			unzipImg(fn, mapname, productId);
+			if (info.isImg())
+				unzipImg(fn, mapname, productId);
+			else if (info.getKind() == FileKind.TYP_KIND)
+				typFile = info.getFilename();
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -113,6 +118,11 @@ public class GmapiBuilder implements Combiner {
 			if (combinerMap.containsKey("mdr")) {
 				File file = new File(getFilenameFor("mdr"));
 				unzipImg(file.getCanonicalPath(), gmapDir.resolve(nameWithoutExtension(file)));
+			}
+
+			if (typFile != null) {
+				File file = new File(typFile);
+				Files.copy(file.toPath(), gmapDir.resolve(file.getName()), StandardCopyOption.REPLACE_EXISTING);
 			}
 
 			for (ProductInfo info : productMap.values()) {
@@ -224,6 +234,11 @@ public class GmapiBuilder implements Combiner {
 				String mdrName = getFilenameFor("mdr");
 				File file = new File(mdrName);
 				xmlElement(writer, "MDR", nameWithoutExtension(file));
+			}
+
+			if (typFile != null) {
+				File file = new File(typFile);
+				xmlElement(writer, "TYP", file.getName());
 			}
 
 			for (ProductInfo prod : productMap.values()) {
