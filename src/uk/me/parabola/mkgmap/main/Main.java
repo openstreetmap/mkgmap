@@ -624,27 +624,29 @@ public class Main implements ArgumentProcessor {
 
 	private void fileOptions(CommandArgs args) {
 		boolean indexOpt = args.exists("index");
-		boolean gmapOpt = args.exists("gmapsupp");
+		boolean gmapsuppOpt = args.exists("gmapsupp");
 		boolean tdbOpt = args.exists("tdbfile");
+		boolean gmapiOpt = args.exists("gmapi");
+
 		if (tdbOpt || createTdbFiles){ 
 			addTdbBuilder();
 		}
 		if (args.exists("nsis")) {
 			addCombiner("nsis", new NsisBuilder());
 		}
-		if (gmapOpt) {
+		if (gmapsuppOpt) {
 			GmapsuppBuilder gmapBuilder = new GmapsuppBuilder();
 			gmapBuilder.setCreateIndex(indexOpt);
 
 			addCombiner("gmapsupp", gmapBuilder);
 		}
 
-		if (indexOpt && (tdbOpt || !gmapOpt)) {
+		if (indexOpt && (tdbOpt || !gmapsuppOpt)) {
 			addCombiner("mdr", new MdrBuilder());
 			addCombiner("mdx", new MdxBuilder());
 		}
 
-		if (true) {
+		if (gmapiOpt) {
 			addCombiner("gmapi", new GmapiBuilder(combinerMap));
 		}
 	}

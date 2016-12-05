@@ -61,12 +61,12 @@ clean:
 	rm -f gmapsupp.img 632*.img
 	if [ -d 63240001 ]; then rmdir 6324000?; fi
 	rm -f 11112222.img 11112222.tdb
+	rm -rf *.gmapi
 	rm -f osmmap*
 	rm -f ovm_*.img
 	rm -f g?.img
 	rm -f styletester.style
 	rm -f test.*
-	rm -rf *.gmapi
 
 load:
 	sleep 2
