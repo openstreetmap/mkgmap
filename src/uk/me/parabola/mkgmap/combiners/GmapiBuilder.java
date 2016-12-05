@@ -35,6 +35,8 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.mkgmap.CommandArgs;
 
+import sun.nio.cs.StandardCharsets;
+
 import static java.nio.file.StandardOpenOption.*;
 
 /**
@@ -178,11 +180,13 @@ public class GmapiBuilder implements Combiner {
 
 			XMLStreamWriter writer = factory.createXMLStreamWriter(stream);
 
-			writer.writeStartDocument("utf-8", "1.0");
+			writer.writeStartDocument("UTF-8", "1.0");
 			writer.setDefaultNamespace(NS);
+			writer.writeCharacters("\n");
 
 			writer.writeStartElement(NS,"MapProduct");
 			writer.writeDefaultNamespace(NS);
+			writer.writeCharacters("\n");
 
 			xmlElement(writer, "Name", familyName);
 			xmlElement(writer, "DataVersion", "100");
@@ -191,12 +195,15 @@ public class GmapiBuilder implements Combiner {
 
 			for (ProductInfo prod : productMap.values()) {
 				writer.writeStartElement(NS, "SubProduct");
+				writer.writeCharacters("\n");
+
 				xmlElement(writer, "Name", prod.seriesName);
 				xmlElement(writer, "ID", String.valueOf(prod.id));
 				xmlElement(writer, "BaseMap", prod.overviewName);
 				xmlElement(writer, "TDB", String.format("%s.tdb", prod.overviewName));
 				xmlElement(writer, "Directory", String.format("Product%s", prod.id));
 				writer.writeEndElement();
+				writer.writeCharacters("\n");
 			}
 
 			writer.writeEndElement();
@@ -208,6 +215,7 @@ public class GmapiBuilder implements Combiner {
 	}
 
 	private void xmlElement(XMLStreamWriter writer, String name, String value) throws XMLStreamException {
+		writer.writeCharacters(" ");
 		writer.writeStartElement(NS, name);
 		writer.writeCharacters(value);
 		writer.writeEndElement();
