@@ -18,6 +18,7 @@ package uk.me.parabola.mkgmap.combiners;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -47,7 +48,7 @@ public class TdbBuilder implements Combiner {
 	private String overviewMapnumber;
 	private String outputDir;
 	private int tdbVersion;
-	private List<String[]> copyrightMsgs = new ArrayList<String[]>();
+	private final List<String[]> copyrightMsgs = new ArrayList<>();
 
 	public TdbBuilder(OverviewBuilder ovb) {
 		overviewBuilder = ovb;
@@ -180,6 +181,11 @@ public class TdbBuilder implements Combiner {
 		tdb.setOverview(overviewBuilder.getBounds(), overviewMapnumber);
 
 		writeTdbFile();
+	}
+
+	@Override
+	public String getFilename() {
+		return Utils.joinPath(outputDir, overviewMapname, "tdb");
 	}
 
 	/**

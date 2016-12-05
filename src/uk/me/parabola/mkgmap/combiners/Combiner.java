@@ -48,4 +48,7 @@ public interface Combiner {
 	 */
 	public void onFinish();
 
+	public default String getFilename() {
+		return null;
+	}
 }

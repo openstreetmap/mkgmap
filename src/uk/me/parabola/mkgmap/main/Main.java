@@ -21,7 +21,6 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -30,6 +29,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -96,14 +96,16 @@ public class Main implements ArgumentProcessor {
 
 	private volatile int programRC = 0;
 
+	private final Map<String, Combiner> combinerMap = new HashMap<>();
+
 	/**
 	 * Used for unit tests
 	 */
-	public static void mainNoSystemExit(String[] args) {
+	public static void mainNoSystemExit(String... args) {
 		Main.mainStart(args);
 	}
 	
-	public static void main(String[] args) {
+	public static void main(String... args) {
 		int rc = Main.mainStart(args);
 		if (rc != 0)
 			System.exit(1);
@@ -116,7 +118,7 @@ public class Main implements ArgumentProcessor {
 	 *
 	 * @param args The command line arguments.
 	 */
-	private static int mainStart(String[] args) {
+	private static int mainStart(String... args) {
 		long start = System.currentTimeMillis();
 		System.out.println("Time started: " + new Date());
 		// We need at least one argument.
@@ -325,7 +327,7 @@ public class Main implements ArgumentProcessor {
 	}
 
 	public void removeOption(String opt) {
-		if ("tdbfile".equals(opt))
+		if (Objects.equals("tdbfile", opt))
 			createTdbFiles = false;
 	}
 
@@ -338,9 +340,9 @@ public class Main implements ArgumentProcessor {
 		if (!tdbBuilderAdded ){
 			OverviewMap overviewSource = new OverviewMapDataSource();
 			OverviewBuilder overviewBuilder = new OverviewBuilder(overviewSource);
-			addCombiner(overviewBuilder);
+			addCombiner("img", overviewBuilder);
 			TdbBuilder tdbBuilder = new TdbBuilder(overviewBuilder);
-			addCombiner(tdbBuilder);
+			addCombiner("tdb", tdbBuilder);
 			tdbBuilderAdded = true;
 		}
 	}
@@ -396,14 +398,14 @@ public class Main implements ArgumentProcessor {
 		}
 		int checked = 0;
 		for (String name : names) {
-			if (styleOption != null && !name.equals(styleOption))
+			if (!Objects.equals(name, styleOption))
 				continue;
 			if (names.length > 1){
 				System.out.println("checking style: " + name);
 			}
 			++checked;
 			boolean performChecks = true;
-			if ("classpath:styles".equals(styleFile) && !"default".equals(name)){
+			if (Objects.equals("classpath:styles", styleFile) && !Objects.equals("default", name)){
 					performChecks = false;
 			}
 			Style style = readOneStyle(name, performChecks);
@@ -447,7 +449,8 @@ public class Main implements ArgumentProcessor {
 		return "en";
 	}
 
-	private void addCombiner(Combiner combiner) {
+	private void addCombiner(String name, Combiner combiner) {
+		combinerMap.put(name, combiner);
 		combiners.add(combiner);
 	}
 
@@ -537,7 +540,7 @@ public class Main implements ArgumentProcessor {
 		for (Combiner c : combiners)
 			c.init(args);
 
-		Collections.sort(filenames, new Comparator<FilenameTask>() {
+		filenames.sort(new Comparator<FilenameTask>() {
 			public int compare(FilenameTask o1, FilenameTask o2) {
 				if (!o1.getFilename().endsWith(".img") || !o2.getFilename().endsWith(".img"))
 					return o1.getFilename().compareTo(o2.getFilename());
@@ -627,22 +630,22 @@ public class Main implements ArgumentProcessor {
 			addTdbBuilder();
 		}
 		if (args.exists("nsis")) {
-			addCombiner(new NsisBuilder());
+			addCombiner("nsis", new NsisBuilder());
 		}
 		if (gmapOpt) {
 			GmapsuppBuilder gmapBuilder = new GmapsuppBuilder();
 			gmapBuilder.setCreateIndex(indexOpt);
 
-			addCombiner(gmapBuilder);
+			addCombiner("gmapsupp", gmapBuilder);
 		}
 
 		if (indexOpt && (tdbOpt || !gmapOpt)) {
-			addCombiner(new MdrBuilder());
-			addCombiner(new MdxBuilder());
+			addCombiner("mdr", new MdrBuilder());
+			addCombiner("mdx", new MdxBuilder());
 		}
 
 		if (true) {
-			addCombiner(new GmapiBuilder());
+			addCombiner("gmapi", new GmapiBuilder(combinerMap));
 		}
 	}
 

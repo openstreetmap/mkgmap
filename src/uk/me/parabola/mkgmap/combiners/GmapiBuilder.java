@@ -16,11 +16,19 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.ByteBuffer;
+import java.nio.channels.ByteChannel;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -35,6 +43,8 @@ import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.util.EnhancedProperties;
 
+import static java.nio.file.StandardOpenOption.*;
+
 /**
  * Create a map in the gmapi format.
  *
@@ -46,12 +56,13 @@ public class GmapiBuilder implements Combiner {
 
 	private final OverviewBuilder overviewBuilder;
 	private final TdbBuilder tdbBuilder;
-	private File tiles;
+	private Path tiles;
+	private Path gmapDir;
+	private EnhancedProperties initArgs;
 
-	public GmapiBuilder() {
-		OverviewMap overviewSource = new OverviewMapDataSource();
-		overviewBuilder = new OverviewBuilder(overviewSource);
-		tdbBuilder = new TdbBuilder(overviewBuilder);
+	public GmapiBuilder(Map<String, Combiner> combinerMap) {
+		overviewBuilder = (OverviewBuilder) combinerMap.get("img");
+		tdbBuilder = (TdbBuilder) combinerMap.get("tdb");
 	}
 
 	/**
@@ -62,23 +73,92 @@ public class GmapiBuilder implements Combiner {
 	 * @param args The command line arguments.
 	 */
 	public void init(CommandArgs args) {
-
+		initArgs = args.getProperties();
 		String overviewMapname = args.get("overview-mapname", "osmmap");
 
-		File base = new File(args.getOutputDir(), overviewMapname + ".gmapi");
-		File gmapDir = new File(base, overviewMapname + ".gmap");
-		tiles = new File(gmapDir, "OSMTiles");
+		Path base = Paths.get(args.getOutputDir(), overviewMapname + ".gmapi");
+		gmapDir = base.resolve(overviewMapname + ".gmap");
+		tiles = gmapDir.resolve("Product1");
 
-		tiles.mkdirs();
+		tiles.toFile().mkdirs();
 
 		writeXmlFile(gmapDir);
 
-		EnhancedProperties properties = args.getProperties();
-		properties.setProperty("output-dir", gmapDir.getAbsolutePath());
-		args = new CommandArgs(properties);
+	}
 
-		overviewBuilder.init(args);
-		tdbBuilder.init(args);
+	/**
+	 * This is called when an individual map is complete.
+	 *
+	 * @param info An interface to read the map.
+	 */
+	public void onMapEnd(FileInfo info) {
+
+		String fn = info.getFilename();
+		System.out.println("FN is  " + fn);
+		String mapname = info.getMapname();
+		unzipImg(fn, mapname);
+	}
+
+	private void unzipImg(String fn, String mapname) {
+		try {
+			FileSystem fs = ImgFS.openFs(fn);
+
+			for (DirectoryEntry ent : fs.list()) {
+				String fullname = ent.getFullName();
+
+				try (ImgChannel f = fs.open(fullname, "r")) {
+					String name = displayName(fullname);
+					if (Objects.equals(name, "."))
+						continue;
+
+					System.out.format("Copying %-15s %d\n", name, ent.getSize());
+					copyToFile(f, mapname, name);
+
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * The complete map set has been processed.  Finish off anything that needs
+	 * doing.
+	 */
+	public void onFinish() {
+		Path tdbPath = Paths.get(tdbBuilder.getFilename());
+		String overviewMapname = initArgs.getProperty("overview-mapname", "osmmap");
+		try {
+
+			Files.copy(tdbPath, gmapDir.resolve("Product1").resolve(overviewMapname + ".tdb"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		unzipImg(overviewBuilder.getFilename(), overviewMapname);
+	}
+
+	private void copyToFile(ImgChannel f, String mapName, String subName) {
+		Path mapDir = tiles.resolve(mapName);
+		mapDir.toFile().mkdirs();
+		Path outName = mapDir.resolve(subName);
+
+		ByteBuffer buf = ByteBuffer.allocate(8 * 1024);
+		try (ByteChannel outchan = Files.newByteChannel(outName, CREATE, WRITE, TRUNCATE_EXISTING)) {
+			while (f.read(buf) > 0) {
+				buf.flip();
+				outchan.write(buf);
+				buf.compact();
+			}
+		} catch (IOException e) {
+			throw new ExitException("Cannot write file " + e);
+		}
+	}
+
+	private String displayName(String fullname) {
+		return fullname.trim().replace("\000", "");
 	}
 
 	/**
@@ -86,11 +166,12 @@ public class GmapiBuilder implements Combiner {
 	 *
 	 * @param gDir The directory where the Info.xml file will be created.
 	 */
-	private void writeXmlFile(File gDir) {
-		File infoFile = new File(gDir, "Info.xml");
+	private void writeXmlFile(Path gDir) {
+		Path infoFile = gDir.resolve("Info.xml");
 
 		XMLOutputFactory factory = XMLOutputFactory.newFactory();
-		try (Writer stream = new OutputStreamWriter(new FileOutputStream(infoFile))) {
+
+		try (Writer stream = Files.newBufferedWriter(infoFile)) {
 
 			XMLStreamWriter writer = factory.createXMLStreamWriter(stream);
 
@@ -110,7 +191,7 @@ public class GmapiBuilder implements Combiner {
 			xmlElement(writer, "ID", "1");
 			xmlElement(writer, "BaseMap", "osmmap");
 			xmlElement(writer, "TDB", "osmmap.tdb");
-			xmlElement(writer, "Directory", "OSMTiles");
+			xmlElement(writer, "Directory", "Product1");
 			writer.writeEndElement();
 
 			writer.writeEndElement();
@@ -125,70 +206,5 @@ public class GmapiBuilder implements Combiner {
 		writer.writeStartElement(NS, name);
 		writer.writeCharacters(value);
 		writer.writeEndElement();
-	}
-
-	/**
-	 * This is called when an individual map is complete.
-	 *
-	 * @param info An interface to read the map.
-	 */
-	public void onMapEnd(FileInfo info) {
-		overviewBuilder.onMapEnd(info);
-		tdbBuilder.onMapEnd(info);
-
-		String fn = info.getFilename();
-		System.out.println("FN is  " + fn);
-		try {
-			FileSystem fs = ImgFS.openFs(fn);
-
-			for (DirectoryEntry ent : fs.list()) {
-				String fullname = ent.getFullName();
-
-				try (ImgChannel f = fs.open(fullname, "r")) {
-					String name = displayName(fullname);
-					if (Objects.equals(name, "."))
-						continue;
-
-					System.out.format("Copying %-15s %d\n", name, ent.getSize());
-					copyToFile(f, info.getMapname(), name);
-
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-	}
-
-	private void copyToFile(ImgChannel f, String mapName, String subName) {
-		File mapDir = new File(tiles, mapName);
-		mapDir.mkdirs();
-		File outName = new File(mapDir, subName);
-
-		ByteBuffer buf = ByteBuffer.allocate(8 * 1024);
-		try (FileOutputStream os = new FileOutputStream(outName)) {
-			FileChannel outchan = os.getChannel();
-			while (f.read(buf) > 0) {
-				buf.flip();
-				outchan.write(buf);
-				buf.compact();
-			}
-		} catch (IOException e) {
-			throw new ExitException("Cannot write file " + e.getMessage());
-		}
-	}
-
-	private String displayName(String fullname) {
-		return fullname.trim().replace("\000", "");
-	}
-
-	/**
-	 * The complete map set has been processed.  Finish off anything that needs
-	 * doing.
-	 */
-	public void onFinish() {
-		overviewBuilder.onFinish();
-		tdbBuilder.onFinish();
 	}
 }
