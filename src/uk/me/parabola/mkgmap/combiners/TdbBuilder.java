@@ -183,7 +183,6 @@ public class TdbBuilder implements Combiner {
 		writeTdbFile();
 	}
 
-	@Override
 	public String getFilename() {
 		return Utils.joinPath(outputDir, overviewMapname, "tdb");
 	}

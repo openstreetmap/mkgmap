@@ -55,4 +55,8 @@ public class MdxBuilder implements Combiner {
 			throw new ExitException("Could not create MDX file", e);
 		}
 	}
+
+	public String getFilename() {
+		return Utils.joinPath(outputDir, mdxFilename);
+	}
 }

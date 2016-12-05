@@ -12,6 +12,7 @@
  */
 package uk.me.parabola.mkgmap.combiners;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.ByteBuffer;
@@ -34,8 +35,6 @@ import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.mkgmap.CommandArgs;
-
-import sun.nio.cs.StandardCharsets;
 
 import static java.nio.file.StandardOpenOption.*;
 
@@ -107,6 +106,15 @@ public class GmapiBuilder implements Combiner {
 	 */
 	public void onFinish() {
 		try {
+			if (combinerMap.containsKey("mdx")) {
+				File file = new File(getFilenameFor("mdx"));
+				Files.copy(file.toPath(), gmapDir.resolve(file.getName()), StandardCopyOption.REPLACE_EXISTING);
+			}
+			if (combinerMap.containsKey("mdr")) {
+				File file = new File(getFilenameFor("mdr"));
+				unzipImg(file.getCanonicalPath(), gmapDir.resolve(nameWithoutExtension(file)));
+			}
+
 			for (ProductInfo info : productMap.values()) {
 				finishTdbFile(info);
 				unzipImg(getFilenameFor("img"), info.overviewName, info.id);
@@ -119,6 +127,14 @@ public class GmapiBuilder implements Combiner {
 		}
 	}
 
+	private String nameWithoutExtension(File file) {
+		String name = file.getName();
+		int len = name.length();
+		if (len < 4)
+			return name;
+		return name.substring(0, len-4);
+	}
+
 	private void finishTdbFile(ProductInfo info) throws IOException {
 		Path tdbPath = Paths.get(getFilenameFor("tdb"));
 
@@ -127,9 +143,14 @@ public class GmapiBuilder implements Combiner {
 				.resolve(String.format("%s.tdb", info.overviewName)), StandardCopyOption.REPLACE_EXISTING);
 	}
 
-	private void unzipImg(String fn, String mapname, int productId) throws IOException {
-		FileSystem fs = ImgFS.openFs(fn);
+	private void unzipImg(String srcImgName, String mapname, int productId) throws IOException {
+		Path destDir = Paths.get(gmapDir.toString(), "Product" + productId, mapname);
 
+		unzipImg(srcImgName, destDir);
+	}
+
+	private void unzipImg(String srcImgName, Path destDir) throws IOException {
+		FileSystem fs = ImgFS.openFs(srcImgName);
 		for (DirectoryEntry ent : fs.list()) {
 			String fullname = ent.getFullName();
 
@@ -138,9 +159,8 @@ public class GmapiBuilder implements Combiner {
 				if (Objects.equals(name, "."))
 					continue;
 
-				Path imgPath = Paths.get(gmapDir.toString(),"Product" + productId, mapname, name);
-				Files.createDirectories(imgPath.getParent());
-				copyToFile(f, imgPath);
+				Files.createDirectories(destDir);
+				copyToFile(f, destDir.resolve(name));
 			}
 		}
 	}
@@ -192,6 +212,19 @@ public class GmapiBuilder implements Combiner {
 			xmlElement(writer, "DataVersion", "100");
 			xmlElement(writer, "DataFormat", "Original");
 			xmlElement(writer, "ID", String.valueOf(familyId));
+
+			if (combinerMap.containsKey("mdx")) {
+				String mdxFile = getFilenameFor("mdx");
+
+				File file = new File(mdxFile);
+				xmlElement(writer, "IDX", file.getName());
+			}
+
+			if (combinerMap.containsKey("mdr")) {
+				String mdrName = getFilenameFor("mdr");
+				File file = new File(mdrName);
+				xmlElement(writer, "MDR", nameWithoutExtension(file));
+			}
 
 			for (ProductInfo prod : productMap.values()) {
 				writer.writeStartElement(NS, "SubProduct");
