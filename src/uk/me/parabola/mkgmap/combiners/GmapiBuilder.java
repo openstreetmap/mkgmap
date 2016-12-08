@@ -70,8 +70,7 @@ public class GmapiBuilder implements Combiner {
 	public void init(CommandArgs args) {
 		String overviewMapname = args.get("overview-mapname", "osmmap");
 
-		Path base = Paths.get(args.getOutputDir(), String.format("%s.gmapi", overviewMapname));
-		gmapDir = base.resolve(overviewMapname + ".gmap");
+		gmapDir = Paths.get(args.getOutputDir(), String.format("%s.gmap", overviewMapname));
 	}
 
 	/**
