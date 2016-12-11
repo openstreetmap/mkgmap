@@ -210,9 +210,8 @@ public class FileInfo {
 	 * @throws FileNotFoundException If the file doesn't exist.
 	 */
 	private static FileInfo imgInfo(String inputName) throws FileNotFoundException {
-		FileSystem imgFs = ImgFS.openFs(inputName);
 
-		try {
+		try (FileSystem imgFs = ImgFS.openFs(inputName)) {
 			FileSystemParam params = imgFs.fsparam();
 			log.info("Desc", params.getMapDescription());
 			log.info("Blocksize", params.getBlockSize());
@@ -237,6 +236,8 @@ public class FileInfo {
 			info.setMapname(name);
 
 			boolean hasTre = false;
+			DirectoryEntry treEnt = null;
+
 			List<DirectoryEntry> entries = imgFs.list();
 			for (DirectoryEntry ent : entries) {
 				if (ent.isSpecial())
@@ -249,8 +250,8 @@ public class FileInfo {
 					info.setTresize(ent.getSize());
 					info.setInnername(ent.getName());
 
-					treInfo(imgFs, ent, info);
 					hasTre = true;
+					treEnt = ent;
 				} else if ("RGN".equals(ext)) {
 					int size = ent.getSize();
 					info.setRgnsize(size);
@@ -273,12 +274,13 @@ public class FileInfo {
 				info.fileSizes.add(ent.getSize());
 			}
 
+			if (hasTre)
+				treInfo(imgFs, treEnt, info);
+
 			if (info.getKind() == UNKNOWN_KIND && hasTre)
 				info.setKind(IMG_KIND);
-			
+
 			return info;
-		} finally {
-			imgFs.close();
 		}
 	}
 
@@ -297,7 +299,7 @@ public class FileInfo {
 
 			info.setBounds(treFile.getBounds());
 
-			info.setLicenceInfo(treFile.getMapInfo());
+			info.setLicenceInfo(treFile.getMapInfo(info.getCodePage()));
 
 			info.setHexname(((TREHeader) treFile.getHeader()).getMapId());
 		} finally {
@@ -399,7 +401,7 @@ public class FileInfo {
 	}
 
 	
-	protected void setLicenceInfo(String[] info) {
+	private void setLicenceInfo(String[] info) {
 		this.licenceInfo = info;
 	}
 

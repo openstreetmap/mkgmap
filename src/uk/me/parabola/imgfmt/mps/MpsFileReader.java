@@ -23,6 +23,8 @@ import java.util.List;
 
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
+import uk.me.parabola.imgfmt.app.labelenc.CharacterDecoder;
+import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 /**
@@ -36,15 +38,18 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
  */
 public class MpsFileReader implements Closeable {
 
-	private final List<MapBlock> maps = new ArrayList<MapBlock>();
-	private final List<ProductBlock> products = new ArrayList<ProductBlock>();
+	private final List<MapBlock> maps = new ArrayList<>();
+	private final List<ProductBlock> products = new ArrayList<>();
 
 	private final ImgChannel chan;
 	private final ImgFileReader reader;
+	private final CharacterDecoder decoder;
 
 	public MpsFileReader(ImgChannel chan) {
 		this.chan = chan;
 		this.reader = new BufferedImgFileReader(chan);
+		CodeFunctions funcs = CodeFunctions.createEncoderForLBL(0, 0);  // TODO fix me
+		decoder = funcs.getDecoder();
 
 		readBlocks();
 	}
@@ -74,9 +79,11 @@ public class MpsFileReader implements Closeable {
 		int val = reader.getInt();
 		block.setIds(val >>> 16, val & 0xffff);
 		block.setMapNumber(reader.getInt());
-		block.setSeriesName(reader.getZString());
-		block.setMapDescription(reader.getZString());
-		block.setAreaName(reader.getZString());
+
+		byte[] zString = reader.getZString();
+		block.setSeriesName(decodeToString(zString));
+		block.setMapDescription(decodeToString(reader.getZString()));
+		block.setAreaName(decodeToString(reader.getZString()));
 		block.setHexNumber(reader.getInt());
 		reader.getInt();
 		maps.add(block);
@@ -86,8 +93,16 @@ public class MpsFileReader implements Closeable {
 		ProductBlock block = new ProductBlock();
 		block.setProductId(reader.getChar());
 		block.setFamilyId(reader.getChar());
-		block.setDescription(reader.getZString());
+		block.setDescription(decodeToString(reader.getZString()));
 		products.add(block);
+	}
+
+	private String decodeToString(byte[] zString) {
+		decoder.reset();
+		for (byte b : zString)
+			decoder.addByte(b);
+
+		return decoder.getText().getText();
 	}
 
 	public List<MapBlock> getMaps() {

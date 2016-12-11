@@ -21,6 +21,9 @@ import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgReader;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.Section;
+import uk.me.parabola.imgfmt.app.labelenc.CharacterDecoder;
+import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
+import uk.me.parabola.imgfmt.app.labelenc.DecodedText;
 import uk.me.parabola.imgfmt.app.lbl.LBLFileReader;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.util.EnhancedProperties;
@@ -196,16 +199,25 @@ public class TREFileReader extends ImgReader {
 		header.config(props);
 	}
 
-	public String[] getMapInfo() {
-
-		List<String> msgs = new ArrayList<String>();
+	public String[] getMapInfo(int codePage) {
+		CodeFunctions funcs = CodeFunctions.createEncoderForLBL(0, codePage);
+		CharacterDecoder decoder = funcs.getDecoder();
 
 		// First do the ones in the TRE header gap
 		ImgFileReader reader = getReader();
 		reader.position(header.getHeaderLength());
+		List<String> msgs = new ArrayList<>();
 		while (reader.position() < header.getHeaderLength() + header.getMapInfoSize()) {
-			String m = reader.getZString();
-			msgs.add(m);
+			byte[] m = reader.getZString();
+
+			decoder.reset();
+			for (byte b : m)
+				decoder.addByte(b);
+
+			DecodedText text = decoder.getText();
+			String text1 = text.getText();
+
+			msgs.add(text1);
 		}
 
 
@@ -215,7 +227,7 @@ public class TREFileReader extends ImgReader {
 	public String[] getCopyrights(LBLFileReader lblReader) {
 		Section sect = header.getCopyrightSection();
 		ImgFileReader reader = getReader();
-		List<String> msgs = new ArrayList<String>();
+		List<String> msgs = new ArrayList<>();
 
 		long pos = sect.getPosition();
 		while (pos < sect.getEndPos()) {
