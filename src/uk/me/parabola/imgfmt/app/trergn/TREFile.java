@@ -21,12 +21,12 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.util.Configurable;
@@ -50,7 +50,7 @@ public class TREFile extends ImgFile implements Configurable {
 	//	private List<Zoom> mapLevels = new ArrayList<Zoom>();
 	private final Zoom[] mapLevels = new Zoom[16];
 
-	private final List<Label> copyrights = new ArrayList<Label>();
+	private final List<Label> copyrights = new ArrayList<>();
 
 	// Information about polylines.  eg roads etc.
 	private final List<PolylineOverview> polylineOverviews = new ArrayList<PolylineOverview>();
@@ -82,15 +82,14 @@ public class TREFile extends ImgFile implements Configurable {
 	 * Add a string to the 'mapinfo' section.  This is a section between the
 	 * header and the start of the data.  Nothing points to it directly.
 	 *
-	 * @param msg A string, usually used to describe the program that generated
-	 * the file.
+	 * @param enc A string in the EncodedText format.
 	 */
-	public void addInfo(String msg) {
-		byte[] val = Utils.toBytes(msg);
+	public void addInfo(EncodedText enc) {
+		byte[] val = enc.getCtext();
 		if (position() != header.getHeaderLength() + header.getMapInfoSize())
 			throw new IllegalStateException("All info must be added before anything else");
 
-		header.setMapInfoSize(header.getMapInfoSize() + (val.length+1));
+		header.setMapInfoSize(header.getMapInfoSize() + enc.getLength() + 1);
 		getWriter().put(val);
 		getWriter().put((byte) 0);
 	}
