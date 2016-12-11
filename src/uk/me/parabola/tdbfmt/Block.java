@@ -16,6 +16,9 @@
  */
 package uk.me.parabola.tdbfmt;
 
+import uk.me.parabola.imgfmt.app.labelenc.BaseEncoder;
+import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
+import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.io.StructuredInputStream;
 import uk.me.parabola.io.StructuredOutputStream;
@@ -34,6 +37,7 @@ class Block {
 	private static final Logger log = Logger.getLogger(Block.class);
 
 	private final int blockId;
+	private final CharacterEncoder encoder;
 	private int blockLength;
 	private byte[] body;
 	private StructuredInputStream istream;
@@ -44,8 +48,12 @@ class Block {
 	 * Create a block that is going to be written to.
 	 * @param blockId The id for this block.
 	 */
-	Block(int blockId) {
+	Block(int blockId, int codePage) {
 		this.blockId = blockId;
+
+		CodeFunctions codeFunctions = CodeFunctions.createEncoderForLBL(0, codePage);
+		encoder = codeFunctions.getEncoder();
+		((BaseEncoder) encoder).setUpperCase(false);
 	}
 
 	/**
@@ -54,7 +62,8 @@ class Block {
 	 * @param body The raw bytes in the block.
 	 */
 	Block(int type, byte[] body) {
-		blockId = type;
+		this(type, 0);  // TODO pass codepage
+
 		this.body = body;
 		this.blockLength = body.length;
 		ByteArrayInputStream stream = new ByteArrayInputStream(body);
@@ -101,7 +110,9 @@ class Block {
 		if (ostream == null) {
 			arrayBody = new ByteArrayOutputStream();
 			body = null;
-			ostream = new StructuredOutputStream(arrayBody);
+
+			ostream = new StructuredOutputStream(arrayBody, encoder);
+
 			try {
 				ostream.write(blockId);
 				ostream.write2(0); // This will be filled in later.

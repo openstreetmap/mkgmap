@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import uk.me.parabola.imgfmt.app.labelenc.AnyCharsetEncoder;
+import uk.me.parabola.imgfmt.app.labelenc.TableTransliterator;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.io.StructuredOutputStream;
 
@@ -39,7 +41,8 @@ public abstract class Block {
 
 	public void write(ImgChannel chan) throws IOException {
 		// First write the body to the byte buffer so that we know its length.
-		writeBody(new StructuredOutputStream(output));
+		writeBody(new StructuredOutputStream(output, // TODO temporary while tdbfile is fixed.
+				new AnyCharsetEncoder("latin1", new TableTransliterator("ascii"))));
 
 		ByteBuffer buf = ByteBuffer.allocate(16);
 		buf.order(ByteOrder.LITTLE_ENDIAN);

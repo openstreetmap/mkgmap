@@ -56,10 +56,11 @@ public class TdbFile {
 	private HeaderBlock headerBlock;
 	private CopyrightBlock copyrightBlock = new CopyrightBlock();
 	private OverviewMapBlock overviewMapBlock;
-	private final List<DetailMapBlock> detailBlocks = new ArrayList<DetailMapBlock>();
+	private final List<DetailMapBlock> detailBlocks = new ArrayList<>();
 	private final RBlock rblock = new RBlock();
 	private final TBlock tblock = new TBlock();
 	private String overviewDescription;
+	private int codePage;
 
 	public TdbFile() {
 	}
@@ -78,13 +79,9 @@ public class TdbFile {
 	public static TdbFile read(String name) throws IOException {
 		TdbFile tdb = new TdbFile();
 
-		InputStream is = new BufferedInputStream(new FileInputStream(name));
-
-		try {
+		try (InputStream is = new BufferedInputStream(new FileInputStream(name))) {
 			StructuredInputStream ds = new StructuredInputStream(is);
 			tdb.load(ds);
-		} finally {
-			is.close();
 		}
 
 		return tdb;
@@ -105,6 +102,7 @@ public class TdbFile {
 	}
 
 	public void setCodePage(int codePage) {
+		this.codePage = codePage;
 		headerBlock.setCodePage(codePage);
 	}
 
@@ -113,6 +111,9 @@ public class TdbFile {
 	 * @param msg The message to add.
 	 */
 	public void addCopyright(String msg) {
+		if (msg.isEmpty())
+			return;
+
 		CopyrightSegment seg = new CopyrightSegment(CopyrightSegment.CODE_COPYRIGHT_TEXT_STRING, 3, msg);
 		copyrightBlock.addSegment(seg);
 	}
@@ -139,34 +140,34 @@ public class TdbFile {
 	}
 
 	public void write(String name) throws IOException {
-		CheckedOutputStream stream = new CheckedOutputStream(
-				new BufferedOutputStream(new FileOutputStream(name)),
-				new CRC32());
 
 		if (headerBlock == null || overviewMapBlock == null)
 			throw new IOException("Attempting to write file without being fully set up");
 
-		try {
-			Block block = new Block(BLOCK_HEADER);
+		try (CheckedOutputStream stream = new CheckedOutputStream(
+				new BufferedOutputStream(new FileOutputStream(name)),
+				new CRC32()))
+		{
+			Block block = newWriteBlock(BLOCK_HEADER);
 			headerBlock.write(block);
 			block.write(stream);
 
-			block = new Block(BLOCK_COPYRIGHT);
+			block = newWriteBlock(BLOCK_COPYRIGHT);
 			copyrightBlock.write(block);
 			block.write(stream);
 
 			if (tdbVersion >= TDB_V407) {
-				block = new Block(BLOCK_R);
+				block = newWriteBlock(BLOCK_R);
 				rblock.write(block);
 				block.write(stream);
 			}
 
-			block = new Block(BLOCK_OVERVIEW);
+			block = newWriteBlock(BLOCK_OVERVIEW);
 			overviewMapBlock.write(block);
 			block.write(stream);
 
 			for (DetailMapBlock detail : detailBlocks) {
-				block = new Block(BLOCK_DETAIL);
+				block = newWriteBlock(BLOCK_DETAIL);
 				detail.write(block);
 				block.write(stream);
 			}
@@ -174,13 +175,15 @@ public class TdbFile {
 			if (tdbVersion >= TDB_V407) {
 				tblock.setSum(stream.getChecksum().getValue());
 
-				block = new Block(BLOCK_T);
+				block = newWriteBlock(BLOCK_T);
 				tblock.write(block);
 				block.write(stream);
 			}
-		} finally {
-			stream.close();
 		}
+	}
+
+	private Block newWriteBlock(int type) {
+		return new Block(type, codePage);
 	}
 
 	/**
