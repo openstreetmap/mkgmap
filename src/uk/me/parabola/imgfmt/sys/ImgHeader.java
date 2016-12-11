@@ -19,11 +19,15 @@ package uk.me.parabola.imgfmt.sys;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
+import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
+import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
@@ -305,30 +309,40 @@ class ImgHeader {
 
 	/**
 	 * Set the description.  It is spread across two areas in the header.
+	 *
+	 * It appears that the description has to be in ascii.
+	 *
 	 * @param desc The description.
 	 */
 	protected void setDescription(String desc) {
-		int len = desc.length();
+		// Force the description to be in ascii.
+		CodeFunctions funcs = CodeFunctions.createEncoderForLBL(0, 0);
+		CharacterEncoder encoder = funcs.getEncoder();
+		EncodedText enc = encoder.encodeText(desc);
+
+		byte[] ctext = enc.getCtext();
+		int len = enc.getLength() - 1;
 		if (len > 50)
 			throw new IllegalArgumentException("Description is too long (max 50)");
-		String part1, part2;
+
+		byte[] part1 = new byte[LEN_MAP_DESCRIPTION];
+		Arrays.fill(part1, (byte) ' ');
+
+		byte[] part2 = new byte[LEN_MAP_NAME_CONT];
+		Arrays.fill(part2, (byte) ' ');
+
 		if (len > LEN_MAP_DESCRIPTION) {
-			part1 = desc.substring(0, LEN_MAP_DESCRIPTION);
-			part2 = desc.substring(LEN_MAP_DESCRIPTION, len);
+			System.arraycopy(ctext, 0, part1, 0, LEN_MAP_DESCRIPTION);
+			System.arraycopy(ctext, LEN_MAP_DESCRIPTION, part2, 0, len - LEN_MAP_DESCRIPTION);
 		} else {
-			part1 = desc.substring(0, len);
-			part2 = "";
+			System.arraycopy(ctext, 0, part1, 0, len);
 		}
 
 		header.position(OFF_MAP_DESCRIPTION);
-		header.put(toByte(part1));
-		for (int i = len; i < LEN_MAP_DESCRIPTION; i++)
-			header.put((byte) ' ');
+		header.put(part1);
 
 		header.position(OFF_MAP_NAME_CONT);
-		header.put(toByte(part2));
-		for (int i = Math.max(len - LEN_MAP_DESCRIPTION, 0); i < LEN_MAP_NAME_CONT; i++)
-			header.put((byte) ' ');
+		header.put(part2);
 
 		header.put((byte) 0); // really?
 	}
