@@ -18,17 +18,22 @@ package uk.me.parabola.tdbfmt;
 
 import java.io.IOException;
 
+import uk.me.parabola.io.FileBlock;
 import uk.me.parabola.io.StructuredOutputStream;
 
 /**
  * @author Steve Ratcliffe
  */
-public class RBlock {
+public class RBlock extends FileBlock {
+	private static final int BLOCK_ID = 'R';
+
 	private final String previewDescription = "Test preview map";
 
-	public void write(Block block) throws IOException {
-		StructuredOutputStream os = block.getOutputStream();
+	public RBlock() {
+		super(BLOCK_ID);
+	}
 
+	public void writeBody(StructuredOutputStream os) throws IOException {
 		os.write(0xc3);
 		os.writeString(previewDescription);
 	}

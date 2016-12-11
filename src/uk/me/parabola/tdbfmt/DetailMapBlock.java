@@ -28,6 +28,7 @@ import uk.me.parabola.io.StructuredOutputStream;
  * @author Steve Ratcliffe
  */
 public class DetailMapBlock extends OverviewMapBlock {
+	public static final int BLOCK_ID = 0x4c;
 
 	private int tdbVersion;
 
@@ -41,19 +42,18 @@ public class DetailMapBlock extends OverviewMapBlock {
 	private int nodDataSize;
 
 	public DetailMapBlock(int tdbVersion) {
+		super(BLOCK_ID);
 		assert tdbVersion > 0;
 		this.tdbVersion = tdbVersion;
 	}
 
 	/**
 	 * Initialise this block from the raw block given.
-	 * @param block The raw block read from the file.
+	 *
 	 * @throws IOException For io problems.
 	 */
-	public DetailMapBlock(Block block) throws IOException {
-		super(block);
-
-		StructuredInputStream ds = block.getInputStream();
+	public DetailMapBlock(StructuredInputStream ds) throws IOException {
+		super(ds);
 
 		// First there are a couple of fields that we ignore.
 		int junk = ds.read2();
@@ -75,15 +75,11 @@ public class DetailMapBlock extends OverviewMapBlock {
 	/**
 	 * Write into the given block.
 	 *
-	 * @param block The block that will have been initialised to be a detail
-	 * block.
 	 * @throws IOException Problems writing, probably can't really happen as
 	 * we use an array backed stream.
 	 */
-	public void write(Block block) throws IOException {
-		super.write(block);
-
-		StructuredOutputStream os = block.getOutputStream();
+	public void writeBody(StructuredOutputStream os) throws IOException {
+		super.writeBody(os);
 
 		int n = 3;
 		if (tdbVersion >= TdbFile.TDB_V407) {
@@ -120,7 +116,7 @@ public class DetailMapBlock extends OverviewMapBlock {
 		}
 	}
 
-	public String getInnername() {
+	private String getInnername() {
 		return innername;
 	}
 

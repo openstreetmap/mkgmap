@@ -18,16 +18,25 @@ package uk.me.parabola.tdbfmt;
 
 import java.io.IOException;
 
+import uk.me.parabola.io.FileBlock;
 import uk.me.parabola.io.StructuredOutputStream;
 
 /**
  * @author Steve Ratcliffe
  */
-public class TBlock {
+public class TBlock extends FileBlock {
+	private static final int BLOCK_ID = 'T';
+
 	private long sum;
 
-	public void write(Block block) throws IOException {
-		StructuredOutputStream os = block.getOutputStream();
+	public TBlock() {
+		super(BLOCK_ID);
+	}
+
+	/**
+	 * This is to overridden in a subclass.
+	 */
+	protected void writeBody(StructuredOutputStream os) throws IOException {
 		// If you change A,B,C or D the maps
 		// will not load, you can change the rest without easily visible
 		// problems although I suppose they must do something.
