@@ -41,7 +41,7 @@ public abstract class FileBlock {
 	 */
 	protected abstract void writeBody(StructuredOutputStream output) throws IOException;
 
-	protected StructuredOutputStream getStructuredOutput(int codePage) {
+	private StructuredOutputStream getStructuredOutput(int codePage) {
 		CharacterEncoder enc = CodeFunctions.createEncoderForLBL(0, codePage).getEncoder();
 		return new StructuredOutputStream(output, enc);
 	}

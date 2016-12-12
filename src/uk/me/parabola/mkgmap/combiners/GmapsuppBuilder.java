@@ -68,7 +68,7 @@ public class GmapsuppBuilder implements Combiner {
 	private static final int ENTRY_SIZE = 240;
 	private static final int DIRECTORY_OFFSET_ENTRY = 2;
 
-	private final Map<String, FileInfo> files = new LinkedHashMap<String, FileInfo>();
+	private final Map<String, FileInfo> files = new LinkedHashMap<>();
 
 	// all these need to be set in the init routine from arguments.
 	private String areaName;
@@ -81,8 +81,8 @@ public class GmapsuppBuilder implements Combiner {
 	private boolean createIndex;	// True if we should create and add an index file
 
 	// There is a separate MDR and SRT file for each family id in the gmapsupp
-	private final Map<Integer, MdrBuilder> mdrBuilderMap = new LinkedHashMap<Integer, MdrBuilder>();
-	private final Map<Integer, Sort> sortMap = new LinkedHashMap<Integer, Sort>();
+	private final Map<Integer, MdrBuilder> mdrBuilderMap = new LinkedHashMap<>();
+	private final Map<Integer, Sort> sortMap = new LinkedHashMap<>();
 	private boolean splitName;
 	private boolean hideGmapsuppOnPC;
 
@@ -231,7 +231,7 @@ public class GmapsuppBuilder implements Combiner {
 	}
 
 	private MapBlock makeMapBlock(FileInfo info) {
-		MapBlock mb = new MapBlock();
+		MapBlock mb = new MapBlock(info.getCodePage());
 		mb.setMapNumber(info.getMapnameAsInt());
 		mb.setHexNumber(info.getHexname());
 		mb.setMapDescription(info.getDescription());
@@ -243,7 +243,7 @@ public class GmapsuppBuilder implements Combiner {
 	}
 
 	private ProductBlock makeProductBlock(FileInfo info) {
-		ProductBlock pb = new ProductBlock();
+		ProductBlock pb = new ProductBlock(info.getCodePage());
 		pb.setFamilyId(info.getFamilyId());
 		pb.setProductId(info.getProductId());
 		pb.setDescription(info.getFamilyName());
@@ -282,7 +282,7 @@ public class GmapsuppBuilder implements Combiner {
 		FileSystem fs = null;
 		try {
 			fs = ImgFS.openFs(name);
-			MpsFileReader mr = new MpsFileReader(fs.open(info.getMpsName(), "r"));
+			MpsFileReader mr = new MpsFileReader(fs.open(info.getMpsName(), "r"), info.getCodePage());
 			for (MapBlock block : mr.getMaps())
 				mpsFile.addMap(block);
 
@@ -356,9 +356,10 @@ public class GmapsuppBuilder implements Combiner {
 		int dot = name.lastIndexOf('.');
 
 		String base = name.substring(0, dot);
-		String ext = name.substring(dot + 1);
 		if (base.length() > 8)
 			base = base.substring(0, 8);
+
+		String ext = name.substring(dot + 1);
 		if (ext.length() > 3)
 			ext = ext.substring(0, 3);
 
@@ -373,13 +374,10 @@ public class GmapsuppBuilder implements Combiner {
 	 */
 	private void addImg(FileSystem outfs, String filename) {
 		try {
-			FileSystem infs = ImgFS.openFs(filename);
-
-			try {
+			try (FileSystem infs = ImgFS.openFs(filename)) {
 				copyAllFiles(infs, outfs);
-			} finally {
-				infs.close();
 			}
+
 		} catch (FileNotFoundException e) {
 			log.error("Could not open file " + filename);
 		}
@@ -417,6 +415,7 @@ public class GmapsuppBuilder implements Combiner {
 	private FileSystem createGmapsupp() throws FileNotWritableException {
 		BlockInfo bi = calcBlockSize();
 		int blockSize = bi.blockSize;
+
 		// Create this file, containing all the sub files
 		FileSystemParam params = new FileSystemParam();
 		params.setBlockSize(blockSize);
@@ -429,7 +428,7 @@ public class GmapsuppBuilder implements Combiner {
 		params.setReservedDirectoryBlocks(reserveBlocks);
 
 		FileSystem outfs = ImgFS.createFs(Utils.joinPath(outputDir, GMAPSUPP), params);
-		
+
 		mpsFile = createMpsFile(outfs);
 		mpsFile.setMapsetName(mapsetName);
 

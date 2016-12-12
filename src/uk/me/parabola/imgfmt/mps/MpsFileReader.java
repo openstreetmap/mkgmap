@@ -44,11 +44,14 @@ public class MpsFileReader implements Closeable {
 	private final ImgChannel chan;
 	private final ImgFileReader reader;
 	private final CharacterDecoder decoder;
+	private final int codePage;
 
-	public MpsFileReader(ImgChannel chan) {
+	public MpsFileReader(ImgChannel chan, int codePage) {
 		this.chan = chan;
 		this.reader = new BufferedImgFileReader(chan);
-		CodeFunctions funcs = CodeFunctions.createEncoderForLBL(0, 0);  // TODO fix me
+
+		this.codePage = codePage;
+		CodeFunctions funcs = CodeFunctions.createEncoderForLBL(0, codePage);
 		decoder = funcs.getDecoder();
 
 		readBlocks();
@@ -75,7 +78,7 @@ public class MpsFileReader implements Closeable {
 	}
 
 	private void readMapBlock() {
-		MapBlock block = new MapBlock();
+		MapBlock block = new MapBlock(codePage);
 		int val = reader.getInt();
 		block.setIds(val >>> 16, val & 0xffff);
 		block.setMapNumber(reader.getInt());
@@ -90,7 +93,7 @@ public class MpsFileReader implements Closeable {
 	}
 
 	private void readProductBlock() {
-		ProductBlock block = new ProductBlock();
+		ProductBlock block = new ProductBlock(codePage);
 		block.setProductId(reader.getChar());
 		block.setFamilyId(reader.getChar());
 		block.setDescription(decodeToString(reader.getZString()));

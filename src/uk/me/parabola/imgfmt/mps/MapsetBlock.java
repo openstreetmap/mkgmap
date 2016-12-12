@@ -25,13 +25,13 @@ import java.io.IOException;
  *
  * @author Steve Ratcliffe
  */
-public class MapsetBlock extends Block {
+public class MapsetBlock extends MpsBlock {
 	private static final int BLOCK_TYPE = 0x56;
 	
 	private String name = "OSM map set";
 	
 	public MapsetBlock() {
-		super(BLOCK_TYPE);
+		super(BLOCK_TYPE, 0);
 	}
 
 	protected void writeBody(StructuredOutputStream out) throws IOException {

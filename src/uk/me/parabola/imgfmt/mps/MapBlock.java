@@ -24,7 +24,7 @@ import uk.me.parabola.io.StructuredOutputStream;
  *
  * @author Steve Ratcliffe
  */
-public class MapBlock extends Block {
+public class MapBlock extends MpsBlock {
 	private static final int BLOCK_TYPE = 0x4c;
 
 	private int familyId;
@@ -36,8 +36,8 @@ public class MapBlock extends Block {
 	private String mapDescription;
 	private String areaName;
 
-	public MapBlock() {
-		super(BLOCK_TYPE);
+	public MapBlock(int codePage) {
+		super(BLOCK_TYPE, codePage);
 	}
 
 	protected void writeBody(StructuredOutputStream out) throws IOException {

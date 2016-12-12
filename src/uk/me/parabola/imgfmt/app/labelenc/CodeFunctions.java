@@ -82,7 +82,7 @@ public class CodeFunctions {
 			funcs.setEncodingType(ENCODING_FORMAT9);
 			funcs.setEncoder(new AnyCharsetEncoder("ascii", new TableTransliterator("ascii")));
 			funcs.setDecoder(new AnyCharsetDecoder("ascii"));
-			funcs.setCodepage(1252);
+			funcs.setCodepage(0);
 			break;
 		case "cp1252":
 		case "latin1":
