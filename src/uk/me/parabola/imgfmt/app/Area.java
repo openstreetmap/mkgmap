@@ -168,7 +168,9 @@ public class Area {
 			return areas;
 // beware - MapSplitter.splitMaxSize requests split of 1/1 if the original area wasn't too big
 		else if (nAreas == 1) // failed to split in half
-			return null;  
+			return null;
+		else if (areas.length == 1 && areas[0] == null)
+			return null;
 		else
 			throw new MapFailedException("Area split shift align problems");
 	}

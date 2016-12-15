@@ -100,6 +100,8 @@ public class MapSplitter {
 
 		MapArea ma = initialArea(mapSource);
 		MapArea[] areas = splitMaxSize(ma, orderByDecreasingArea);
+		if (areas == null)
+			return new MapArea[0];
 
 		// Now step through each area and see if any have too many map features
 		// in them.  For those that do, we further split them.  This is done
