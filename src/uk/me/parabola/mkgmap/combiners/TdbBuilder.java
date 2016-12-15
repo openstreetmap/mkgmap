@@ -18,7 +18,6 @@ package uk.me.parabola.mkgmap.combiners;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -61,6 +60,7 @@ public class TdbBuilder implements Combiner {
 	 *
 	 * @param args The command line arguments as they are at the end of the list.
 	 * In other words if the same argument appears more than once, then it will
+	 * have the latest value set.
 	 */
 	public void init(CommandArgs args) {
 		overviewMapname = args.get("overview-mapname", "osmmap");

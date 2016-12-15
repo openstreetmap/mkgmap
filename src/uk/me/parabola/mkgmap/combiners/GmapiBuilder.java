@@ -55,6 +55,7 @@ public class GmapiBuilder implements Combiner {
 	private String familyName;
 	private int familyId;
 	private String typFile;
+	private short productVersion;
 
 	public GmapiBuilder(Map<String, Combiner> combinerMap) {
 		this.combinerMap = combinerMap;
@@ -68,6 +69,8 @@ public class GmapiBuilder implements Combiner {
 	 * @param args The command line arguments.
 	 */
 	public void init(CommandArgs args) {
+		productVersion = (short) args.get("product-version", 100);
+
 		String overviewMapname = args.get("overview-mapname", "osmmap");
 
 		gmapDir = Paths.get(args.getOutputDir(), String.format("%s.gmap", overviewMapname));
@@ -218,7 +221,7 @@ public class GmapiBuilder implements Combiner {
 			writer.writeCharacters("\n");
 
 			xmlElement(writer, "Name", familyName);
-			xmlElement(writer, "DataVersion", "100");
+			xmlElement(writer, "DataVersion", String.valueOf(productVersion));
 			xmlElement(writer, "DataFormat", "Original");
 			xmlElement(writer, "ID", String.valueOf(familyId));
 
