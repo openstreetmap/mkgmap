@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.imgfmt.app;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -172,18 +173,19 @@ public class BufferedImgFileReader implements ImgFileReader {
 	}
 
 	/**
-	 * Read a zero terminated string from the file.
-	 * @return A string
+	 * Read a zero terminated string from the file, still as raw bytes.
+	 *
+	 * @return A byte array containing the encoded representation of the string.
 	 * @throws ReadFailedException For failures.
 	 */
-	public String getZString() throws ReadFailedException {
-		StringBuffer sb = new StringBuffer();
+	public byte[] getZString() throws ReadFailedException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
 
 		// Slow but sure implementation.
 		for (byte b = get(); b != 0; b = get()) {
-			sb.append((char) b);
+			out.write(b);
 		}
-		return sb.toString();
+		return out.toByteArray();
 	}
 
 	/**

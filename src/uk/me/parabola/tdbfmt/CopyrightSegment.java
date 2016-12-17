@@ -67,8 +67,7 @@ class CopyrightSegment {
 		this.extraProperties = 0;
 	}
 
-	public void write(Block block) throws IOException {
-		StructuredOutputStream os = block.getOutputStream();
+	public void write(StructuredOutputStream os) throws IOException {
 		os.write(copyrightCode);
 		os.write(whereCode);
 		os.write2(extraProperties);

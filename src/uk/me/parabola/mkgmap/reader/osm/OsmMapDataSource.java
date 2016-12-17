@@ -22,6 +22,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -65,7 +67,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 			new HousenumberHooks(),
 	};
 	protected OsmConverter converter;
-	private final Set<String> usedTags = new HashSet<String>();
+	private final Set<String> usedTags = new HashSet<>();
 	protected ElementSaver elementSaver;
 	protected OsmReadingHooks osmReadingHooks;
 
@@ -139,12 +141,12 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	 */
 	public String[] copyrightMessages() {
 		String copyrightFileName = getConfig().getProperty("copyright-file", null);
-		if (copyrightFileName != null)
-		{
-			File file = new File(copyrightFileName);
-			List<String> copyrightArray = new ArrayList<String>();
+		if (copyrightFileName != null) {
+			List<String> copyrightArray = new ArrayList<>();
 			try {
-				BufferedReader reader = new BufferedReader(new FileReader(file));
+				File file = new File(copyrightFileName);
+				BufferedReader reader = Files.newBufferedReader(file.toPath(), Charset.forName("utf-8"));
+
 				String text;
 				while ((text = reader.readLine()) != null) {
 					copyrightArray.add(text);

@@ -465,7 +465,7 @@ public class GmapsuppTest extends Base {
 
 	private MpsFileReader getMpsFile() throws IOException {
 		FileSystem fs = openFs(GMAPSUPP_IMG);
-		MpsFileReader reader = new MpsFileReader(fs.open("MAKEGMAP.MPS", "r"));
+		MpsFileReader reader = new MpsFileReader(fs.open("MAKEGMAP.MPS", "r"), 0);
 		TestUtils.registerFile(reader);
 		return reader;
 	}

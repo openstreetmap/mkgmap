@@ -19,6 +19,7 @@ package uk.me.parabola.tdbfmt;
 import java.io.IOException;
 
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.io.FileBlock;
 import uk.me.parabola.io.StructuredInputStream;
 import uk.me.parabola.io.StructuredOutputStream;
 
@@ -36,10 +37,11 @@ import uk.me.parabola.io.StructuredOutputStream;
  * 
  * @author Steve Ratcliffe
  */
-public class OverviewMapBlock {
+public class OverviewMapBlock extends FileBlock {
+	public static final int BLOCK_ID = 0x42;
+
 
 	private int mapNumber;
-	private String mapName;
 	private int parentMapNumber;
 
 	private String description;
@@ -50,11 +52,16 @@ public class OverviewMapBlock {
 	private int minLong;
 
 	public OverviewMapBlock() {
+		super(BLOCK_ID);
 		description = "overview map";
 	}
 
-	public OverviewMapBlock(Block block) throws IOException {
-		StructuredInputStream ds = block.getInputStream();
+	protected OverviewMapBlock(int blockId) {
+		super(blockId);
+	}
+
+	public OverviewMapBlock(StructuredInputStream ds) throws IOException {
+		super(BLOCK_ID);
 
 		mapNumber = ds.read4();
 		parentMapNumber = ds.read4();
@@ -67,9 +74,7 @@ public class OverviewMapBlock {
 		description = ds.readString();
 	}
 
-	public void write(Block block) throws IOException {
-		StructuredOutputStream os = block.getOutputStream();
-
+	public void writeBody(StructuredOutputStream os) throws IOException {
 		os.write4(mapNumber);
 		os.write4(parentMapNumber);
 		os.write4(maxLat);
@@ -108,16 +113,11 @@ public class OverviewMapBlock {
 	}
 
 	public void setMapName(String mapName) {
-		this.mapName = mapName;
 		try {
 			this.mapNumber = Integer.parseInt(mapName);
 		} catch (NumberFormatException e) {
 			this.mapNumber = 0;
 		}
-	}
-
-	protected String getMapName() {
-		return mapName;
 	}
 
 	public void setParentMapNumber(int parentMapNumber) {

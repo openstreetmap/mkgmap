@@ -16,8 +16,9 @@ package uk.me.parabola.mkgmap.build;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,8 +27,6 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
-
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.Utils;
@@ -95,6 +94,8 @@ import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.util.Configurable;
 import uk.me.parabola.util.EnhancedProperties;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+
 /**
  * This is the core of the code to translate from the general representation
  * into the garmin representation.
@@ -135,7 +136,7 @@ public class MapBuilder implements Configurable {
 
 	private int minSizePolygon;
 	private String polygonSizeLimitsOpt;
-	private HashMap<Integer,Integer> polygonSizeLimits = null;
+	private HashMap<Integer,Integer> polygonSizeLimits;
 	private double reducePointError;
 	private double reducePointErrorPolygon;
 	private boolean mergeLines;
@@ -821,16 +822,13 @@ public class MapBuilder implements Configurable {
 
 	/**
 	 * Set all the information that appears in the header.
-	 *
-	 * @param map The map to write to.
-	 * @param src The source of map information.
 	 */
-	protected void getMapInfo() {
+	private void getMapInfo() {
 		if (licenseFileName != null) {
 			File file = new File(licenseFileName);
 
 			try {
-				BufferedReader reader = new BufferedReader(new FileReader(file));
+				BufferedReader reader = Files.newBufferedReader(file.toPath(), Charset.forName("utf-8"));
 				String text;
 
 				// repeat until all lines is read
@@ -881,7 +879,7 @@ public class MapBuilder implements Configurable {
 	 * @param map The map to write to.
 	 * @param src The source of map information.
 	 */
-	protected void processInfo(Map map, LoadableMapDataSource src) {
+	private void processInfo(Map map, LoadableMapDataSource src) {
 		// The bounds of the map.
 		map.setBounds(src.getBounds());
 

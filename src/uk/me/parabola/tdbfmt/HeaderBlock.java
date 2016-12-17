@@ -18,6 +18,7 @@ package uk.me.parabola.tdbfmt;
 
 import java.io.IOException;
 
+import uk.me.parabola.io.FileBlock;
 import uk.me.parabola.io.StructuredInputStream;
 import uk.me.parabola.io.StructuredOutputStream;
 
@@ -26,7 +27,8 @@ import uk.me.parabola.io.StructuredOutputStream;
  *
  * @author Steve Ratcliffe
  */
-class HeaderBlock {
+class HeaderBlock extends FileBlock {
+	static final int BLOCK_ID = 0x50;
 
 	/** The map family. */
 	private short familyId;
@@ -54,11 +56,12 @@ class HeaderBlock {
 	private int codePage;
 
 	HeaderBlock(int tdbVersion) {
+		super(BLOCK_ID);
 		this.tdbVersion = tdbVersion;
 	}
 
-	HeaderBlock(Block block) throws IOException {
-		StructuredInputStream ds = block.getInputStream();
+	public HeaderBlock(StructuredInputStream ds) throws IOException {
+		super(BLOCK_ID);
 
 		productId = (short) ds.read2();
 		familyId = (short) ds.read2();
@@ -69,8 +72,10 @@ class HeaderBlock {
 		familyName = ds.readString();
 	}
 
-	public void write(Block block) throws IOException {
-		StructuredOutputStream os = block.getOutputStream();
+	/**
+	 * This is to overridden in a subclass.
+	 */
+	protected void writeBody(StructuredOutputStream os) throws IOException {
 		os.write2(productId);
 		os.write2(familyId);
 		os.write2(tdbVersion);
@@ -96,34 +101,15 @@ class HeaderBlock {
 			os.write3(0);
 			os.write4(codePage);
 			os.write4(10000);
-			os.write(1);	// map is routable
+			os.write(1);    // map is routable
 			if (enableProfile == 1)
-				os.write(1);	// map has profile information
+				os.write(1);    // map has profile information
 			else
 				os.write(0);
-			os.write(0);	// map has DEM sub files
+			os.write(0);    // map has DEM sub files
 		}
 	}
 
-	// good
-			//os.write(0);
-			//os.write(0x12);
-			//os.write(1);
-			//os.write(1);
-			//os.write(1);
-			//os.write4(0);
-			//os.write(0);
-			//os.write(0x15);
-			//os.write4(0);
-			//os.write4(0);
-			//os.write4(0);
-			//os.write4(0);
-			//os.write3(0);
-			//os.write4(1252);
-			//os.write4(10000);
-			//os.write(1);
-			//os.write(0);
-			//os.write(0);
 	public String toString() {
 		return "TDB header: "
 				+ productId

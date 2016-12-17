@@ -96,7 +96,7 @@ public interface ImgFileReader extends Closeable {
 	 * @return A string
 	 * @throws ReadFailedException For failures.
 	 */
-	public String getZString() throws ReadFailedException;
+	public byte[] getZString() throws ReadFailedException;
 
 	/**
 	 * Read in a string of digits in the compressed base 11 format that is used

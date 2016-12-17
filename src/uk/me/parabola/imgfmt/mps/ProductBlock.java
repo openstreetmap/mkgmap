@@ -26,15 +26,15 @@ import uk.me.parabola.io.StructuredOutputStream;
  *
  * @author Steve Ratcliffe
  */
-public class ProductBlock extends Block {
+public class ProductBlock extends MpsBlock {
 	private static final int BLOCK_TYPE = 0x46;
 
 	private int familyId;
 	private int productId;
 	private String description = "OSM maps";
 
-	public ProductBlock() {
-		super(BLOCK_TYPE);
+	public ProductBlock(int codePage) {
+		super(BLOCK_TYPE, codePage);
 	}
 
 	protected void writeBody(StructuredOutputStream out) throws IOException {

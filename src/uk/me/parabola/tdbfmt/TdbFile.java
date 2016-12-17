@@ -18,6 +18,7 @@ package uk.me.parabola.tdbfmt;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -42,13 +43,6 @@ public class TdbFile {
 
 	public static final int TDB_V407 = 407;
 
-	private static final int BLOCK_OVERVIEW = 0x42;
-	private static final int BLOCK_HEADER = 0x50;
-	private static final int BLOCK_COPYRIGHT = 0x44;
-	private static final int BLOCK_DETAIL = 0x4c;
-	private static final int BLOCK_R = 0x52;
-	private static final int BLOCK_T = 0x54;
-
 	// The version number of the TDB format
 	private int tdbVersion;
 
@@ -56,10 +50,11 @@ public class TdbFile {
 	private HeaderBlock headerBlock;
 	private CopyrightBlock copyrightBlock = new CopyrightBlock();
 	private OverviewMapBlock overviewMapBlock;
-	private final List<DetailMapBlock> detailBlocks = new ArrayList<DetailMapBlock>();
+	private final List<DetailMapBlock> detailBlocks = new ArrayList<>();
 	private final RBlock rblock = new RBlock();
 	private final TBlock tblock = new TBlock();
 	private String overviewDescription;
+	private int codePage;
 
 	public TdbFile() {
 	}
@@ -78,13 +73,8 @@ public class TdbFile {
 	public static TdbFile read(String name) throws IOException {
 		TdbFile tdb = new TdbFile();
 
-		InputStream is = new BufferedInputStream(new FileInputStream(name));
-
-		try {
-			StructuredInputStream ds = new StructuredInputStream(is);
-			tdb.load(ds);
-		} finally {
-			is.close();
+		try (InputStream is = new BufferedInputStream(new FileInputStream(name))) {
+			tdb.load(is);
 		}
 
 		return tdb;
@@ -105,6 +95,7 @@ public class TdbFile {
 	}
 
 	public void setCodePage(int codePage) {
+		this.codePage = codePage;
 		headerBlock.setCodePage(codePage);
 	}
 
@@ -113,6 +104,9 @@ public class TdbFile {
 	 * @param msg The message to add.
 	 */
 	public void addCopyright(String msg) {
+		if (msg.isEmpty())
+			return;
+
 		CopyrightSegment seg = new CopyrightSegment(CopyrightSegment.CODE_COPYRIGHT_TEXT_STRING, 3, msg);
 		copyrightBlock.addSegment(seg);
 	}
@@ -139,47 +133,32 @@ public class TdbFile {
 	}
 
 	public void write(String name) throws IOException {
-		CheckedOutputStream stream = new CheckedOutputStream(
-				new BufferedOutputStream(new FileOutputStream(name)),
-				new CRC32());
 
 		if (headerBlock == null || overviewMapBlock == null)
 			throw new IOException("Attempting to write file without being fully set up");
 
-		try {
-			Block block = new Block(BLOCK_HEADER);
-			headerBlock.write(block);
-			block.write(stream);
+		try (CheckedOutputStream stream = new CheckedOutputStream(
+				new BufferedOutputStream(new FileOutputStream(name)),
+				new CRC32()))
+		{
+			headerBlock.writeTo(stream, codePage);
 
-			block = new Block(BLOCK_COPYRIGHT);
-			copyrightBlock.write(block);
-			block.write(stream);
+			copyrightBlock.writeTo(stream, codePage);
 
 			if (tdbVersion >= TDB_V407) {
-				block = new Block(BLOCK_R);
-				rblock.write(block);
-				block.write(stream);
+				rblock.writeTo(stream, codePage);
 			}
 
-			block = new Block(BLOCK_OVERVIEW);
-			overviewMapBlock.write(block);
-			block.write(stream);
+			overviewMapBlock.writeTo(stream, codePage);
 
 			for (DetailMapBlock detail : detailBlocks) {
-				block = new Block(BLOCK_DETAIL);
-				detail.write(block);
-				block.write(stream);
+				detail.writeTo(stream, codePage);
 			}
 
 			if (tdbVersion >= TDB_V407) {
 				tblock.setSum(stream.getChecksum().getValue());
-
-				block = new Block(BLOCK_T);
-				tblock.write(block);
-				block.write(stream);
+				tblock.writeTo(stream, codePage);
 			}
-		} finally {
-			stream.close();
 		}
 	}
 
@@ -189,56 +168,73 @@ public class TdbFile {
 	 * @param ds The stream to read from.
 	 * @throws IOException For problems reading the file.
 	 */
-	private void load(StructuredInputStream ds) throws IOException {
+	private void load(InputStream ds) throws IOException {
 
-		while (!ds.testEof()) {
-			Block block = readBlock(ds);
-
-			switch (block.getBlockId()) {
-			case BLOCK_HEADER:
-				headerBlock = new HeaderBlock(block);
-				log.info("header block seen", headerBlock);
-				break;
-			case BLOCK_COPYRIGHT:
-				log.info("copyright block");
-				copyrightBlock = new CopyrightBlock(block);
-				break;
-			case BLOCK_OVERVIEW:
-				overviewMapBlock = new OverviewMapBlock(block);
-				log.info("overview block", overviewMapBlock);
-				break;
-			case BLOCK_DETAIL:
-				DetailMapBlock db = new DetailMapBlock(block);
-				log.info("detail block", db);
-				detailBlocks.add(db);
-				break;
-			default:
-				log.warn("Unknown block in tdb file");
-				break;
+		boolean eof = false;
+		while (!eof) {
+			try {
+				readBlock(ds);
+			} catch (EndOfFileException ignore) {
+				eof = true;
 			}
 		}
-
 	}
 
 	/**
 	 * The file is divided into blocks.  This reads a single block.
 	 *
 	 * @param is The input stream.
-	 * @return A block from the file.
 	 * @throws IOException For problems reading the file.
 	 */
-	private Block readBlock(StructuredInputStream is) throws IOException {
+	private void readBlock(InputStream is) throws IOException {
 		int blockType = is.read();
 		if (blockType == -1)
 			throw new EndOfFileException();
-		int blockLength = is.read2();
+
+		int blockLength = readBlockLength(is);
+		if (blockLength == -1)
+			throw new EndOfFileException();
 
 		byte[] body = new byte[blockLength];
 		int n = is.read(body);
 		if (n < 0)
 			throw new IOException("failed to read block");
 
-		return new Block(blockType, body);
+		StructuredInputStream ds = new StructuredInputStream(new ByteArrayInputStream(body));
+		switch (blockType) {
+		case HeaderBlock.BLOCK_ID:
+			headerBlock = new HeaderBlock(ds);
+			log.info("header block seen", headerBlock);
+			break;
+		case CopyrightBlock.BLOCK_ID:
+			log.info("copyright block");
+			copyrightBlock = new CopyrightBlock(ds);
+			break;
+		case OverviewMapBlock.BLOCK_ID:
+			overviewMapBlock = new OverviewMapBlock(ds);
+			log.info("overview block", overviewMapBlock);
+			break;
+		case DetailMapBlock.BLOCK_ID:
+			DetailMapBlock db = new DetailMapBlock(ds);
+			log.info("detail block", db);
+			detailBlocks.add(db);
+			break;
+		default:
+			log.warn("Unknown block in tdb file");
+			break;
+		}
+	}
+
+	private int readBlockLength(InputStream is) throws IOException {
+		int b1 = is.read();
+		if (b1 < 0)
+			return -1;
+
+		int b2 = is.read();
+		if (b2 < 0)
+			return -1;
+
+		return ((b2 & 0xff) << 8) | (b1 & 0xff);
 	}
 
 	public int getTdbVersion() {

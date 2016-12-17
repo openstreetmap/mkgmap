@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.tdbfmt;
 
+import uk.me.parabola.io.FileBlock;
+import uk.me.parabola.io.StructuredOutputStream;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.io.StructuredInputStream;
 
@@ -30,17 +32,20 @@ import java.util.HashSet;
  *
  * @author Steve Ratcliffe
  */
-class CopyrightBlock {
+class CopyrightBlock extends FileBlock {
+	public static final int BLOCK_ID = 0x44;
+
 	private static final Logger log = Logger.getLogger(CopyrightBlock.class);
 	
-	private final List<CopyrightSegment> segments = new ArrayList<CopyrightSegment>();
-	private final Set<CopyrightSegment> copySet = new HashSet<CopyrightSegment>();
+	private final List<CopyrightSegment> segments = new ArrayList<>();
+	private final Set<CopyrightSegment> copySet = new HashSet<>();
 
 	CopyrightBlock() {
+		super(BLOCK_ID);
 	}
 
-	CopyrightBlock(Block block) throws IOException {
-		StructuredInputStream ds = block.getInputStream();
+	CopyrightBlock(StructuredInputStream ds) throws IOException {
+		super(BLOCK_ID);
 
 		while (!ds.testEof()) {
 			CopyrightSegment segment = new CopyrightSegment(ds);
@@ -50,9 +55,12 @@ class CopyrightBlock {
 		}
 	}
 
-	public void write(Block block) throws IOException {
+	/**
+	 * This is to overridden in a subclass.
+	 */
+	protected void writeBody(StructuredOutputStream ds) throws IOException {
 		for (CopyrightSegment seg : segments) {
-			seg.write(block);
+			seg.write(ds);
 		}
 	}
 

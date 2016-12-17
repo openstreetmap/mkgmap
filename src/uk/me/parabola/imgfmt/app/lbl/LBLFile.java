@@ -50,7 +50,7 @@ public class LBLFile extends ImgFile {
 
 	private CharacterEncoder textEncoder = CodeFunctions.getDefaultEncoder();
 
-	private final Map<EncodedText, Label> labelCache = new HashMap<EncodedText, Label>();
+	private final Map<EncodedText, Label> labelCache = new HashMap<>();
 
 	private final LBLHeader lblHeader = new LBLHeader();
 
@@ -223,5 +223,9 @@ public class LBLFile extends ImgFile {
 
 	public int numZips() {
 		return places.numZips();
+	}
+
+	public int getCodePage() {
+		return lblHeader.getCodePage();
 	}
 }

@@ -118,5 +118,6 @@ public class SimpleTest extends Base {
 			}
 		}
 		assertTrue("enough checks run", count >= 3);
+
 	}
 }

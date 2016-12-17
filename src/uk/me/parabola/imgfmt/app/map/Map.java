@@ -23,6 +23,7 @@ import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
 import uk.me.parabola.imgfmt.app.net.NETFile;
 import uk.me.parabola.imgfmt.app.net.NODFile;
@@ -115,8 +116,8 @@ public class Map implements InternalFiles, Configurable {
 	}
 
 	public void config(EnhancedProperties props) {
-		// we don't want routing infos in the overview map (for now)
-		if (OverviewBuilder.isOverviewImg(mapName) == false){
+		// we don't want routing info in the overview map (for now)
+		if (!OverviewBuilder.isOverviewImg(mapName)){
 			try {
 				if (props.containsKey("route")) {
 					addNet();
@@ -131,11 +132,11 @@ public class Map implements InternalFiles, Configurable {
 		treFile.config(props);
 	}
 
-	protected void addNet() throws FileExistsException {
+	private void addNet() throws FileExistsException {
 		netFile = new NETFile(fileSystem.create(mapName + ".NET"));
 	}
 
-	protected void addNod() throws FileExistsException {
+	private void addNod() throws FileExistsException {
 		nodFile = new NODFile(fileSystem.create(mapName + ".NOD"), true);
 	}
 
@@ -159,12 +160,17 @@ public class Map implements InternalFiles, Configurable {
 
 	/**
 	 * There is an area after the TRE header and before its data
-	 * starts that can be used to save any old junk it seems.
+	 * starts that is used to save licence info.
 	 *
-	 * @param info Any string.
+	 * It seems that this must follow the code page of the LBL file.  The format6 encoding is not allowed
+	 * however.
+	 *
+	 * @param msg Any string.
 	 */
-	public void addInfo(String info) {
-		treFile.addInfo(info);
+	public void addInfo(String msg) {
+		int codePage = lblFile.getCodePage();
+		CodeFunctions functions = CodeFunctions.createEncoderForLBL(0, codePage);
+		treFile.addInfo(functions.getEncoder().encodeText(msg));
 	}
 
 	/**

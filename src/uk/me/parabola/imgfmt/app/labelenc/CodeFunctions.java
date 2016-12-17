@@ -40,7 +40,7 @@ public class CodeFunctions {
 		return encoder;
 	}
 
-	protected void setDecoder(CharacterDecoder decoder) {
+	private void setDecoder(CharacterDecoder decoder) {
 		this.decoder = decoder;
 	}
 
@@ -52,7 +52,7 @@ public class CodeFunctions {
 		return encodingType;
 	}
 
-	protected void setEncodingType(int encodingType) {
+	private void setEncodingType(int encodingType) {
 		this.encodingType = encodingType;
 	}
 
@@ -77,6 +77,12 @@ public class CodeFunctions {
 			funcs.setEncodingType(ENCODING_FORMAT6);
 			funcs.setEncoder(new Format6Encoder());
 			funcs.setDecoder(new Format6Decoder());
+			break;
+		case "cp0":  // This is used for ascii but with the single byte format
+			funcs.setEncodingType(ENCODING_FORMAT9);
+			funcs.setEncoder(new AnyCharsetEncoder("ascii", new TableTransliterator("ascii")));
+			funcs.setDecoder(new AnyCharsetDecoder("ascii"));
+			funcs.setCodepage(0);
 			break;
 		case "cp1252":
 		case "latin1":

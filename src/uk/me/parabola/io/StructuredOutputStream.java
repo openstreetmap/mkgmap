@@ -16,9 +16,15 @@
  */
 package uk.me.parabola.io;
 
+import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.FilterOutputStream;
+
+import uk.me.parabola.imgfmt.ExitException;
+import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
+import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
+
+import static uk.me.parabola.imgfmt.app.labelenc.BaseEncoder.NO_TEXT;
 
 /**
  * An output stream that has methods for writing strings and little endian
@@ -27,9 +33,12 @@ import java.io.FilterOutputStream;
  * @author Steve Ratcliffe
  */
 public class StructuredOutputStream extends FilterOutputStream {
-	
-	public StructuredOutputStream(OutputStream out) {
+
+	private final CharacterEncoder encoder;
+
+	public StructuredOutputStream(OutputStream out, CharacterEncoder encoder) {
 		super(out);
+		this.encoder = encoder;
 	}
 
 	public void write(int b) throws IOException {
@@ -63,10 +72,13 @@ public class StructuredOutputStream extends FilterOutputStream {
 	 * @throws IOException If the write fails.
 	 */
 	public void writeString(String s) throws IOException {
-		for (char c : s.toCharArray()) {
-			out.write((byte) c);
-		}
+		if (encoder == null)
+			throw new ExitException("tdbfile: character encoding is null");
 
-		out.write('\0');
+		EncodedText encodedText = encoder.encodeText(s);
+		if (encodedText == NO_TEXT)
+			return;
+
+		out.write(encodedText.getCtext(), 0, encodedText.getLength());
 	}
 }

@@ -17,6 +17,8 @@
 package uk.me.parabola.imgfmt.mps;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.channels.Channels;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -36,8 +38,8 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
 public class MpsFile {
 	private String mapsetName = "OSM map set";
 
-	private final Set<ProductBlock> products = new HashSet<ProductBlock>();
-	private final List<MapBlock> maps = new ArrayList<MapBlock>();
+	private final Set<ProductBlock> products = new HashSet<>();
+	private final List<MapBlock> maps = new ArrayList<>();
 
 	private final ImgChannel chan;
 
@@ -46,15 +48,16 @@ public class MpsFile {
 	}
 
 	public void sync() throws IOException {
+		OutputStream os = Channels.newOutputStream(chan);
 		for (MapBlock map : maps)
-			map.write(chan);
+			map.writeTo(os, map.getCodePage());
 
 		for (ProductBlock block : products)
-			block.write(chan);
+			block.writeTo(os, block.getCodePage());
 
 		MapsetBlock mapset = new MapsetBlock();
 		mapset.setName(mapsetName);
-		mapset.write(chan);
+		mapset.writeTo(os, mapset.getCodePage());
 	}
 
 	public void addMap(MapBlock map) {
