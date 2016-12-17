@@ -428,7 +428,7 @@ public class FileInfo {
 	}
 
 	public String getFamilyName() {
-		return args.get("family-name", "family name");
+		return args.get("family-name", "OSM map");
 	}
 
 	public String getSeriesName() {
