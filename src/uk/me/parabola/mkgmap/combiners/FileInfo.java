@@ -430,7 +430,7 @@ public class FileInfo {
 	}
 
 	public String getFamilyName() {
-		return args.get("family-name", "family name");
+		return args.get("family-name", "OSM map");
 	}
 
 	public String getSeriesName() {
@@ -491,5 +491,9 @@ public class FileInfo {
 
 	public boolean hasSortOrder() {
 		return sortOrderId != 0;
+	}
+
+	public String getOverviewName() {
+		return args.get("overview-mapname", "osmmap");
 	}
 }

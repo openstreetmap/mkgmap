@@ -362,6 +362,10 @@ public class MdrBuilder implements Combiner {
 			Utils.closeFile(file);
 	}
 
+	public String getFilename() {
+		return outputName;
+	}
+
 	public int getSize() {
 		return (int) tmpName.length();
 	}

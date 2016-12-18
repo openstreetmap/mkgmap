@@ -17,7 +17,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -47,12 +46,10 @@ public class GmapsuppTest extends Base {
 		File f = new File(GMAPSUPP_IMG);
 		assertFalse("does not pre-exist", f.exists());
 
-		Main.mainNoSystemExit(new String[]{
-				Args.TEST_STYLE_ARG,
+		Main.mainNoSystemExit(Args.TEST_STYLE_ARG,
 				"--gmapsupp",
 				Args.TEST_RESOURCE_IMG + "63240001.img",
-				Args.TEST_RESOURCE_IMG + "63240002.img"
-		});
+				Args.TEST_RESOURCE_IMG + "63240002.img");
 
 		assertTrue("gmapsupp.img is created", f.exists());
 
@@ -72,8 +69,7 @@ public class GmapsuppTest extends Base {
 	 */
 	@Test
 	public void testMpsFile() throws IOException {
-		Main.mainNoSystemExit(new String[]{
-				Args.TEST_STYLE_ARG,
+		Main.mainNoSystemExit(Args.TEST_STYLE_ARG,
 				"--gmapsupp",
 				"--family-id=150",
 				"--product-id=24",
@@ -81,8 +77,7 @@ public class GmapsuppTest extends Base {
 				"--family-name=tst family",
 				"--area-name=tst area",
 				Args.TEST_RESOURCE_IMG + "63240001.img",
-				Args.TEST_RESOURCE_IMG + "63240002.img"
-		});
+				Args.TEST_RESOURCE_IMG + "63240002.img");
 
 		MpsFileReader reader = getMpsFile();
 		List<MapBlock> list = reader.getMaps();
@@ -108,38 +103,30 @@ public class GmapsuppTest extends Base {
 	@Test
 	public void testCombiningSupps() throws IOException {
 		TestUtils.registerFile("g1.img", "g2.img");
-		Main.mainNoSystemExit(new String[]{
-				Args.TEST_STYLE_ARG,
+		Main.mainNoSystemExit(Args.TEST_STYLE_ARG,
 				"--gmapsupp",
 				"--family-id=150",
 				"--product-id=24",
 				"--series-name=tst series",
 				"--family-name=tst family",
 				"--area-name=tst area",
-				Args.TEST_RESOURCE_IMG + "63240001.img",
-		});
+				Args.TEST_RESOURCE_IMG + "63240001.img");
 
 		File f = new File("gmapsupp.img");
 		f.renameTo(new File("g1.img"));
 
-		Main.mainNoSystemExit(new String[]{
-				Args.TEST_STYLE_ARG,
+		Main.mainNoSystemExit(Args.TEST_STYLE_ARG,
 				"--gmapsupp",
 				"--family-id=152",
 				"--product-id=26",
 				"--series-name=tst series 2",
 				"--family-name=tst family 2",
 				"--area-name=tst area 2",
-				Args.TEST_RESOURCE_IMG + "63240002.img",
-		});
+				Args.TEST_RESOURCE_IMG + "63240002.img");
+
 		f.renameTo(new File("g2.img"));
 
-		Main.mainNoSystemExit(new String[]{
-				Args.TEST_STYLE_ARG,
-				"--gmapsupp",
-				"g1.img",
-				"g2.img"
-		});
+		Main.mainNoSystemExit(Args.TEST_STYLE_ARG, "--gmapsupp", "g1.img", "g2.img");
 
 
 		MpsFileReader reader = getMpsFile();
@@ -173,20 +160,16 @@ public class GmapsuppTest extends Base {
 	 */
 	@Test
 	public void testDifferentFamilies() throws IOException {
-		Main.mainNoSystemExit(new String[]{
-				Args.TEST_STYLE_ARG,
+		Main.mainNoSystemExit(Args.TEST_STYLE_ARG,
 				"--gmapsupp",
-
 				"--family-id=101",
 				"--product-id=1",
 				"--series-name=tst series1",
 				Args.TEST_RESOURCE_IMG + "63240001.img",
-
 				"--family-id=102",
 				"--product-id=2",
 				"--series-name=tst series2",
-				Args.TEST_RESOURCE_IMG + "63240002.img"
-		});
+				Args.TEST_RESOURCE_IMG + "63240002.img");
 
 		MpsFileReader reader = getMpsFile();
 		List<MapBlock> list = reader.getMaps();
@@ -212,27 +195,23 @@ public class GmapsuppTest extends Base {
 	 */
 	@Test
 	public void testProductBlocks() throws IOException {
-		Main.mainNoSystemExit(new String[]{
-				Args.TEST_STYLE_ARG,
+		Main.mainNoSystemExit(Args.TEST_STYLE_ARG,
 				"--gmapsupp",
-
 				"--family-id=101",
 				"--product-id=1",
 				"--family-name=tst family1",
 				"--series-name=tst series1",
 				Args.TEST_RESOURCE_IMG + "63240001.img",
-
 				"--family-id=102",
 				"--product-id=2",
 				"--family-name=tst family2",
 				"--series-name=tst series2",
-				Args.TEST_RESOURCE_IMG + "63240002.img"
-		});
+				Args.TEST_RESOURCE_IMG + "63240002.img");
 
 		MpsFileReader reader = getMpsFile();
 
 		List<ProductBlock> products = reader.getProducts();
-		Collections.sort(products, new Comparator<ProductBlock>() {
+		products.sort(new Comparator<ProductBlock>() {
 			public int compare(ProductBlock o1, ProductBlock o2) {
 				if (o1.getFamilyId() == o2.getFamilyId())
 					return 0;
@@ -259,17 +238,14 @@ public class GmapsuppTest extends Base {
 	 */
 	@Test
 	public void testProductWithSeveralMaps() throws IOException {
-		Main.mainNoSystemExit(new String[]{
-						Args.TEST_STYLE_ARG,
-						"--gmapsupp",
-
-						"--family-id=101",
-						"--product-id=1",
-						"--family-name=tst family1",
-						"--series-name=tst series1",
-						Args.TEST_RESOURCE_IMG + "63240001.img",
-						Args.TEST_RESOURCE_IMG + "63240002.img"
-				});
+		Main.mainNoSystemExit(Args.TEST_STYLE_ARG,
+				"--gmapsupp",
+				"--family-id=101",
+				"--product-id=1",
+				"--family-name=tst family1",
+				"--series-name=tst series1",
+				Args.TEST_RESOURCE_IMG + "63240001.img",
+				Args.TEST_RESOURCE_IMG + "63240002.img");
 
 		MpsFileReader reader = getMpsFile();
 		assertEquals("number of map blocks", 2, reader.getMaps().size());
@@ -279,19 +255,16 @@ public class GmapsuppTest extends Base {
 	@Test
 	public void testWithIndex() throws IOException {
 		new File("osmmap_mdr.img").delete();
-		Main.mainNoSystemExit(new String[]{
-				Args.TEST_STYLE_ARG,
+		Main.mainNoSystemExit(Args.TEST_STYLE_ARG,
 				"--gmapsupp",
 				"--index",
 				"--latin1",
-
 				"--family-id=101",
 				"--product-id=1",
 				"--family-name=tst family1",
 				"--series-name=tst series1",
 				Args.TEST_RESOURCE_IMG + "63240001.img",
-				Args.TEST_RESOURCE_IMG + "63240002.img"
-		});
+				Args.TEST_RESOURCE_IMG + "63240002.img");
 
 		assertFalse(new File("osmmap_mdr.img").exists());
 
@@ -315,20 +288,17 @@ public class GmapsuppTest extends Base {
 	public void testWithTwoIndexes() throws IOException {
 		TestUtils.registerFile("osmmap_mdr.img", "osmmap.img", "osmmap.tbd", "osmmap.mdx");
 
-		Main.mainNoSystemExit(new String[]{
-				Args.TEST_STYLE_ARG,
+		Main.mainNoSystemExit(Args.TEST_STYLE_ARG,
 				"--gmapsupp",
 				"--index",
 				"--tdbfile",
 				"--latin1",
-
 				"--family-id=101",
 				"--product-id=1",
 				"--family-name=tst family1",
 				"--series-name=tst series1",
 				Args.TEST_RESOURCE_IMG + "63240001.img",
-				Args.TEST_RESOURCE_IMG + "63240002.img"
-		});
+				Args.TEST_RESOURCE_IMG + "63240002.img");
 
 		assertTrue(new File("osmmap_mdr.img").exists());
 
@@ -355,12 +325,10 @@ public class GmapsuppTest extends Base {
 	public void testTwoFamilyIndex() throws IOException {
 		TestUtils.registerFile("osmmap_mdr.img", "osmmap.img", "osmmap.tbd", "osmmap.mdx");
 
-		Main.mainNoSystemExit(new String[]{
-				Args.TEST_STYLE_ARG,
+		Main.mainNoSystemExit(Args.TEST_STYLE_ARG,
 				"--gmapsupp",
 				"--index",
 				"--latin1",
-
 				"--family-id=101",
 				"--product-id=1",
 				"--family-name=tst family1",
@@ -369,8 +337,7 @@ public class GmapsuppTest extends Base {
 				"--family-id=202",
 				"--family-name=tst family2",
 				"--series-name=tst series2",
-				Args.TEST_RESOURCE_OSM + "uk-test-2.osm.gz"
-		});
+				Args.TEST_RESOURCE_OSM + "uk-test-2.osm.gz");
 
 		assertFalse(new File("osmmap_mdr.img").exists());
 
@@ -407,20 +374,10 @@ public class GmapsuppTest extends Base {
 	public void testImplicitCodePageIndex() throws IOException {
 		TestUtils.registerFile("osmmap_mdr.img", "osmmap.img", "osmmap.tbd", "osmmap.mdx");
 
-		Main.mainNoSystemExit(new String[]{
-				Args.TEST_STYLE_ARG,
-				"--code-page=1256",
+		Main.mainNoSystemExit(Args.TEST_STYLE_ARG, "--code-page=1256",
+				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz");
 
-				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz",
-		});
-
-		Main.mainNoSystemExit(new String[]{
-				Args.TEST_STYLE_ARG,
-				"--gmapsupp",
-				"--index",
-
-				"63240001.img",
-		});
+		Main.mainNoSystemExit(Args.TEST_STYLE_ARG, "--gmapsupp", "--index", "63240001.img");
 
 		assertFalse(new File("osmmap_mdr.img").exists());
 
@@ -442,15 +399,10 @@ public class GmapsuppTest extends Base {
 	public void testWarningOnMismatchedCodePages() throws IOException {
 		TestUtils.registerFile("osmmap.img");
 
-		Main.mainNoSystemExit(new String[]{
-				Args.TEST_STYLE_ARG,
-				"--route",
-				"--code-page=1256",
+		Main.mainNoSystemExit(Args.TEST_STYLE_ARG, "--route", "--code-page=1256",
 				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz",
-
 				"--latin1",
-				Args.TEST_RESOURCE_OSM + "uk-test-2.osm.gz",
-		});
+				Args.TEST_RESOURCE_OSM + "uk-test-2.osm.gz");
 
 		Outputs outputs = TestUtils.run(Args.TEST_STYLE_ARG,
 				"--gmapsupp",

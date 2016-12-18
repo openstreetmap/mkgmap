@@ -90,7 +90,12 @@ public class OverviewBuilder implements Combiner {
 		calcLevels();
 		writeOverviewMap();
 	}
-	
+
+	@Override
+	public String getFilename() {
+		return Utils.joinPath(outputDir, overviewMapname, "img");
+	}
+
 	private void calcLevels() {
 		List<MapShape> shapes = overviewSource.getShapes();
 		int maxRes = 16; // we can write a 0x4a polygon for planet in res 16

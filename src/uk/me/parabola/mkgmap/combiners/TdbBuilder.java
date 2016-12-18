@@ -47,7 +47,7 @@ public class TdbBuilder implements Combiner {
 	private String overviewMapnumber;
 	private String outputDir;
 	private int tdbVersion;
-	private List<String[]> copyrightMsgs = new ArrayList<String[]>();
+	private final List<String[]> copyrightMsgs = new ArrayList<>();
 
 	public TdbBuilder(OverviewBuilder ovb) {
 		overviewBuilder = ovb;
@@ -60,6 +60,7 @@ public class TdbBuilder implements Combiner {
 	 *
 	 * @param args The command line arguments as they are at the end of the list.
 	 * In other words if the same argument appears more than once, then it will
+	 * have the latest value set.
 	 */
 	public void init(CommandArgs args) {
 		overviewMapname = args.get("overview-mapname", "osmmap");
@@ -180,6 +181,10 @@ public class TdbBuilder implements Combiner {
 		tdb.setOverview(overviewBuilder.getBounds(), overviewMapnumber);
 
 		writeTdbFile();
+	}
+
+	public String getFilename() {
+		return Utils.joinPath(outputDir, overviewMapname, "tdb");
 	}
 
 	/**

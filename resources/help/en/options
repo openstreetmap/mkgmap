@@ -23,6 +23,10 @@ filename
 	compiled img files, if the input files are not already compiled
 	then they are compiled first and then the gmapsupp is created.
 
+--gmapi
+	Create a directory in the "gmapi" format required by Mac
+	applications.
+
 -c filename
 --read-config=filename
 	The given file is opened and each line is an option setting of
@@ -32,9 +36,9 @@ filename
 	long name instead.
 
 --output-dir=filename
-    The directory in which all output files are written. It defaults
-    to the current working directory, i.e. the directory the command is
-    executed from.
+	The directory in which all output files are written. It defaults
+	to the current working directory, i.e. the directory the command is
+	executed from.
 
 -n name
 --mapname=name
@@ -74,9 +78,9 @@ Label options:
 	This is equivalent to --code-page=65001. Note that only newer devices support Unicode.
 
 --code-page=number
-    This option enables the use of international characters. Only 8 bit
-    character sets are supported and so you have to specify which code page
-    you want to use.
+	This option enables the use of international characters. Only 8 bit
+	character sets are supported and so you have to specify which code page
+	you want to use.
 
 	It is entirely dependent on the device firmware which code pages are
 	supported.
@@ -121,46 +125,46 @@ Address search options:
 	  mkgmap:phone
 	  (mkgmap:is_in - used by location-autofill=is_in)
 
-  If the index is created from previously compiled .img files, then the
-  same code page and sorting options (e.g. --code-page, --latin1) must
-  be used as were used to compile the individual map tiles.
-  
---x-split-name-index
-    A temporary option to enable indexing each part of a street name separately.
-    So for example if the street is "Aleksandra Gryglewskiego" then you will be able to
-    search for it as both "Aleksandra" and "Gryglewskiego".  It will also increase the
-    size of the index.  Useful in countries where searching for the first word in name
-    is not the right thing to do.
+	If the index is created from previously compiled .img files, then the
+	same code page and sorting options (e.g. --code-page, --latin1) must
+	be used as were used to compile the individual map tiles.
 
-    Note that this option is still experimental and there may be problems. If you find
-    any let us know!
+--x-split-name-index
+	A temporary option to enable indexing each part of a street name separately.
+	So for example if the street is "Aleksandra Gryglewskiego" then you will be able to
+	search for it as both "Aleksandra" and "Gryglewskiego".  It will also increase the
+	size of the index.  Useful in countries where searching for the first word in name
+	is not the right thing to do.
+
+	Note that this option is still experimental and there may be problems. If you find
+	any let us know!
 
 --bounds=directory|zipfile
-    A directory or a zip file containing the preprocessed bounds files. 
-    Bounds files in a zip file must be located in the zip file's root directory.
+	A directory or a zip file containing the preprocessed bounds files. 
+	Bounds files in a zip file must be located in the zip file's root directory.
 
-    The preprocessed boundaries are used to add special tags to all elements 
-    (points, lines and polygons) containing the elements location information.
-    The style file can be used to assign the address tags mkgmap:country,
-    mkgmap:region etc. using these values.
-    
-    The following special tags are added:          
-              mkgmap:admin_level2 : Name of the admin_level=2 boundary 
-              mkgmap:admin_level3 : Name of the admin_level=3 boundary
-              ..
-              mkgmap:admin_level11
-              mkgmap:postcode : the postal_code value
-              
-    Preprocessed bounds can be created with the following command:
-       java -cp mkgmap.jar 
-          uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryPreprocessor
-          <inputfile> <boundsdir>
-    
-    The input file must contain the boundaries that should be preprocessed. 
-    It can have OSM, PBF or O5M file format. It is recommended that it 
-    contains the boundary data only to avoid very high memory usage.
-    The boundsdir gives the directory where the processed files are stored.
-    This directory can be used as --bounds parameter with mkgmap.               
+	The preprocessed boundaries are used to add special tags to all elements 
+	(points, lines and polygons) containing the elements location information.
+	The style file can be used to assign the address tags mkgmap:country,
+	mkgmap:region etc. using these values.
+
+	The following special tags are added:          
+			  mkgmap:admin_level2 : Name of the admin_level=2 boundary 
+			  mkgmap:admin_level3 : Name of the admin_level=3 boundary
+			  ..
+			  mkgmap:admin_level11
+			  mkgmap:postcode : the postal_code value
+			  
+	Preprocessed bounds can be created with the following command:
+	   java -cp mkgmap.jar 
+		  uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryPreprocessor
+		  <inputfile> <boundsdir>
+
+	The input file must contain the boundaries that should be preprocessed. 
+	It can have OSM, PBF or O5M file format. It is recommended that it 
+	contains the boundary data only to avoid very high memory usage.
+	The boundsdir gives the directory where the processed files are stored.
+	This directory can be used as --bounds parameter with mkgmap.               
     
 --location-autofill=[option1,[option2]]
 	Controls how the address fields for country, region, city and zip info 
@@ -168,39 +172,39 @@ Address search options:
 	mkgmap address tags (e.g. mkgmap:city - see option index).
 	Warning: automatic assignment of address fields is somehow a best guess.
 
-    is_in     The is_in tag is analyzed for country and region information.
+	is_in     The is_in tag is analyzed for country and region information.
               
-    nearest   The city/hamlet points that are closest to the element are used 
+	nearest   The city/hamlet points that are closest to the element are used 
               to assign the missing address fields. Beware that cities located 
               in the same tile are used only. So the results close to a tile 
               border have less quality.  
 
 --housenumbers
-  Enables house number search for OSM input files. 
-  All nodes and polygons having addr:housenumber set are matched 
-  to streets. A match between a house number element and a street is created if
-  the street is located within a radius of 150m and the addr:street tag value of 
-  the house number element equals the mgkmap:street tag value of the street. 
-  The mkgmap:street tag must be added to the street in the style file.
-  For optimal results, the tags mkgmap:city and mkgmap:postal_code should be
-  set for the housenumber element. If a street connects two or more cities
-  this allows to find all addresses along the road, even they have the same
-  number.
-  Example for given street name: 
-     Node -  addr:street=Main Street addr:housenumber=2
-     Way 1 - name=Main Street
-     Way 2 - name=Main Street, mkgmap:street=Main Street
-     Way 3 - mkgmap:street=Mainstreet
-     Way 4 - name=Main Street [A504]
-    The node matches to Way 2. It has mkgmap:street set with a value equal to
-    the addr:street tag value of the house number node.
-  If the street is not given with addr:housenumber, mkgmap uses heuristics
+	Enables house number search for OSM input files. 
+	All nodes and polygons having addr:housenumber set are matched 
+	to streets. A match between a house number element and a street is created if
+	the street is located within a radius of 150m and the addr:street tag value of 
+	the house number element equals the mgkmap:street tag value of the street. 
+	The mkgmap:street tag must be added to the street in the style file.
+	For optimal results, the tags mkgmap:city and mkgmap:postal_code should be
+	set for the housenumber element. If a street connects two or more cities
+	this allows to find all addresses along the road, even they have the same
+	number.
+	Example for given street name: 
+	 Node -  addr:street=Main Street addr:housenumber=2
+	 Way 1 - name=Main Street
+	 Way 2 - name=Main Street, mkgmap:street=Main Street
+	 Way 3 - mkgmap:street=Mainstreet
+	 Way 4 - name=Main Street [A504]
+	The node matches to Way 2. It has mkgmap:street set with a value equal to
+	the addr:street tag value of the house number node.
+	If the street is not given with addr:housenumber, mkgmap uses heuristics
 	to find the best match.
-  
+
 Overview map options:
 --overview-mapname=name
-	If --tdbfile is enabled, this gives the name of the overview
-	.img and .tdb files. The default map name is osmmap.
+If --tdbfile is enabled, this gives the name of the overview
+.img and .tdb files. The default map name is osmmap.
 
 --overview-mapnumber=8 digit number
 	If --tdbfile is enabled, this gives the internal 8 digit
@@ -208,17 +212,17 @@ Overview map options:
 	number is 63240000.
 
 --overview-levels
-  like levels, specifies additional levels that are to be written to the
-  overview map. Counting of the levels should continue. Up to 8 additional 
-  levels may be specified, but the lowest usable resolution with MapSource 
-  seems to be 11. The hard coded default is empty.      
+	like levels, specifies additional levels that are to be written to the
+	overview map. Counting of the levels should continue. Up to 8 additional 
+	levels may be specified, but the lowest usable resolution with MapSource 
+	seems to be 11. The hard coded default is empty.      
 
 --remove-ovm-work-files
-  If overview-levels is used, mkgmap creates one additional file 
-  with the prefix ovm_ for each map (*.img) file. 
-  These files are used to create the overview map.
-  With option --remove-ovm-work-files=true the files are removed 
-  after the overview map was created. The default is to keep the files.  
+	If overview-levels is used, mkgmap creates one additional file 
+	with the prefix ovm_ for each map (*.img) file. 
+	These files are used to create the overview map.
+	With option --remove-ovm-work-files=true the files are removed 
+	after the overview map was created. The default is to keep the files.  
 
 Style options:
 --style-file=file
@@ -241,8 +245,8 @@ Style options:
 
 --style=name
 	Specify a style name. Must be used if --style-file points to a 
-  directory or zip file containing multiple styles. If --style-file 
-  is not used, it selects one of the built-in styles. 
+	directory or zip file containing multiple styles. If --style-file 
+	is not used, it selects one of the built-in styles. 
 
 --list-styles
 	List the available styles. If this option is preceded by a style-file
@@ -250,9 +254,9 @@ Style options:
 
 --check-styles
 	Perform some checks on the available styles. If this option is 
-  preceded by a style-file option then it checks the styles 
-  available within that file. If it is also preceded by the style
-  option it will only check that style.
+	preceded by a style-file option then it checks the styles 
+	available within that file. If it is also preceded by the style
+	option it will only check that style.
 
 --levels=levels code
 	Change the way that the levels on the map correspond to the zoom
@@ -293,9 +297,9 @@ Product description options:
 	drop-down. The default is "OSM map".
 
 --area-name
-  Area name is displayed on Garmin units (or at least on eTrex) as the second 
-  part of the mapname in the list of the individual maps.
-   
+	Area name is displayed on Garmin units (or at least on eTrex) as the second 
+	part of the mapname in the list of the individual maps.
+
 --copyright-message=note
 	Specify a copyright message for files that do not contain one.
 
@@ -306,7 +310,7 @@ Product description options:
 
 --license-file=file
 	Specify a file which content will be added as license. 
-  All entries of all maps will be merged in the overview map.
+	All entries of all maps will be merged in the overview map.
 
 Optimization options:
 
@@ -329,21 +333,21 @@ Optimization options:
   Default is enabled, use --no-merge-lines to disable.
 	
 --min-size-polygon=NUM
-  Removes all polygons smaller than NUM from the map.
-  This reduces map size and speeds up redrawing of maps. 
-  Recommended value is 8 to 15, default is 8.
-  See also polygon-size-limits.
-   
+	Removes all polygons smaller than NUM from the map.
+	This reduces map size and speeds up redrawing of maps. 
+	Recommended value is 8 to 15, default is 8.
+	See also polygon-size-limits.
+
 --polygon-size-limits=limits code
-  Allows to specify different min-size-polygon values for each resolution.
-  Sample:  
-  --polygon-size-limits="24:12, 18:10, 16:8, 14:4, 12:2, 11:0"
-  If a resolution is not given, mkgmap uses the value for the next higher 
-  one. For the given sample, resolutions 19 to 24 will use value 12,
-  resolution 17 and 18 will use 10, and so on.
-  Value 0 means to skip the size filter. 
-  Note that in resolution 24 the filter is not used.  
-   
+	Allows to specify different min-size-polygon values for each resolution.
+	Sample:  
+	--polygon-size-limits="24:12, 18:10, 16:8, 14:4, 12:2, 11:0"
+	If a resolution is not given, mkgmap uses the value for the next higher 
+	one. For the given sample, resolutions 19 to 24 will use value 12,
+	resolution 17 and 18 will use 10, and so on.
+	Value 0 means to skip the size filter. 
+	Note that in resolution 24 the filter is not used.  
+
 Miscellaneous options:
 
 --max-jobs[=number]
@@ -508,21 +512,21 @@ Miscellaneous options:
 	       * the centre point of the biggest area
 
 --pois-to-areas-placement[=taglist]
-    A semicolon separated list of tag=value definitions. A POI is placed at the first
-    node of the polygon tagged with the first tag/value pair. If none of the nodes are
-    tagged with the first tag-value pair the first node tagged with the second tag-value
-    pair is used and so on. If none of the tag-value pairs matches or the taglist is empty 
-    the centre of the polygon is used.
-    It is possible to define wildcards for tag values like entrance=*.
-    Default: entrance=main;entrance=yes;building=entrance
+	A semicolon separated list of tag=value definitions. A POI is placed at the first
+	node of the polygon tagged with the first tag/value pair. If none of the nodes are
+	tagged with the first tag-value pair the first node tagged with the second tag-value
+	pair is used and so on. If none of the tag-value pairs matches or the taglist is empty 
+	the centre of the polygon is used.
+	It is possible to define wildcards for tag values like entrance=*.
+	Default: entrance=main;entrance=yes;building=entrance
 
 --precomp-sea=directory|zipfile
-    Defines the directory or a zip file that contains precompiled sea tiles. 
-    Sea files in a zip file must be located in the zip file's root directory or in 
-    a sub directory sea. When this option is defined all natural=coastline tags 
-    from the input OSM tiles are removed and the precompiled data is used instead. 
-    This option can be combined with the generate-sea options multipolygon, polygons 
-    and land-tag. The coastlinefile option is ignored if precomp-sea is set.      
+	Defines the directory or a zip file that contains precompiled sea tiles. 
+	Sea files in a zip file must be located in the zip file's root directory or in 
+	a sub directory sea. When this option is defined all natural=coastline tags 
+	from the input OSM tiles are removed and the precompiled data is used instead. 
+	This option can be combined with the generate-sea options multipolygon, polygons 
+	and land-tag. The coastlinefile option is ignored if precomp-sea is set.      
 
 --coastlinefile=filename[,filename]
 	Defines a comma separated list of files that contain coastline 
@@ -593,7 +597,7 @@ Miscellaneous options:
 	(NSIS) to create a Windows Mapsource Installer.
 
 --make-all-cycleways
-  Deprecated, use --make-opposite-cycleways instead. Former meaning: 
+	Deprecated, use --make-opposite-cycleways instead. Former meaning: 
 	Turn on all of the options that make cycleways.
 
 --make-opposite-cycleways
@@ -602,7 +606,7 @@ Miscellaneous options:
 	the original that allows bicycle traffic (in both directions).
 
 --make-cycleways
-  Now ignored, former meaning:
+	Now ignored, former meaning:
 	Some streets have a separate cycleway track/lane just for
 	bicycle traffic and this option makes a way with the same
 	points as the original that allows bicycle traffic. Also,
@@ -610,22 +614,22 @@ Miscellaneous options:
 	(unless that way's bicycle access has been defined).
 
 --link-pois-to-ways
-    This option may copy some specific attributes of a POI 
-    to a small part of the way the POI is located on. This can be used
-    to let barriers block a way or to lower the calculated speed
-    around traffic signals.
-    POIs with the tags highway=* (e.g. highway=traffic_signals)  
-    or barrier=* (e.g. barrier=cycle_barrier) are supported.
-    The style developer must add at least one of the access tags
-    (mkgmap:foot, mkgmap:car etc.), mkgmap:road-speed and/or 
-    mkgmap:road-class to the POI. 
-    The access tags are ignored if they have no effect for the way, 
-    else a route restriction is added at the POI so that only 
-    allowed vehicles are routed through it. 
-    The tags mkgmap:road-speed and/or mkgmap:road-class are 
-    applied to a small part of the way around the POI, typically
-    to the next junction or a length of ~25 m. The tags
-    are ignored for pedestrian-only ways.      
+	This option may copy some specific attributes of a POI 
+	to a small part of the way the POI is located on. This can be used
+	to let barriers block a way or to lower the calculated speed
+	around traffic signals.
+	POIs with the tags highway=* (e.g. highway=traffic_signals)  
+	or barrier=* (e.g. barrier=cycle_barrier) are supported.
+	The style developer must add at least one of the access tags
+	(mkgmap:foot, mkgmap:car etc.), mkgmap:road-speed and/or 
+	mkgmap:road-class to the POI. 
+	The access tags are ignored if they have no effect for the way, 
+	else a route restriction is added at the POI so that only 
+	allowed vehicles are routed through it. 
+	The tags mkgmap:road-speed and/or mkgmap:road-class are 
+	applied to a small part of the way around the POI, typically
+	to the next junction or a length of ~25 m. The tags
+	are ignored for pedestrian-only ways.      
 
 --process-destination
 	Splits all motorway_link, trunk_link, primary_link, secondary_link,
@@ -642,20 +646,20 @@ Miscellaneous options:
 	See also --process-exits.
 	
 --process-exits
-    Usual Garmin devices do not tell the name of the exit on motorways 
-    while routing with mkgmap created maps. This option splits each
-    motorway_link, trunk_link, primary_link, secondary_link, and tertiary_link 
+	Usual Garmin devices do not tell the name of the exit on motorways 
+	while routing with mkgmap created maps. This option splits each
+	motorway_link, trunk_link, primary_link, secondary_link, and tertiary_link 
 		way into three parts. 
 		All parts are tagged with the original tags of the link. 
 		Additionally the middle part is tagged with the following tags:
-      mkgmap:exit_hint=true
-      mkgmap:exit_hint_ref=<ref tag value of the exit>
-      mkgmap:exit_hint_name=<name tag value of the exit>
-      mkgmap:exit_hint_exit_to=<exit_to tag value of the exit>
-    Adding a rule checking the mkgmap:exit_hint=true makes it possible
-    to use any routable Garmin type (except 0x08 and 0x09) for the middle 
-    part so that the Garmin device tells the name of this middle part as 
-    hint where to leave the major road.
+	  mkgmap:exit_hint=true
+	  mkgmap:exit_hint_ref=<ref tag value of the exit>
+	  mkgmap:exit_hint_name=<name tag value of the exit>
+	  mkgmap:exit_hint_exit_to=<exit_to tag value of the exit>
+	Adding a rule checking the mkgmap:exit_hint=true makes it possible
+	to use any routable Garmin type (except 0x08 and 0x09) for the middle 
+	part so that the Garmin device tells the name of this middle part as 
+	hint where to leave the major road.
 	The first part must have type 0x08 or 0x09 so that Garmin uses the hint. 
 	
 --delete-tags-file=FILENAME
@@ -686,7 +690,7 @@ Miscellaneous options:
 	things.
 
 --hide-gmapsupp-on-pc
-  Set a bit in the gmapsupp.img that tells PC software that the file is
+	Set a bit in the gmapsupp.img that tells PC software that the file is
 	already installed on the PC and therefore there is no need to read it 
 	from the device.
 
