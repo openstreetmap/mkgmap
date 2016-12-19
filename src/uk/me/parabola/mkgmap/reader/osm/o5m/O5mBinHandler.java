@@ -386,17 +386,7 @@ public class O5mBinHandler extends OsmHandler{
 				ioPos++; // skip terminating zero from uid
 				--bytesToRead;
 			}
-			int start = 0;
-			int buffPos = 0; 
-			stringPair[1] = null;
-			while(stringPair[1] == null){
-				final int b = ioBuf[ioPos++];
-				--bytesToRead;
-				cnvBuffer[buffPos++] = (byte) b;
-
-				if (b == 0)
-					stringPair[1] = new String(cnvBuffer, start, buffPos-1, "UTF-8");
-			}
+			stringPair[1] = readString();
 			long bytes = toReadStart - bytesToRead;
 			if (bytes <= MAX_STRING_PAIR_SIZE)
 				storeStringPair();
@@ -423,17 +413,7 @@ public class O5mBinHandler extends OsmHandler{
 				refType = 3;
 			stringPair[0] = REL_REF_TYPES[refType];
 				
-			int start = 0;
-			int buffPos = 0; 
-			stringPair[1] = null;
-			while(stringPair[1] == null){
-				final int b = ioBuf[ioPos++];
-				--bytesToRead;
-				cnvBuffer[buffPos++] =  (byte)b;
-
-				if (b == 0)
-					stringPair[1] = new String(cnvBuffer, start, buffPos-1, "UTF-8");
-			}
+			stringPair[1] = readString();
 			long bytes = toReadStart - bytesToRead;
 			if (bytes <= MAX_STRING_PAIR_SIZE)
 				storeStringPair();
@@ -460,18 +440,8 @@ public class O5mBinHandler extends OsmHandler{
 		if (stringRef == 0){
 			long toReadStart = bytesToRead;
 			int cnt = 0;
-			int buffPos = 0; 
-			int start = 0;
 			while (cnt < 2){
-				final int b = ioBuf[ioPos++];
-				--bytesToRead;
-				cnvBuffer[buffPos++] =  (byte)b;
-
-				if (b == 0){
-					stringPair[cnt] = new String(cnvBuffer, start, buffPos-start-1, "UTF-8");
-					++cnt;
-					start = buffPos;
-				}
+				stringPair[cnt++] = readString();
 			}
 			long bytes = toReadStart - bytesToRead;
 			if (bytes <= MAX_STRING_PAIR_SIZE)
@@ -480,6 +450,22 @@ public class O5mBinHandler extends OsmHandler{
 		else 
 			setStringRefPair(stringRef);
 	}
+	
+	/**
+	 * Read a zero-terminated string (see o5m definition).
+	 * @throws IOException
+	 */
+	String readString() throws IOException {
+		int length = 0; 
+		while (true) {
+			final int b = ioBuf[ioPos++];
+			--bytesToRead;
+			if (b == 0)
+				return new String(cnvBuffer, 0, length, "UTF-8");
+			cnvBuffer[length++] = (byte) b;
+		}
+	}
+
 	
 	/** reset the delta values and string table */
 	private void reset(){
