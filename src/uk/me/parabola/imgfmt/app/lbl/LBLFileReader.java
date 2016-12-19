@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
@@ -48,11 +49,11 @@ public class LBLFileReader extends ImgFile {
 
 	private final LBLHeader header = new LBLHeader();
 
-	private final Map<Integer, Label> labels = new HashMap<>();
-	private final Map<Integer, POIRecord> pois = new HashMap<>();
+	private final Int2ObjectOpenHashMap<Label> labels = new Int2ObjectOpenHashMap<>();
+	private final Int2ObjectOpenHashMap<POIRecord> pois = new Int2ObjectOpenHashMap<>();
 	private final List<Country> countries = new ArrayList<>();
 	private final List<Region> regions = new ArrayList<>();
-	private final Map<Integer, Zip> zips = new HashMap<>();
+	private final Int2ObjectOpenHashMap<Zip> zips = new Int2ObjectOpenHashMap<>();
 	private final List<City> cities = new ArrayList<>();
 
 	public LBLFileReader(ImgChannel chan) {
