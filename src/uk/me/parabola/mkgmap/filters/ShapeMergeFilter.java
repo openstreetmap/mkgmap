@@ -15,6 +15,7 @@ package uk.me.parabola.mkgmap.filters;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -52,8 +53,8 @@ public class ShapeMergeFilter{
 		if (shapes.size() <= 1)
 			return shapes;
 		int count = 0;
-		MultiHashMap<Integer, Map<MapShape, List<ShapeHelper>>> topMap = new MultiHashMap<Integer, Map<MapShape,List<ShapeHelper>>>();
-		List<MapShape> mergedShapes = new ArrayList<MapShape>();
+		MultiHashMap<Integer, Map<MapShape, List<ShapeHelper>>> topMap = new MultiHashMap<>();
+		List<MapShape> mergedShapes = new ArrayList<>();
 		for (MapShape shape: shapes) {
 			if (shape.getMinResolution() > resolution || shape.getMaxResolution() < resolution)
 				continue;
@@ -76,8 +77,8 @@ public class ShapeMergeFilter{
 				continue;
 			}
 			if (sameTypeList.isEmpty()){
-				Map<MapShape, List<ShapeHelper>> lowMap = new LinkedHashMap<MapShape, List<ShapeHelper>>();
-				ArrayList<ShapeHelper> list = new ArrayList<ShapeHelper>();
+				Map<MapShape, List<ShapeHelper>> lowMap = new LinkedHashMap<>();
+				ArrayList<ShapeHelper> list = new ArrayList<>();
 				list.add(sh);
 				lowMap.put(shape, list);
 				topMap.add(shape.getType(),lowMap);
@@ -105,7 +106,7 @@ public class ShapeMergeFilter{
 					}
 				}
 				if (!added){
-					ArrayList<ShapeHelper> list = new ArrayList<ShapeHelper>();
+					ArrayList<ShapeHelper> list = new ArrayList<>();
 					list.add(sh);
 					lowMap.put(shape, list);
 				}
@@ -157,7 +158,7 @@ public class ShapeMergeFilter{
 	private List<ShapeHelper> addWithConnectedHoles(List<ShapeHelper> list,
 			final ShapeHelper toAdd, final int type) {
 		assert toAdd.getPoints().size() > 3;
-		List<ShapeHelper> result = new ArrayList<ShapeHelper>(list.size()+1);
+		List<ShapeHelper> result = new ArrayList<>(list.size()+1);
 		ShapeHelper shNew = new ShapeHelper(toAdd);
 		for (ShapeHelper shOld:list){
 			if (shOld.getBounds().intersects(shNew.getBounds()) == false){
@@ -224,6 +225,8 @@ public class ShapeMergeFilter{
 		List<Coord> merged = null; 
 		if (points1.size() + points2.size() - 2*sh1PositionsToCheck.size() < PolygonSplitterFilter.MAX_POINT_IN_ELEMENT){
 			merged = mergeLongestSequence(points1, points2, sh1PositionsToCheck, sh2PositionsToCheck, sameDir);
+			if (merged.isEmpty())
+				return dupShape;
 			if (merged.get(0) != merged.get(merged.size()-1))
 				merged = null;
 			else if (merged.size() > PolygonSplitterFilter.MAX_POINT_IN_ELEMENT){
@@ -262,7 +265,7 @@ public class ShapeMergeFilter{
 	 * @param s1PositionsToCheck will contain common positions in shape 1   
 	 * @param s2PositionsToCheck will contain common positions in shape 2
 	 */
-	private void findCommonCoords(List<Coord> s1, List<Coord> s2,
+	private static void findCommonCoords(List<Coord> s1, List<Coord> s2,
 			IntArrayList s1PositionsToCheck,
 			IntArrayList s2PositionsToCheck) {
 		Map<Coord, Integer> s2PosMap = new IdentityHashMap<>(s2.size() - 1);
@@ -312,7 +315,7 @@ public class ShapeMergeFilter{
 	 * @param sameDir true if both shapes are clockwise or both are ccw
 	 * @return the merged shape or null if no points are common.
 	 */
-	private List<Coord> mergeLongestSequence(List<Coord> points1, List<Coord> points2, IntArrayList sh1PositionsToCheck,
+	private static List<Coord> mergeLongestSequence(List<Coord> points1, List<Coord> points2, IntArrayList sh1PositionsToCheck,
 			IntArrayList sh2PositionsToCheck, boolean sameDir) {
 		if (sh1PositionsToCheck.isEmpty())
 			return null;
@@ -360,7 +363,11 @@ public class ShapeMergeFilter{
 		}
 		// now merge the shapes. The longest sequence of common points is removed.
 		// The remaining points are connected in the direction of the 1st shape.
-		List<Coord> merged = new ArrayList<Coord>(s1Size + s2Size - 2*longestSequence -1);
+		int remaining = s1Size + s2Size - 2*longestSequence -1;
+		if (remaining < 3) {
+			return Collections.emptyList(); // may happen with self-intersecting duplicated shapes
+		}
+		List<Coord> merged = new ArrayList<>(remaining);
 		int s1Pos = sh1PositionsToCheck.getInt(startOfLongestSequence+longestSequence);
 		for (int i = 0; i < s1Size - longestSequence - 1; i++){
 			merged.add(points1.get(s1Pos));
@@ -387,7 +394,7 @@ public class ShapeMergeFilter{
 		return merged;
 	}
  	
-	private class ShapeHelper{
+	private static class ShapeHelper{
 		final private List<Coord> points;
 		long id; // TODO: remove debugging aid
 		long areaTestVal;
