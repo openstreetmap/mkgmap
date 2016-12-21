@@ -34,6 +34,7 @@ import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
 import uk.me.parabola.mkgmap.filters.MapFilterChain;
 import uk.me.parabola.mkgmap.filters.PolygonSplitterFilter;
 import uk.me.parabola.mkgmap.filters.PolygonSubdivSizeSplitterFilter;
+import uk.me.parabola.mkgmap.filters.ShapeMergeFilter;
 import uk.me.parabola.mkgmap.general.MapDataSource;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
@@ -205,6 +206,8 @@ public class MapArea implements MapDataSource {
 	 */
 	public MapArea[] split(int nx, int ny, int resolution, Area bounds, boolean orderByDecreasingArea) {
 		int resolutionShift = orderByDecreasingArea ? (24 - resolution) : 0;
+		if (!this.hasData())
+			resolutionShift = 0;
 		Area[] areas = bounds.split(nx, ny, resolutionShift);
 		if (areas == null) { //  Failed to split!
 			if (log.isDebugEnabled()) { // see what is here
@@ -623,7 +626,7 @@ public class MapArea implements MapDataSource {
 	 * @param dy30 The size of each division (y direction)
 	 * @return The index to areas where the map element fits.
 	 */
-	private int pickArea(MapArea[] areas, MapElement e,
+	private static int pickArea(MapArea[] areas, MapElement e,
 			int xbase30, int ybase30,
 			int nx, int ny,
 			int dx30, int dy30)
@@ -733,8 +736,18 @@ public class MapArea implements MapDataSource {
 							areasHashMap.put(hashVal, co);
 					}
 				}
+				if (Math.abs(signedAreaSize) < ShapeMergeFilter.SINGLE_POINT_AREA
+						&& areas[areaIndex].areaResolution != 24) {
+					if (log.isInfoEnabled()) {
+						log.info("splitIntoAreas creates single point shape. id", e.getOsmid(),
+								"type", uk.me.parabola.mkgmap.reader.osm.GType.formatType(e.getType()), subSize,
+								"points, at", subShape.get(0).toOSMURL());
+					}
+					continue;
+				}
+
 				if (signedAreaSize == 0) {
-					log.warn("splitIntoAreas flat shape. id", e.getOsmid(),
+					log.warn("splitIntoAreas creates single point shape. id", e.getOsmid(),
 						 "type", uk.me.parabola.mkgmap.reader.osm.GType.formatType(e.getType()), subSize,
 						 "points, at", subShape.get(0).toOSMURL());
 					continue;

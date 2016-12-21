@@ -447,7 +447,7 @@ public class ShapeMergeFilter{
 			return new Area(minLat, minLon, maxLat, maxLon);
 		}
 	}
-	private final static long smallArea = 1L<<6 * 1L<<6;
+	public final static long SINGLE_POINT_AREA = 1L<<6 * 1L<<6;
 	
 	/**
 	 * Calculate the high precision area size test value.  
@@ -471,7 +471,7 @@ public class ShapeMergeFilter{
 			signedAreaSize += (long) (c2.getHighPrecLon() + c1.getHighPrecLon())
 					* (c1.getHighPrecLat() - c2.getHighPrecLat());
 		}
-		if (Math.abs(signedAreaSize) < smallArea){
+		if (Math.abs(signedAreaSize) < SINGLE_POINT_AREA){
 			log.debug("very small shape near", points.get(0).toOSMURL(), "signed area in high prec map units:", signedAreaSize );
 		}
 		return signedAreaSize;

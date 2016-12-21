@@ -163,7 +163,10 @@ public class Area {
 			xstart = xend;
 		}
 
-//		assert areas.length == xsplit * ysplit;
+		if (resolutionShift == 0) {
+			assert areas.length == xsplit * ysplit;
+			return areas;
+		}
 		if (nAreas == areas.length) // no problem
 			return areas;
 // beware - MapSplitter.splitMaxSize requests split of 1/1 if the original area wasn't too big
