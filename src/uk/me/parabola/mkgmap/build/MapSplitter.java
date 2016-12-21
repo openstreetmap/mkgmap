@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.build;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Area;
@@ -99,15 +100,21 @@ public class MapSplitter {
 		log.debug("orig area", mapSource.getBounds());
 
 		MapArea ma = initialArea(mapSource);
+		MapArea[] origArea = {ma};
 		MapArea[] areas = splitMaxSize(ma, orderByDecreasingArea);
-		if (areas == null)
-			return new MapArea[0];
+		if (areas == null) {
+			log.warn("initial split returned null for ",ma);
+			return origArea;
+		}
 
 		// Now step through each area and see if any have too many map features
 		// in them.  For those that do, we further split them.  This is done
 		// recursively until everything fits.
 		List<MapArea> alist = new ArrayList<>();
 		addAreasToList(areas, alist, 0, orderByDecreasingArea);
+		if (alist.isEmpty()) {
+			return origArea;
+		}
 
 		MapArea[] results = new MapArea[alist.size()];
 		return alist.toArray(results);
@@ -139,8 +146,8 @@ public class MapSplitter {
 						 ", lines = " + area.getNumLines() + "/" + sizes[MapArea.LINE_KIND] +
 						 ", shapes = " + area.getNumShapes() + "/" + sizes[MapArea.SHAPE_KIND]);
 			}
-			boolean doSplit = false;
-			
+			boolean wantSplit = false;
+			boolean mustSplit = false;
 			if (area.getNumLines() > MAX_NUM_LINES ||
 				area.getNumPoints() > MAX_NUM_POINTS ||
 				(sizes[MapArea.POINT_KIND] +
@@ -149,7 +156,7 @@ public class MapSplitter {
 				sizes[MapArea.XT_POINT_KIND] > MAX_XT_POINTS_SIZE ||
 				sizes[MapArea.XT_LINE_KIND] > MAX_XT_LINES_SIZE ||
 				sizes[MapArea.XT_SHAPE_KIND] > MAX_XT_SHAPES_SIZE)
-				doSplit = true; // we must split
+				mustSplit = true; // we must split
 			else if (bounds.getMaxDimension() > MIN_DIMENSION) {
 				int sumSize = 0;
 				for (int s : sizes)
@@ -158,11 +165,11 @@ public class MapSplitter {
 					if (area.getLines().size() + area.getShapes().size() >= 2) {
 						// area has more bytes than wanted, and we can split
 						log.debug("splitting area because size is larger than wanted: " + sumSize);
-						doSplit = true;
+						wantSplit = true;
 					}
 				}
 			}
-			if (doSplit){
+			if (wantSplit || mustSplit){
 				if (bounds.getMaxDimension() > MIN_DIMENSION) {
 					if (log.isDebugEnabled())
 						log.debug("splitting area", area);
@@ -172,8 +179,13 @@ public class MapSplitter {
 					else
 						sublist = area.split(1, 2, res, bounds, orderByDecreasingArea);
 					if (sublist == null) {
-						log.warn("SubDivision is single point at this resolution so can't split at " +
-							 area.getBounds().getCenter().toOSMURL() + " (probably harmless)");
+						String msg = "SubDivision is single point at this resolution so can't split at "
+								+ area.getBounds().getCenter().toOSMURL();
+						if (wantSplit) {
+							log.info(msg + " (probably harmless)");
+						} else { 
+							log.error(msg);
+						}
 					} else {
 						addAreasToList(sublist, alist, depth + 1, orderByDecreasingArea);
 						continue;
