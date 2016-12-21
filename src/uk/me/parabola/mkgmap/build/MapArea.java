@@ -206,8 +206,6 @@ public class MapArea implements MapDataSource {
 	 */
 	public MapArea[] split(int nx, int ny, int resolution, Area bounds, boolean orderByDecreasingArea) {
 		int resolutionShift = orderByDecreasingArea ? (24 - resolution) : 0;
-		if (!this.hasData())
-			resolutionShift = 0;
 		Area[] areas = bounds.split(nx, ny, resolutionShift);
 		if (areas == null) { //  Failed to split!
 			if (log.isDebugEnabled()) { // see what is here
