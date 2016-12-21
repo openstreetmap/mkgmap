@@ -93,4 +93,10 @@ public class ArgsTest extends Base {
 
 		assertEquals("display priority", pri, ((TREHeader) treFile.getHeader()).getDisplayPriority());
 	}
+
+	@Test
+	public void testNoDescription() {
+		Outputs op = TestUtils.run("--description", Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz");
+		op.checkNoError();
+	}
 }

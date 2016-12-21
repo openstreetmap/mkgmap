@@ -331,11 +331,13 @@ class ImgHeader {
 		byte[] part2 = new byte[LEN_MAP_NAME_CONT];
 		Arrays.fill(part2, (byte) ' ');
 
-		if (len > LEN_MAP_DESCRIPTION) {
-			System.arraycopy(ctext, 0, part1, 0, LEN_MAP_DESCRIPTION);
-			System.arraycopy(ctext, LEN_MAP_DESCRIPTION, part2, 0, len - LEN_MAP_DESCRIPTION);
-		} else {
-			System.arraycopy(ctext, 0, part1, 0, len);
+		if (ctext != null) {
+			if (len > LEN_MAP_DESCRIPTION) {
+				System.arraycopy(ctext, 0, part1, 0, LEN_MAP_DESCRIPTION);
+				System.arraycopy(ctext, LEN_MAP_DESCRIPTION, part2, 0, len - LEN_MAP_DESCRIPTION);
+			} else {
+				System.arraycopy(ctext, 0, part1, 0, len);
+			}
 		}
 
 		header.position(OFF_MAP_DESCRIPTION);
