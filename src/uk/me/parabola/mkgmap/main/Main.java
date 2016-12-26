@@ -398,7 +398,7 @@ public class Main implements ArgumentProcessor {
 		}
 		int checked = 0;
 		for (String name : names) {
-			if (!Objects.equals(name, styleOption))
+			if (styleOption != null && !Objects.equals(name, styleOption))
 				continue;
 			if (names.length > 1){
 				System.out.println("checking style: " + name);
