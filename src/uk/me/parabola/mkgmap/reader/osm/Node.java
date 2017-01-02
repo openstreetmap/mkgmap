@@ -46,6 +46,7 @@ public class Node extends Element {
 
 	public Node copy() {
 		Node dup = new Node(getId(), location);
+		dup.copyIds(this);
 		dup.copyTags(this);
 		return dup;
 	}

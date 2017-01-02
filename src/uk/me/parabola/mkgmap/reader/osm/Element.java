@@ -249,6 +249,11 @@ public abstract class Element {
 			tags = other.tags.copy();
 	}
 
+	protected void copyIds(Element other) {
+		id = other.id;
+		originalId = other.originalId;
+	}
+
 	public String getName() {
 		return getTag("mkgmap:label:1");
 	}
