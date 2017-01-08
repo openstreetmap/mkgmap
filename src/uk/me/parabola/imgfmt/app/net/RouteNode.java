@@ -212,14 +212,12 @@ public class RouteNode implements Comparable<RouteNode> {
 			for (RouteArc arc: arcs){
 				if (lastArc == null || lastArc.getIndexA() != arc.getIndexA() || lastArc.isForward() != arc.isForward()){
 					int dir = RouteArc.directionFromDegrees(arc.getInitialHeading());
-					dir = dir & 0xf0;
+					dir = (dir + 8) & 0xf0;
 					if (initialHeadings.contains(dir)){
 						useCompactDirs = false;
 						break;
 					}
 					initialHeadings.add(dir);
-				} else {
-					// 
 				}
 				lastArc = arc;
 			}
