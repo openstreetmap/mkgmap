@@ -18,6 +18,9 @@ highway=* & name=* { set mkgmap:street='${name}' }
 # Mark highways with the toll flag
 highway=* & (toll=yes|toll=true) { set mkgmap:toll=yes }
 
+# mark multipolygons as area
+highway=* & mkgmap:mp_created=true {add area=yes}
+
 # Hide proposed ways
 (highway=proposed | highway=proposal | highway=planned | highway ~ '.*proposed.*') {delete highway;delete junction}
 # Hide removed ways
