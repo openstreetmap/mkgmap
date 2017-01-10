@@ -1051,9 +1051,9 @@ public class StyledConverter implements OsmConverter {
 		if (dupPOI){
 			if (log.isInfoEnabled()){
 				if (FakeIdGenerator.isFakeId(node.getId()))
-					log.info("ignmoring duplicate POI with type",GType.formatType(type),mp.getName(),"for generated element with id",node.getId(),"at",mp.getLocation().toDegreeString());
+					log.info("ignoring duplicate POI with type",GType.formatType(type),mp.getName(),"for generated element with id",node.getId(),"at",mp.getLocation().toDegreeString());
 				else 
-					log.info("ignmoring duplicate POI with type",GType.formatType(type),mp.getName(),"for element",node.toBrowseURL());
+					log.info("ignoring duplicate POI with type",GType.formatType(type),mp.getName(),"for element",node.toBrowseURL());
 			}
 			return;
 		}

@@ -396,7 +396,8 @@ The options are translated to drive-on=left|right.
 : 	Check that roundabouts have the expected direction (clockwise
 when vehicles drive on the left). Roundabouts that are complete
 loops and have the wrong direction are reversed. Also checks
-that the roundabouts do not fork or overlap other roundabouts.
+that the roundabouts do not fork or overlap other roundabouts
+and that no more than one connecting highway joins at each node.
 <p>
 ;--check-roundabout-flares
 : 	Sanity check roundabout flare roads - warn if they don't point

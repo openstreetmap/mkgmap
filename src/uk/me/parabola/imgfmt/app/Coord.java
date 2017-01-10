@@ -54,8 +54,9 @@ public class Coord implements Comparable<Coord> {
 	public final static int HIGH_PREC_BITS = 30;
 	public final static int DELTA_SHIFT = 6;
 	
-	public final static double R = 6378137.0; // Radius of earth as defined by WGS84
-	public final static double U = R * 2 * Math.PI; // circumference of earth (WGS84)
+	public final static double R = 6378137.0; // Radius of earth at equator as defined by WGS84
+	public final static double U = R * 2 * Math.PI; // circumference of earth at equator (WGS84)
+	public final static double MEAN_EARTH_RADIUS = 6371000; // earth is a flattened sphere
 	
 	private final int latitude;
 	private final int longitude;
@@ -840,6 +841,21 @@ public class Coord implements Comparable<Coord> {
 			distance = this.distToLineSegment(a, b);
 		}
 		return distance;
+	}
+	
+	/**
+	 * @return a new coordinate at the specified distance (metres) away along the specified bearing (degrees)
+	 * uses "Destination point given distance and bearing from start point" formula from 
+	 * http://www.movable-type.co.uk/scripts/latlong.html
+	 */
+	public Coord offset(double bearingInDegrees, double distanceInMetres) {
+		double bearing = Math.toRadians(bearingInDegrees);
+		double angularDistance = distanceInMetres / MEAN_EARTH_RADIUS;
+		double lat = Math.toRadians(getLatDegrees());
+		double lon = Math.toRadians(getLonDegrees());
+		double newLat = Math.asin(Math.sin(lat) * Math.cos(angularDistance) + Math.cos(lat) * Math.sin(angularDistance) * Math.cos(bearing));
+		double newLon = lon + Math.atan2(Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(lat), Math.cos(angularDistance) - Math.sin(lat) * Math.sin(newLat));
+		return new Coord(Math.toDegrees(newLat), Math.toDegrees(newLon));
 	}
 	
 }

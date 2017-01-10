@@ -54,9 +54,9 @@ public class RouteNode implements Comparable<RouteNode> {
 	private int offsetNod1 = -1;
 
 	// arcs from this node
-	private final List<RouteArc> arcs = new ArrayList<RouteArc>(4);
+	private final List<RouteArc> arcs = new ArrayList<>(4);
 	// restrictions at (via) this node
-	private final List<RouteRestriction> restrictions = new ArrayList<RouteRestriction>();
+	private final List<RouteRestriction> restrictions = new ArrayList<>();
 
 	private int flags;
 
@@ -345,55 +345,151 @@ public class RouteNode implements Comparable<RouteNode> {
 	}
 
 	public void checkRoundabouts() {
-		List<RouteArc> roundaboutArcs = new ArrayList<RouteArc>();
+		List<RouteArc> roundaboutArcs = new ArrayList<>();
+		List<RouteArc> nonRoundaboutArcs = new ArrayList<>();
 		int countNonRoundaboutRoads = 0;
 		int countNonRoundaboutOtherHighways = 0;
-		RouteArc roundaboutArc = null;
-		for(RouteArc a : arcs) {
-			// ignore ways that have been synthesised by mkgmap
-			RoadDef r = a.getRoadDef();
-			if (!r.isSynthesised() && a.isDirect()){
-				if(r.isRoundabout())
-				{
-					roundaboutArcs.add(a);
-					if (roundaboutArc == null)
-						roundaboutArc = a;
-				}
-				else {
-					// ignore footpaths and ways with no access
-					byte access = r.getAccess();
-					if ((access & AccessTagsAndBits.CAR) != 0)
-						countNonRoundaboutRoads++;
-					else if ((access & (AccessTagsAndBits.BIKE | AccessTagsAndBits.BUS | AccessTagsAndBits.TAXI | AccessTagsAndBits.TRUCK)) != 0)
-						countNonRoundaboutOtherHighways++;
+		int countHighwaysInsideRoundabout = 0;
+		for(RouteArc ra : arcs) {
+			if (ra.isDirect()) {
+				// ignore ways that have been synthesised by mkgmap
+				RoadDef rd = ra.getRoadDef();
+				if (!rd.isSynthesised()) {
+					if (rd.isRoundabout())
+						roundaboutArcs.add(ra);
+					else
+						nonRoundaboutArcs.add(ra);
 				}
 			}
 		}
-			
-		if(arcs.size() > 1 && roundaboutArcs.size() == 1)
-			log.warn("Roundabout",roundaboutArc.getRoadDef(),roundaboutArc.isForward() ? "starts at" : "ends at", coord.toOSMURL());
 		if (roundaboutArcs.size() > 0) {
-			if (countNonRoundaboutRoads > 1)
-				log.warn("Roundabout",roundaboutArc.getRoadDef(),"is connected to more than one road at",coord.toOSMURL());
-			else if ((countNonRoundaboutRoads == 1) && (countNonRoundaboutOtherHighways > 0))
-				log.warn("Roundabout",roundaboutArc.getRoadDef(),"is connected to a road and",countNonRoundaboutOtherHighways,"other highways at",coord.toOSMURL());
-		}
-		if(roundaboutArcs.size() > 2) {
-			for(RouteArc fa : arcs) {
-				if(fa.isForward() && fa.isDirect()) {
-					RoadDef rd = fa.getRoadDef();
-					for(RouteArc fb : arcs) {
-						if(fb != fa && fb.isDirect() && 
-						   fa.getPointsHash() == fb.getPointsHash() &&
-						   ((fb.isForward() && fb.getDest() == fa.getDest()) ||
-							(!fb.isForward() && fb.getSource() == fa.getDest()))) {
-							if(!rd.messagePreviouslyIssued("roundabout forks/overlaps")) {
-								log.warn("Roundabout " + rd + " overlaps " + fb.getRoadDef() + " at " + coord.toOSMURL());
+			// get the coordinates of a box bounding the junctions of the roundabout
+			int minRoundaboutLat = coord.getHighPrecLat();
+			int maxRoundaboutLat = minRoundaboutLat;
+			int minRoundaboutLon = coord.getHighPrecLon();
+			int maxRoundaboutLon = minRoundaboutLon;
+			List<RouteNode> processedNodes = new ArrayList<>();
+			processedNodes.add(this);
+			for (RouteArc ra : roundaboutArcs) {
+				if (ra.isForward()) {
+					for (RouteArc ra1 : nonRoundaboutArcs) {
+						if ((ra1.getDirectHeading() == ra.getDirectHeading()) && (ra1.getInitialHeading() == ra.getInitialHeading()) && (ra1.getFinalHeading() == ra.getFinalHeading()) && (ra1.getLengthInMeter() == ra.getLengthInMeter())) {
+							// non roundabout highway overlaps roundabout
+							nonRoundaboutArcs.remove(ra1);
+							if(!ra.getRoadDef().messagePreviouslyIssued("roundabout forks/overlaps"))
+								log.warn("Highway",ra1.getRoadDef(), "overlaps roundabout", ra.getRoadDef(), "at",coord.toOSMURL());
+							break;
+						}						
+					}
+					RouteNode rn = ra.getDest();
+					while (rn != null && !processedNodes.contains(rn)) {
+						processedNodes.add(rn);
+						int lat = rn.coord.getHighPrecLat();
+						int lon = rn.coord.getHighPrecLon();
+						minRoundaboutLat = Math.min(minRoundaboutLat, lat);
+						maxRoundaboutLat = Math.max(maxRoundaboutLat, lat);
+						minRoundaboutLon = Math.min(minRoundaboutLon, lon);
+						maxRoundaboutLon = Math.max(maxRoundaboutLon, lon);
+						RouteNode nrn = null;
+						for (RouteArc nra : rn.arcs) {
+							if (nra.isDirect() && nra.isForward()) {
+								RoadDef nrd = nra.getRoadDef();
+								if (nrd.isRoundabout() && !nrd.isSynthesised())
+									nrn = nra.getDest();
 							}
 						}
-						else if(fa != fb && fb.isForward()) {
-							if(!rd.messagePreviouslyIssued("roundabout forks/overlaps")) {
-								log.warn("Roundabout " + rd + " forks at " + coord.toOSMURL());
+						rn = nrn;
+					}
+				}
+			}
+			if (nonRoundaboutArcs.size() > 1) {
+				// get an approximate centre of the roundabout
+				Coord roundaboutCentre =  Coord.makeHighPrecCoord((minRoundaboutLat + maxRoundaboutLat) / 2, (minRoundaboutLon + maxRoundaboutLon) / 2);
+				for (RouteArc ra : nonRoundaboutArcs) {
+					double distanceToCentre = roundaboutCentre.distance(coord);
+					RoadDef rd = ra.getRoadDef();
+					// ignore footpaths and ways with no access
+					byte access = rd.getAccess();
+					if (access != 0 && (access != AccessTagsAndBits.FOOT)) {
+						// check whether the way is inside the roundabout by seeing if the next point is nearer to the centre of the bounding box than this
+						RouteNode nextNode = ra.getSource().coord == coord ? ra.getDest() : ra.getSource();
+						Coord nextCoord = nextNode.coord;
+						for (RouteNode roundaboutNode : processedNodes) {
+							if (roundaboutNode.coord.equals(nextCoord)) {
+								// arc rejoins roundabout, so calculate another point to use half the distance away at the initial bearing
+								double heading1 = ra.getSource().coord == coord ? ra.getInitialHeading() : 180 + ra.getFinalHeading();
+								double distance = coord.distance(nextCoord) / 2;
+								Coord nextCoord1 = coord.offset(heading1, distance);
+								// now calculate a point the same distance away from the end point 180 degrees from the final bearing
+								double heading2 = ra.getSource().coord == coord ? 180 + ra.getFinalHeading() : ra.getInitialHeading();
+								Coord nextCoord2 = nextCoord.offset(heading2, distance);
+								double distanceToCentreOfNextCoord = roundaboutCentre.distance(nextCoord);
+								// use the point which has a bigger difference in distance from the centre to increase accuracy
+								if (Math.abs(distanceToCentre - roundaboutCentre.distance(nextCoord1)) >= Math.abs(distanceToCentreOfNextCoord - roundaboutCentre.distance(nextCoord2)))
+									nextCoord = nextCoord1;
+								else {
+									distanceToCentre = distanceToCentreOfNextCoord;
+									nextCoord = nextCoord2;
+								}
+								break;
+							}
+						}
+						double nextDistanceToCentre = roundaboutCentre.distance(nextCoord);
+						if (Math.abs(nextDistanceToCentre - distanceToCentre) < 2)
+							log.info("Way",rd,"unable to accurately determine whether",nextCoord.toOSMURL()," is inside roundabout");
+						if (nextDistanceToCentre < distanceToCentre)
+							countHighwaysInsideRoundabout++;
+						else {
+							if ((access & AccessTagsAndBits.CAR) != 0)
+								countNonRoundaboutRoads++;
+							else if ((access & (AccessTagsAndBits.BIKE | AccessTagsAndBits.BUS | AccessTagsAndBits.TAXI | AccessTagsAndBits.TRUCK)) != 0)
+								countNonRoundaboutOtherHighways++;
+						}
+					}
+				}
+			
+				RouteArc roundaboutArc = roundaboutArcs.get(0);
+				if (arcs.size() > 1 && roundaboutArcs.size() == 1)
+					log.warn("Roundabout",roundaboutArc.getRoadDef(),roundaboutArc.isForward() ? "starts at" : "ends at", coord.toOSMURL());
+				if (countNonRoundaboutRoads > 1)
+					log.warn("Roundabout",roundaboutArc.getRoadDef(),"is connected to more than one road at",coord.toOSMURL());
+				else if (countNonRoundaboutRoads == 1) {
+					if (countNonRoundaboutOtherHighways > 0) {
+						if (countHighwaysInsideRoundabout > 0)
+							log.warn("Roundabout",roundaboutArc.getRoadDef(),"is connected to a road",countNonRoundaboutOtherHighways,"other highway(s) and",countHighwaysInsideRoundabout,"highways inside the roundabout at",coord.toOSMURL());
+						else
+							log.warn("Roundabout",roundaboutArc.getRoadDef(),"is connected to a road and",countNonRoundaboutOtherHighways,"other highway(s) at",coord.toOSMURL());
+					}
+					else if (countHighwaysInsideRoundabout > 0)
+						log.warn("Roundabout",roundaboutArc.getRoadDef(),"is connected to a road and",countHighwaysInsideRoundabout,"highway(s) inside the roundabout at",coord.toOSMURL());
+				}
+				else if (countNonRoundaboutOtherHighways > 0) {
+					if (countHighwaysInsideRoundabout > 0)
+						log.warn("Roundabout",roundaboutArc.getRoadDef(),"is connected to",countNonRoundaboutOtherHighways,"highway(s) and",countHighwaysInsideRoundabout,"inside the roundabout at",coord.toOSMURL());
+					else if (countNonRoundaboutOtherHighways > 1)
+						log.warn("Roundabout",roundaboutArc.getRoadDef(),"is connected to",countNonRoundaboutOtherHighways,"highways at",coord.toOSMURL());
+				}
+				else if (countHighwaysInsideRoundabout > 1)
+					log.warn("Roundabout",roundaboutArc.getRoadDef(),"is connected to",countHighwaysInsideRoundabout,"highways inside the roundabout at",coord.toOSMURL());
+				if(roundaboutArcs.size() > 2) {
+					for(RouteArc fa : roundaboutArcs) {
+						if(fa.isForward()) {
+							RoadDef rd = fa.getRoadDef();
+							for(RouteArc fb : roundaboutArcs) {
+								if(fb != fa) { 
+									if(fa.getPointsHash() == fb.getPointsHash() &&
+									   ((fb.isForward() && fb.getDest() == fa.getDest()) ||
+										(!fb.isForward() && fb.getSource() == fa.getDest()))) {
+										if(!rd.messagePreviouslyIssued("roundabout forks/overlaps")) {
+											log.warn("Roundabout " + rd + " overlaps " + fb.getRoadDef() + " at " + coord.toOSMURL());
+										}
+									}
+									else if(fb.isForward()) {
+										if(!rd.messagePreviouslyIssued("roundabout forks/overlaps")) {
+											log.warn("Roundabout " + rd + " forks at " + coord.toOSMURL());
+										}
+									}
+								}
 							}
 						}
 					}
@@ -404,7 +500,7 @@ public class RouteNode implements Comparable<RouteNode> {
 
 	// determine "distance" between two nodes on a roundabout
 	private static int roundaboutSegmentLength(final RouteNode n1, final RouteNode n2) {
-		List<RouteNode> seen = new ArrayList<RouteNode>();
+		List<RouteNode> seen = new ArrayList<>();
 		int len = 0;
 		RouteNode n = n1;
 		boolean checkMoreLinks = true;
@@ -444,7 +540,7 @@ public class RouteNode implements Comparable<RouteNode> {
 			// follow the arc to find the first node that connects the
 			// roundabout to a non-roundabout segment
 			RouteNode nb = r.getDest();
-			List<RouteNode> seen = new ArrayList<RouteNode>();
+			List<RouteNode> seen = new ArrayList<>();
 			seen.add(this);
 
 			while (true) {
@@ -580,7 +676,7 @@ public class RouteNode implements Comparable<RouteNode> {
 
 	public void addThroughRoute(long roadIdA, long roadIdB) {
 		if(throughRoutes == null)
-			throughRoutes = new ArrayList<RouteArc[]>();
+			throughRoutes = new ArrayList<>();
 		boolean success = false;
 		for(RouteArc arc1 : arcs) {
 			if(arc1.getRoadDef().getId() == roadIdA) {

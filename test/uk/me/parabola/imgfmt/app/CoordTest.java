@@ -86,4 +86,9 @@ public class CoordTest {
 		Coord russia4 = russia1.destOnRhumLine(10000, 0.0);
 		assertEquals(russia4.getLongitude(), russia1.getLongitude());
 	}
+	
+	@Test
+	public void testOffset() {
+		assertEquals(pLAX, pLAX.offset(60, 100).offset(120, 100).offset(180, 100).offset(240, 100).offset(300, 100).offset(360, 100));
+	}
 }
