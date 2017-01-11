@@ -50,8 +50,9 @@ QLandkarte, MapSource or on a GPS, where it is normally shown
 below the family name. Example: --description="Germany, Denmark"
 Please note: if you use splitter.jar to build a template.args file
 and use -c template.args, then that file may contain a
-"description" that will override this option. Use "--description" in
-splitter.jar to change the description in the template.args file.
+"description" that will override this option for each single
+tile. Make sure to set the description for the gmapsupp.img after
+"-c template.args".
 <p>
 ;--country-name=name
 : 	Sets the map's country name. The default is "COUNTRY".
