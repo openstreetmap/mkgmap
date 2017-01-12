@@ -142,7 +142,13 @@ public class Main implements ArgumentProcessor {
 			++numExitExceptions;
 		} catch (ExitException e) {
 			++numExitExceptions;
-			System.err.println(e.getMessage());
+			String message = e.getMessage();
+			Throwable cause = e.getCause();
+			while (cause != null) {
+				message += "\r\n" + cause.toString();
+				cause = cause.getCause();
+			}
+			System.err.println(message);
 		}
 		
 		System.out.println("Number of ExitExceptions: " + numExitExceptions);

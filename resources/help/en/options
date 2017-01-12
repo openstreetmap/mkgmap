@@ -307,10 +307,17 @@ Product description options:
 --copyright-file=file
 	Specify copyright messages from a file.
 	Note that the first copyright message is not displayed on a device, but is 
-	shown in BaseCamp. The copyright file must include at least two lines.
+	shown in BaseCamp. The copyright file must include at least two lines and
+	be UTF-8 encoded. The following symbols will be substituted by mkgmap:
+	$MKGMAP_VERSION$, $JAVA_VERSION$, $YEAR$, $LONG_DATE$, $SHORT_DATE$ and $TIME$.
+	Time and date substitutions use the local date and time formats.
 
 --license-file=file
-	Specify a file which content will be added as license. 
+	Specify a file which content will be added as license.
+	The license file must be UTF-8 encoded.
+	The following symbols will be substituted by mkgmap:
+	$MKGMAP_VERSION$, $JAVA_VERSION$, $YEAR$, $LONG_DATE$, $SHORT_DATE$ and $TIME$.
+	Time and date substitutions use the local date and time formats.
 	All entries of all maps will be merged in the overview map.
 
 Optimization options:
