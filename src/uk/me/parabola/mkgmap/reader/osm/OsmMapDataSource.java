@@ -158,7 +158,12 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 			}
 			if ((copyrightArray.size() > 0) && copyrightArray.get(0).startsWith("\ufeff"))
 				copyrightArray.set(0, copyrightArray.get(0).substring(1));
-			UnaryOperator<String> replaceVariables = s->s.replace("$MKGMAP_VERSION$", Version.VERSION).replace("$JAVA_VERSION$", System.getProperty("java.version")).replace("$YEAR$", Integer.toString(now.getYear())).replace("$LONGDATE$", now.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG))).replace("$SHORTDATE$", now.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT))).replace("$TIME$", now.toLocalTime().toString().substring(0, 5));
+			UnaryOperator<String> replaceVariables = s -> s.replace("$MKGMAP_VERSION$", Version.VERSION)
+					.replace("$JAVA_VERSION$", System.getProperty("java.version"))
+					.replace("$YEAR$", Integer.toString(now.getYear()))
+					.replace("$LONGDATE$", now.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)))
+					.replace("$SHORTDATE$", now.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)))
+					.replace("$TIME$", now.toLocalTime().toString().substring(0, 5));
 			copyrightArray.replaceAll(replaceVariables);
 			String[] copyright = new String[copyrightArray.size()];
 			copyrightArray.toArray(copyright);
@@ -208,7 +213,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	}
 	
 	protected OsmReadingHooks pluginChain(ElementSaver saver, EnhancedProperties props) {
-		List<OsmReadingHooks> plugins = new ArrayList<OsmReadingHooks>();
+		List<OsmReadingHooks> plugins = new ArrayList<>();
 		for (OsmReadingHooks p : getPossibleHooks()) {
 			if (p.init(saver, props)){
 				plugins.add(p);
@@ -236,10 +241,9 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 		return hooks;
 	}
 
-	private Map<String, Set<String>> readDeleteTagsFile(String fileName) {
-		Map<String, Set<String>> deletedTags = new HashMap<String,Set<String>>();
-		try {
-			BufferedReader br = new BufferedReader(new FileReader(fileName));
+	private static Map<String, Set<String>> readDeleteTagsFile(String fileName) {
+		Map<String, Set<String>> deletedTags = new HashMap<>();
+		try (BufferedReader br = new BufferedReader(new FileReader(fileName))) { 
 			String line;
 			while((line = br.readLine()) != null) {
 				line = line.trim();
@@ -253,7 +257,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 						} else {
 							Set<String> vals = deletedTags.get(parts[0]);
 							if (vals == null)
-								vals = new HashSet<String>();
+								vals = new HashSet<>();
 							vals.add(parts[1]);
 							deletedTags.put(parts[0], vals);
 						}
@@ -262,7 +266,6 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 					}
 				}
 			}
-			br.close();
 		}
 		catch(FileNotFoundException e) {
 			log.error("Could not open delete tags file " + fileName);

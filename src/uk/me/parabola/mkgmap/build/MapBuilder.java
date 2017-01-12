@@ -114,16 +114,16 @@ public class MapBuilder implements Configurable {
 	
 	private static final int MIN_SIZE_LINE = 1;
 
-	private final java.util.Map<MapPoint,POIRecord> poimap = new HashMap<MapPoint,POIRecord>();
-	private final java.util.Map<MapPoint,City> cityMap = new HashMap<MapPoint,City>();
-	private List<String> mapInfo = new ArrayList<String>();
-	private List<String> copyrights = new ArrayList<String>();
+	private final java.util.Map<MapPoint,POIRecord> poimap = new HashMap<>();
+	private final java.util.Map<MapPoint,City> cityMap = new HashMap<>();
+	private List<String> mapInfo = new ArrayList<>();
+	private List<String> copyrights = new ArrayList<>();
 
 	private boolean doRoads;
 	private Boolean driveOnLeft;
 	private Locator locator;
 
-	private final java.util.Map<String, Highway> highways = new HashMap<String, Highway>();
+	private final java.util.Map<String, Highway> highways = new HashMap<>();
 
 	/** name that is used for cities which name are unknown */
 	private final static String UNKNOWN_CITY_NAME = "";
@@ -688,7 +688,7 @@ public class MapBuilder implements Configurable {
 
 		// Now the levels filled with features.
 		for (LevelInfo linfo : levels) {
-			List<SourceSubdiv> nextList = new ArrayList<SourceSubdiv>();
+			List<SourceSubdiv> nextList = new ArrayList<>();
 
 			Zoom zoom = map.createZoom(linfo.getLevel(), linfo.getBits());
 
@@ -721,7 +721,7 @@ public class MapBuilder implements Configurable {
 	 * identical when they are equal.
 	 * @param shapes the list of shapes
 	 */
-	private void prepShapesForMerge(List<MapShape> shapes) {
+	private static void prepShapesForMerge(List<MapShape> shapes) {
 		Long2ObjectOpenHashMap<Coord> coordMap = new Long2ObjectOpenHashMap<>();
 		for (MapShape s : shapes){
 			List<Coord> points = s.getPoints();
@@ -837,7 +837,12 @@ public class MapBuilder implements Configurable {
 			}
 			if ((licenseArray.size() > 0) && licenseArray.get(0).startsWith("\ufeff"))
 				licenseArray.set(0, licenseArray.get(0).substring(1));
-			UnaryOperator<String> replaceVariables = s->s.replace("$MKGMAP_VERSION$", Version.VERSION).replace("$JAVA_VERSION$", System.getProperty("java.version")).replace("$YEAR$", Integer.toString(now.getYear())).replace("$LONGDATE$", now.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG))).replace("$SHORTDATE$", now.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT))).replace("$TIME$", now.toLocalTime().toString().substring(0, 5));
+			UnaryOperator<String> replaceVariables = s -> s.replace("$MKGMAP_VERSION$", Version.VERSION)
+					.replace("$JAVA_VERSION$", System.getProperty("java.version"))
+					.replace("$YEAR$", Integer.toString(now.getYear()))
+					.replace("$LONGDATE$", now.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)))
+					.replace("$SHORTDATE$", now.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)))
+					.replace("$TIME$", now.toLocalTime().toString().substring(0, 5));
 			licenseArray.replaceAll(replaceVariables);
 			mapInfo.addAll(licenseArray);
 		} else {
@@ -1167,7 +1172,7 @@ public class MapBuilder implements Configurable {
 	 * @param res the current resolution
 	 * @param shapes list of shapes
 	 */
-	private void preserveHorizontalAndVerticalLines(int res, List<MapShape> shapes) {
+	private static void preserveHorizontalAndVerticalLines(int res, List<MapShape> shapes) {
 		if (res == 24)
 			return;
 		for (MapShape shape : shapes) {
@@ -1263,7 +1268,7 @@ public class MapBuilder implements Configurable {
 			return minSizePolygon;
 	
 		if (polygonSizeLimits == null){
-			polygonSizeLimits = new HashMap<Integer, Integer>();
+			polygonSizeLimits = new HashMap<>();
 			String[] desc = polygonSizeLimitsOpt.split("[, \\t\\n]+");
 	
 			int count = 0;
