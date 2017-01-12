@@ -23,7 +23,8 @@ import java.util.List;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
 import uk.me.parabola.imgfmt.Utils;
-import uk.me.parabola.util.Java2DConverter;
+// import uk.me.parabola.util.Java2DConverter;
+import uk.me.parabola.util.ShapeSplitter;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.trergn.Overview;
@@ -658,16 +659,17 @@ public class MapArea implements MapDataSource {
 	/**
 	 * Spit the polygon into areas
 	 *
-	 * Using .intersect() here is expensive. The code should be changed to
-	 * use a simple rectangle clipping algorithm as in, say, 
-	 * util/ShapeSplitter.java
-	 *
 	 * @param areas The available areas to choose from.
 	 * @param e The map element.
 	 * @param used flag vector to say area has been added to.
 	 */
 	private void splitIntoAreas(MapArea[] areas, MapShape e, boolean[] used)
 	{
+		if (areas.length == 1) { // this happens quite a lot
+			used[0] = true;
+			areas[0].addShape(e);
+			return;
+		}
 		// quick check if bbox of shape lies fully inside one of the areas
 		Area shapeBounds = e.getBounds();
 
@@ -675,10 +677,19 @@ public class MapArea implements MapDataSource {
 		// tricky problems as it might not really be fully within the area.
 		// so: pretend the shape is a touch bigger. Will get the optimisation most of the time
 		// and in the boundary cases will fall into the precise code.
-		shapeBounds = new Area(shapeBounds.getMinLat()-2,
-				       shapeBounds.getMinLong()-2,
-				       shapeBounds.getMaxLat()+2,
-				       shapeBounds.getMaxLong()+2);
+		int xtra = 2;
+		// However, if the shape is significantly larger than the error margin (ie most of it
+		// should be in this area) I don't see any problem in letting it expand a little bit out
+		// of the area.
+		// This avoids very small polygons being left in the adjacent areas, which ShapeMergeFilter
+		// notices with an debug message and then output filters probably chuck away.
+		if (Math.min(shapeBounds.getWidth(), shapeBounds.getHeight()) > 8)
+			xtra = -2; // pretend shape is smaller
+
+		shapeBounds = new Area(shapeBounds.getMinLat()-xtra,
+				       shapeBounds.getMinLong()-xtra,
+				       shapeBounds.getMaxLat()+xtra,
+				       shapeBounds.getMaxLong()+xtra);
 		for (int areaIndex = 0; areaIndex < areas.length; ++areaIndex) {
 			if (areas[areaIndex].getBounds().contains(shapeBounds)) {
 				used[areaIndex] = true;
@@ -686,70 +697,50 @@ public class MapArea implements MapDataSource {
 				return;
 			}
 		}
+
 		// Shape crosses area(s), we have to split it
 
-		// Convert to a awt area
-		List<Coord> coords = e.getPoints();
-		java.awt.geom.Area area = Java2DConverter.createArea(coords);
-		// remember actual coord, so can re-use
-		int origSize = coords.size();
-		Long2ObjectOpenHashMap<Coord> shapeHashMap = new Long2ObjectOpenHashMap<>(origSize);
-		for (int i = 0; i < origSize; ++i) {
-			Coord co = coords.get(i);
-			shapeHashMap.put(Utils.coord2Long(co), co);
-		}
 		if (areasHashMap == null)
 			areasHashMap = new Long2ObjectOpenHashMap<>();
 
-		for (int areaIndex = 0; areaIndex < areas.length; ++areaIndex) {
-			java.awt.geom.Area clipper = Java2DConverter.createBoundsArea(areas[areaIndex].getBounds());
-			clipper.intersect(area);
-			List<List<Coord>> subShapePoints = Java2DConverter.areaToShapes(clipper);
-			for (List<Coord> subShape : subShapePoints) {
-				// Use original or share newly created coords on clipped edge.
-				// NB: .intersect()/areaToShapes can output flattened shapes,
-				// normally triangles, in any orientation; check we haven't got one by calc area.
-				long signedAreaSize = 0;
-				int subSize = subShape.size();
-				int c1_highPrecLat = 0, c1_highPrecLon = 0;
-				int c2_highPrecLat, c2_highPrecLon;
-				for (int i = 0; i < subSize; ++i) {
-					Coord co = subShape.get(i);
-					c2_highPrecLat = co.getHighPrecLat();
-					c2_highPrecLon = co.getHighPrecLon();
-					if (i > 0)
-						signedAreaSize += (long)(c2_highPrecLon + c1_highPrecLon) *
-									(c1_highPrecLat - c2_highPrecLat);
-					c1_highPrecLat = c2_highPrecLat;
-					c1_highPrecLon = c2_highPrecLon;
-					long hashVal = Utils.coord2Long(co);
-					Coord replCoord = shapeHashMap.get(hashVal);
-					if (replCoord != null)
-						subShape.set(i, replCoord);
-					else { // not an original coord
-						replCoord = areasHashMap.get(hashVal);
-						if (replCoord != null)
-							subShape.set(i, replCoord);
-						else
-							areasHashMap.put(hashVal, co);
-					}
+		if (areas.length == 2) { // just divide along the line between the two areas
+			int dividingLine = 0;
+			boolean isLongitude = false;
+			boolean commonLine = true;
+			if (areas[0].getBounds().getMaxLat() == areas[1].getBounds().getMinLat()) {
+				dividingLine = areas[0].getBounds().getMaxLat();
+				isLongitude = false;
+			} else if (areas[0].getBounds().getMaxLong() == areas[1].getBounds().getMinLong()) {
+				dividingLine = areas[0].getBounds().getMaxLong();
+				isLongitude = true;
+			} else {
+				commonLine = false;
+				log.warn("Split into 2 expects shared edge between the areas");
+			}
+			if (commonLine) {
+				List<List<Coord>> lessList = new ArrayList<>(), moreList = new ArrayList<>();
+				ShapeSplitter.splitShape(e.getPoints(), dividingLine << Coord.DELTA_SHIFT, isLongitude, lessList, moreList, areasHashMap);
+				for (List<Coord> subShape : lessList) {
+					MapShape s = e.copy();
+					s.setPoints(subShape);
+					s.setClipped(true);
+					areas[0].addShape(s);
+					used[0] = true;
 				}
-				if (Math.abs(signedAreaSize) < ShapeMergeFilter.SINGLE_POINT_AREA
-						&& areas[areaIndex].areaResolution != 24) {
-					if (log.isInfoEnabled()) {
-						log.info("splitIntoAreas creates single point shape. id", e.getOsmid(),
-								"type", uk.me.parabola.mkgmap.reader.osm.GType.formatType(e.getType()), subSize,
-								"points, at", subShape.get(0).toOSMURL());
-					}
-					continue;
+				for (List<Coord> subShape : moreList) {
+					MapShape s = e.copy();
+					s.setPoints(subShape);
+					s.setClipped(true);
+					areas[1].addShape(s);
+					used[1] = true;
 				}
+				return;
+			}
+		}
 
-				if (signedAreaSize == 0) {
-					log.warn("splitIntoAreas creates single point shape. id", e.getOsmid(),
-						 "type", uk.me.parabola.mkgmap.reader.osm.GType.formatType(e.getType()), subSize,
-						 "points, at", subShape.get(0).toOSMURL());
-					continue;
-				}
+		for (int areaIndex = 0; areaIndex < areas.length; ++areaIndex) {
+			List<List<Coord>> subShapePoints = ShapeSplitter.clipToBounds(e.getPoints(), areas[areaIndex].getBounds(), areasHashMap);
+			for (List<Coord> subShape : subShapePoints) {
 				MapShape s = e.copy();
 				s.setPoints(subShape);
 				s.setClipped(true);
@@ -758,7 +749,6 @@ public class MapArea implements MapDataSource {
 			}
 		}
 	}
-
 
 	/**
 	 * @return true if this area contains any data
