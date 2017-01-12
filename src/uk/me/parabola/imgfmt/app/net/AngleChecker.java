@@ -54,6 +54,7 @@ public class AngleChecker {
 	private final int MIN_LOW_SPEED_ANGLE = 0x20;
 
 	private int mask;
+	private int mrnd;
 
 	// helper class to collect multiple arcs with (nearly) the same initial headings
 	private class ArcGroup {
@@ -95,7 +96,7 @@ public class AngleChecker {
 			while (modIH < -180)
 				modIH += 360; 
 			initialHeading = modIH;
-			imgHeading = (byte) (RouteArc.directionFromDegrees(initialHeading) & mask); 
+			imgHeading = calcEncodedBearing(initialHeading); 
 			
 			for (RouteArc arc : arcs){
 				arc.setInitialHeading(modIH);
@@ -105,6 +106,11 @@ public class AngleChecker {
 		public String toString(){
 			return arcs.get(0).toString();
 		}
+	}
+	
+	
+	private byte calcEncodedBearing (float b) {
+		return (byte) ((RouteArc.directionFromDegrees(b) + mrnd) & mask);
 	}
 	
 	public void config(EnhancedProperties props) {
@@ -129,6 +135,7 @@ public class AngleChecker {
 
 			for (RouteNode node : nodes.values()){
 				mask = 0xf0; // we assume compacted format
+				mrnd = 0x08; // rounding
 				fixSharpAngles(node, sharpAnglesCheckMask);				
 			}
 		}
@@ -393,7 +400,7 @@ public class AngleChecker {
 			}
 		}
 		for (ArcGroup ag : arcGroups){
-			ag.imgHeading = (byte) (RouteArc.directionFromDegrees(ag.initialHeading) & mask);
+			ag.imgHeading = calcEncodedBearing(ag.initialHeading);
 		}
 		return arcGroups;
 	}
@@ -401,7 +408,7 @@ public class AngleChecker {
 	/**
 	 * for log messages
 	 */
-	private String getCompassBearing (float bearing){
+	private static String getCompassBearing (float bearing){
 		float cb = (bearing + 360) % 360;
 		return Math.round(cb) + "°";
 	}
@@ -412,7 +419,7 @@ public class AngleChecker {
 	 * @param heading2
 	 * @return
 	 */
-	private int getImgAngle(byte heading1, byte heading2){
+	private static int getImgAngle(byte heading1, byte heading2){
 		int angle = heading2 - heading1;
 		if (angle < 0)
 			angle += 256;
