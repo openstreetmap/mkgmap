@@ -17,7 +17,6 @@
 package uk.me.parabola.mkgmap.build;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Area;
