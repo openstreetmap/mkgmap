@@ -225,11 +225,13 @@ public class MapArea implements MapDataSource {
 			}
 			return null;
 		}
+		
 		MapArea[] mapAreas = new MapArea[nx * ny];
 		log.info("Splitting area " + bounds + " into " + nx + "x" + ny + " pieces at resolution " + resolution);
+		boolean lastSplit = bounds.getWidth() < MapSplitter.MIN_DIMENSION || bounds.getHeight() < MapSplitter.MIN_DIMENSION;
 		boolean useNormalSplit = true;
 		while (true){
-			List<MapArea> largeObjectAreas = new ArrayList<>();
+			List<MapArea> addedAreas = new ArrayList<>();
 			for (int i = 0; i < nx * ny; i++) {
 				mapAreas[i] = new MapArea(areas[i], resolution);
 				if (log.isDebugEnabled())
@@ -240,41 +242,51 @@ public class MapArea implements MapDataSource {
 			int ybase30 = areas[0].getMinLat() << Coord.DELTA_SHIFT;
 			int dx30 = areas[0].getWidth() << Coord.DELTA_SHIFT;
 			int dy30 = areas[0].getHeight() << Coord.DELTA_SHIFT;
-			
-			boolean[] used = new boolean[nx * ny];
-			// Now sprinkle each map element into the correct map area.
-			for (MapPoint p : this.points) {
-				int pos = pickArea(mapAreas, p, xbase30, ybase30, nx, ny, dx30, dy30);
-				mapAreas[pos].addPoint(p);
-				used[pos] = true;
-			}
 
+			// Now sprinkle each map element into the correct map area.
+			boolean[] used = new boolean[mapAreas.length];
+			if (lastSplit && this.points.size() > MapSplitter.MAX_NUM_POINTS) {
+				// unlikely: too many points in small area
+				distPointsEqually(addedAreas, resolution);
+			} else {
+				for (MapPoint p : this.points) {
+					int pos = pickArea(mapAreas, p, xbase30, ybase30, nx, ny, dx30, dy30);
+					mapAreas[pos].addPoint(p);
+					used[pos] = true;
+				}
+			}
+			
 			int maxWidth = areas[0].getWidth();
 			int maxHeight = areas[0].getHeight();
-			if (nx*ny == 1 || maxWidth < LARGE_OBJECT_DIM|| maxHeight < LARGE_OBJECT_DIM){
+			if (mapAreas.length == 1 || maxWidth < LARGE_OBJECT_DIM|| maxHeight < LARGE_OBJECT_DIM){
 				// don't separate large objects
 				maxWidth = Integer.MAX_VALUE;  
 				maxHeight = Integer.MAX_VALUE; 
 			}
 
 			int areaIndex = 0;
-			for (MapLine l : this.lines) {
-				// Drop any zero sized lines.
-				if (l instanceof MapRoad == false && l.getRect().height <= 0 && l.getRect().width <= 0)
-					continue;
-				if (useNormalSplit){
-					areaIndex = pickArea(mapAreas, l, xbase30, ybase30, nx, ny, dx30, dy30);
-					if (l.getBounds().getHeight() > maxHeight || l.getBounds().getWidth() > maxWidth){
-						MapArea largeObjectArea = new MapArea(l.getBounds(), resolution);
-						largeObjectArea.addLine(l);
-						largeObjectAreas.add(largeObjectArea);
+			if (lastSplit && this.lines.size() > MapSplitter.MAX_NUM_LINES) {
+				// unlikely: too many lines in small area
+				distLinesEqually(addedAreas, resolution);
+			} else {
+				for (MapLine l : this.lines) {
+					// Drop any zero sized lines.
+					if (l instanceof MapRoad == false && l.getRect().height <= 0 && l.getRect().width <= 0)
 						continue;
+					if (useNormalSplit){
+						if (l.getBounds().getHeight() > maxHeight || l.getBounds().getWidth() > maxWidth){
+							MapArea largeObjectArea = new MapArea(l.getBounds(), resolution);
+							largeObjectArea.addLine(l);
+							addedAreas.add(largeObjectArea);
+							continue;
+						}
+						areaIndex = pickArea(mapAreas, l, xbase30, ybase30, nx, ny, dx30, dy30);
 					}
+					else 
+						areaIndex = areaIndex == 0 ? 1: 0;
+					mapAreas[areaIndex].addLine(l);
+					used[areaIndex] = true;
 				}
-				else 
-					areaIndex = ++areaIndex % mapAreas.length;
-				mapAreas[areaIndex].addLine(l);
-				used[areaIndex] = true;
 			}
 
 			for (MapShape e : this.shapes) {
@@ -283,23 +295,23 @@ public class MapArea implements MapDataSource {
 					continue;
 				}
 				if (useNormalSplit){
-					areaIndex = pickArea(mapAreas, e, xbase30, ybase30, nx, ny, dx30, dy30);
 					if (e.getBounds().getHeight() > maxHeight || e.getBounds().getWidth() > maxWidth){
 						MapArea largeObjectArea = new MapArea(e.getBounds(), resolution);
 						largeObjectArea.addShape(e);
-						largeObjectAreas.add(largeObjectArea);
+						addedAreas.add(largeObjectArea);
 						continue;
 					}
+					areaIndex = pickArea(mapAreas, e, xbase30, ybase30, nx, ny, dx30, dy30);
 				}
 				else 
-					areaIndex = ++areaIndex % mapAreas.length;
+					areaIndex = areaIndex == 0 ? 1: 0;
 				mapAreas[areaIndex].addShape(e);
 				used[areaIndex] = true;
 			}
 			// detect special case  
-			if (useNormalSplit && mapAreas.length == 2 && bounds.getMaxDimension() < 2 * (MapSplitter.MIN_DIMENSION + 1)
-					&& used[0] != used[1]
-					&& (this.lines.size() > 1 || this.shapes.size() > 1)) {
+			if (useNormalSplit && mapAreas.length == 2 && lastSplit
+					&& this.lines.size() > 1 &&  (mapAreas[0].lines.isEmpty() || mapAreas[1].lines.isEmpty()
+					|| this.shapes.size() > 1 &&  (mapAreas[0].shapes.isEmpty() || mapAreas[1].shapes.isEmpty()))) {
 				/* if we get here we probably have two or more identical long ways or
 				 * big shapes with the same center point. We can safely distribute
 				 * them equally to the two areas.  
@@ -309,11 +321,11 @@ public class MapArea implements MapDataSource {
 				continue;
 			} 
 			
-			if (largeObjectAreas.isEmpty() == false){
+			if (addedAreas.isEmpty() == false){
 				// combine list and array
 				int pos = mapAreas.length;
-				mapAreas = Arrays.copyOf(mapAreas, mapAreas.length + largeObjectAreas.size());
-				for (MapArea ma : largeObjectAreas)
+				mapAreas = Arrays.copyOf(mapAreas, mapAreas.length + addedAreas.size());
+				for (MapArea ma : addedAreas)
 					mapAreas[pos++] = ma;
 			}
 			return mapAreas;
@@ -321,6 +333,32 @@ public class MapArea implements MapDataSource {
 	}
 
 	
+	private void distPointsEqually(List<MapArea> addedAreas, int resolution) {
+		// special case: too many POI in small area
+		int done = 0;
+		while (done < points.size()) {
+			MapArea extraArea = new MapArea(this.getBounds(), resolution);
+			for (int j = 0; j < MapSplitter.MAX_NUM_POINTS; j++) {
+				extraArea.addPoint(this.points.get(done + j));
+			}
+			addedAreas.add(extraArea);
+			done += MapSplitter.MAX_NUM_POINTS;
+		} 				
+	}
+
+	private void distLinesEqually(List<MapArea> addedAreas, int resolution) {
+		// special case: too many Lines in small area
+		int done = 0;
+		while (done < this.lines.size()) {
+			MapArea extraArea = new MapArea(this.getBounds(), resolution);
+			for (int j = 0; j < MapSplitter.MAX_NUM_LINES; j++) {
+				extraArea.addLine(this.lines.get(done + j));
+			}
+			addedAreas.add(extraArea);
+			done += MapSplitter.MAX_NUM_LINES;
+		} 				
+	}
+
 	/**
 	 * Get the full bounds of this area.  As lines and polylines are
 	 * added then may go outside of the initial area.  When this happens
@@ -464,14 +502,14 @@ public class MapArea implements MapDataSource {
 	 * shown because they are at a resolution at least as great as the resolution
 	 * of the area.
 	 *
-	 * @param p The element containing the minimum resolution that it will be
+	 * @param el The element containing the minimum resolution that it will be
 	 * displayed at.
 	 * @param kind What kind of element this is KIND_POINT etc.
 	 */
-	private void addSize(MapElement p, int kind) {
+	private void addSize(MapElement el, int kind) {
 
-		int res = p.getMinResolution();
-		if (res > MAX_RESOLUTION)
+		int res = el.getMinResolution();
+		if (res > areaResolution || res > MAX_RESOLUTION)
 			return;
 
 		int numPoints;
@@ -480,42 +518,36 @@ public class MapArea implements MapDataSource {
 		switch (kind) {
 		case POINT_KIND:
 		case XT_POINT_KIND:
-			if(res <= areaResolution) {
-				// Points are predictably less than 9 bytes.
-				sizes[kind] += 9;
-				if(!p.hasExtendedType()) {
-					if(((MapPoint) p).isCity())
-						nActiveIndPoints++;
-					else
-						nActivePoints++;
-				}
+			// Points are predictably less than 10 bytes.
+			sizes[kind] += 9;
+			if(!el.hasExtendedType()) {
+				if(((MapPoint) el).isCity())
+					nActiveIndPoints++;
+				else
+					nActivePoints++;
 			}
 			break;
 
 		case LINE_KIND:
 		case XT_LINE_KIND:
-			if(res <= areaResolution) {
-				// Estimate the size taken by lines and shapes as a constant plus
-				// a factor based on the number of points.
-				numPoints = ((MapLine) p).getPoints().size();
-				numElements = 1 + ((numPoints - 1) / LineSplitterFilter.MAX_POINTS_IN_LINE);
-				sizes[kind] += numElements * 11 + numPoints * 4;
-				if (!p.hasExtendedType())
-					nActiveLines += numElements;
-			}
+			// Estimate the size taken by lines and shapes as a constant plus
+			// a factor based on the number of points.
+			numPoints = ((MapLine) el).getPoints().size();
+			numElements = 1 + ((numPoints - 1) / LineSplitterFilter.MAX_POINTS_IN_LINE);
+			sizes[kind] += numElements * 11 + numPoints * 4; // very pessimistic, typically less than 2 bytes are needed for one point
+			if (!el.hasExtendedType())
+				nActiveLines += numElements;
 			break;
 
 		case SHAPE_KIND:
 		case XT_SHAPE_KIND:
-			if(res <= areaResolution) {
-				// Estimate the size taken by lines and shapes as a constant plus
-				// a factor based on the number of points.
-				numPoints = ((MapLine) p).getPoints().size();
-				numElements = 1 + ((numPoints - 1) / PolygonSplitterFilter.MAX_POINT_IN_ELEMENT);
-				sizes[kind] += numElements * 11 + numPoints * 4;
-				if (!p.hasExtendedType())
-					nActiveShapes += numElements;
-			}
+			// Estimate the size taken by lines and shapes as a constant plus
+			// a factor based on the number of points.
+			numPoints = ((MapLine) el).getPoints().size();
+			numElements = 1 + ((numPoints - 1) / PolygonSplitterFilter.MAX_POINT_IN_ELEMENT);
+			sizes[kind] += numElements * 11 + numPoints * 4; // very pessimistic, typically less than 2 bytes are needed for one point
+			if (!el.hasExtendedType())
+				nActiveShapes += numElements;
 			break;
 
 		default:
@@ -768,4 +800,12 @@ public class MapArea implements MapDataSource {
 			return false;
 		return true;
 	}
+
+	@Override
+	public String toString() {
+		return "MapArea [res=" + areaResolution + ", width=" + bounds.getWidth() + ", height=" + bounds.getHeight()
+				+ ", sizes=" + Arrays.toString(sizes) + "]";
+	}
+	
+	
 }
