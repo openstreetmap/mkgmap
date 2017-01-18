@@ -28,17 +28,18 @@ import uk.me.parabola.mkgmap.general.MapShape;
 
 /**
  * A filter that ensures that a line does not exceed the allowed number of
- * points that a line can have. If the line is split, the last part
- * will have at least 50 points to avoid that too small parts are filtered later.
+ * points that a line can have. If the line is split, each part will have at
+ * least 50% of allowed number of points to avoid that too small parts are
+ * filtered later.
  *
  * @author Steve Ratcliffe
+ * @author Gerd Petermann
  */
 public class LineSplitterFilter implements MapFilter {
 	private static final Logger log = Logger.getLogger(LineSplitterFilter.class);
 	
 	// Not sure of the value, probably 255.  Say 250 here.
 	public static final int MAX_POINTS_IN_LINE = 250;
-	public static final int MIN_POINTS_IN_LINE = 50;
 
 	private int level;
 	private boolean isRoutable;
@@ -69,51 +70,43 @@ public class LineSplitterFilter implements MapFilter {
 			return;
 		}
 
+		
 		log.debug("line has too many points, splitting");
-		if(line.isRoad() && level == 0 && isRoutable) {
-			MapRoad road = ((MapRoad)line);
-			if (log.isDebugEnabled())
-				log.debug("Way " + road.getRoadDef() + " has more than "+ MAX_POINTS_IN_LINE + " points and is about to be split");
+		if(line.isRoad() && level == 0 && isRoutable && log.isDebugEnabled())  {
+			log.debug("Way " + ((MapRoad)line).getRoadDef() + " has more than "+ MAX_POINTS_IN_LINE + " points and is about to be split");
 		} 
+		
+		boolean last = false;
+		int wantedSize = (npoints < 2 * MAX_POINTS_IN_LINE) ? npoints/ 2 + 1: MAX_POINTS_IN_LINE;
+		int pos = 0;
+		while (true) {
+			if (pos == 0)
+				log.debug("saving first part");
+			else if (!last)
+				log.debug("saving next part");
+			else 
+				log.debug("saving final part");
 
-		MapLine l = line.copy();
-
-		List<Coord> coords = new ArrayList<Coord>();
-		int count = 0;
-		boolean first = true;
-		int remaining = points.size();
-		int wantedSize = (remaining < MAX_POINTS_IN_LINE + MIN_POINTS_IN_LINE) ? remaining / 2 + 10 : MAX_POINTS_IN_LINE;
-
-		for (Coord co : points) {
-			coords.add(co);
-			--remaining;
-			
-			if (++count >= wantedSize) {
-				if (first)
-					log.debug("saving first part");
-				else
-					log.debug("saving next part");
-				l.setPoints(coords);
-				if (l instanceof MapRoad){
-					((MapRoad)l).setSegmentsFollowing(true);
-				}
-				next.doFilter(l);
-
-				l = line.copy();
-				count = 0;
-				first = false;
-				coords = new ArrayList<Coord>();
-				coords.add(co);
-				// make sure that the last part has at least 50 points
-				if (remaining > MAX_POINTS_IN_LINE && remaining < MAX_POINTS_IN_LINE + MIN_POINTS_IN_LINE)
-					wantedSize = remaining / 2 + 10;
-			}
-		}
-
-		if (count != 0) {
-			log.debug("saving a final part");
-			l.setPoints(coords);
+			MapLine l = line.copy();
+			l.setPoints(new ArrayList<>(points.subList(pos, pos + wantedSize)));
+			if (wantedSize < MAX_POINTS_IN_LINE / 2)
+				log.error("size?",npoints,pos,wantedSize);
+			if (!last && line instanceof MapRoad)  
+				((MapRoad)line).setSegmentsFollowing(true);
 			next.doFilter(l);
+			
+			if (last)
+				break;
+			
+			pos += wantedSize - 1; // we start with the last point of previous part
+			int remaining = npoints - pos;
+			
+			// make sure that the last parts have enough points
+			if (remaining <= MAX_POINTS_IN_LINE) {
+				last = true;
+				wantedSize = remaining;
+			} else if (remaining < 2 * MAX_POINTS_IN_LINE)
+				wantedSize = remaining / 2 + 1;
 		}
 	}
 }
