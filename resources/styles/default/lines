@@ -113,7 +113,7 @@ junction=roundabout & (highway=primary | highway=primary_link) [0x0c road_class=
 junction=roundabout & (highway=secondary | highway=secondary_link) [0x0c road_class=2 road_speed=2 resolution 20]
 junction=roundabout & (highway=tertiary | highway=tertiary_link) [0x0c road_class=1 road_speed=1 resolution 21]
 junction=roundabout & highway=unclassified [0x0c road_class=1 road_speed=1 resolution 21]
-junction=roundabout [0x0c road_class=0 road_speed=1 resolution 22]
+junction=roundabout & highway=* [0x0c road_class=0 road_speed=1 resolution 22]
 
 # Ways that may or may not be useable
 
