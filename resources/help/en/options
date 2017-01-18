@@ -291,7 +291,7 @@ Product description options:
 	It is often just 1, which is the default.
 
 --product-version
-	The version of the product. Default value is 1.
+	The version of the product. Default value is 100 which means version 1.00.
 
 --series-name
 	This name will be displayed in MapSource in the map selection

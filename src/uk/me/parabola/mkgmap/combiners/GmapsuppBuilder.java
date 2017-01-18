@@ -85,6 +85,7 @@ public class GmapsuppBuilder implements Combiner {
 	private final Map<Integer, Sort> sortMap = new LinkedHashMap<>();
 	private boolean splitName;
 	private boolean hideGmapsuppOnPC;
+	private int productVersion;
 
 
 	public void init(CommandArgs args) {
@@ -94,6 +95,7 @@ public class GmapsuppBuilder implements Combiner {
 		outputDir = args.getOutputDir();
 		splitName = args.get("split-name-index", false);
 		hideGmapsuppOnPC = args.get("hide-gmapsupp-on-pc", false);
+		productVersion = args.get("product-version", 100);
 	}
 
 	/**
@@ -423,6 +425,7 @@ public class GmapsuppBuilder implements Combiner {
 		params.setDirectoryStartEntry(DIRECTORY_OFFSET_ENTRY);
 		params.setGmapsupp(true);
 		params.setHideGmapsuppOnPC(hideGmapsuppOnPC);
+		params.setProductVersion(productVersion);
 
 		int reserveBlocks = (int) Math.ceil(bi.reserveEntries * 512.0 / blockSize);
 		params.setReservedDirectoryBlocks(reserveBlocks);
