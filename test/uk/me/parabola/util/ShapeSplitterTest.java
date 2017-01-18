@@ -44,18 +44,20 @@ public class ShapeSplitterTest {
 	st.addExpected(f1);
 	int[][] f2 = { {3,2}, {5,3}, {7,7}, {3,5} };
 	st.addExpected(f2);
-	st.cutWithSplitShape();
-	st.cutWithClipToBounds();
-	st.cutWithJava2D();
-	
+	st.runSplitShape();
+	st.runClipToBounds();
+	st.runJava2D();	
+//	st.runSuthHodg();
+
 	st.cutPosn(5, true);
 	int[][] t1 = { {1,1}, {5,3}, {6,5}, {3,5} };
 	st.addExpected(t1);
 	int[][] t2 = { {6,5}, {7,7}, {3,5} };
 	st.addExpected(t2);
-	st.cutWithSplitShape();
-	st.cutWithClipToBounds();
-	st.cutWithJava2D();
+	st.runSplitShape();
+	st.runClipToBounds();
+	st.runJava2D();
+//	st.runSuthHodg();
     }
 
     @Test
@@ -72,9 +74,10 @@ public class ShapeSplitterTest {
 	st.addExpected(t2);
 	int[][] t3 = { {1,2}, {3,2}, {3,3}, {2,3}, {2,4}, {4,4}, {4,3}, {3,3}, {3,2}, {5,2}, {5,5}, {1,5} };
 	st.addExpected(t3);
-	st.cutWithSplitShape();
-	st.cutWithClipToBounds();
-//!!!	st.cutWithJava2D();  !!! java2D can't handle this
+	st.runSplitShape();
+	st.runClipToBounds();
+//!!!	st.runJava2D();  !!! java2D can't handle this
+//	st.runSuthHodg();
 	
 	// cut along cut and through other side of hole
 	st.cutPosn(3, false);
@@ -82,9 +85,10 @@ public class ShapeSplitterTest {
 	st.addExpected(f1);
 	int[][] f2 = { {3,1}, {5,1}, {5,5}, {3,5}, {3,4}, {4,4}, {4,3}, {3,3} };
 	st.addExpected(f2);
-	st.cutWithSplitShape();
-	st.cutWithClipToBounds();
-	st.cutWithJava2D();
+	st.runSplitShape();
+	st.runClipToBounds();
+	st.runJava2D();
+//	st.runSuthHodg();
     }
 
     @Test
@@ -125,9 +129,10 @@ public class ShapeSplitterTest {
 	st.addExpected(r3);
 	int[][] r4 = { {12,9}, {12,15}, {15,15}, {15,9}, {14,9}, {14,14}, {13,14}, {13,9} };
 	st.addExpected(r4);
-	st.cutWithSplitShape();
-	st.cutWithClipToBounds();
-	st.cutWithJava2D();
+	st.runSplitShape();
+	st.runClipToBounds();
+	st.runJava2D();
+//	st.runSuthHodg();
     }
 
     @Test
@@ -166,10 +171,57 @@ public class ShapeSplitterTest {
 	st.addExpected(r6);
 	int[][] r7 = { {19,9}, {20,10}, {20,9} };
 	st.addExpected(r7);
-	st.cutWithSplitShape();
-	st.cutWithClipToBounds();
-	st.cutWithJava2D();
+	st.runSplitShape();
+	st.runClipToBounds();
+	st.runJava2D();
+//	st.runSuthHodg();
+
+	st.clipBounds(1, 1, 20, 18); // this full area
+	st.addExpected(os); // original shape
+	st.runClipToBounds();
+	st.runJava2D();
+//	st.runSuthHodg();
+
+	st.clipBounds(13, 10, 19, 16); // a solid bit
+	int[][] s1 = { {13,10}, {13,16}, {19,16}, {19,10} };
+	st.addExpected(s1);
+	st.runClipToBounds();
+	st.runJava2D();
+//	st.runSuthHodg();
+	
+	st.clipBounds(9, 10, 13, 11); // a hole
+	st.runClipToBounds();
+	st.runJava2D();
+//	st.runSuthHodg();
     }
+
+    @Test
+    public void test4_clipTest() {
+	// shape to defeat naive sutherland-hodge implementation
+	int[][] os = {
+	    {2,1}, {10,1}, {10,10}, {1,10}, {1,2},
+	    {2,3},
+	    {2,5}, {4,5}, {4,6}, {2,6}, {2,9},
+	    {5,9}, {5,7}, {6,7}, {6,9}, {9,9},
+	    {9,6}, {7,6}, {7,5}, {9,5}, {9,2},
+	    {6,2}, {6,4}, {5,4}, {5,2}, {3,2}
+	};
+	splitTester st = new splitTester(os);
+	st.clipBounds(3, 3, 8, 8);
+
+	int[][] s1 = { {6,3}, {6,4}, {5,4}, {5,3} };
+	st.addExpected(s1);
+	int[][] s2 = { {7,5}, {8,5}, {8,6}, {7,6} };
+	st.addExpected(s2);
+	int[][] s3 = { {5,7}, {6,7}, {6,8}, {5,8} };
+	st.addExpected(s3);
+	int[][] s4 = { {3,5}, {4,5}, {4,6}, {3,6} };
+	st.addExpected(s4);
+	st.runClipToBounds();
+	st.runJava2D();
+//	st.runSuthHodg();
+    }
+
 
     private class splitTester {
 
@@ -179,9 +231,10 @@ public class ShapeSplitterTest {
 	List<List<Coord>> expectedShapes, resultShapes;
 	long totalArea;
 
+        boolean dividingInTwo;
 	int dividingLine;
 	boolean isLongitude;
-	Area lessBounds, moreBounds;
+	Area fstBounds, lstBounds;
 
 	String algorithm;
 
@@ -199,6 +252,7 @@ public class ShapeSplitterTest {
 	}
 
 	void cutPosn(int dividingLine, boolean isLongitude) {
+	    dividingInTwo = true;
 	    this.dividingLine = dividingLine;
 	    this.isLongitude = isLongitude;
 	    expectedShapes = new ArrayList<>();
@@ -208,26 +262,33 @@ public class ShapeSplitterTest {
 	    tempShape.setPoints(origShape);
 	    Area bounds = tempShape.getBounds();
 	    if (isLongitude) {
-		lessBounds = new Area(bounds.getMinLat(),
-				      bounds.getMinLong(),
-				      bounds.getMaxLat(),
-				      dividingLine);
-		moreBounds = new Area(bounds.getMinLat(),
-				      dividingLine,
-				      bounds.getMaxLat(),
-				      bounds.getMaxLong());
+		fstBounds = new Area(bounds.getMinLat(),
+				     bounds.getMinLong(),
+				     bounds.getMaxLat(),
+				     dividingLine);
+		lstBounds = new Area(bounds.getMinLat(),
+				     dividingLine,
+				     bounds.getMaxLat(),
+				     bounds.getMaxLong());
 	    } else {
-		lessBounds = new Area(bounds.getMinLat(),
-				      bounds.getMinLong(),
-				      dividingLine,
-				      bounds.getMaxLong());
-		moreBounds = new Area(dividingLine,
-				      bounds.getMinLong(),
-				      bounds.getMaxLat(),
-				      bounds.getMaxLong());
+		fstBounds = new Area(bounds.getMinLat(),
+				     bounds.getMinLong(),
+				     dividingLine,
+				     bounds.getMaxLong());
+		lstBounds = new Area(dividingLine,
+				     bounds.getMinLong(),
+				     bounds.getMaxLat(),
+				     bounds.getMaxLong());
 	    }
 	}
 
+	void clipBounds(int minLat, int minLong, int maxLat, int maxLong) {
+	    dividingInTwo = false;
+	    expectedShapes = new ArrayList<>();
+	    totalArea = 0;
+	    fstBounds = new Area(minLat, minLong, maxLat, maxLong);
+	}
+    
 	void addExpected(int[][] lowPrecPoints) {
 	    List<Coord> another = makeShape(lowPrecPoints);
 	    totalArea += Math.abs(ShapeMergeFilter.calcAreaSizeTestVal(another));
@@ -236,7 +297,8 @@ public class ShapeSplitterTest {
 
 	void preSplit(String algorithm) {
 	    this.algorithm = algorithm;
-	    assertEquals(algorithm + " bits area", Math.abs(origArea), totalArea);
+	    if (dividingInTwo)
+		assertEquals(algorithm + " bits area", Math.abs(origArea), totalArea);
 	    resultShapes = null;
 	}
 		
@@ -285,47 +347,52 @@ public class ShapeSplitterTest {
 		} // for each expectedShape
 		assertTrue(algorithm + " result shape not matched", foundIt);
 	    } // for each resultShape
-	    assertEquals(algorithm + " result total area", Math.abs(origArea), resTotalArea);
+	    assertEquals(algorithm + " result total area", totalArea, resTotalArea);
 	} // checkResults
 
-	void cutWithSplitShape() {
+	void runSplitShape() {
 	    preSplit("splitShape");
 	    resultShapes = new ArrayList<>();
+	    assertTrue(algorithm + " Not applicable to clip", dividingInTwo);
 	    ShapeSplitter.splitShape(origShape, dividingLine << Coord.DELTA_SHIFT, isLongitude, resultShapes, resultShapes, null);
 	    checkResults();
 	}
 
-	void cutWithClipToBounds() {
+	void runClipToBounds() {
 	    preSplit("clipToBounds");
-	    resultShapes = ShapeSplitter.clipToBounds(origShape, lessBounds, null);
-	    List<List<Coord>> moreShapes = ShapeSplitter.clipToBounds(origShape, moreBounds, null);
-	    resultShapes.addAll(moreShapes);
+	    resultShapes = ShapeSplitter.clipToBounds(origShape, fstBounds, null);
+	    if (dividingInTwo) {
+		List<List<Coord>> moreShapes = ShapeSplitter.clipToBounds(origShape, lstBounds, null);
+		resultShapes.addAll(moreShapes);
+	    }
 	    checkResults();
 	}
 
-	void cutWithJava2D() {
+	void runJava2D() {
 	    preSplit("java2D");
 	    java.awt.geom.Area area = Java2DConverter.createArea(origShape);
-	    java.awt.geom.Area clipper = Java2DConverter.createBoundsArea(lessBounds);
+	    java.awt.geom.Area clipper = Java2DConverter.createBoundsArea(fstBounds);
 	    clipper.intersect(area);
 	    resultShapes = Java2DConverter.areaToShapes(clipper);
-	    clipper = Java2DConverter.createBoundsArea(moreBounds);
-	    clipper.intersect(area);
-	    List<List<Coord>> moreShapes = Java2DConverter.areaToShapes(clipper);
-	    resultShapes.addAll(moreShapes);
+	    if (dividingInTwo) {
+		clipper = Java2DConverter.createBoundsArea(lstBounds);
+		clipper.intersect(area);
+		List<List<Coord>> moreShapes = Java2DConverter.areaToShapes(clipper);
+		resultShapes.addAll(moreShapes);
+	    }
 	    checkResults();
 	}
 
-/*
-	void cutWithSuthHodg() {
+	void runSuthHodg() {
+/*	    
 	    preSplit("suthHodg");
 
 started to look at this to see if could fit in to testing like above but gave up.
 	    Path2D.Double ShapeSplitter.clipSinglePathWithSutherlandHodgman (double[] points, int num, Rectangle2D clippingRect, Rectangle2D.Double bbox) {
 
 	    checkResults();
-	}
 */
+	}
 
     }
 	

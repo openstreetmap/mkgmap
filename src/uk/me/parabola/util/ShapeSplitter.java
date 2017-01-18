@@ -305,40 +305,6 @@ done	mkgmap/build/MapArea.java
 */
 
 	/**
-	 * closes a shape and appends to list.
-	 *
-	 * If the shape starts and ends at the same point on the dividing line then
-	 * there is no need to close it. Also check for and chuck a spike, which happens
-	 * if there is a single point just across the dividing line and the two intersecting
-	 * points ended up being the same.
-	 *
-	 * @param points the shape to process.
-	 * @param origList list of shapes to which we append new shapes.
-	 */
-	private static void closeAppend(List<Coord> points, List<List<Coord>> origList, boolean onDividingLine) {
-		Coord firstCoord = points.get(0);
-		int lastPointInx = points.size()-1;
-		if (firstCoord.highPrecEquals(points.get(lastPointInx))) { // start and end at same point on line
-			if (lastPointInx == 2) // just a single point across the line
-				return;
-			// There should be no need to close the line, but am finding, for shapes that never crossed the
-			// dividing line, quite a few that, after splitShapes has rotating the shape by 1, have first and last
-			// points highPrecEquals but they are different objects.
-			// This means that the original first and last were the same object, but the second and last were highPrecEquals!
-			// If left like this, it might be flagged by ShapeMergeFilter.
-			// NB: if no coordPool, likely to be different closing object anyway
-			if (firstCoord != points.get(lastPointInx)) {
-				if (onDividingLine)
-					log.error("high prec/diff obj", firstCoord, lastPointInx, onDividingLine, firstCoord.toOSMURL());
-				else
-					points.set(lastPointInx, firstCoord); // quietly replace with first point
-			}
-		} else
-			points.add(firstCoord); // close it
-		origList.add(points);
-	} // closeAppend
-
-	/**
 	 * Service routine for processLineList. Processes a nested list of holes within a shape or
 	 * list of shapes within a hole.
 	 *
@@ -352,16 +318,17 @@ done	mkgmap/build/MapArea.java
 	 * @param origList list of shapes to which we append new shapes.
 	 */
 	private static int doLines(int startInx, int endEnclosed, MergeCloseHelper addHolesToThis,
-				   MergeCloseHelper[] lineInfo, List<List<Coord>> origList) {
+				   List<MergeCloseHelper> lineInfo, List<List<Coord>> origList) {
 		int inx = startInx;
-		while (inx < lineInfo.length) {
-			MergeCloseHelper thisLine = lineInfo[inx];
+		while (inx < lineInfo.size()) {
+			MergeCloseHelper thisLine = lineInfo.get(inx);
 			if (thisLine.highPoint > endEnclosed) // only do enclosed items
+			// %%% this is the other place where need to take care. consider high/low equal to end and then use something else
 				break;
 			// process any enclosed lines
 			inx = doLines(inx+1, thisLine.highPoint, addHolesToThis == null ? thisLine : null, lineInfo, origList);
 			if (addHolesToThis == null) // handling list of shapes
-				closeAppend(thisLine.points, origList, true);
+				thisLine.closeAppend(origList, true);
 			else  // handling list of holes
 				addHolesToThis.addHole(thisLine);
 		}
@@ -370,39 +337,37 @@ done	mkgmap/build/MapArea.java
 
 	/**
 	 * Service routine for splitShape. Takes list of lines and appends distinct shapes
-	 * @param newList list of lines that start and end on the dividing line (or orig startPoint)
+	 * @param lineInfo list of lines that start and end on the dividing line (or orig startPoint)
 	 * @param origList list of shapes to which we append new shapes formed from above
 	 * @param isLongitude true if dividing on a line of longitude, false if latitude
+	 * @param dividingLine the line in high precision.
 	 */
-	private static void processLineList(List<List<Coord>> newList, List<List<Coord>> origList, boolean isLongitude) {
+	private static void processLineList(List<MergeCloseHelper> lineInfo, List<List<Coord>> origList, long fullArea) {
 		if (origList == null) // never wanted this side
 			return;
-		List<Coord> firstPoly = newList.get(0);
-		if (newList.size() == 1) { // single shape that never crossed line
-			if (!firstPoly.isEmpty()) // all on this side
-				closeAppend(firstPoly, origList, false);
+		MergeCloseHelper firstLine = lineInfo.get(0);
+		if (lineInfo.size() == 1) { // single shape that never crossed line
+			if (!firstLine.points.isEmpty()) // all on this side
+				firstLine.closeAppend(origList, false);
 			return;
 		}
-		// look at last elem in list of lists
-		List<Coord> lastPoly = newList.get(newList.size()-1);
-		if (lastPoly.isEmpty()) // will be empty if did not return to this side
-			newList.remove(newList.size()-1);
+		// look at last item in list of lines
+		MergeCloseHelper lastLine = lineInfo.get(lineInfo.size()-1);
+		if (lastLine.points.isEmpty()) // will be empty if did not return to this side
+			lineInfo.remove(lineInfo.size()-1);
 		else { // ended up on this side and must have crossed the line
-			// so first points are a continuation of last
-			lastPoly.addAll(firstPoly);
-			newList.remove(0);
-			firstPoly = newList.get(0);
+			// so first element is really the end of the last
+			lastLine.combineFirstIntoLast(firstLine, fullArea);
+			lineInfo.remove(0);
+			firstLine = lineInfo.get(0);
 		}
-		if (newList.size() == 1) { // simple poly that crossed once and back
-			closeAppend(firstPoly, origList, true);
+		if (lineInfo.size() == 1) { // simple poly that crossed once and back
+			firstLine.setMoreInfo(0);
+			firstLine.closeAppend(origList, true);
 			return;
 		}
 		// Above were the simple cases - probably 99% of calls.
 
-		// Now imagine something like a snake, with a coiled bit, zig-zag bit and
-		// a flat area that has been flash shape hacked out of it. Then cut a line
-		// through these complex shapes and now need to describe the shapes remaining
-		// on one side of the cut. I think the following does this!
 		// splitShape has generated a list of lines that start and end on the dividing line.
 		// These lines don't cross. Order them by their lowest point on the divider, but note which
 		// direction they go. The first (and last) line must define a shape. Starting with this
@@ -411,21 +376,59 @@ done	mkgmap/build/MapArea.java
 		// handle any shapes enclosed. Repeat until we reach the end of the enclosing
 		// space.
 
-		final int numLines = newList.size();
-		// make ordered list of more info about the lines that start/end on the dividing line
-		MergeCloseHelper[] lineInfo = new MergeCloseHelper[numLines];
-		for (int inx = 0; inx < numLines; ++inx)
-			lineInfo[inx] = new MergeCloseHelper(newList.get(inx), isLongitude);
-		Arrays.sort(lineInfo);
+		log.debug("complex ShapeSplit", lineInfo.size(), "at", firstLine.points.get(0).toOSMURL());
+		int fullAreaSign = Long.signum(fullArea);
+		// check and set any missing directions based on sign of area
+		boolean someDirectionsNotSet = false;
+		int areaDirection = 0;
+ 		for (MergeCloseHelper thisLine : lineInfo) {
+			thisLine.setMoreInfo(fullAreaSign);
+			if (thisLine.direction == 0)
+				someDirectionsNotSet = true;
+			else if (thisLine.areaToLine != 0) {
+				int tmpAreaDirection = thisLine.direction * Long.signum(thisLine.areaToLine);
+				if (areaDirection == 0)
+					areaDirection = tmpAreaDirection;
+				else if (areaDirection != tmpAreaDirection)
+					log.error("Direction/Area conflict", thisLine.points.get(0).toOSMURL());
+			}
+			log.debug(thisLine.lowPoint, thisLine.highPoint, thisLine.direction, thisLine.areaToLine);
+		}
+		if (someDirectionsNotSet) {
+			if (areaDirection == 0)
+				log.error("Cant deduce direction/Area mapping", firstLine.points.get(0).toOSMURL());
+			else
+				for (MergeCloseHelper thisLine : lineInfo)
+					if (thisLine.direction == 0)
+						thisLine.direction = areaDirection * Long.signum(thisLine.areaToLine);
+		}
 
-		log.debug("complex ShapeSplit", numLines, "at", firstPoly.get(0).toOSMURL());
-		for (MergeCloseHelper el : lineInfo)
-			log.debug(el.lowPoint, el.highPoint, el.direction);
+		lineInfo.sort(null);
 
 		int dummy = doLines(0, Integer.MAX_VALUE, null, lineInfo, origList);
-		assert dummy == lineInfo.length;
+		assert dummy == lineInfo.size();
 	} // processLineList
 
+	private static List<Coord> startLine(List<MergeCloseHelper> lineInfo) {
+		MergeCloseHelper thisLine = new MergeCloseHelper();
+		lineInfo.add(thisLine);
+		return thisLine.points;
+	} // startLine
+
+	private static void openLine(List<MergeCloseHelper> lineInfo, Coord lineCoord, int lineAlong, long currentArea) {
+		MergeCloseHelper thisLine = lineInfo.get(lineInfo.size()-1);
+		thisLine.points.add(lineCoord);
+		thisLine.firstPoint = lineAlong;
+		thisLine.startingArea = currentArea;
+	} // openLine
+
+	private static List<Coord> closeLine(List<MergeCloseHelper> lineInfo, Coord lineCoord, int lineAlong, long currentArea) {
+		MergeCloseHelper thisLine = lineInfo.get(lineInfo.size()-1);
+		thisLine.points.add(lineCoord);
+		thisLine.lastPoint = lineAlong;
+		thisLine.endingArea = currentArea;
+		return startLine(lineInfo);
+	} // closeLine
 
 	/**
 	 * Helper class for splitShape. Holds information about line.
@@ -434,15 +437,18 @@ done	mkgmap/build/MapArea.java
 	private static class MergeCloseHelper implements Comparable<MergeCloseHelper> {
 
 		List<Coord> points;
+		int firstPoint, lastPoint;
+		long startingArea, endingArea; // from runningArea
 		int direction;
 		int lowPoint, highPoint;
+		long areaToLine;
+		int areaOrHole; // +1/-1
 
-		MergeCloseHelper(List<Coord> points, boolean isLongitude) {
-			this.points = points;
-			Coord aCoord = points.get(0);
-			int firstPoint = isLongitude ? aCoord.getHighPrecLat() : aCoord.getHighPrecLon();
-			aCoord = points.get(points.size()-1);
-			int lastPoint = isLongitude ? aCoord.getHighPrecLat() : aCoord.getHighPrecLon();
+		MergeCloseHelper() {
+			points = new ArrayList<>();
+		} // MergeCloseHelper
+
+		void setMoreInfo(int fullAreaSign) {
 			this.direction = Integer.signum(lastPoint - firstPoint);
 			if (this.direction > 0) {
 				this.lowPoint = firstPoint;
@@ -451,7 +457,17 @@ done	mkgmap/build/MapArea.java
 				this.lowPoint = lastPoint;
 				this.highPoint = firstPoint;
 			}
-		} // MergeCloseHelper
+			this.areaToLine = this.endingArea - this.startingArea; // correct if closed
+			// also correct when close along the line, because would do:
+//			this.areaToLine += (long)(lastPoint + firstPoint) * (dividingLine - dividingLine);
+			this.areaOrHole = fullAreaSign * Long.signum(this.areaToLine);
+		} // setMoreInfo
+
+		void combineFirstIntoLast(MergeCloseHelper other, long fullArea) {
+			this.points.addAll(other.points);
+			this.lastPoint = other.lastPoint;
+			this.endingArea = fullArea + other.endingArea;
+		} // combineFirstIntoLast
 
 		public int compareTo(MergeCloseHelper other) {
 			int cmp = this.lowPoint - other.lowPoint;
@@ -461,22 +477,30 @@ done	mkgmap/build/MapArea.java
 			cmp = other.highPoint - this.highPoint;
 			if (cmp != 0)
 				return cmp;
-			// pathalogical case where when have same start & end
-			log.error("Lines hit divider at same points", this.lowPoint, this.highPoint, this.points.get(0).toOSMURL());
-			// %%% should return one with larger area as being less,
-			// but I don't think anyone will define an area like this and expect it to work
-			// so, for moment:
+			// case where when have same start & end
+			// del%%%  return one with larger area as being less because it must be a shape, to handle first
+// %%%			cmp = Long.compare(Math.abs(other.areaToLine), Math.abs(this.areaToLine));
+			// return the shape as lower than the hole, to handle first
+			cmp = other.areaOrHole - this.areaOrHole;
+			if (cmp != 0)
+				return cmp;
+			log.error("Lines hit divider at same points. same area sign", this.lowPoint, this.highPoint,
+				  this.areaToLine, other.areaToLine, this.direction, other.direction, this.points.size(),
+				  this.points.get(0).toOSMURL(), this.points.get(this.points.size()/2).toOSMURL());
+			// after this, don't think anthing else possible, but, for stability
 			return this.direction - other.direction;
 		} // compareTo
 
 		void addHole(MergeCloseHelper other) {
-			if (other.direction == 0 && other.points.size() == 3)
+			// %%% fix dir==0 earlier & more correctly ??? then remove stuff from here
+			if (other.areaToLine == 0)
 				return; // spike into this area. cf. closeAppend()
 			// shapes must have opposite directions.
 			if (this.direction == 0 && other.direction == 0)
 				log.error("Direction of shape and hole indeterminate", this.points.get(0).toOSMURL());
 			else if (this.direction != 0 && other.direction != 0 && this.direction == other.direction)
-				log.error("Direction of shape and hole conflict", this.points.get(0).toOSMURL());
+				log.error("Direction of shape and hole conflict", this.areaToLine, other.areaToLine, this.points.size(),
+					  this.points.get(0).toOSMURL(), this.points.get(this.points.size()/2).toOSMURL());
 			else if (this.direction < 0 || other.direction > 0) {
 				this.points.addAll(other.points);
 				if (this.direction == 0)
@@ -487,7 +511,52 @@ done	mkgmap/build/MapArea.java
 				if (this.direction == 0)
 					this.direction = +1;
 			}
+//			??? move first/lastPoint???
+			this.areaToLine += other.areaToLine;
 		} // addHole
+
+		/**
+		 * closes a shape and appends to list.
+		 *
+		 * If the shape starts and ends at the same point on the dividing line then
+		 * there is no need to close it. Also check for and chuck a spike, which happens
+		 * if there is a single point just across the dividing line and the two intersecting
+		 * points ended up being the same. %%% fix comment
+		 *
+		 * @param points the shape to process.
+		 * @param origList list of shapes to which we append new shapes.
+		 */
+		void closeAppend(List<List<Coord>> origList, boolean onDividingLine) {
+			if (onDividingLine && this.areaToLine == 0)
+				return;
+			Coord firstCoord = points.get(0);
+			int lastPointInx = points.size()-1;
+			if (firstCoord.highPrecEquals(points.get(lastPointInx))) { // start and end at same point on line
+				// There should be no need to close the line, but am finding, for shapes that never crossed the
+				// dividing line, quite a few that, after splitShapes has rotating the shape by 1, have first and last
+				// points highPrecEquals but they are different objects.
+				// This means that the original first and last were the same object, but the second and last were highPrecEquals!
+				// If left like this, it might be flagged by ShapeMergeFilter.
+				// NB: if no coordPool, likely to be different closing object anyway
+				if (firstCoord != points.get(lastPointInx)) {
+					if (onDividingLine)
+						log.error("high prec/diff obj", firstCoord, lastPointInx, onDividingLine, firstCoord.toOSMURL());
+					else
+						points.set(lastPointInx, firstCoord); // quietly replace with first point
+				}
+			} else
+				points.add(firstCoord); // close it
+			if (onDividingLine) { // otherwise just one shape without complicated area chopping
+//				assert Math.abs(this.areaToLine) == Math.abs(uk.me.parabola.mkgmap.filters.ShapeMergeFilter.calcAreaSizeTestVal(points))
+//					: "split added area inconsistent";
+// !!! this is quite expensive, and, not a problem at the moment - %%% remove soon
+				long stdFuncSize = uk.me.parabola.mkgmap.filters.ShapeMergeFilter.calcAreaSizeTestVal(points);
+				if (Math.abs(this.areaToLine) != Math.abs(stdFuncSize))
+					log.error("part area diff", stdFuncSize, areaToLine, points.size(), firstPoint, lastPoint, startingArea, endingArea,
+						  direction, lowPoint, highPoint);
+			}
+			origList.add(points);
+		} // closeAppend
 
 	} // MergeCloseHelper
 
@@ -504,37 +573,46 @@ done	mkgmap/build/MapArea.java
 				      List<List<Coord>> lessList, List<List<Coord>> moreList,
 				      Long2ObjectOpenHashMap<Coord> coordPool) {
 
-		List<List<Coord>> newLess = null, newMore = null;
+		List<MergeCloseHelper> newLess = null, newMore = null;
 		List<Coord> lessPoly = null, morePoly = null;
 		if (lessList != null) {
 			newLess = new ArrayList<>();
-			lessPoly = new ArrayList<>();
-			newLess.add(lessPoly);
+			lessPoly = startLine(newLess);
 		}
 		if (moreList != null) {
 			newMore = new ArrayList<>();
-			morePoly = new ArrayList<>();
-			newMore.add(morePoly);
+			morePoly = startLine(newMore);
 		}
+		/**
+		 * trailXxx variables are the previous coordinate information.
+		 * leadXxx            are for the current coordinate
+		 * lineXxx            are the crossing point
+		 * where Xxx is Coord : Coord
+		 *              Away  : position in plane at right angles to dividing line
+		 *              Along : position in same plane as the dividing line
+		 *              Rel   : -1/0/+1 depending on relationship of Away to dividing line
+		 */
 		Coord trailCoord = null;
-		int trailPosn = 0, trailRel = 0;
+		int trailAway = 0, trailAlong = 0, trailRel = 0;
+		long runningArea = 0;
 
 		for (Coord leadCoord : coords) {
-			int leadPosn = isLongitude ? leadCoord.getHighPrecLon() : leadCoord.getHighPrecLat();
-			int leadRel = Integer.signum(leadPosn - dividingLine);
+			int leadAway  = isLongitude ? leadCoord.getHighPrecLon() : leadCoord.getHighPrecLat();
+			int leadAlong = isLongitude ? leadCoord.getHighPrecLat() : leadCoord.getHighPrecLon();
+			int leadRel = Integer.signum(leadAway - dividingLine);
 			if (trailCoord != null) { // use first point as trailing (poly is closed)
 
 				Coord lineCoord = null;
+				int lineAlong = trailAlong; // initial assumption
 				if (trailRel == 0) // trailing point on line
 					lineCoord = trailCoord;
-				else if (leadRel == 0) // leading point on line
+				else if (leadRel == 0) { // leading point on line
 					lineCoord = leadCoord;
-				else if (trailRel != leadRel) { // crosses line; make intersecting coord
-					int newOther = isLongitude ? trailCoord.getHighPrecLat() : trailCoord.getHighPrecLon();
-					int leadOther = isLongitude ? leadCoord.getHighPrecLat() :  leadCoord.getHighPrecLon();
-					if (newOther != leadOther)
-						newOther += (dividingLine - trailPosn) * (leadOther - newOther) / (leadPosn - trailPosn);
-					lineCoord = Coord.makeHighPrecCoord(isLongitude ? newOther : dividingLine, isLongitude ? dividingLine : newOther);
+					lineAlong = leadAlong;
+				} else if (trailRel != leadRel) { // crosses line; make intersecting coord
+					if (lineAlong != leadAlong)
+						lineAlong += (dividingLine - trailAway) * (leadAlong - trailAlong) / (leadAway - trailAway);
+					lineCoord = Coord.makeHighPrecCoord(isLongitude ? lineAlong : dividingLine, isLongitude ? dividingLine : lineAlong);
 				}
 				if (lineCoord != null && coordPool != null) {
 					// Add new coords to pool. Also add existing ones if on the dividing line because there is slight
@@ -549,38 +627,42 @@ done	mkgmap/build/MapArea.java
 						lineCoord = replCoord;
 				}
 
+				long extraArea; // add in later to get the area to leading point
+				if (leadRel * trailRel >= 0) // doesn't cross the line
+					extraArea = (long)(trailAlong + leadAlong) * (trailAway - leadAway);
+				else { // calc as 2 points
+					runningArea += (long)(trailAlong + lineAlong) * (trailAway - dividingLine);
+					extraArea = (long)(lineAlong + leadAlong) * (dividingLine - leadAway);
+				}
+				
 				if (lessList != null) {
 					if (leadRel < 0) { // this point required
 						if (trailRel >= 0) // previous not on this side, add line point
-							lessPoly.add(lineCoord);
+							openLine(newLess, lineCoord, lineAlong, runningArea);
 						lessPoly.add(leadCoord);
-					} else if (trailRel < 0) { // if this not reqd and prev was, add line point and start new shape
-						lessPoly.add(lineCoord);
-						lessPoly = new ArrayList<>();
-						newLess.add(lessPoly);
-					}
+					} else if (trailRel < 0) // if this not reqd and prev was, add line point and start new shape
+						lessPoly = closeLine(newLess, lineCoord, lineAlong, runningArea + (leadRel == 0 ? extraArea : 0));
 				}
 
 				// identical to above except other way around
 				if (moreList != null) {
 					if (leadRel > 0) { // this point required
 						if (trailRel <= 0) // previous not on this side, add line point
-							morePoly.add(lineCoord);
+							openLine(newMore, lineCoord, lineAlong, runningArea);
 						morePoly.add(leadCoord);
-					} else if (trailRel > 0) { // if this not reqd and prev was, add line point and start new shape
-						morePoly.add(lineCoord);
-						morePoly = new ArrayList<>();
-						newMore.add(morePoly);
-					}
+					} else if (trailRel > 0) // if this not reqd and prev was, add line point and start new shape
+						morePoly = closeLine(newMore, lineCoord, lineAlong, runningArea + (leadRel == 0 ? extraArea : 0));
 				}
 
+				runningArea += extraArea;
 			} // if not first Coord
 			trailCoord = leadCoord;
-			trailPosn = leadPosn;
+			trailAway = leadAway;
+			trailAlong = leadAlong;
 			trailRel = leadRel;
 		} // for leadCoord
-		processLineList(newLess, lessList, isLongitude);
-		processLineList(newMore, moreList, isLongitude);
+		processLineList(newLess, lessList, runningArea);
+		processLineList(newMore, moreList, runningArea);
 	} // splitShape
 
 
