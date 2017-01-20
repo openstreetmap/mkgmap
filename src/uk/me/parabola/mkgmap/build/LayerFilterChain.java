@@ -73,7 +73,7 @@ public class LayerFilterChain implements MapFilterChain {
 	 *
 	 * @param filter Filter to added at the end of the chain.
 	 */
-	void addFilter(MapFilter filter) {
+	public void addFilter(MapFilter filter) {
 		assert config != null;
 
 		filter.init(config);

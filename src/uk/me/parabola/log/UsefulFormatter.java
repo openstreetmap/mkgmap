@@ -32,6 +32,8 @@ import java.util.logging.LogRecord;
  */
 public class UsefulFormatter extends Formatter {
 	private boolean showTime = true;
+	private static final String lineSeparator = System.getProperty("line.separator");
+
 
 	public String format(LogRecord record) {
 		StringBuffer sb = new StringBuffer();
@@ -60,8 +62,8 @@ public class UsefulFormatter extends Formatter {
 		sb.append("): ");
 
 		sb.append(record.getMessage());
-
-		sb.append('\n');
+		
+		sb.append(lineSeparator);
 
 		Throwable t = record.getThrown();
 		if (t != null) {

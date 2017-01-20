@@ -26,6 +26,7 @@ public class FileSystemParam {
 	private int reservedDirectoryBlocks = 202;
 	private boolean gmapsupp;
 	private boolean hideGmapsuppOnPC;
+	private int productVersion = -1; // means unset 
 
 	public String getFilename() {
 		return filename;
@@ -83,5 +84,13 @@ public class FileSystemParam {
 
 	public void setHideGmapsuppOnPC(boolean hideGmapsuppOnPC) {
 		this.hideGmapsuppOnPC = hideGmapsuppOnPC;
+	}
+
+	public void setProductVersion(int version) {
+		this.productVersion = version;
+	}
+
+	public int getProductVersion() {
+		return productVersion;
 	}
 }

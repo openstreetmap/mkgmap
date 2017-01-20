@@ -46,9 +46,6 @@ highway=* & oneway=yes & (access=private|access=no)
 #highway=motorway_link & oneway!=yes & oneway!=no { echo "motorway_link lacks oneway" }
 highway=motorway|highway=motorway_link { add oneway=yes; add mkgmap:numbers=false }
 
-# Set highway names to include the reference if there is one
-highway=motorway { name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-symbol:hbox}' | '${name}' }
-
 # start of rules for process-exits and process-destination options
 # which may add info to a part of these highway=*_link roads:
 # motorway_link, trunk_link, primary_link, secondary_link, tertiary_link
@@ -70,8 +67,10 @@ mkgmap:exit_hint=true
 # use destination hint and/or exit hint to build name              
 (mkgmap:exit_hint=true | mkgmap:dest_hint=*)
   {	name '${exit_hint} ${dest_hint}' | 	'${dest_hint}' | 		'${exit_hint}' }
-# end of rules for process-exits and process-destination options	
-  
+# end of rules for process-exits and process-destination options
+
+# Set highway names to include the reference if there is one
+highway=motorway { name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-symbol:hbox}' | '${name}' }
 highway=trunk {name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-symbol:hbox}' | '${name}'; addlabel '${name} (${ref})' }
 highway=primary {name '${ref|highway-symbol:box} ${name}' | '${ref|highway-symbol:box}' | '${name}'; addlabel '${name} (${ref})' }
 highway=secondary | highway=tertiary {name '${ref|highway-symbol:oval} ${name}' | '${ref|highway-symbol:oval}' | '${name}'; addlabel '${name} (${ref})' }
@@ -114,7 +113,7 @@ junction=roundabout & (highway=primary | highway=primary_link) [0x0c road_class=
 junction=roundabout & (highway=secondary | highway=secondary_link) [0x0c road_class=2 road_speed=2 resolution 20]
 junction=roundabout & (highway=tertiary | highway=tertiary_link) [0x0c road_class=1 road_speed=1 resolution 21]
 junction=roundabout & highway=unclassified [0x0c road_class=1 road_speed=1 resolution 21]
-junction=roundabout [0x0c road_class=0 road_speed=1 resolution 22]
+junction=roundabout & highway=* [0x0c road_class=0 road_speed=1 resolution 22]
 
 # Ways that may or may not be useable
 
@@ -210,7 +209,7 @@ include 'inc/roadspeed';
 # calculate the access rules
 include 'inc/access';
 
-#limit artificial cycleways to to resolution 24
+#limit artificial cycleways to resolution 24
 mkgmap:synthesised=yes & mkgmap:bicycle=yes { set mkgmap:highest-resolution-only = true }
 
 # don't add house numbers to unnamed or artifical bicycle ways

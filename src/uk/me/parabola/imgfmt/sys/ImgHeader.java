@@ -45,6 +45,7 @@ class ImgHeader {
 
 	// Offsets into the header.
 	private static final int OFF_XOR = 0x0;
+	private static final int OFF_VERSION = 0x8;
 	private static final int OFF_UPDATE_MONTH = 0xa;
 	private static final int OFF_UPDATE_YEAR = 0xb; // +1900 for val >= 0x63, +2000 for less
 	private static final int OFF_SUPP = 0xe;		// Appears to be set for gmapsupp files
@@ -165,8 +166,17 @@ class ImgHeader {
 		setCreationTime(date);
 		setUpdateTime(date);
 		setDescription(params.getMapDescription());
-		header.put(OFF_SUPP, (byte) (fsParams.isGmapsupp() && fsParams.isHideGmapsuppOnPC() ? 1: 0));
-
+		if (fsParams.isGmapsupp()) {
+			header.put(OFF_SUPP, (byte) (fsParams.isHideGmapsuppOnPC() ? 1: 0));
+			int prodVersion = fsParams.getProductVersion();
+			if (prodVersion >= 0) {
+				// value 100 means 1.00 */
+				int major = prodVersion / 100;
+				int minor = prodVersion % 100;
+				short version = (short) (major | (minor << 8)); 
+				header.putShort(OFF_VERSION, version);
+			}
+		}
 		// Checksum is not checked.
 		header.put(OFF_CHECKSUM, (byte) 0);
 	}
