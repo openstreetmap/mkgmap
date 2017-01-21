@@ -228,7 +228,7 @@ public class MapArea implements MapDataSource {
 		
 		MapArea[] mapAreas = new MapArea[nx * ny];
 		log.info("Splitting area " + bounds + " into " + nx + "x" + ny + " pieces at resolution " + resolution);
-		boolean lastSplit = bounds.getWidth() < MapSplitter.MIN_DIMENSION || bounds.getHeight() < MapSplitter.MIN_DIMENSION;
+		boolean lastSplit = bounds.getWidth() <= MapSplitter.MIN_DIMENSION || bounds.getHeight() <= MapSplitter.MIN_DIMENSION;
 		boolean useNormalSplit = true;
 		while (true){
 			List<MapArea> addedAreas = new ArrayList<>();
@@ -310,8 +310,8 @@ public class MapArea implements MapDataSource {
 			}
 			// detect special case  
 			if (useNormalSplit && mapAreas.length == 2 && lastSplit
-					&& this.lines.size() > 1 &&  (mapAreas[0].lines.isEmpty() || mapAreas[1].lines.isEmpty()
-					|| this.shapes.size() > 1 &&  (mapAreas[0].shapes.isEmpty() || mapAreas[1].shapes.isEmpty()))) {
+					&& (this.lines.size() > 1 &&  (mapAreas[0].lines.isEmpty() || mapAreas[1].lines.isEmpty())
+							|| this.shapes.size() > 1 &&  (mapAreas[0].shapes.isEmpty() || mapAreas[1].shapes.isEmpty()))) {
 				/* if we get here we probably have two or more identical long ways or
 				 * big shapes with the same center point. We can safely distribute
 				 * them equally to the two areas.  
