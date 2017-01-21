@@ -700,6 +700,10 @@ cover the same area, you can see through this map and see the
 lower map too.  Useful for contour line maps among other
 things.
 <p>
+;--custom
+: 	Write a different TRE header. With this option mkgmap writes the bytes
+0x170401 instead of the default 0x110301 at offset 43. Useful for marine maps.	
+<p>
 ;--hide-gmapsupp-on-pc
 : 	Set a bit in the gmapsupp.img that tells PC software that the file is
 already installed on the PC and therefore there is no need to read it 

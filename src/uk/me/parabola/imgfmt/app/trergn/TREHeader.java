@@ -88,6 +88,8 @@ public class TREHeader extends CommonHeader {
 
 	private int mapId;
 
+	private boolean custom;
+
 	public TREHeader() {
 		super(DEFAULT_HEADER_LEN, "GARMIN TRE");
 	}
@@ -175,8 +177,11 @@ public class TREHeader extends CommonHeader {
 		writer.put(getPoiDisplayFlags());
 
 		writer.put3(displayPriority);
-		writer.putInt(0x110301);
-
+		if (custom)
+			writer.putInt(0x170401);
+		else
+			writer.putInt(0x110301);
+		
 		writer.putChar((char) 1);
 		writer.put((byte) 0);
 
@@ -240,6 +245,8 @@ public class TREHeader extends CommonHeader {
 
 		if (props.containsKey("transparent"))
 			poiDisplayFlags |= POI_FLAG_TRANSPARENT;
+		custom = props.containsKey("custom");
+			
 	}
 	
 	/**
