@@ -332,31 +332,32 @@ public class MapArea implements MapDataSource {
 		}
 	}
 
-	
 	private void distPointsEqually(List<MapArea> addedAreas, int resolution) {
 		// special case: too many POI in small area
-		int done = 0;
-		while (done < points.size()) {
+		int off = 0;
+		final int n = points.size();
+		while (off < n) {
 			MapArea extraArea = new MapArea(this.getBounds(), resolution);
-			for (int j = 0; j < MapSplitter.MAX_NUM_POINTS; j++) {
-				extraArea.addPoint(this.points.get(done + j));
+			for (int j = off; j < Math.min(n, off + MapSplitter.MAX_NUM_POINTS); j++) {
+				extraArea.addPoint(this.points.get(j));
 			}
 			addedAreas.add(extraArea);
-			done += MapSplitter.MAX_NUM_POINTS;
-		} 				
+			off += MapSplitter.MAX_NUM_POINTS;
+		}
 	}
 
 	private void distLinesEqually(List<MapArea> addedAreas, int resolution) {
 		// special case: too many Lines in small area
-		int done = 0;
-		while (done < this.lines.size()) {
+		int off = 0;
+		final int n = lines.size();
+		while (off < n) {
 			MapArea extraArea = new MapArea(this.getBounds(), resolution);
-			for (int j = 0; j < MapSplitter.MAX_NUM_LINES; j++) {
-				extraArea.addLine(this.lines.get(done + j));
+			for (int j = off; j < Math.min(n, off + MapSplitter.MAX_NUM_LINES); j++) {
+				extraArea.addLine(this.lines.get(j));
 			}
 			addedAreas.add(extraArea);
-			done += MapSplitter.MAX_NUM_LINES;
-		} 				
+			off += MapSplitter.MAX_NUM_LINES;
+		}
 	}
 
 	/**
