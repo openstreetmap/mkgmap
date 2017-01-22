@@ -17,6 +17,7 @@ import java.util.ArrayList;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -46,7 +47,7 @@ public class RestrictionRelation extends Relation {
     private List<Long> toWayIds = new ArrayList<>(2);
     private List<Long> viaWayIds = new ArrayList<>(2);
     private List<Coord> viaPoints = new ArrayList<>(2);
-    private HashSet<Long> updatedViaWays = new HashSet<>(); 
+    private Map<Long, List<Coord>> updatedViaWays = new HashMap<>();
     private Coord viaCoord;
     private String restriction;
 	private byte exceptMask;
@@ -634,7 +635,7 @@ public class RestrictionRelation extends Relation {
 	 * @param wayId
 	 * @return
 	 */
-	public boolean isValidWithoputWay(long wayId) {
+	public boolean isValidWithoutWay(long wayId) {
 		assert evalWasCalled;
 		if (viaWayIds.contains(wayId))
 			return false;
@@ -661,32 +662,23 @@ public class RestrictionRelation extends Relation {
 			return;
 		if (viaWayIds.contains(way.getId()) == false)
 			return;
-		if(updatedViaWays.contains(way.getId())){
+		List<Coord> wayViaPoints = new ArrayList<>();
+		for (int i : nodeIndices) {
+			wayViaPoints.add(way.getPoints().get(i));
+		}
+		List<Coord> prevViaPoints = updatedViaWays.get(way.getId()); 
+		if(prevViaPoints != null){
 			// we may get here when the style adds multiple routable ways for the
 			// OSM way
-			if (viaPoints.size() != nodeIndices.size())
-				valid = false;
-			else {
-				Iterator<Coord> iter = viaPoints.iterator();
-				for (int pos : nodeIndices){
-					if (iter.hasNext()){
-						if (way.getPoints().get(pos).equals(iter.next()))
-							continue;
-					}
-					valid = false;
-					break;
-				}
-			}
-			if (!valid)
-				log.error(messagePrefix, "internal error: via way is updated again with different nodes");
-			else {
+			if (prevViaPoints.equals(wayViaPoints)) {
 				// already up to date
 				return;
+			} else {
+				log.error(messagePrefix, "internal error: via way is updated again with different nodes");
 			}
 		}
-		Coord first = way.getPoints().get(nodeIndices.get(0));
-		Coord last = way.getPoints().get(
-				nodeIndices.get(nodeIndices.size() - 1));
+		Coord first = wayViaPoints.get(0);
+		Coord last = wayViaPoints.get(wayViaPoints.size()-1);
 		int posFirst = -1;
 		int posLast = -1;
 		for (int i = 0; i < viaPoints.size(); i++) {
@@ -712,10 +704,7 @@ public class RestrictionRelation extends Relation {
 			valid = false;
 			return;
 		}
-		List<Coord> midPoints = new ArrayList<>();
-		for (int i = 1; i + 1 < nodeIndices.size(); i++) {
-			midPoints.add(way.getPoints().get(nodeIndices.get(i)));
-		}
+		List<Coord> midPoints = new ArrayList<>(wayViaPoints.subList(1, wayViaPoints.size()-1));
 		if (posFirst < posLast){
 			if (posLast - posFirst > 1)
 				viaPoints.subList(posFirst+1, posLast).clear();
@@ -741,6 +730,6 @@ public class RestrictionRelation extends Relation {
 			log.warn(messagePrefix,"has more than 6 via nodes, this is not supported");
 			valid = false;
 		}
-		updatedViaWays.add(way.getId());
+		updatedViaWays.put(way.getId(), wayViaPoints);
 	}
 }
