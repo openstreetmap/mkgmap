@@ -67,9 +67,9 @@ public class MultiPolygonRelation extends Relation {
 	public static final String MP_CREATED_TAG = "mkgmap:mp_created";
 	
 	private final Map<Long, Way> tileWayMap;
-	private final Map<Long, String> roleMap = new HashMap<Long, String>();
+	private final Map<Long, String> roleMap = new HashMap<>();
  
-	private Map<Long, Way> mpPolygons = new LinkedHashMap<Long, Way>();
+	private Map<Long, Way> mpPolygons = new LinkedHashMap<>();
 	
 	
 	protected ArrayList<BitSet> containsMatrix;
@@ -183,8 +183,7 @@ public class MultiPolygonRelation extends Relation {
 	 * @return <code>true</code> if tempWay way is (or could be) joined to
 	 *         joinWay
 	 */
-	private boolean joinWays(JoinedWay joinWay, JoinedWay tempWay,
-			boolean checkOnly) {
+	private static boolean joinWays(JoinedWay joinWay, JoinedWay tempWay, boolean checkOnly) {
 		boolean reverseTempWay = false;
 		int insIdx = -1;
 		int firstTmpIdx = 1;
@@ -227,7 +226,7 @@ public class MultiPolygonRelation extends Relation {
 			
 			if (reverseTempWay) {
 				// the remp coords need to be reversed so copy the list
-				tempCoords = new ArrayList<Coord>(tempCoords);
+				tempCoords = new ArrayList<>(tempCoords);
 				// and reverse it
 				Collections.reverse(tempCoords);
 			}
@@ -249,14 +248,14 @@ public class MultiPolygonRelation extends Relation {
 		// TODO check if the closed polygon is valid and implement a
 		// backtracking algorithm to get other combinations
 
-		ArrayList<JoinedWay> joinedWays = new ArrayList<JoinedWay>();
+		ArrayList<JoinedWay> joinedWays = new ArrayList<>();
 		if (segments == null || segments.isEmpty()) {
 			return joinedWays;
 		}
 
 		// go through all segments and categorize them to closed and unclosed
 		// list
-		ArrayList<JoinedWay> unclosedWays = new ArrayList<JoinedWay>();
+		ArrayList<JoinedWay> unclosedWays = new ArrayList<>();
 		for (Way orgSegment : segments) {
 			JoinedWay jw = new JoinedWay(orgSegment);
 			roleMap.put(jw.getId(), getRole(orgSegment));
@@ -469,7 +468,7 @@ public class MultiPolygonRelation extends Relation {
 	}
 	
 	protected boolean connectUnclosedWays(List<JoinedWay> allWays) {
-		List<JoinedWay> unclosed = new ArrayList<JoinedWay>();
+		List<JoinedWay> unclosed = new ArrayList<>();
 
 		for (JoinedWay w : allWays) {
 			if (w.hasIdenticalEndPoints() == false) {
@@ -479,7 +478,7 @@ public class MultiPolygonRelation extends Relation {
 		// try to connect ways lying outside or on the bbox
 		if (unclosed.size() >= 2) {
 			log.debug("Checking",unclosed.size(),"unclosed ways for connections outside the bbox");
-			Map<Coord, JoinedWay> outOfBboxPoints = new IdentityHashMap<Coord, JoinedWay>();
+			Map<Coord, JoinedWay> outOfBboxPoints = new IdentityHashMap<>();
 			
 			// check all ways for endpoints outside or on the bbox
 			for (JoinedWay w : unclosed) {
@@ -501,8 +500,8 @@ public class MultiPolygonRelation extends Relation {
 				return false;
 			}
 			
-			List<ConnectionData> coordPairs = new ArrayList<ConnectionData>();
-			ArrayList<Coord> coords = new ArrayList<Coord>(outOfBboxPoints.keySet());
+			List<ConnectionData> coordPairs = new ArrayList<>();
+			ArrayList<Coord> coords = new ArrayList<>(outOfBboxPoints.keySet());
 			for (int i = 0; i < coords.size(); i++) {
 				for (int j = i + 1; j < coords.size(); j++) {
 					ConnectionData cd = new ConnectionData();
@@ -712,7 +711,7 @@ public class MultiPolygonRelation extends Relation {
 
 	protected ArrayList<PolygonStatus> getPolygonStatus(BitSet outmostPolygons,
 			String defaultRole) {
-		ArrayList<PolygonStatus> polygonStatusList = new ArrayList<PolygonStatus>();
+		ArrayList<PolygonStatus> polygonStatusList = new ArrayList<>();
 		for (int polyIndex = outmostPolygons.nextSetBit(0); polyIndex >= 0; polyIndex = outmostPolygons
 				.nextSetBit(polyIndex + 1)) {
 			// polyIndex is the polygon that is not contained by any other
@@ -744,7 +743,7 @@ public class MultiPolygonRelation extends Relation {
 	 * @return all source ways
 	 */
 	protected List<Way> getSourceWays() {
-		ArrayList<Way> allWays = new ArrayList<Way>();
+		ArrayList<Way> allWays = new ArrayList<>();
 
 		for (Map.Entry<String, Element> r_e : getElements()) {
 			if (r_e.getValue() instanceof Way) {
@@ -794,8 +793,8 @@ public class MultiPolygonRelation extends Relation {
 		// join all single ways to polygons, try to close ways and remove non closed ways 
 		polygons = joinWays(allWays);
 		
-		outerWaysForLineTagging = new HashSet<Way>();
-		outerTags = new HashMap<String,String>();
+		outerWaysForLineTagging = new HashSet<>();
+		outerTags = new HashMap<>();
 		
 		closeWays(polygons);
 
@@ -829,7 +828,7 @@ public class MultiPolygonRelation extends Relation {
 		}
 
 		// the intersectingPolygons marks all intersecting/overlapping polygons
-		intersectingPolygons = new HashSet<JoinedWay>();
+		intersectingPolygons = new HashSet<>();
 		
 		// check which polygons lie inside which other polygon 
 		createContainsMatrix(polygons);
@@ -870,7 +869,7 @@ public class MultiPolygonRelation extends Relation {
 			return;
 		}
 
-		Queue<PolygonStatus> polygonWorkingQueue = new LinkedBlockingQueue<PolygonStatus>();
+		Queue<PolygonStatus> polygonWorkingQueue = new LinkedBlockingQueue<>();
 		BitSet nestedOuterPolygons = new BitSet();
 		BitSet nestedInnerPolygons = new BitSet();
 
@@ -993,7 +992,7 @@ public class MultiPolygonRelation extends Relation {
 					singularOuterPolygons = Collections
 							.singletonList((Way) new JoinedWay(currentPolygon.polygon));
 				} else {
-					List<Way> innerWays = new ArrayList<Way>(holes.size());
+					List<Way> innerWays = new ArrayList<>(holes.size());
 					for (PolygonStatus polygonHoleStatus : holes) {
 						innerWays.add(polygonHoleStatus.polygon);
 					}
@@ -1299,7 +1298,7 @@ public class MultiPolygonRelation extends Relation {
 		largestOuterPolygon = null;
 	}
 
-	private CutPoint calcNextCutPoint(AreaCutData areaData) {
+	private static CutPoint calcNextCutPoint(AreaCutData areaData) {
 		if (areaData.innerAreas == null || areaData.innerAreas.isEmpty()) {
 			return null;
 		}
@@ -1320,7 +1319,7 @@ public class MultiPolygonRelation extends Relation {
 			
 		}
 		
-		ArrayList<Area> innerStart = new ArrayList<Area>(areaData.innerAreas);
+		ArrayList<Area> innerStart = new ArrayList<>(areaData.innerAreas);
 		
 		// first try to cut out all polygons that intersect the boundaries of the outer polygon
 		// this has the advantage that the outer polygon need not be split into two halves
@@ -1359,7 +1358,7 @@ public class MultiPolygonRelation extends Relation {
 		}
 		
 		
-		ArrayList<CutPoint> bestCutPoints = new ArrayList<CutPoint>(CoordinateAxis.values().length);
+		ArrayList<CutPoint> bestCutPoints = new ArrayList<>(CoordinateAxis.values().length);
 		for (CoordinateAxis axis : CoordinateAxis.values()) {
 			CutPoint bestCutPoint = new CutPoint(axis, outerBounds);
 			CutPoint currentCutPoint = new CutPoint(axis, outerBounds);
@@ -1405,14 +1404,14 @@ public class MultiPolygonRelation extends Relation {
 
 		// this list contains all non overlapping and singular areas
 		// of the outerPolygon
-		Queue<AreaCutData> areasToCut = new LinkedList<AreaCutData>();
-		Collection<Area> finishedAreas = new ArrayList<Area>(innerPolygons.size());
+		Queue<AreaCutData> areasToCut = new LinkedList<>();
+		Collection<Area> finishedAreas = new ArrayList<>(innerPolygons.size());
 		
 		// create a list of Area objects from the outerPolygon (clipped to the bounding box)
 		List<Area> outerAreas = createAreas(outerPolygon, true);
 		
 		// create the inner areas
-		List<Area> innerAreas = new ArrayList<Area>(innerPolygons.size()+2);
+		List<Area> innerAreas = new ArrayList<>(innerPolygons.size()+2);
 		for (Way innerPolygon : innerPolygons) {
 			// don't need to clip to the bounding box because 
 			// these polygons are just used to cut out holes
@@ -1436,7 +1435,7 @@ public class MultiPolygonRelation extends Relation {
 			for (Area outerArea : outerAreas) {
 				AreaCutData initialCutData = new AreaCutData();
 				initialCutData.outerArea = outerArea;
-				initialCutData.innerAreas = new ArrayList<Area>(innerAreas
+				initialCutData.innerAreas = new ArrayList<>(innerAreas
 						.size());
 				for (Area innerArea : innerAreas) {
 					if (outerArea.getBounds2D().intersects(
@@ -1525,7 +1524,7 @@ public class MultiPolygonRelation extends Relation {
 					finishedAreas.addAll(Java2DConverter.areaToSingularAreas(a1));
 					finishedAreas.addAll(Java2DConverter.areaToSingularAreas(a2));
 				} else {
-					ArrayList<Area> cuttedAreas = new ArrayList<Area>();
+					ArrayList<Area> cuttedAreas = new ArrayList<>();
 					cuttedAreas.addAll(Java2DConverter.areaToSingularAreas(a1));
 					cuttedAreas.addAll(Java2DConverter.areaToSingularAreas(a2));
 					
@@ -1536,7 +1535,7 @@ public class MultiPolygonRelation extends Relation {
 						for (Area nonProcessedInner : areaCutData.innerAreas) {
 							if (nextOuterArea.intersects(nonProcessedInner.getBounds2D())) {
 								if (nextInnerAreas == null) {
-									nextInnerAreas = new ArrayList<Area>();
+									nextInnerAreas = new ArrayList<>();
 								}
 								nextInnerAreas.add(nonProcessedInner);
 							}
@@ -1557,7 +1556,7 @@ public class MultiPolygonRelation extends Relation {
 		}
 		
 		// convert the java.awt.geom.Area back to the mkgmap way
-		List<Way> cuttedOuterPolygon = new ArrayList<Way>(finishedAreas.size());
+		List<Way> cuttedOuterPolygon = new ArrayList<>(finishedAreas.size());
 		Long2ObjectOpenHashMap<Coord> commonCoordMap = new Long2ObjectOpenHashMap<>();
 		for (Area area : finishedAreas) {
 			Way w = singularAreaToWay(area, getOriginalId());
@@ -1695,7 +1694,7 @@ public class MultiPolygonRelation extends Relation {
 	 *            a list of polygons
 	 */
 	protected void createContainsMatrix(List<JoinedWay> polygonList) {
-		containsMatrix = new ArrayList<BitSet>();
+		containsMatrix = new ArrayList<>();
 		for (int i = 0; i < polygonList.size(); i++) {
 			containsMatrix.add(new BitSet());
 		}
@@ -1707,7 +1706,7 @@ public class MultiPolygonRelation extends Relation {
 
 		// use this matrix to check which matrix element has been
 		// calculated
-		ArrayList<BitSet> finishedMatrix = new ArrayList<BitSet>(polygonList
+		ArrayList<BitSet> finishedMatrix = new ArrayList<>(polygonList
 				.size());
 
 		for (int i = 0; i < polygonList.size(); i++) {
@@ -1869,7 +1868,7 @@ public class MultiPolygonRelation extends Relation {
 			onePointContained = false;
 			// all points of polygon2 lie on lines of polygon1
 			// => the middle of each line polygon must NOT lie outside polygon1
-			ArrayList<Coord> middlePoints2 = new ArrayList<Coord>(polygon2.getPoints().size());
+			ArrayList<Coord> middlePoints2 = new ArrayList<>(polygon2.getPoints().size());
 			Coord p1 = null;
 			for (Coord p2 : polygon2.getPoints()) {
 				if (p1 != null) {
@@ -2010,7 +2009,7 @@ public class MultiPolygonRelation extends Relation {
 	 * @param points a list of points; all consecutive points are handled as lines
 	 * @return true if p is located on one line given by points
 	 */
-	private boolean locatedOnLine(Coord p, List<Coord> points) {
+	private static boolean locatedOnLine(Coord p, List<Coord> points) {
 		Coord cp1 = null;
 		for (Coord cp2 : points) {
 			if (p.highPrecEquals(cp2)) { 
@@ -2073,8 +2072,7 @@ public class MultiPolygonRelation extends Relation {
 	 * @param p2_2 second point of line 2
 	 * @return true if both lines intersect somewhere in the middle of each other
 	 */
-	private boolean linesCutEachOther(Coord p1_1, Coord p1_2, Coord p2_1,
-			Coord p2_2) {
+	private static boolean linesCutEachOther(Coord p1_1, Coord p1_2, Coord p2_1, Coord p2_2) {
 		int width1 = p1_2.getHighPrecLon() - p1_1.getHighPrecLon();
 		int width2 = p2_2.getHighPrecLon() - p2_1.getHighPrecLon();
 
@@ -2111,7 +2109,7 @@ public class MultiPolygonRelation extends Relation {
 		if (selection.isEmpty()) {
 			return Collections.emptyList();
 		}
-		List<JoinedWay> wayList = new ArrayList<JoinedWay>(selection
+		List<JoinedWay> wayList = new ArrayList<>(selection
 				.cardinality());
 		for (int i = selection.nextSetBit(0); i >= 0; i = selection.nextSetBit(i + 1)) {
 			wayList.add(polygons.get(i));
@@ -2119,7 +2117,7 @@ public class MultiPolygonRelation extends Relation {
 		return wayList;
 	}
 
-	private void logWayURLs(Level level, String preMsg, Way way) {
+	private static void logWayURLs(Level level, String preMsg, Way way) {
 		if (log.isLoggable(level)) {
 			if (way instanceof JoinedWay) {
 				if (((JoinedWay) way).getOriginalWays().isEmpty()) {
@@ -2193,7 +2191,7 @@ public class MultiPolygonRelation extends Relation {
 	protected void tagOuterWays() {
 		Map<String, String> tags;
 		if (hasStyleRelevantTags(this)) {
-			tags = new HashMap<String, String>();
+			tags = new HashMap<>();
 			for (Entry<String, String> relTag : getTagEntryIterator()) {
 				tags.put(relTag.getKey(), relTag.getValue());
 			}
@@ -2378,7 +2376,7 @@ public class MultiPolygonRelation extends Relation {
 		public JoinedWay(Way originalWay) {
 			super(originalWay.getOriginalId(), originalWay.getPoints());
 			setFakeId();
-			originalWays = new ArrayList<Way>();
+			originalWays = new ArrayList<>();
 			addWay(originalWay);
 
 			// we have to initialize the min/max values
@@ -2490,7 +2488,7 @@ public class MultiPolygonRelation extends Relation {
 		}
 
 		public static Map<String,String> getMergedTags(Collection<Way> ways) {
-			Map<String,String> mergedTags = new HashMap<String, String>();
+			Map<String,String> mergedTags = new HashMap<>();
 			boolean first = true;
 			for (Way way : ways) {
 				if (first) {
@@ -2508,7 +2506,7 @@ public class MultiPolygonRelation extends Relation {
 							// the tags are different
 							if (wayTagValue!= null) {
 								if (tagsToRemove == null) {
-									tagsToRemove=new ArrayList<String>();
+									tagsToRemove=new ArrayList<>();
 								}
 								tagsToRemove.add(tag.getKey());
 							}
@@ -2613,7 +2611,7 @@ public class MultiPolygonRelation extends Relation {
 		public CutPoint(CoordinateAxis axis, Rectangle2D outerBounds) {
 			this.axis = axis;
 			this.outerBounds = outerBounds;
-			this.areas = new LinkedList<Area>();
+			this.areas = new LinkedList<>();
 			this.comparator = (axis == CoordinateAxis.LONGITUDE ? COMP_LONG_STOP : COMP_LAT_STOP);
 		}
 		
