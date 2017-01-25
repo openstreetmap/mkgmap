@@ -2091,14 +2091,14 @@ public class MultiPolygonRelation extends Relation {
 
 		double isx = (double)((width2 * y1My3) - (height2 * x1Mx3))
 				/ denominator;
-		if (isx < 0 || isx > 1) {
+		if (isx <= 0 || isx >= 1) {
 			return false;
 		}
 		
 		double isy = (double)((width1 * y1My3) - (height1 * x1Mx3))
 				/ denominator;
 
-		if (isy < 0 || isy > 1) {
+		if (isy <= 0 || isy >= 1) {
 			return false;
 		} 
 
