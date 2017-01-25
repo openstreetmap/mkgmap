@@ -416,8 +416,8 @@ public class MultiPolygonRelation extends Relation {
 				}
 			}
 			
-			Line2D closingLine = new Line2D.Float(p1.getLongitude(), p1
-					.getLatitude(), p2.getLongitude(), p2.getLatitude());
+			Line2D closingLine = new Line2D.Double(p1.getHighPrecLon(), p1.getHighPrecLat(),
+							       p2.getHighPrecLon(), p2.getHighPrecLat());
 
 			boolean intersects = false;
 			Coord lastPoint = null;
@@ -427,9 +427,8 @@ public class MultiPolygonRelation extends Relation {
 			for (Coord thisPoint : way.getPoints().subList(1,
 					way.getPoints().size() - 1)) {
 				if (lastPoint != null) {
-					if (closingLine.intersectsLine(lastPoint.getLongitude(),
-							lastPoint.getLatitude(), thisPoint.getLongitude(),
-							thisPoint.getLatitude())) {
+					if (closingLine.intersectsLine(lastPoint.getHighPrecLon(), lastPoint.getHighPrecLat(),
+								       thisPoint.getHighPrecLon(), thisPoint.getHighPrecLat())) {
 						intersects = true;
 						break;
 					}
@@ -519,10 +518,10 @@ public class MultiPolygonRelation extends Relation {
 						// not cut the bounding box.
 						// This can be removed when the splitter guarantees to provide logical complete
 						// multi-polygons.
-						Coord edgePoint1 = new Coord(cd.c1.getLatitude(), cd.c2
-								.getLongitude());
-						Coord edgePoint2 = new Coord(cd.c2.getLatitude(), cd.c1
-								.getLongitude());
+						Coord edgePoint1 = Coord.makeHighPrecCoord(cd.c1.getHighPrecLat(),
+											   cd.c2.getHighPrecLon());
+						Coord edgePoint2 = Coord.makeHighPrecCoord(cd.c2.getHighPrecLat(),
+											   cd.c1.getHighPrecLon());
 
 						if (lineCutsBbox(cd.c1, edgePoint1) == false
 								&& lineCutsBbox(edgePoint1, cd.c2) == false) {
@@ -1915,10 +1914,10 @@ public class MultiPolygonRelation extends Relation {
 				continue;
 			}
 
-			int lonMin = Math.min(p1_1.getLongitude(), p1_2.getLongitude());
-			int lonMax = Math.max(p1_1.getLongitude(), p1_2.getLongitude());
-			int latMin = Math.min(p1_1.getLatitude(), p1_2.getLatitude());
-			int latMax = Math.max(p1_1.getLatitude(), p1_2.getLatitude());
+			int lonMin = Math.min(p1_1.getHighPrecLon(), p1_2.getHighPrecLon());
+			int lonMax = Math.max(p1_1.getHighPrecLon(), p1_2.getHighPrecLon());
+			int latMin = Math.min(p1_1.getHighPrecLat(), p1_2.getHighPrecLat());
+			int latMax = Math.max(p1_1.getHighPrecLat(), p1_2.getHighPrecLat());
 
 			// check all lines of way1 and way2 for intersections
 			Iterator<Coord> it2 = polygon2.getPoints().iterator();
@@ -1929,10 +1928,8 @@ public class MultiPolygonRelation extends Relation {
 			// -1 means below min lon/lat of bbox line p1_1-p1_2
 			// 0 means inside the bounding box of the line p1_1-p1_2
 			// 1 means above max lon/lat of bbox line p1_1-p1_2
-			int lonField = p2_1.getLongitude() < lonMin ? -1 : p2_1
-					.getLongitude() > lonMax ? 1 : 0;
-			int latField = p2_1.getLatitude() < latMin ? -1 : p2_1
-					.getLatitude() > latMax ? 1 : 0;
+			int lonField = p2_1.getHighPrecLon() < lonMin ? -1 : p2_1.getHighPrecLon() > lonMax ? 1 : 0;
+			int latField = p2_1.getHighPrecLat() < latMin ? -1 : p2_1.getHighPrecLat() > latMax ? 1 : 0;
 
 			int prevLonField = lonField;
 			int prevLatField = latField;
@@ -1943,17 +1940,15 @@ public class MultiPolygonRelation extends Relation {
 
 				int changes = 0;
 				// check if the field of the 3x3 matrix has changed
-				if ((lonField >= 0 && p1_1.getLongitude() < lonMin)
-						|| (lonField <= 0 && p1_1.getLongitude() > lonMax)) {
+				if ((lonField >= 0 && p1_1.getHighPrecLon() < lonMin)
+						|| (lonField <= 0 && p1_1.getHighPrecLon() > lonMax)) {
 					changes++;
-					lonField = p1_1.getLongitude() < lonMin ? -1 : p1_1
-							.getLongitude() > lonMax ? 1 : 0;
+					lonField = p1_1.getHighPrecLon() < lonMin ? -1 : p1_1.getHighPrecLon() > lonMax ? 1 : 0;
 				}
-				if ((latField >= 0 && p1_1.getLatitude() < latMin)
-						|| (latField <= 0 && p1_1.getLatitude() > latMax)) {
+				if ((latField >= 0 && p1_1.getHighPrecLat() < latMin)
+						|| (latField <= 0 && p1_1.getHighPrecLat() > latMax)) {
 					changes++;
-					latField = p1_1.getLatitude() < latMin ? -1 : p1_1
-							.getLatitude() > latMax ? 1 : 0;
+					latField = p1_1.getHighPrecLat() < latMin ? -1 : p1_1.getHighPrecLat() > latMax ? 1 : 0;
 				}
 
 				// an intersection is possible if
@@ -2383,8 +2378,8 @@ public class MultiPolygonRelation extends Relation {
 
 			// we have to initialize the min/max values
 			Coord c0 = originalWay.getPoints().get(0);
-			minLat = maxLat = c0.getLatitude();
-			minLon = maxLon = c0.getLongitude();
+			minLat = maxLat = c0.getHighPrecLat();
+			minLon = maxLon = c0.getHighPrecLon();
 
 			updateBounds(originalWay.getPoints());
 		}
@@ -2401,7 +2396,7 @@ public class MultiPolygonRelation extends Relation {
 
 		private void updateBounds(List<Coord> pointList) {
 			for (Coord c : pointList) {
-				updateBounds(c.getLatitude(),c.getLongitude());
+				updateBounds(c.getHighPrecLat(),c.getHighPrecLon());
 			}
 		}
 
@@ -2430,7 +2425,7 @@ public class MultiPolygonRelation extends Relation {
 			
 		}
 		private void updateBounds(Coord point) {
-			updateBounds(point.getLatitude(), point.getLongitude());
+			updateBounds(point.getHighPrecLat(), point.getHighPrecLon());
 		}
 		
 		/**
@@ -2443,10 +2438,10 @@ public class MultiPolygonRelation extends Relation {
 		 *         bounding box; <code>false</code> else
 		 */
 		public boolean intersects(uk.me.parabola.imgfmt.app.Area bbox) {
-			return (maxLat >= bbox.getMinLat() && 
-					minLat <= bbox.getMaxLat() && 
-					maxLon >= bbox.getMinLong() && 
-					minLon <= bbox.getMaxLong());
+			return (maxLat >= (bbox.getMinLat() << Coord.DELTA_SHIFT) && 
+				minLat <= (bbox.getMaxLat() << Coord.DELTA_SHIFT) && 
+				maxLon >= (bbox.getMinLong() << Coord.DELTA_SHIFT) && 
+				minLon <= (bbox.getMaxLong() << Coord.DELTA_SHIFT));
 		}
 
 		public Rectangle getBounds() {
@@ -2462,8 +2457,8 @@ public class MultiPolygonRelation extends Relation {
 		}
 
 		public boolean linePossiblyIntersectsWay(Coord p1, Coord p2) {
-			return getBounds().intersectsLine(p1.getLongitude(),
-					p1.getLatitude(), p2.getLongitude(), p2.getLatitude());
+			return getBounds().intersectsLine(p1.getHighPrecLon(), p1.getHighPrecLat(),
+							  p2.getHighPrecLon(), p2.getHighPrecLat());
 		}
 
 		public void addWay(Way way) {
