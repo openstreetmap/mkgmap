@@ -32,7 +32,10 @@ public class EchoAction implements Action {
 
 	public boolean perform(Element el) {
 		String e = value.build(el, el);
-		System.err.println(el.getId() + (FakeIdGenerator.isFakeId(el.getId()) ? " (" + el.getOriginalId() + ")" : "") + ": " + e);
+		String className = el.getClass().getSimpleName();
+		if (className.equals("GeneralRelation"))
+			className = "Relation";
+		System.err.println(className + (FakeIdGenerator.isFakeId(el.getId()) ? " generated from " : " ") + el.getOriginalId() + " " + e);
 		return false;
 	}
 }
