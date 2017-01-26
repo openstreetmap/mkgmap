@@ -377,7 +377,7 @@ public class MultiPolygonRelation extends Relation {
 	 * @param wayList
 	 *            a list of ways
 	 */
-	protected void closeWays(ArrayList<JoinedWay> wayList) {
+	protected void closeWays(ArrayList<JoinedWay> wayList, double maxCloseDist) {
 		for (JoinedWay way : wayList) {
 			if (way.hasIdenticalEndPoints() || way.getPoints().size() < 3) {
 				continue;
@@ -431,16 +431,21 @@ public class MultiPolygonRelation extends Relation {
 
 			if (!intersects) {
 				// close the polygon
-				// the new way segment does not intersect the rest of the
-				// polygon
-				if (log.isInfoEnabled()){
+				// the new way segment does not intersect the rest of the polygon
+				boolean doClose = true;
+				if (maxCloseDist > 0) {
+					// calc the distance to close
+					double closeDist = way.getPoints().get(0).distance(way.getPoints().get(way.getPoints().size()-1));
+					doClose = closeDist < maxCloseDist;
+				}
+				if (doClose) {
 					log.info("Closing way", way);
 					log.info("from", way.getPoints().get(0).toOSMURL());
 					log.info("to", way.getPoints().get(way.getPoints().size() - 1)
 							.toOSMURL());
-				} 
-				// mark this ways as artificially closed
-				way.closeWayArtificially();
+					// mark this ways as artificially closed
+					way.closeWayArtificially();
+				}
 			}
 		}
 	}
@@ -476,12 +481,12 @@ public class MultiPolygonRelation extends Relation {
 			// check all ways for endpoints outside or on the bbox
 			for (JoinedWay w : unclosed) {
 				Coord c1 = w.getPoints().get(0);
+				Coord c2 = w.getPoints().get(w.getPoints().size()-1);
 				if (bbox.insideBoundary(c1)==false) {
 					log.debug("Point",c1,"of way",w.getId(),"outside bbox");
 					outOfBboxPoints.put(c1, w);
 				}
 
-				Coord c2 = w.getPoints().get(w.getPoints().size()-1);
 				if (bbox.insideBoundary(c2)==false) {
 					log.debug("Point",c2,"of way",w.getId(),"outside bbox");
 					outOfBboxPoints.put(c2, w);
@@ -789,32 +794,28 @@ public class MultiPolygonRelation extends Relation {
 		outerWaysForLineTagging = new HashSet<>();
 		outerTags = new HashMap<>();
 		
-		closeWays(polygons);
-
-		while (connectUnclosedWays(polygons)) {
-			closeWays(polygons);
-		}
+		do {
+			closeWays(polygons, getMaxCloseDist());
+		} while (connectUnclosedWays(polygons));
 
 		removeUnclosedWays(polygons);
 
 		// now only closed ways are left => polygons only
 
 		// check if we have at least one polygon left
-		if (polygons.isEmpty()) {
-			// do nothing
-			log.info("Multipolygon " + toBrowseURL()
-					+ " does not contain a closed polygon.");
-			tagOuterWays();
-			cleanup();
-			return;
-		}
+		boolean hasPolygons = !polygons.isEmpty();
 
 		removeWaysOutsideBbox(polygons);
 
 		if (polygons.isEmpty()) {
 			// do nothing
-			log.info("Multipolygon", toBrowseURL(),
-					 "is completely outside the bounding box. It is not processed.");
+			if (log.isInfoEnabled()) {
+				if (hasPolygons)
+					log.info("Multipolygon", toBrowseURL(),
+							"is completely outside the bounding box. It is not processed.");
+				else
+					log.info("Multipolygon " + toBrowseURL() + " does not contain a closed polygon.");
+			}
 			tagOuterWays();
 			cleanup();
 			return;
@@ -1123,6 +1124,11 @@ public class MultiPolygonRelation extends Relation {
 		cleanup();
 	}
 	
+	protected double getMaxCloseDist() {
+		return -1; // 
+	}
+
+
 	protected void postProcessing() {
 		
 		if (isAreaSizeCalculated()) {
