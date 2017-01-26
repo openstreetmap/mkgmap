@@ -86,9 +86,6 @@ public class BoundaryRelation extends MultiPolygonRelation {
 //		}
 
 		
-		// create an Area for the bbox to clip the polygons
-		bboxArea = Java2DConverter.createBoundsArea(getBbox()); 
-
 		// join all single ways to polygons, try to close ways and remove non closed ways 
 		polygons = joinWays(allWays);
 		
