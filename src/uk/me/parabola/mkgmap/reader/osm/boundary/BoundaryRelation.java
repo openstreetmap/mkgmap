@@ -415,7 +415,7 @@ public class BoundaryRelation extends MultiPolygonRelation {
 				// the way is not closed
 				// check if one of start/endpoint is out of the bounding box
 				// in this case it is too risky to close it
-				if (getBbox().contains(first) == false || getBbox().contains(last) == false) {
+				if (getTileBounds().contains(first) == false || getTileBounds().contains(last) == false) {
 					pIter.remove();
 				}
 			}

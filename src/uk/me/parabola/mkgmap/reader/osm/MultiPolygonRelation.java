@@ -76,8 +76,8 @@ public class MultiPolygonRelation extends Relation {
 	protected Set<Way> outerWaysForLineTagging;
 	protected Map<String, String> outerTags;
 
-	private final uk.me.parabola.imgfmt.app.Area bbox;
-	private Area bboxArea;
+	private final uk.me.parabola.imgfmt.app.Area tileBounds;
+	private Area tileArea;
 	
 	private Coord cOfG = null;
 	
@@ -108,7 +108,9 @@ public class MultiPolygonRelation extends Relation {
 	public MultiPolygonRelation(Relation other, Map<Long, Way> wayMap,
 			uk.me.parabola.imgfmt.app.Area bbox) {
 		this.tileWayMap = wayMap;
-		this.bbox = bbox;
+		this.tileBounds = bbox;
+		// create an Area for the bbox to clip the polygons
+		tileArea = Java2DConverter.createBoundsArea(tileBounds); 
 
 		setId(other.getId());
 		copyTags(other);
@@ -385,19 +387,19 @@ public class MultiPolygonRelation extends Relation {
 			Coord p1 = way.getPoints().get(0);
 			Coord p2 = way.getPoints().get(way.getPoints().size() - 1);
 
-			if (bbox.insideBoundary(p1) == false
-					&& bbox.insideBoundary(p2) == false) {
+			if (tileBounds.insideBoundary(p1) == false
+					&& tileBounds.insideBoundary(p2) == false) {
 				// both points lie outside the bbox or on the bbox
 
 				// check if both points are on the same side of the bounding box
-				if ((p1.getLatitude() <= bbox.getMinLat() && p2.getLatitude() <= bbox
+				if ((p1.getLatitude() <= tileBounds.getMinLat() && p2.getLatitude() <= tileBounds
 						.getMinLat())
-						|| (p1.getLatitude() >= bbox.getMaxLat() && p2
-								.getLatitude() >= bbox.getMaxLat())
-						|| (p1.getLongitude() <= bbox.getMinLong() && p2
-								.getLongitude() <= bbox.getMinLong())
-						|| (p1.getLongitude() >= bbox.getMaxLong() && p2
-								.getLongitude() >= bbox.getMaxLong())) {
+						|| (p1.getLatitude() >= tileBounds.getMaxLat() && p2
+								.getLatitude() >= tileBounds.getMaxLat())
+						|| (p1.getLongitude() <= tileBounds.getMinLong() && p2
+								.getLongitude() <= tileBounds.getMinLong())
+						|| (p1.getLongitude() >= tileBounds.getMaxLong() && p2
+								.getLongitude() >= tileBounds.getMaxLong())) {
 					// they are on the same side outside of the bbox
 					// so just close them without worrying about if
 					// they intersect itself because the intersection also
@@ -482,12 +484,12 @@ public class MultiPolygonRelation extends Relation {
 			for (JoinedWay w : unclosed) {
 				Coord c1 = w.getPoints().get(0);
 				Coord c2 = w.getPoints().get(w.getPoints().size()-1);
-				if (bbox.insideBoundary(c1)==false) {
+				if (tileBounds.insideBoundary(c1)==false) {
 					log.debug("Point",c1,"of way",w.getId(),"outside bbox");
 					outOfBboxPoints.put(c1, w);
 				}
 
-				if (bbox.insideBoundary(c2)==false) {
+				if (tileBounds.insideBoundary(c2)==false) {
 					log.debug("Point",c2,"of way",w.getId(),"outside bbox");
 					outOfBboxPoints.put(c2, w);
 				}
@@ -593,7 +595,7 @@ public class MultiPolygonRelation extends Relation {
 			JoinedWay tempWay = it.next();
 			if (!tempWay.hasIdenticalEndPoints()) {
 				// warn only if the way intersects the bounding box 
-				boolean inBbox = tempWay.intersects(bbox);
+				boolean inBbox = tempWay.intersects(tileBounds);
 				if (inBbox) {
 					if (firstWarn) {
 						log.warn(
@@ -630,7 +632,7 @@ public class MultiPolygonRelation extends Relation {
 			boolean remove = true;
 			// check all points
 			for (Coord c : w.getPoints()) {
-				if (bbox.contains(c)) {
+				if (tileBounds.contains(c)) {
 					// if one point is in the bounding box the way should not be removed
 					remove = false;
 					break;
@@ -639,7 +641,7 @@ public class MultiPolygonRelation extends Relation {
 
 			if (remove) {
 				// check if the polygon contains the complete bounding box
-				if (w.getBounds().contains(bboxArea.getBounds())) {
+				if (w.getBounds().contains(tileArea.getBounds())) {
 					remove = false;
 				}
 			}
@@ -785,9 +787,6 @@ public class MultiPolygonRelation extends Relation {
 		}
 
 		
-		// create an Area for the bbox to clip the polygons
-		bboxArea = Java2DConverter.createBoundsArea(getBbox()); 
-
 		// join all single ways to polygons, try to close ways and remove non closed ways 
 		polygons = joinWays(allWays);
 		
@@ -991,7 +990,7 @@ public class MultiPolygonRelation extends Relation {
 						innerWays.add(polygonHoleStatus.polygon);
 					}
 
-					MultiPolygonCutter cutter = new MultiPolygonCutter(this, bboxArea);
+					MultiPolygonCutter cutter = new MultiPolygonCutter(this, tileArea);
 					singularOuterPolygons = cutter.cutOutInnerPolygons(currentPolygon.polygon, innerWays);
 				}
 				
@@ -1181,7 +1180,7 @@ public class MultiPolygonRelation extends Relation {
 
 			boolean outOfBbox = false;
 			for (Coord c : polygon.getPoints()) {
-				if (!bbox.contains(c)) {
+				if (!tileBounds.contains(c)) {
 					outOfBbox = true;
 					oneOufOfBbox = true;
 					break;
@@ -1283,7 +1282,7 @@ public class MultiPolygonRelation extends Relation {
 		roleMap.clear();
 		containsMatrix = null;
 		polygons = null;
-		bboxArea = null;
+		tileArea = null;
 		intersectingPolygons = null;
 		outerWaysForLineTagging = null;
 		outerTags = null;
@@ -1516,7 +1515,7 @@ public class MultiPolygonRelation extends Relation {
 					allOnLine = false;
 					break;
 				}
-			} else if (bbox.contains(px)) {
+			} else if (tileBounds.contains(px)) {
 				// we have to check if the point is on one line of the polygon1
 				
 				if (!locatedOnLine(px, polygon1.getWay().getPoints())) {
@@ -1548,7 +1547,7 @@ public class MultiPolygonRelation extends Relation {
 					// box => polygon1 may contain polygon2
 					onePointContained = true;
 					break;
-				} else if (bbox.contains(px)) {
+				} else if (tileBounds.contains(px)) {
 					// we have to check if the point is on one line of the polygon1
 					
 					if (!locatedOnLine(px, polygon1.getWay().getPoints())) {
@@ -1633,10 +1632,10 @@ public class MultiPolygonRelation extends Relation {
 						// closing segment causes the intersection
 						log.info("Polygon", polygon1, "may contain polygon", polygon2,
 							". Ignoring artificial generated intersection.");
-					} else if ((!bbox.contains(p1_1))
-							|| (!bbox.contains(p1_2))
-							|| (!bbox.contains(p2_1))
-							|| (!bbox.contains(p2_2))) {
+					} else if ((!tileBounds.contains(p1_1))
+							|| (!tileBounds.contains(p1_2))
+							|| (!tileBounds.contains(p2_1))
+							|| (!tileBounds.contains(p2_2))) {
 						// at least one point is outside the bounding box
 						// we ignore the intersection because the ways may not
 						// be complete
@@ -1712,10 +1711,10 @@ public class MultiPolygonRelation extends Relation {
 	}
 
 	private boolean lineCutsBbox(Coord p1_1, Coord p1_2) {
-		Coord nw = new Coord(bbox.getMaxLat(), bbox.getMinLong());
-		Coord sw = new Coord(bbox.getMinLat(), bbox.getMinLong());
-		Coord se = new Coord(bbox.getMinLat(), bbox.getMaxLong());
-		Coord ne = new Coord(bbox.getMaxLat(), bbox.getMaxLong());
+		Coord nw = new Coord(tileBounds.getMaxLat(), tileBounds.getMinLong());
+		Coord sw = new Coord(tileBounds.getMinLat(), tileBounds.getMinLong());
+		Coord se = new Coord(tileBounds.getMinLat(), tileBounds.getMaxLong());
+		Coord ne = new Coord(tileBounds.getMaxLat(), tileBounds.getMaxLong());
 		return linesCutEachOther(nw, sw, p1_1, p1_2)
 				|| linesCutEachOther(sw, se, p1_1, p1_2)
 				|| linesCutEachOther(se, ne, p1_1, p1_2)
@@ -1987,8 +1986,8 @@ public class MultiPolygonRelation extends Relation {
 		return mpPolygons;
 	}
 
-	protected uk.me.parabola.imgfmt.app.Area getBbox() {
-		return bbox;
+	protected uk.me.parabola.imgfmt.app.Area getTileBounds() {
+		return tileBounds;
 	}
 	
 	/**

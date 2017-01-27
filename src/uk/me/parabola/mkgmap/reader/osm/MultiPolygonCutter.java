@@ -43,11 +43,16 @@ import uk.me.parabola.util.Java2DConverter;
 public class MultiPolygonCutter {
 	private static final Logger log = Logger.getLogger(MultiPolygonCutter.class);
 	private final MultiPolygonRelation rel;
-	private final Area bboxArea;
+	private final Area tileArea;
 
-	public MultiPolygonCutter(MultiPolygonRelation multiPolygonRelation, Area bboxArea) {
+	/**
+	 * Create cutter for a given MP-relation and tile
+	 * @param multiPolygonRelation the MP-relation
+	 * @param tileArea the java area of the tile
+	 */
+	public MultiPolygonCutter(MultiPolygonRelation multiPolygonRelation, Area tileArea) {
 		rel = multiPolygonRelation;
-		this.bboxArea = bboxArea;
+		this.tileArea = tileArea;
 	}
 
 	/**
@@ -351,9 +356,9 @@ public class MultiPolygonCutter {
 	 */
 	private List<Area> createAreas(Way w, boolean clipBbox) {
 		Area area = Java2DConverter.createArea(w.getPoints());
-		if (clipBbox && !bboxArea.contains(area.getBounds2D())) {
+		if (clipBbox && !tileArea.contains(area.getBounds2D())) {
 			// the area intersects the bounding box => clip it
-			area.intersect(bboxArea);
+			area.intersect(tileArea);
 		}
 		List<Area> areaList = Java2DConverter.areaToSingularAreas(area);
 		if (log.isDebugEnabled()) {
