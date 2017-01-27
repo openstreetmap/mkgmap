@@ -1148,9 +1148,20 @@ public class MapBuilder implements Configurable {
 			if(reducePointErrorPolygon > 0)
 				filters.addFilter(new DouglasPeuckerFilter(reducePointErrorPolygon));
 		}
+/* %%% ??? don't run PolygonSplitterFilter()); here because RoundCoordsFilter might have caused overlap
+consider 
+1/ breaking the chain at this point
+2/ having some method of backtracing the chain
+3/ detecting the problem earlier - trying this
+also, order was
 		filters.addFilter(new PolygonSplitterFilter());
 		filters.addFilter(new RemoveEmpty());
 		filters.addFilter(new RemoveObsoletePointsFilter());
+but this should be better anyway
+*/
+		filters.addFilter(new RemoveObsoletePointsFilter());
+		filters.addFilter(new PolygonSplitterFilter(false));
+		filters.addFilter(new RemoveEmpty());
 		filters.addFilter(new LinePreparerFilter(div));
 		filters.addFilter(new ShapeAddFilter(div, map));
 

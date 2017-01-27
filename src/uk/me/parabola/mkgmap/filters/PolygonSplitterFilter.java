@@ -39,6 +39,12 @@ import java.util.List;
 public class PolygonSplitterFilter extends PolygonSplitterBase implements MapFilter {
 	public static final int MAX_POINT_IN_ELEMENT = 250;
 
+	private final boolean usePredictedNumPoints;
+
+	public PolygonSplitterFilter(boolean usePredictedNumPoints) {
+		this.usePredictedNumPoints = usePredictedNumPoints;
+	}
+
 	/**
 	 * Split up polygons that have more than the max allowed number of points.
 	 * Initially I shall just throw out polygons that have too many points
@@ -51,7 +57,8 @@ public class PolygonSplitterFilter extends PolygonSplitterBase implements MapFil
 		assert element instanceof MapShape;
 		MapShape shape = (MapShape) element;
 
-		int n = shape.getPoints().size();
+		int n = usePredictedNumPoints ? PredictFilterPoints.predictedMaxNumPoints(shape.getPoints(), resolution, false)
+					      : shape.getPoints().size();
 		if (n < MAX_POINT_IN_ELEMENT) {
 			// This is ok let it through and return.
 			next.doFilter(element);
@@ -67,7 +74,9 @@ public class PolygonSplitterFilter extends PolygonSplitterBase implements MapFil
 		// NOTE: the end condition is changed from within the loop.
 		for (int i = 0; i < outputs.size(); i++) {
 			MapShape s = outputs.get(i);
-			if (s.getPoints().size() > MAX_POINT_IN_ELEMENT) {
+			n = usePredictedNumPoints ? PredictFilterPoints.predictedMaxNumPoints(s.getPoints(), resolution, false)
+						  : s.getPoints().size();
+			if (n > MAX_POINT_IN_ELEMENT) {
 				// Not small enough, so remove it and split it again.  The resulting
 				// pieces will be placed at the end of the list and will be
 				// picked up later on.

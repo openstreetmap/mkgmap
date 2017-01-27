@@ -29,10 +29,12 @@ import uk.me.parabola.mkgmap.general.MapShape;
  */
 public class PolygonSplitterBase extends BaseFilter {
 	protected static final int MAX_SIZE = 0xffff; // larger value causes problem in delta encoding of lines
-	private int shift;
+	protected int shift;
+	protected int resolution;
 	
 	public void init(FilterConfig config) {
 		shift = config.getShift();
+		resolution = config.getResolution();
 	}
 	
 	/**

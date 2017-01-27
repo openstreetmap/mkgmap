@@ -32,10 +32,12 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.FilterConfig;
 import uk.me.parabola.mkgmap.filters.LineSizeSplitterFilter;
 import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
+import uk.me.parabola.mkgmap.filters.MapFilter;
 import uk.me.parabola.mkgmap.filters.MapFilterChain;
 import uk.me.parabola.mkgmap.filters.PolygonSplitterFilter;
 import uk.me.parabola.mkgmap.filters.PolygonSubdivSizeSplitterFilter;
 import uk.me.parabola.mkgmap.filters.ShapeMergeFilter;
+import uk.me.parabola.mkgmap.filters.PredictFilterPoints;
 import uk.me.parabola.mkgmap.general.MapDataSource;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
@@ -114,8 +116,13 @@ public class MapArea implements MapDataSource {
 			else
 				log.error("Point with type 0x" + Integer.toHexString(p.getType()) + " at " + p.getLocation().toOSMURL() + " is outside of the map area centred on " + bounds.getCenter().toOSMURL() + " width = " + bounds.getWidth() + " height = " + bounds.getHeight() + " resolution = " + resolution);
 		}
-		addLines(src, resolution);
-		addPolygons(src, resolution);
+		FilterConfig config = new FilterConfig();
+		config.setResolution(resolution);
+		config.setBounds(bounds);
+//%%% info to support: checkPreserved = config.getLevel() == 0 && config.isRoutable(); when we do lines as well
+
+		addLines(src, config);
+		addPolygons(src, config);
 	}
 
 	/**
@@ -123,22 +130,29 @@ public class MapArea implements MapDataSource {
 	 * @param src The map data.
 	 * @param resolution The resolution of this layer.
 	 */
-	private void addPolygons(MapDataSource src, final int resolution) {
-		MapFilterChain chain = new MapFilterChain() {
-			public void doFilter(MapElement element) {
+	private void addPolygons(MapDataSource src, FilterConfig config) {
+		MapFilter chain = new MapFilter() {
+			public void init(FilterConfig config) {}
+			public void doFilter(MapElement element, MapFilterChain next) {
 				MapShape shape = (MapShape) element;
 				addShape(shape);
 			}
 		};
 
-		PolygonSubdivSizeSplitterFilter filter = new PolygonSubdivSizeSplitterFilter();
-		FilterConfig config = new FilterConfig();
-		config.setResolution(resolution);
-		config.setBounds(bounds);
-		filter.init(config);
+		LayerFilterChain filters = new LayerFilterChain(config);
+		if (true)
+/* %%% ???
+idea here is to suppress subDivSizeSolitter if orderBy
+either have something more in the config that filter notices or just stop it here
+how to decide - the orderBy flag is a long way away
+Maybe never have this filter here and always pass big poly into splitIntoArea
+*/
+			filters.addFilter(new PolygonSubdivSizeSplitterFilter());
+		filters.addFilter(new PolygonSplitterFilter(true));
+		filters.addFilter(chain);
 
 		for (MapShape s : src.getShapes()) {
-			filter.doFilter(s, chain);
+			filters.startFilter(s);
 		}
 	}
 
@@ -148,7 +162,7 @@ public class MapArea implements MapDataSource {
 	 * @param src The map data.
 	 * @param resolution The current resolution of the layer.
 	 */
-	private void addLines(MapDataSource src, final int resolution) {
+	private void addLines(MapDataSource src, FilterConfig config) {
 		// Split lines for size, such that it is appropriate for the
 		// resolution that it is at.
 		MapFilterChain chain = new MapFilterChain() {
@@ -159,9 +173,6 @@ public class MapArea implements MapDataSource {
 		};
 
 		LineSizeSplitterFilter filter = new LineSizeSplitterFilter();
-		FilterConfig config = new FilterConfig();
-		config.setResolution(resolution);
-		config.setBounds(bounds);
 		filter.init(config);
 		for (MapLine l : src.getLines()) {
 			filter.doFilter(l, chain);
@@ -535,6 +546,7 @@ public class MapArea implements MapDataSource {
 			// Estimate the size taken by lines and shapes as a constant plus
 			// a factor based on the number of points.
 			numPoints = ((MapLine) el).getPoints().size();
+//%%%			numPoints = PredictFilterPoints.predictedMaxNumPoints(((MapLine) el).getPoints(), areaResolution, checkPreserved???);
 			numElements = 1 + ((numPoints - 1) / LineSplitterFilter.MAX_POINTS_IN_LINE);
 			sizes[kind] += numElements * 11 + numPoints * 4; // very pessimistic, typically less than 2 bytes are needed for one point
 			if (!el.hasExtendedType())
@@ -545,8 +557,11 @@ public class MapArea implements MapDataSource {
 		case XT_SHAPE_KIND:
 			// Estimate the size taken by lines and shapes as a constant plus
 			// a factor based on the number of points.
-			numPoints = ((MapLine) el).getPoints().size();
+			numPoints = PredictFilterPoints.predictedMaxNumPoints(((MapShape) el).getPoints(), areaResolution, false);
 			numElements = 1 + ((numPoints - 1) / PolygonSplitterFilter.MAX_POINT_IN_ELEMENT);
+			if (numElements > 1) // the new idea is to spot this before it happens and split the polygon in advance
+			        // %%% error->warn. might not matter anyway as future area split 
+				log.error("Polygon estimate still needs split", ((MapShape) el).getPoints().size(), numPoints, numElements, areaResolution);
 			sizes[kind] += numElements * 11 + numPoints * 4; // very pessimistic, typically less than 2 bytes are needed for one point
 			if (!el.hasExtendedType())
 				nActiveShapes += numElements;
