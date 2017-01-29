@@ -120,7 +120,7 @@ public class MapBuilder implements Configurable {
 	private List<String> copyrights = new ArrayList<>();
 
 	private boolean doRoads;
-	private Boolean driveOnLeft;
+	private Boolean driveOnLeft; // needs to be Boolean for later test:	if (driveOnLeft == null){
 	private Locator locator;
 
 	private final java.util.Map<String, Highway> highways = new HashMap<>();

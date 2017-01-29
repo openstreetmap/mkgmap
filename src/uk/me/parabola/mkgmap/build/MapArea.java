@@ -23,7 +23,6 @@ import java.util.List;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
 import uk.me.parabola.imgfmt.Utils;
-// import uk.me.parabola.util.Java2DConverter;
 import uk.me.parabola.util.ShapeSplitter;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -95,7 +94,8 @@ public class MapArea implements MapDataSource {
 	private int nActiveShapes;
 
 	/** The resolution that this area is at */
-	private final int areaResolution;
+	private int areaResolution;
+	private final boolean splitPolygonsIntoArea;
 
 	private Long2ObjectOpenHashMap<Coord> areasHashMap;
 
@@ -106,53 +106,33 @@ public class MapArea implements MapDataSource {
 	 *
 	 * @param src The map data source to initialise this area with.
 	 * @param resolution The resolution of this area.
+	 * @param splitPolygonsIntoArea aligns subareas as powerOf2 and splits polygons into the subareas.
 	 */
-	public MapArea(MapDataSource src, int resolution) {
-		this.areaResolution = 0;
+	public MapArea(MapDataSource src, int resolution, boolean splitPolygonsIntoArea) {
+		this.areaResolution = 0; // don't want to gather size information for this area
 		this.bounds = src.getBounds();
+		this.splitPolygonsIntoArea = splitPolygonsIntoArea;
 		for (MapPoint p : src.getPoints()) {
 			if(bounds.contains(p.getLocation()))
 				addPoint(p);
 			else
-				log.error("Point with type 0x" + Integer.toHexString(p.getType()) + " at " + p.getLocation().toOSMURL() + " is outside of the map area centred on " + bounds.getCenter().toOSMURL() + " width = " + bounds.getWidth() + " height = " + bounds.getHeight() + " resolution = " + resolution);
+				log.error("Point with type 0x" + Integer.toHexString(p.getType()) + " at " + p.getLocation().toOSMURL() +
+					  " is outside of the map area centred on " + bounds.getCenter().toOSMURL() +
+					  " width = " + bounds.getWidth() + " height = " + bounds.getHeight() + " resolution = " + areaResolution);
 		}
-		FilterConfig config = new FilterConfig();
-		config.setResolution(resolution);
-		config.setBounds(bounds);
-//%%% info to support: checkPreserved = config.getLevel() == 0 && config.isRoutable(); when we do lines as well
-
-		addLines(src, config);
-		addPolygons(src, config);
+		addLines(src, resolution);
+		addPolygons(src, resolution);
+		this.areaResolution = resolution;
 	}
 
 	/**
 	 * Add the polygons, making sure that they are not too big.
 	 * @param src The map data.
-	 * @param resolution The resolution of this layer.
 	 */
-	private void addPolygons(MapDataSource src, FilterConfig config) {
-		MapFilter chain = new MapFilter() {
-			public void init(FilterConfig config) {}
-			public void doFilter(MapElement element, MapFilterChain next) {
-				MapShape shape = (MapShape) element;
-				addShape(shape);
-			}
-		};
-
-		LayerFilterChain filters = new LayerFilterChain(config);
-		if (true)
-/* %%% ???
-idea here is to suppress subDivSizeSolitter if orderBy
-either have something more in the config that filter notices or just stop it here
-how to decide - the orderBy flag is a long way away
-Maybe never have this filter here and always pass big poly into splitIntoArea
-*/
-			filters.addFilter(new PolygonSubdivSizeSplitterFilter());
-		filters.addFilter(new PolygonSplitterFilter(true));
-		filters.addFilter(chain);
-
+	private void addPolygons(MapDataSource src, final int resolution) {
+		// don't want to do any oversize splitting here, handled better later by split
 		for (MapShape s : src.getShapes()) {
-			filters.startFilter(s);
+			addShape(s);
 		}
 	}
 
@@ -162,7 +142,7 @@ Maybe never have this filter here and always pass big poly into splitIntoArea
 	 * @param src The map data.
 	 * @param resolution The current resolution of the layer.
 	 */
-	private void addLines(MapDataSource src, FilterConfig config) {
+	private void addLines(MapDataSource src, final int resolution) {
 		// Split lines for size, such that it is appropriate for the
 		// resolution that it is at.
 		MapFilterChain chain = new MapFilterChain() {
@@ -173,6 +153,11 @@ Maybe never have this filter here and always pass big poly into splitIntoArea
 		};
 
 		LineSizeSplitterFilter filter = new LineSizeSplitterFilter();
+		FilterConfig config = new FilterConfig();
+		config.setResolution(resolution);
+		config.setBounds(bounds);
+//%%% info to support: checkPreserved = config.getLevel() == 0 && config.isRoutable()//isRoad(); when we do lines as well
+// see addSize LINE_KIND
 		filter.init(config);
 		for (MapLine l : src.getLines()) {
 			filter.doFilter(l, chain);
@@ -183,11 +168,13 @@ Maybe never have this filter here and always pass big poly into splitIntoArea
 	 * Create an map area with the given initial bounds.
 	 *
 	 * @param area The bounds for this area.
-	 * @param res The minimum resolution for this area.
+	 * @param resolution The minimum resolution for this area.
+	 * @param splitPolygonsIntoArea aligns subareas as powerOf2 and splits polygons into the subareas.
 	 */
-	private MapArea(Area area, int res) {
+	private MapArea(Area area, int resolution, boolean splitPolygonsIntoArea) {
 		bounds = area;
-		areaResolution = res;
+		areaResolution = resolution;
+		this.splitPolygonsIntoArea = splitPolygonsIntoArea;
 	}
 
 	/**
@@ -195,7 +182,7 @@ Maybe never have this filter here and always pass big poly into splitIntoArea
 	 * to the appropriate subarea.  Usually this instance would now be thrown
 	 * away and the new sub areas used instead.
 	 * <p>
-	 * if orderByDecreasingArea, the split is forced onto boundaries that can
+	 * if splitPolygonsIntoArea, the split is forced onto boundaries that can
 	 * be represented exactly with the relevant shift for the level.
 	 * This can cause the split to fail because all the lines/shapes that need
 	 * to be put at this level are here, but represented at the highest resolution
@@ -211,13 +198,13 @@ Maybe never have this filter here and always pass big poly into splitIntoArea
 	 *
 	 * @param nx The number of pieces in the x (longitude) direction.
 	 * @param ny The number of pieces in the y direction.
-	 * @param resolution The resolution of the level.
-	 * @param bounds the bounding box that is used to create the areas.  
-	 * @param orderByDecreasingArea aligns subareas as powerOf2 and splits polygons into the subareas.
+	 * @param bounds the bounding box that is used to create the areas.
+	 *
 	 * @return An array of the new MapArea's or null if can't split.
 	 */
-	public MapArea[] split(int nx, int ny, int resolution, Area bounds, boolean orderByDecreasingArea) {
-		int resolutionShift = orderByDecreasingArea ? (24 - resolution) : 0;
+	public MapArea[] split(int nx, int ny, Area bounds, boolean lastSplit) {
+//%%% always	int resolutionShift = splitPolygonsIntoArea ? (MAX_RESOLUTION - resolution) : 0;
+		int resolutionShift = MAX_RESOLUTION - areaResolution;
 		Area[] areas = bounds.split(nx, ny, resolutionShift);
 		if (areas == null) { //  Failed to split!
 			if (log.isDebugEnabled()) { // see what is here
@@ -239,117 +226,118 @@ Maybe never have this filter here and always pass big poly into splitIntoArea
 		}
 		
 		MapArea[] mapAreas = new MapArea[nx * ny];
-		log.info("Splitting area " + bounds + " into " + nx + "x" + ny + " pieces at resolution " + resolution);
-		boolean lastSplit = bounds.getWidth() <= MapSplitter.MIN_DIMENSION || bounds.getHeight() <= MapSplitter.MIN_DIMENSION;
-		boolean useNormalSplit = true;
-		while (true){
-			List<MapArea> addedAreas = new ArrayList<>();
-			for (int i = 0; i < nx * ny; i++) {
-				mapAreas[i] = new MapArea(areas[i], resolution);
-				if (log.isDebugEnabled())
-					log.debug("area before", mapAreas[i].getBounds());
-			}
+		log.info("Splitting area " + bounds + " into " + nx + "x" + ny + " pieces at resolution " + areaResolution);
+//		boolean lastSplit = bounds.getWidth() <= MapSplitter.MIN_DIMENSION || bounds.getHeight() <= MapSplitter.MIN_DIMENSION;
+		List<MapArea> addedAreas = new ArrayList<>();
+		for (int i = 0; i < mapAreas.length; i++) {
+			mapAreas[i] = new MapArea(areas[i], areaResolution, splitPolygonsIntoArea);
+			if (log.isDebugEnabled())
+				log.debug("area before", mapAreas[i].getBounds());
+		}
 
-			int xbase30 = areas[0].getMinLong() << Coord.DELTA_SHIFT;
-			int ybase30 = areas[0].getMinLat() << Coord.DELTA_SHIFT;
-			int dx30 = areas[0].getWidth() << Coord.DELTA_SHIFT;
-			int dy30 = areas[0].getHeight() << Coord.DELTA_SHIFT;
+		int xbase30 = areas[0].getMinLong() << Coord.DELTA_SHIFT;
+		int ybase30 = areas[0].getMinLat() << Coord.DELTA_SHIFT;
+		int dx30 = areas[0].getWidth() << Coord.DELTA_SHIFT;
+		int dy30 = areas[0].getHeight() << Coord.DELTA_SHIFT;
 
-			// Now sprinkle each map element into the correct map area.
-			boolean[] used = new boolean[mapAreas.length];
-			if (lastSplit && this.points.size() > MapSplitter.MAX_NUM_POINTS) {
-				// unlikely: too many points in small area
-				distPointsEqually(addedAreas, resolution);
-			} else {
-				for (MapPoint p : this.points) {
-					int pos = pickArea(mapAreas, p, xbase30, ybase30, nx, ny, dx30, dy30);
-					mapAreas[pos].addPoint(p);
-					used[pos] = true;
-				}
-			}
-			
-			int maxWidth = areas[0].getWidth();
-			int maxHeight = areas[0].getHeight();
-			if (mapAreas.length == 1 || maxWidth < LARGE_OBJECT_DIM|| maxHeight < LARGE_OBJECT_DIM){
-				// don't separate large objects
-				maxWidth = Integer.MAX_VALUE;  
-				maxHeight = Integer.MAX_VALUE; 
-			}
+/*
+various things going on:
+o 1 or set of areas to put items into
+o could be adding item that wont show at this resolution
+o item  has much larger area than current 1/2 major areas and want to put it into own
+  probably best if nothing else put into this subDiv
+o item too big for subdivision and needs split - currently happens on initial MapArea setup
+o lastSplit false if area reasonable size, true otherwise and 1 area
+o because lastSplit true, need to create and populate other areas when current one current full
+  if lastSplit false, just ignore overflow
 
-			int areaIndex = 0;
-			if (lastSplit && this.lines.size() > MapSplitter.MAX_NUM_LINES) {
-				// unlikely: too many lines in small area
-				distLinesEqually(addedAreas, resolution);
-			} else {
-				for (MapLine l : this.lines) {
-					// Drop any zero sized lines.
-					if (l instanceof MapRoad == false && l.getRect().height <= 0 && l.getRect().width <= 0)
-						continue;
-					if (useNormalSplit){
-						if (l.getBounds().getHeight() > maxHeight || l.getBounds().getWidth() > maxWidth){
-							MapArea largeObjectArea = new MapArea(l.getBounds(), resolution);
-							largeObjectArea.addLine(l);
-							addedAreas.add(largeObjectArea);
-							continue;
-						}
-						areaIndex = pickArea(mapAreas, l, xbase30, ybase30, nx, ny, dx30, dy30);
-					}
-					else 
-						areaIndex = areaIndex == 0 ? 1: 0;
-					mapAreas[areaIndex].addLine(l);
-					used[areaIndex] = true;
-				}
-			}
+%%% have removed the #points chopping when we start a level because only need to
+do after have chopped for other reasons and if the poly is vis at this resolution
 
-			for (MapShape e : this.shapes) {
-				if (orderByDecreasingArea) { // need to treat shapes consistently, regardless of useNormalSplit
-					splitIntoAreas(mapAreas, e, used);
+?? if long road in own subdiv it might get divided at next mapLevel
+
+still need filter in one of the versions of putShapes that checks if gen data
+
+want to change the order as well
+*/
+
+		int maxWidth = areas[0].getWidth();
+		int maxHeight = areas[0].getHeight();
+		if (mapAreas.length == 1 || maxWidth < LARGE_OBJECT_DIM || maxHeight < LARGE_OBJECT_DIM) {
+//??? not ness true anymore, but may be because these would have been shifted out earlier
+		    // %%% reasons for this
+			// don't separate large objects
+			maxWidth = Integer.MAX_VALUE;  
+			maxHeight = Integer.MAX_VALUE; 
+		}
+
+		// Now sprinkle each map element into the correct map area.
+
+		// do shapes first because want these to define the primary area
+		// move some of the work done by PolygonSubdivSizeSplitterFilter here
+		final int maxSize = Math.min((1<<24)-1, Math.max(MapSplitter.MAX_DIVISION_SIZE << (MAX_RESOLUTION - areaResolution), 0x8000));
+		for (MapShape e : this.shapes) {
+			Area shapeBounds = e.getBounds();
+			if (splitPolygonsIntoArea || shapeBounds.getMaxDimension() > maxSize) {
+				splitIntoAreas(mapAreas, e);
+				continue;
+			}
+			if (shapeBounds.getHeight() > maxHeight || shapeBounds.getWidth() > maxWidth) {
+				MapArea largeObjectArea = new MapArea(e.getBounds(), areaResolution, true); // use splitIntoAreas to deal with overflow
+				largeObjectArea.addSplitShape(e);
+				addedAreas.add(largeObjectArea);
+				continue;
+			}
+			int areaIndex = pickArea(mapAreas, e, xbase30, ybase30, nx, ny, dx30, dy30);
+			mapAreas[areaIndex].addSplitShape(e);
+		}
+
+		if (lastSplit && this.points.size() > MapSplitter.MAX_NUM_POINTS) {  // %%% fix test
+			// unlikely: too many points in small area
+			distPointsEqually(addedAreas);
+		} else {
+			for (MapPoint p : this.points) {
+				int areaIndex = pickArea(mapAreas, p, xbase30, ybase30, nx, ny, dx30, dy30);
+				mapAreas[areaIndex].addPoint(p);
+			}
+		}
+		
+		if (lastSplit && this.lines.size() > MapSplitter.MAX_NUM_LINES) {
+			// unlikely: too many lines in small area
+			distLinesEqually(addedAreas);
+		} else {
+			for (MapLine l : this.lines) {
+				// Drop any zero sized lines.
+				if (l instanceof MapRoad == false && l.getRect().height <= 0 && l.getRect().width <= 0)
+					continue;
+				if (l.getBounds().getHeight() > maxHeight || l.getBounds().getWidth() > maxWidth) {
+					MapArea largeObjectArea = new MapArea(l.getBounds(), areaResolution, splitPolygonsIntoArea);
+					largeObjectArea.addLine(l);
+					addedAreas.add(largeObjectArea);
 					continue;
 				}
-				if (useNormalSplit){
-					if (e.getBounds().getHeight() > maxHeight || e.getBounds().getWidth() > maxWidth){
-						MapArea largeObjectArea = new MapArea(e.getBounds(), resolution);
-						largeObjectArea.addShape(e);
-						addedAreas.add(largeObjectArea);
-						continue;
-					}
-					areaIndex = pickArea(mapAreas, e, xbase30, ybase30, nx, ny, dx30, dy30);
-				}
-				else 
-					areaIndex = areaIndex == 0 ? 1: 0;
-				mapAreas[areaIndex].addShape(e);
-				used[areaIndex] = true;
+				int areaIndex = pickArea(mapAreas, l, xbase30, ybase30, nx, ny, dx30, dy30);
+				mapAreas[areaIndex].addLine(l);
 			}
-			// detect special case  
-			if (useNormalSplit && mapAreas.length == 2 && lastSplit
-					&& (this.lines.size() > 1 &&  (mapAreas[0].lines.isEmpty() || mapAreas[1].lines.isEmpty())
-							|| this.shapes.size() > 1 &&  (mapAreas[0].shapes.isEmpty() || mapAreas[1].shapes.isEmpty()))) {
-				/* if we get here we probably have two or more identical long ways or
-				 * big shapes with the same center point. We can safely distribute
-				 * them equally to the two areas.  
-				 */
-				useNormalSplit = false;
-				log.warn("useNormalSplit false");
-				continue;
-			} 
-			
-			if (addedAreas.isEmpty() == false){
-				// combine list and array
-				int pos = mapAreas.length;
-				mapAreas = Arrays.copyOf(mapAreas, mapAreas.length + addedAreas.size());
-				for (MapArea ma : addedAreas)
-					mapAreas[pos++] = ma;
-			}
-			return mapAreas;
 		}
+
+		
+		if (!addedAreas.isEmpty()) {
+			// combine list and array
+			int pos = mapAreas.length;
+			mapAreas = Arrays.copyOf(mapAreas, mapAreas.length + addedAreas.size());
+			for (MapArea ma : addedAreas)
+				mapAreas[pos++] = ma;
+		}
+		return mapAreas;
 	}
 
-	private void distPointsEqually(List<MapArea> addedAreas, int resolution) {
+	private void distPointsEqually(List<MapArea> addedAreas) {
 		// special case: too many POI in small area
 		int off = 0;
 		final int n = points.size();
 		while (off < n) {
-			MapArea extraArea = new MapArea(this.getBounds(), resolution);
+			MapArea extraArea = new MapArea(this.getBounds(), areaResolution, splitPolygonsIntoArea);
 			for (int j = off; j < Math.min(n, off + MapSplitter.MAX_NUM_POINTS); j++) {
 				extraArea.addPoint(this.points.get(j));
 			}
@@ -358,12 +346,17 @@ Maybe never have this filter here and always pass big poly into splitIntoArea
 		}
 	}
 
-	private void distLinesEqually(List<MapArea> addedAreas, int resolution) {
+	private void distLinesEqually(List<MapArea> addedAreas) {
 		// special case: too many Lines in small area
+//%%% this is wrong - and parts of the points one as well
+// need to consider all the other limits (ie total points....)  as well
+// and the fact it might not appear at this resolution anyway and so should
+// be in primary area
 		int off = 0;
 		final int n = lines.size();
+		log.error("distLinesEqually needs more consideration", n);
 		while (off < n) {
-			MapArea extraArea = new MapArea(this.getBounds(), resolution);
+			MapArea extraArea = new MapArea(this.getBounds(), areaResolution, splitPolygonsIntoArea);
 			for (int j = off; j < Math.min(n, off + MapSplitter.MAX_NUM_LINES); j++) {
 				extraArea.addLine(this.lines.get(j));
 			}
@@ -545,8 +538,11 @@ Maybe never have this filter here and always pass big poly into splitIntoArea
 		case XT_LINE_KIND:
 			// Estimate the size taken by lines and shapes as a constant plus
 			// a factor based on the number of points.
-			numPoints = ((MapLine) el).getPoints().size();
-//%%%			numPoints = PredictFilterPoints.predictedMaxNumPoints(((MapLine) el).getPoints(), areaResolution, checkPreserved???);
+			numPoints = PredictFilterPoints.predictedMaxNumPoints(((MapLine) el).getPoints(), areaResolution,
+				// assume MapBuilder.doRoads is true. subDiv.getZoom().getLevel() == 0 is maximum resolution
+				((MapLine) el).isRoad() && areaResolution == MAX_RESOLUTION);
+			if (numPoints <= 1 && !((MapLine) el).isRoad())
+				return;
 			numElements = 1 + ((numPoints - 1) / LineSplitterFilter.MAX_POINTS_IN_LINE);
 			sizes[kind] += numElements * 11 + numPoints * 4; // very pessimistic, typically less than 2 bytes are needed for one point
 			if (!el.hasExtendedType())
@@ -558,9 +554,11 @@ Maybe never have this filter here and always pass big poly into splitIntoArea
 			// Estimate the size taken by lines and shapes as a constant plus
 			// a factor based on the number of points.
 			numPoints = PredictFilterPoints.predictedMaxNumPoints(((MapShape) el).getPoints(), areaResolution, false);
+			if (numPoints <= 3)
+				return;
 			numElements = 1 + ((numPoints - 1) / PolygonSplitterFilter.MAX_POINT_IN_ELEMENT);
 			if (numElements > 1) // the new idea is to spot this before it happens and split the polygon in advance
-			        // %%% error->warn. might not matter anyway as future area split 
+				// %%% error->warn. might not matter anyway as future area split
 				log.error("Polygon estimate still needs split", ((MapShape) el).getPoints().size(), numPoints, numElements, areaResolution);
 			sizes[kind] += numElements * 11 + numPoints * 4; // very pessimistic, typically less than 2 bytes are needed for one point
 			if (!el.hasExtendedType())
@@ -606,6 +604,34 @@ Maybe never have this filter here and always pass big poly into splitIntoArea
 		shapes.add(s);
 		addToBounds(s.getBounds());
 		addSize(s, s.hasExtendedType()? XT_SHAPE_KIND : SHAPE_KIND);
+	}
+
+	private void addSplitShape(MapShape s) {
+/* %%%
+want to divide the shape up here if has too many points for a shape
+
+should we make the filter chain more global
+
+??? what if the sum of multiple parts also won't fit into a single
+area
+*/
+		if (s.getMinResolution() > areaResolution || s.getPoints().size() < PolygonSplitterFilter.MAX_POINT_IN_ELEMENT) {
+			addShape(s);
+			return;
+		}
+
+		MapFilterChain chain = new MapFilterChain() {
+			public void doFilter(MapElement element) {
+				addShape((MapShape)element);
+			}
+		};
+
+		PolygonSplitterFilter filter = new PolygonSplitterFilter(true);
+		FilterConfig config = new FilterConfig();
+		config.setResolution(areaResolution);
+		config.setBounds(bounds);
+		filter.init(config);
+		filter.doFilter(s, chain);
 	}
 
 	/**
@@ -711,11 +737,10 @@ Maybe never have this filter here and always pass big poly into splitIntoArea
 	 * @param e The map element.
 	 * @param used flag vector to say area has been added to.
 	 */
-	private void splitIntoAreas(MapArea[] areas, MapShape e, boolean[] used)
+	private void splitIntoAreas(MapArea[] areas, MapShape e)
 	{
 		if (areas.length == 1) { // this happens quite a lot
-			used[0] = true;
-			areas[0].addShape(e);
+			areas[0].addSplitShape(e);
 			return;
 		}
 		// quick check if bbox of shape lies fully inside one of the areas
@@ -740,8 +765,7 @@ Maybe never have this filter here and always pass big poly into splitIntoArea
 				       shapeBounds.getMaxLong()+xtra);
 		for (int areaIndex = 0; areaIndex < areas.length; ++areaIndex) {
 			if (areas[areaIndex].getBounds().contains(shapeBounds)) {
-				used[areaIndex] = true;
-				areas[areaIndex].addShape(e);
+				areas[areaIndex].addSplitShape(e);
 				return;
 			}
 		}
@@ -772,15 +796,13 @@ Maybe never have this filter here and always pass big poly into splitIntoArea
 					MapShape s = e.copy();
 					s.setPoints(subShape);
 					s.setClipped(true);
-					areas[0].addShape(s);
-					used[0] = true;
+					areas[0].addSplitShape(s);
 				}
 				for (List<Coord> subShape : moreList) {
 					MapShape s = e.copy();
 					s.setPoints(subShape);
 					s.setClipped(true);
-					areas[1].addShape(s);
-					used[1] = true;
+					areas[1].addSplitShape(s);
 				}
 				return;
 			}
@@ -792,8 +814,7 @@ Maybe never have this filter here and always pass big poly into splitIntoArea
 				MapShape s = e.copy();
 				s.setPoints(subShape);
 				s.setClipped(true);
-				areas[areaIndex].addShape(s);
-				used[areaIndex] = true;
+				areas[areaIndex].addSplitShape(s);
 			}
 		}
 	}

@@ -18,6 +18,7 @@ package uk.me.parabola.mkgmap.filters;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.CoordNode;
 
 /**
  * Not actually a real filter, but estimates the number of points that would be left in
@@ -26,16 +27,15 @@ import uk.me.parabola.imgfmt.app.Coord;
  * Possibly could be extended to predict the effect of straight lines and spike removal
  * but wanted it to be as simple as possible to start with.
  *
- * %%% need to handle checkPreserved when used for lines and decide on closing count
- *
  * @author Ticker Berkin
  */
 public class PredictFilterPoints {
 
-
 	public static int predictedMaxNumPoints(List<Coord> points, int resolution, boolean checkPreserved) {
 
-		// %%% checkPreserved = config.getLevel() == 0 && config.isRoutable();
+	    	// see RemoveObsoletePointsFilter, RoundCoordsFilter, ... for comments on preserved and resolution
+		// %%% checkPreserved = config.getLevel() == 0 && config.isRoutable() && line.isRoad()){
+	    
 		final int shift = 30 - resolution; // NB getting highPrec
 		final int half = 1 << (shift - 1); // 0.5 shifted
 		final int mask = ~((1 << shift) - 1); // to remove fraction bits
@@ -46,16 +46,16 @@ public class PredictFilterPoints {
 			final int lat = (p.getHighPrecLat() + half) & mask;
 			final int lon = (p.getHighPrecLon() + half) & mask;
 			if (numPoints == 0)
-				numPoints = 1; // always have the first point
+				numPoints = 1; // always have one/first point
 			else {
-//				if (checkRouting && p instanceof CoordNode && p.preserved()) { %%% }
-				if (lat != lastLat || lon != lastLon)
+				if (lat != lastLat || lon != lastLon ||
+				    (checkPreserved && p instanceof CoordNode && p.preserved()))
 					++numPoints;
 			}
 			lastLat = lat;
 			lastLon = lon;
 		}
-// ??? what about correct closing if ness poly/vs line
-	return numPoints;
+		return numPoints; // true shapes will have >3 points, lines >1
 	} // predictNumNumPoints
+
 }

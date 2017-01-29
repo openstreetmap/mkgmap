@@ -98,9 +98,9 @@ public class MapSplitter {
 	public MapArea[] split(boolean orderByDecreasingArea) {
 		log.debug("orig area", mapSource.getBounds());
 
-		MapArea ma = initialArea(mapSource);
+		MapArea ma = initialArea(mapSource, orderByDecreasingArea);
 		MapArea[] origArea = {ma};
-		MapArea[] areas = splitMaxSize(ma, orderByDecreasingArea);
+		MapArea[] areas = splitMaxSize(ma);
 		if (areas == null) {
 			log.warn("initial split returned null for ",ma);
 			return origArea;
@@ -110,7 +110,7 @@ public class MapSplitter {
 		// in them.  For those that do, we further split them.  This is done
 		// recursively until everything fits.
 		List<MapArea> alist = new ArrayList<>();
-		addAreasToList(areas, alist, 0, orderByDecreasingArea);
+		addAreasToList(areas, alist, 0);
 		if (alist.isEmpty()) {
 			return origArea;
 		}
@@ -121,30 +121,30 @@ public class MapSplitter {
 
 	/**
 	 * Adds map areas to a list.  If an area has too many features, then it
-	 * is split into 4 and this routine is called recursively to add the new
+	 * is split into 2 and this routine is called recursively to add the new
 	 * areas.
 	 *
 	 * @param areas The areas to add to the list (and possibly split up).
 	 * @param alist The list that will finally contain the complete list of
 	 * map areas.
-	 * @param orderByDecreasingArea aligns subareas as powerOf2 and splits polygons into the subareas.  
 	 */
-	private void addAreasToList(MapArea[] areas, List<MapArea> alist, int depth, boolean orderByDecreasingArea) {
-		int res = zoom.getResolution();
+	private void addAreasToList(MapArea[] areas, List<MapArea> alist, int depth) {
+		int shift = zoom.getShiftValue();
+
 		for (MapArea area : areas) {
+			if (!area.hasData())
+				continue;
 			Area bounds = area.getBounds();
 			int[] sizes = area.getEstimatedSizes();
-			if (area.hasData() == false)
-				continue;
 			if(log.isInfoEnabled()) {
 				String padding = depth + "                                                                      ";
 				log.info(padding.substring(0, (depth + 1) * 2) + 
 						 bounds.getWidth() + "x" + bounds.getHeight() +
-						 ", res = " + res +
 						 ", points = " + area.getNumPoints() + "/" + sizes[MapArea.POINT_KIND] +
 						 ", lines = " + area.getNumLines() + "/" + sizes[MapArea.LINE_KIND] +
 						 ", shapes = " + area.getNumShapes() + "/" + sizes[MapArea.SHAPE_KIND]);
 			}
+
 			boolean wantSplit = false;
 			boolean mustSplit = false;
 			if (area.getNumLines() > MAX_NUM_LINES ||
@@ -155,50 +155,46 @@ public class MapSplitter {
 				sizes[MapArea.XT_POINT_KIND] > MAX_XT_POINTS_SIZE ||
 				sizes[MapArea.XT_LINE_KIND] > MAX_XT_LINES_SIZE ||
 				sizes[MapArea.XT_SHAPE_KIND] > MAX_XT_SHAPES_SIZE)
-				mustSplit = true; // we must split
-			else if (bounds.getMaxDimension() > MIN_DIMENSION) {
+				mustSplit = true;
+			else if (bounds.getMaxDimension() > (MIN_DIMENSION << shift)) {
 				int sumSize = 0;
 				for (int s : sizes)
 					sumSize += s;
 				if (sumSize > WANTED_MAX_AREA_SIZE) {
-					if (area.getLines().size() + area.getShapes().size() >= 2) {
-						// area has more bytes than wanted, and we can split
-						log.debug("splitting area because size is larger than wanted: " + sumSize);
-						wantSplit = true;
-					}
+					// area has more bytes than wanted, and large enough to split
+					log.debug("splitting area because data size is larger than wanted:", sumSize);
+					wantSplit = true;
 				}
 			}
-			if (wantSplit || mustSplit){
-				if (bounds.getMaxDimension() > MIN_DIMENSION) {
-					if (log.isDebugEnabled())
-						log.debug("splitting area", area);
+    
+			if (wantSplit || mustSplit) {
+				if (bounds.getMaxDimension() > (MIN_DIMENSION << shift)) {
+					log.debug("splitting area in half", area, mustSplit, wantSplit);
 					MapArea[] sublist;
-					if(bounds.getWidth() > bounds.getHeight())
-						sublist = area.split(2, 1, res, bounds, orderByDecreasingArea);
+					if (bounds.getWidth() > bounds.getHeight())
+						sublist = area.split(2, 1, bounds, false);
 					else
-						sublist = area.split(1, 2, res, bounds, orderByDecreasingArea);
-					if (sublist == null) {
-						String msg = "SubDivision is single point at this resolution so can't split at "
-								+ area.getBounds().getCenter().toOSMURL();
-						if (wantSplit) {
-							log.info(msg + " (probably harmless)");
-						} else { 
-							log.error(msg);
-						}
-					} else {
-						addAreasToList(sublist, alist, depth + 1, orderByDecreasingArea);
+						sublist = area.split(1, 2, bounds, false);
+					if (sublist == null)
+						log.error("SubDivision split failed at", area.getBounds().getCenter().toOSMURL());
+					else {
+						addAreasToList(sublist, alist, depth + 1);
 						continue;
 					}
-				} else {
-					log.error("Area too small to split at " + area.getBounds().getCenter().toOSMURL() + " (reduce the density of points, length of lines, etc.)");
+				} else if (mustSplit) { // can't reduce size, so force more subdivisions
+					log.debug("splitting area by contents", area);
+					MapArea[] sublist = area.split(1, 1, bounds, true);
+					addAreasToList(sublist, alist, depth + 1);
+					continue;
 				}
 			}
 
-			log.debug("adding area unsplit", ",has points" + area.hasPoints());
+			log.debug("adding area unsplit: has points", area.hasPoints());
 			alist.add(area);
 		}
-	}
+	} // addAreasToList
 
+    
 	/**
 	 * Split the area into portions that have the maximum size.  There is a
 	 * maximum limit to the size of a subdivision (16 bits or about 1.4 degrees
@@ -212,18 +208,14 @@ public class MapSplitter {
 	 * If the area is already small enough then it will be returned unchanged.
 	 *
 	 * @param mapArea The area that needs to be split down.
-	 * @param orderByDecreasingArea aligns subareas as powerOf2 and splits polygons into the subareas.  
 	 * @return An array of map areas.  Each will be below the max size.
 	 */
-	private MapArea[] splitMaxSize(MapArea mapArea, boolean orderByDecreasingArea) {
+	private MapArea[] splitMaxSize(MapArea mapArea) {
 		Area bounds = mapArea.getFullBounds();
 
 		int shift = zoom.getShiftValue();
 		int width = bounds.getWidth() >> shift;
 		int height = bounds.getHeight() >> shift;
-		log.info("splitMaxSize() bounds = " + bounds + " shift = " + shift + " width = " + width + " height = " + height);
-		if (log.isDebugEnabled())
-			log.debug("shifted width", width, "shifted height", height);
 
 		// There is an absolute maximum size that a division can be.  Make sure
 		// that we are well inside that.
@@ -235,17 +227,19 @@ public class MapSplitter {
 		if (height > MAX_DIVISION_SIZE)
 			ysplit = height / MAX_DIVISION_SIZE + 1;
 
-		return mapArea.split(xsplit, ysplit, zoom.getResolution(), bounds, orderByDecreasingArea);
+		log.debug("splitMaxSize: bounds", bounds, "shift", shift, "width", width, "height", height, "xsplit", xsplit, "ysplit", ysplit);
+		return mapArea.split(xsplit, ysplit, bounds, false);
 	}
 
 	/**
 	 * The initial area contains all the features of the map.
 	 *
 	 * @param src The map data source.
+	 * @param splitPolygonsIntoArea aligns subareas as powerOf2 and splits polygons into the subareas.  
 	 * @return The initial map area covering the whole area and containing
 	 * all the map features that are visible.
 	 */
-	private MapArea initialArea(MapDataSource src) {
-		return new MapArea(src, zoom.getResolution());
+	private MapArea initialArea(MapDataSource src, boolean splitPolygonsIntoArea) {
+		return new MapArea(src, zoom.getResolution(), splitPolygonsIntoArea);
 	}
 }
