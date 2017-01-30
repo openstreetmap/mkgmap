@@ -109,7 +109,7 @@ public class MapArea implements MapDataSource {
 	 * @param splitPolygonsIntoArea aligns subareas as powerOf2 and splits polygons into the subareas.
 	 */
 	public MapArea(MapDataSource src, int resolution, boolean splitPolygonsIntoArea) {
-		this.areaResolution = 0; // don't want to gather size information for this area
+		this.areaResolution = 0; // don't want to gather size information for this MapArea
 		this.bounds = src.getBounds();
 		this.splitPolygonsIntoArea = splitPolygonsIntoArea;
 		for (MapPoint p : src.getPoints()) {
@@ -126,11 +126,11 @@ public class MapArea implements MapDataSource {
 	}
 
 	/**
-	 * Add the polygons, making sure that they are not too big.
+	 * Add the polygons
 	 * @param src The map data.
 	 */
 	private void addPolygons(MapDataSource src, final int resolution) {
-		// don't want to do any oversize splitting here, handled better later by split
+		// don't want to do any oversize splitting here, handled better later by splitIntoArea
 		for (MapShape s : src.getShapes()) {
 			addShape(s);
 		}
@@ -169,7 +169,7 @@ public class MapArea implements MapDataSource {
 	 *
 	 * @param area The bounds for this area.
 	 * @param resolution The minimum resolution for this area.
-	 * @param splitPolygonsIntoArea aligns subareas as powerOf2 and splits polygons into the subareas.
+	 * @param splitPolygonsIntoArea splits polygons into the subareas.
 	 */
 	private MapArea(Area area, int resolution, boolean splitPolygonsIntoArea) {
 		bounds = area;
@@ -181,28 +181,15 @@ public class MapArea implements MapDataSource {
 	 * Split this area into several pieces. All the map elements are reallocated
 	 * to the appropriate subarea.  Usually this instance would now be thrown
 	 * away and the new sub areas used instead.
-	 * <p>
-	 * if splitPolygonsIntoArea, the split is forced onto boundaries that can
-	 * be represented exactly with the relevant shift for the level.
-	 * This can cause the split to fail because all the lines/shapes that need
-	 * to be put at this level are here, but represented at the highest resolution
-	 * without any filtering relevant to the resolution and the logic to request
-	 * splitting considers this too much for a subDivision, even though it will
-	 * mostly will disappear when we come to write it and look meaningless -
-	 * the subDivision has been reduced to a single point at its shift level.
-	 * <p>
-	 * The lines/shapes should have been simplified much earlier in the process,
-	 * then they could appear as such in reasonably size subDivision.
-	 * The logic of levels, lines and shape placement, simplification, splitting and
-	 * other filtering, subDivision splitting etc needs a re-think and re-organisation.
 	 *
 	 * @param nx The number of pieces in the x (longitude) direction.
 	 * @param ny The number of pieces in the y direction.
 	 * @param bounds the bounding box that is used to create the areas.
+	 * @param tooSmallToDivide the area is small and data overflows; split into overflow areas
 	 *
 	 * @return An array of the new MapArea's or null if can't split.
 	 */
-	public MapArea[] split(int nx, int ny, Area bounds, boolean lastSplit) {
+	public MapArea[] split(int nx, int ny, Area bounds, boolean tooSmallToDivide) {
 //%%% always	int resolutionShift = splitPolygonsIntoArea ? (MAX_RESOLUTION - resolution) : 0;
 		int resolutionShift = MAX_RESOLUTION - areaResolution;
 		Area[] areas = bounds.split(nx, ny, resolutionShift);
@@ -226,8 +213,7 @@ public class MapArea implements MapDataSource {
 		}
 		
 		MapArea[] mapAreas = new MapArea[nx * ny];
-		log.info("Splitting area " + bounds + " into " + nx + "x" + ny + " pieces at resolution " + areaResolution);
-//		boolean lastSplit = bounds.getWidth() <= MapSplitter.MIN_DIMENSION || bounds.getHeight() <= MapSplitter.MIN_DIMENSION;
+		log.info("Splitting area " + bounds + " into " + nx + "x" + ny + " pieces at resolution " + areaResolution, tooSmallToDivide);
 		List<MapArea> addedAreas = new ArrayList<>();
 		for (int i = 0; i < mapAreas.length; i++) {
 			mapAreas[i] = new MapArea(areas[i], areaResolution, splitPolygonsIntoArea);
@@ -240,32 +226,11 @@ public class MapArea implements MapDataSource {
 		int dx30 = areas[0].getWidth() << Coord.DELTA_SHIFT;
 		int dy30 = areas[0].getHeight() << Coord.DELTA_SHIFT;
 
-/*
-various things going on:
-o 1 or set of areas to put items into
-o could be adding item that wont show at this resolution
-o item  has much larger area than current 1/2 major areas and want to put it into own
-  probably best if nothing else put into this subDiv
-o item too big for subdivision and needs split - currently happens on initial MapArea setup
-o lastSplit false if area reasonable size, true otherwise and 1 area
-o because lastSplit true, need to create and populate other areas when current one current full
-  if lastSplit false, just ignore overflow
-
-%%% have removed the #points chopping when we start a level because only need to
-do after have chopped for other reasons and if the poly is vis at this resolution
-
-?? if long road in own subdiv it might get divided at next mapLevel
-
-still need filter in one of the versions of putShapes that checks if gen data
-
-want to change the order as well
-*/
-
 		int maxWidth = areas[0].getWidth();
 		int maxHeight = areas[0].getHeight();
 		if (mapAreas.length == 1 || maxWidth < LARGE_OBJECT_DIM || maxHeight < LARGE_OBJECT_DIM) {
 //??? not ness true anymore, but may be because these would have been shifted out earlier
-		    // %%% reasons for this
+// %%% reasons for this - still not sre
 			// don't separate large objects
 			maxWidth = Integer.MAX_VALUE;  
 			maxHeight = Integer.MAX_VALUE; 
@@ -274,6 +239,7 @@ want to change the order as well
 		// Now sprinkle each map element into the correct map area.
 
 		// do shapes first because want these to define the primary area
+		// and don't have a good tooSmallToDivide strategy
 		// move some of the work done by PolygonSubdivSizeSplitterFilter here
 		final int maxSize = Math.min((1<<24)-1, Math.max(MapSplitter.MAX_DIVISION_SIZE << (MAX_RESOLUTION - areaResolution), 0x8000));
 		for (MapShape e : this.shapes) {
@@ -283,7 +249,7 @@ want to change the order as well
 				continue;
 			}
 			if (shapeBounds.getHeight() > maxHeight || shapeBounds.getWidth() > maxWidth) {
-				MapArea largeObjectArea = new MapArea(e.getBounds(), areaResolution, true); // use splitIntoAreas to deal with overflow
+				MapArea largeObjectArea = new MapArea(shapeBounds, areaResolution, true); // use splitIntoAreas to deal with overflow
 				largeObjectArea.addSplitShape(e);
 				addedAreas.add(largeObjectArea);
 				continue;
@@ -292,9 +258,8 @@ want to change the order as well
 			mapAreas[areaIndex].addSplitShape(e);
 		}
 
-		if (lastSplit && this.points.size() > MapSplitter.MAX_NUM_POINTS) {  // %%% fix test
-			// unlikely: too many points in small area
-			distPointsEqually(addedAreas);
+		if (tooSmallToDivide) {
+			distPointsIntoNewAreas(addedAreas, mapAreas[0]);
 		} else {
 			for (MapPoint p : this.points) {
 				int areaIndex = pickArea(mapAreas, p, xbase30, ybase30, nx, ny, dx30, dy30);
@@ -302,16 +267,15 @@ want to change the order as well
 			}
 		}
 		
-		if (lastSplit && this.lines.size() > MapSplitter.MAX_NUM_LINES) {
-			// unlikely: too many lines in small area
-			distLinesEqually(addedAreas);
+		if (tooSmallToDivide) {
+			distLinesIntoNewAreas(addedAreas, mapAreas[0]);
 		} else {
 			for (MapLine l : this.lines) {
 				// Drop any zero sized lines.
 				if (l instanceof MapRoad == false && l.getRect().height <= 0 && l.getRect().width <= 0)
 					continue;
 				if (l.getBounds().getHeight() > maxHeight || l.getBounds().getWidth() > maxWidth) {
-					MapArea largeObjectArea = new MapArea(l.getBounds(), areaResolution, splitPolygonsIntoArea);
+					MapArea largeObjectArea = new MapArea(l.getBounds(), areaResolution, false);
 					largeObjectArea.addLine(l);
 					addedAreas.add(largeObjectArea);
 					continue;
@@ -321,7 +285,6 @@ want to change the order as well
 			}
 		}
 
-		
 		if (!addedAreas.isEmpty()) {
 			// combine list and array
 			int pos = mapAreas.length;
@@ -332,37 +295,45 @@ want to change the order as well
 		return mapAreas;
 	}
 
-	private void distPointsEqually(List<MapArea> addedAreas) {
-		// special case: too many POI in small area
-		int off = 0;
-		final int n = points.size();
-		while (off < n) {
-			MapArea extraArea = new MapArea(this.getBounds(), areaResolution, splitPolygonsIntoArea);
-			for (int j = off; j < Math.min(n, off + MapSplitter.MAX_NUM_POINTS); j++) {
-				extraArea.addPoint(this.points.get(j));
+	private void distPointsIntoNewAreas(List<MapArea> addedAreas, MapArea primaryArea) { // cant divide the area
+		MapArea extraArea = null;
+		int numAdded = Integer.MAX_VALUE;
+		for (MapPoint p : this.points)
+			if (p.getMinResolution() > areaResolution) // doesn't add to subDivision
+				primaryArea.addPoint(p);
+			else {
+				if (numAdded >= MapSplitter.MAX_NUM_POINTS) {
+					extraArea = new MapArea((Area)null, areaResolution, false);
+					addedAreas.add(extraArea);
+					numAdded = 0;
+				}
+				extraArea.addPoint(p);
+				++numAdded;
 			}
-			addedAreas.add(extraArea);
-			off += MapSplitter.MAX_NUM_POINTS;
-		}
 	}
 
-	private void distLinesEqually(List<MapArea> addedAreas) {
-		// special case: too many Lines in small area
-//%%% this is wrong - and parts of the points one as well
-// need to consider all the other limits (ie total points....)  as well
-// and the fact it might not appear at this resolution anyway and so should
-// be in primary area
-		int off = 0;
-		final int n = lines.size();
-		log.error("distLinesEqually needs more consideration", n);
-		while (off < n) {
-			MapArea extraArea = new MapArea(this.getBounds(), areaResolution, splitPolygonsIntoArea);
-			for (int j = off; j < Math.min(n, off + MapSplitter.MAX_NUM_LINES); j++) {
-				extraArea.addLine(this.lines.get(j));
+	private void distLinesIntoNewAreas(List<MapArea> addedAreas, MapArea primaryArea) {
+		MapArea extraArea = null;
+		int numAdded = Integer.MAX_VALUE;
+		int dataAdded = 0;
+		for (MapLine l : this.lines)
+			if (l.getMinResolution() > areaResolution) // doesn't add to subDivision
+				primaryArea.addLine(l);
+			else { // see later addSize() and MapSplitter.addAreasToList for choice of values here
+				int numPoints = PredictFilterPoints.predictedMaxNumPoints(l.getPoints(), areaResolution,
+					// assume MapBuilder.doRoads is true. subDiv.getZoom().getLevel() == 0 is maximum resolution
+					l.isRoad() && areaResolution == MAX_RESOLUTION);
+				int dataSize = 11 + numPoints * 4; 
+				if (numAdded >= MapSplitter.MAX_NUM_LINES || (dataAdded + dataSize) >= MapSplitter.MAX_XT_LINES_SIZE) {
+					extraArea = new MapArea((Area)null, areaResolution, false);
+					addedAreas.add(extraArea);
+					numAdded = 0;
+					dataAdded = 0;
+				}
+				extraArea.addLine(l);
+				++numAdded;
+				dataAdded += dataSize;
 			}
-			addedAreas.add(extraArea);
-			off += MapSplitter.MAX_NUM_LINES;
-		}
 	}
 
 	/**
@@ -606,15 +577,14 @@ want to change the order as well
 		addSize(s, s.hasExtendedType()? XT_SHAPE_KIND : SHAPE_KIND);
 	}
 
+	/**
+	 * Add a single shape to this map area, but if there is a possibility
+	 * that it will be split by a MapBuilder filter because it has too many
+	 * points, split it now.
+	 *
+	 * @param s The shape to add.
+	 */
 	private void addSplitShape(MapShape s) {
-/* %%%
-want to divide the shape up here if has too many points for a shape
-
-should we make the filter chain more global
-
-??? what if the sum of multiple parts also won't fit into a single
-area
-*/
 		if (s.getMinResolution() > areaResolution || s.getPoints().size() < PolygonSplitterFilter.MAX_POINT_IN_ELEMENT) {
 			addShape(s);
 			return;

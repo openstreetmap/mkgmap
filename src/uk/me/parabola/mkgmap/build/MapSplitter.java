@@ -227,6 +227,9 @@ public class MapSplitter {
 		if (height > MAX_DIVISION_SIZE)
 			ysplit = height / MAX_DIVISION_SIZE + 1;
 
+		bounds = mapArea.getBounds();
+// getFullBounds in following causes primary area overlap which conflicts with concept of orderByDecreasingArea
+// It is a little bit bigger because lines are allowed to go slightly out of their area		
 		log.debug("splitMaxSize: bounds", bounds, "shift", shift, "width", width, "height", height, "xsplit", xsplit, "ysplit", ysplit);
 		return mapArea.split(xsplit, ysplit, bounds, false);
 	}
