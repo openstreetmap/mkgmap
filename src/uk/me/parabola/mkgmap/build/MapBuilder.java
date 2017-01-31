@@ -939,8 +939,7 @@ public class MapBuilder implements Configurable {
 		// points (not 1)
 		for (MapPoint point : points) {
 			if (point.isCity() &&
-			    point.getMinResolution() <= res &&
-			    point.getMaxResolution() >= res) {
+			    point.getMinResolution() <= res) {
 				++pointIndex;
 				haveIndPoints = true;
 			}
@@ -949,8 +948,7 @@ public class MapBuilder implements Configurable {
 		for (MapPoint point : points) {
 
 			if (point.isCity() ||
-			    point.getMinResolution() > res ||
-			    point.getMaxResolution() < res)
+			    point.getMinResolution() > res)
 				continue;
 
 			String name = point.getName();
@@ -1008,8 +1006,7 @@ public class MapBuilder implements Configurable {
 			for (MapPoint point : points) {
 
 				if (!point.isCity() ||
-				    point.getMinResolution() > res ||
-				    point.getMaxResolution() < res)
+				    point.getMinResolution() > res)
 					continue;
 
 				String name = point.getName();
@@ -1091,7 +1088,7 @@ public class MapBuilder implements Configurable {
 		filters.addFilter(new LineAddFilter(div, map, doRoads));
 		
 		for (MapLine line : lines) {
-			if (line.getMinResolution() > res || line.getMaxResolution() < res)
+			if (line.getMinResolution() > res)
 				continue;
 
 			filters.startFilter(line);
@@ -1148,25 +1145,16 @@ public class MapBuilder implements Configurable {
 			if(reducePointErrorPolygon > 0)
 				filters.addFilter(new DouglasPeuckerFilter(reducePointErrorPolygon));
 		}
-/* %%% ??? don't run PolygonSplitterFilter()); here because RoundCoordsFilter might have caused overlap
-consider 
-1/ breaking the chain at this point
-2/ having some method of backtracing the chain
-3/ detecting the problem earlier - trying this
-also, order was
-		filters.addFilter(new PolygonSplitterFilter());
-		filters.addFilter(new RemoveEmpty());
 		filters.addFilter(new RemoveObsoletePointsFilter());
-but this should be better anyway
-*/
-		filters.addFilter(new RemoveObsoletePointsFilter());
+		// MapArea splitting should ensure PolygonSplitterFilter never does anything, because
+		// RoundCoordsFilter might move points slightly sutch that the result self-intersects
 		filters.addFilter(new PolygonSplitterFilter(false));
 		filters.addFilter(new RemoveEmpty());
 		filters.addFilter(new LinePreparerFilter(div));
 		filters.addFilter(new ShapeAddFilter(div, map));
 
 		for (MapShape shape : shapes) {
-			if (shape.getMinResolution() > res || shape.getMaxResolution() < res)
+			if (shape.getMinResolution() > res)
 				continue;
 
 			filters.startFilter(shape);
@@ -1187,7 +1175,7 @@ but this should be better anyway
 		if (res == 24)
 			return;
 		for (MapShape shape : shapes) {
-			if (shape.getMinResolution() > res || shape.getMaxResolution() < res)
+			if (shape.getMinResolution() > res)
 				continue;
 			int minLat = shape.getBounds().getMinLat();
 			int maxLat = shape.getBounds().getMaxLat();

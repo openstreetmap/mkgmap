@@ -109,10 +109,12 @@ public class MapArea implements MapDataSource {
 	 * @param splitPolygonsIntoArea aligns subareas as powerOf2 and splits polygons into the subareas.
 	 */
 	public MapArea(MapDataSource src, int resolution, boolean splitPolygonsIntoArea) {
-		this.areaResolution = 0; // don't want to gather size information for this MapArea
+		this.areaResolution = 0; // don't want addSize() to gather information for this MapArea
 		this.bounds = src.getBounds();
 		this.splitPolygonsIntoArea = splitPolygonsIntoArea;
 		for (MapPoint p : src.getPoints()) {
+			if (p.getMaxResolution() < resolution)
+				continue;
 			if(bounds.contains(p.getLocation()))
 				addPoint(p);
 			else
@@ -132,6 +134,8 @@ public class MapArea implements MapDataSource {
 	private void addPolygons(MapDataSource src, final int resolution) {
 		// don't want to do any oversize splitting here, handled better later by splitIntoArea
 		for (MapShape s : src.getShapes()) {
+			if (s.getMaxResolution() < resolution)
+				continue;
 			addShape(s);
 		}
 	}
@@ -156,10 +160,10 @@ public class MapArea implements MapDataSource {
 		FilterConfig config = new FilterConfig();
 		config.setResolution(resolution);
 		config.setBounds(bounds);
-//%%% info to support: checkPreserved = config.getLevel() == 0 && config.isRoutable()//isRoad(); when we do lines as well
-// see addSize LINE_KIND
 		filter.init(config);
 		for (MapLine l : src.getLines()) {
+			if (l.getMaxResolution() < resolution)
+				continue;
 			filter.doFilter(l, chain);
 		}
 	}
@@ -181,6 +185,15 @@ public class MapArea implements MapDataSource {
 	 * Split this area into several pieces. All the map elements are reallocated
 	 * to the appropriate subarea.  Usually this instance would now be thrown
 	 * away and the new sub areas used instead.
+	 * <p>
+	 * This code is dealing with a lot of factors that govern the splitting, eg:
+	 *  splitPolygonsIntoArea,
+	 *  tooSmallToDivide,
+	 *  item.minResolution vs. areaResolution,
+	 *  number/size of items and the limits of a subDivision,
+	 *  items that exceed maximum subDivision on their own,
+	 *  items that extend up to 50% outside the current area,
+	 *  items bigger than this.
 	 *
 	 * @param nx The number of pieces in the x (longitude) direction.
 	 * @param ny The number of pieces in the y direction.
@@ -190,7 +203,6 @@ public class MapArea implements MapDataSource {
 	 * @return An array of the new MapArea's or null if can't split.
 	 */
 	public MapArea[] split(int nx, int ny, Area bounds, boolean tooSmallToDivide) {
-//%%% always	int resolutionShift = splitPolygonsIntoArea ? (MAX_RESOLUTION - resolution) : 0;
 		int resolutionShift = MAX_RESOLUTION - areaResolution;
 		Area[] areas = bounds.split(nx, ny, resolutionShift);
 		if (areas == null) { //  Failed to split!
@@ -229,8 +241,6 @@ public class MapArea implements MapDataSource {
 		int maxWidth = areas[0].getWidth();
 		int maxHeight = areas[0].getHeight();
 		if (mapAreas.length == 1 || maxWidth < LARGE_OBJECT_DIM || maxHeight < LARGE_OBJECT_DIM) {
-//??? not ness true anymore, but may be because these would have been shifted out earlier
-// %%% reasons for this - still not sre
 			// don't separate large objects
 			maxWidth = Integer.MAX_VALUE;  
 			maxHeight = Integer.MAX_VALUE; 
@@ -239,8 +249,8 @@ public class MapArea implements MapDataSource {
 		// Now sprinkle each map element into the correct map area.
 
 		// do shapes first because want these to define the primary area
-		// and don't have a good tooSmallToDivide strategy
-		// move some of the work done by PolygonSubdivSizeSplitterFilter here
+		// and don't have a good tooSmallToDivide strategy.
+		// Some of the work done by PolygonSubdivSizeSplitterFilter now done here
 		final int maxSize = Math.min((1<<24)-1, Math.max(MapSplitter.MAX_DIVISION_SIZE << (MAX_RESOLUTION - areaResolution), 0x8000));
 		for (MapShape e : this.shapes) {
 			Area shapeBounds = e.getBounds();
@@ -295,7 +305,7 @@ public class MapArea implements MapDataSource {
 		return mapAreas;
 	}
 
-	private void distPointsIntoNewAreas(List<MapArea> addedAreas, MapArea primaryArea) { // cant divide the area
+	private void distPointsIntoNewAreas(List<MapArea> addedAreas, MapArea primaryArea) { // can't divide the area
 		MapArea extraArea = null;
 		int numAdded = Integer.MAX_VALUE;
 		for (MapPoint p : this.points)
@@ -528,9 +538,8 @@ public class MapArea implements MapDataSource {
 			if (numPoints <= 3)
 				return;
 			numElements = 1 + ((numPoints - 1) / PolygonSplitterFilter.MAX_POINT_IN_ELEMENT);
-			if (numElements > 1) // the new idea is to spot this before it happens and split the polygon in advance
-				// %%% error->warn. might not matter anyway as future area split
-				log.error("Polygon estimate still needs split", ((MapShape) el).getPoints().size(), numPoints, numElements, areaResolution);
+			if (numElements > 1) // polygon should get split earlier, so that doesn't happen in MapBuilder filter
+				log.warn("Polygon estimate still needs split", ((MapShape) el).getPoints().size(), numPoints, numElements, areaResolution);
 			sizes[kind] += numElements * 11 + numPoints * 4; // very pessimistic, typically less than 2 bytes are needed for one point
 			if (!el.hasExtendedType())
 				nActiveShapes += numElements;
@@ -757,7 +766,7 @@ public class MapArea implements MapDataSource {
 				isLongitude = true;
 			} else {
 				commonLine = false;
-				log.warn("Split into 2 expects shared edge between the areas");
+				log.error("Split into 2 expects shared edge between the areas");
 			}
 			if (commonLine) {
 				List<List<Coord>> lessList = new ArrayList<>(), moreList = new ArrayList<>();
