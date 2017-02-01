@@ -238,13 +238,24 @@ public class MapArea implements MapDataSource {
 		int dx30 = areas[0].getWidth() << Coord.DELTA_SHIFT;
 		int dy30 = areas[0].getHeight() << Coord.DELTA_SHIFT;
 
+/*
 		int maxWidth = areas[0].getWidth();
 		int maxHeight = areas[0].getHeight();
-		if (mapAreas.length == 1 || maxWidth < LARGE_OBJECT_DIM || maxHeight < LARGE_OBJECT_DIM) {
+		if (mapAreas.length == 1 || maxWidth < LARGE_OBJECT_DIM || maxHeight < LARGE_OBJECT_DIM {
 			// don't separate large objects
 			maxWidth = Integer.MAX_VALUE;  
 			maxHeight = Integer.MAX_VALUE; 
 		}
+Some of the logic about when to inhibit addedArea for large objects doesn't quite make sense anymore
+
+reduce size if big so if had object of area size on both sides, ie overhanging by half on both 
+sides, it still wouldn't exceed the subdivision. For a given object, allow it if it fits
+in the area without problem
+
+Disable the logic about number of area as LARGE_OBJECT_DIM
+*/
+		int maxWidth = Math.min(areas[0].getWidth(), MapSplitter.MAX_DIVISION_SIZE/2);
+		int maxHeight = Math.min(areas[0].getHeight(), MapSplitter.MAX_DIVISION_SIZE/2);
 
 		// Now sprinkle each map element into the correct map area.
 
@@ -258,13 +269,14 @@ public class MapArea implements MapDataSource {
 				splitIntoAreas(mapAreas, e);
 				continue;
 			}
-			if (shapeBounds.getHeight() > maxHeight || shapeBounds.getWidth() > maxWidth) {
+			int areaIndex = pickArea(mapAreas, e, xbase30, ybase30, nx, ny, dx30, dy30);
+			if (!areas[areaIndex].contains(shapeBounds) &&
+			    (shapeBounds.getHeight() > maxHeight || shapeBounds.getWidth() > maxWidth)) {
 				MapArea largeObjectArea = new MapArea(shapeBounds, areaResolution, true); // use splitIntoAreas to deal with overflow
 				largeObjectArea.addSplitShape(e);
 				addedAreas.add(largeObjectArea);
 				continue;
 			}
-			int areaIndex = pickArea(mapAreas, e, xbase30, ybase30, nx, ny, dx30, dy30);
 			mapAreas[areaIndex].addSplitShape(e);
 		}
 
@@ -284,13 +296,15 @@ public class MapArea implements MapDataSource {
 				// Drop any zero sized lines.
 				if (l instanceof MapRoad == false && l.getRect().height <= 0 && l.getRect().width <= 0)
 					continue;
-				if (l.getBounds().getHeight() > maxHeight || l.getBounds().getWidth() > maxWidth) {
+				Area lineBounds = l.getBounds();
+				int areaIndex = pickArea(mapAreas, l, xbase30, ybase30, nx, ny, dx30, dy30);
+				if (!areas[areaIndex].contains(lineBounds) &&
+				    (lineBounds.getHeight() > maxHeight || lineBounds.getWidth() > maxWidth)) {
 					MapArea largeObjectArea = new MapArea(l.getBounds(), areaResolution, false);
 					largeObjectArea.addLine(l);
 					addedAreas.add(largeObjectArea);
 					continue;
 				}
-				int areaIndex = pickArea(mapAreas, l, xbase30, ybase30, nx, ny, dx30, dy30);
 				mapAreas[areaIndex].addLine(l);
 			}
 		}
