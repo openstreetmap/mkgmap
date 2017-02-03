@@ -36,15 +36,18 @@ public class PredictFilterPoints {
 	    	// see RemoveObsoletePointsFilter, RoundCoordsFilter, ... for comments on preserved and resolution
 		// %%% checkPreserved = config.getLevel() == 0 && config.isRoutable() && line.isRoad()){
 	    
-		final int shift = 30 - resolution; // NB getting highPrec
+//		final int shift = 30 - resolution; // NB getting highPrec
+		final int shift = 24 - resolution; // best use same info as filters
 		final int half = 1 << (shift - 1); // 0.5 shifted
 		final int mask = ~((1 << shift) - 1); // to remove fraction bits
 
 		int numPoints = 0;
 		int lastLat = 0, lastLon = 0;
 		for (Coord p : points) {
-			final int lat = (p.getHighPrecLat() + half) & mask;
-			final int lon = (p.getHighPrecLon() + half) & mask;
+//			final int lat = (p.getHighPrecLat() + half) & mask;
+//			final int lon = (p.getHighPrecLon() + half) & mask;
+			final int lat = (p.getLatitude() + half) & mask;
+			final int lon = (p.getLongitude() + half) & mask;
 			if (numPoints == 0)
 				numPoints = 1; // always have one/first point
 			else {
