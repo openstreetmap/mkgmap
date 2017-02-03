@@ -37,9 +37,18 @@ public class PredictFilterPoints {
 		// %%% checkPreserved = config.getLevel() == 0 && config.isRoutable() && line.isRoad()){
 	    
 //		final int shift = 30 - resolution; // NB getting highPrec
+//		final int half = 1 << (shift - 1); // 0.5 shifted
+//		final int mask = ~((1 << shift) - 1); // to remove fraction bits
 		final int shift = 24 - resolution; // best use same info as filters
-		final int half = 1 << (shift - 1); // 0.5 shifted
-		final int mask = ~((1 << shift) - 1); // to remove fraction bits
+		int half;
+		int mask;
+		if (shift == 0) {
+			half = 0;
+			mask = ~0;
+		} else {
+			half = 1 << (shift - 1); // 0.5 shifted
+			mask = ~((1 << shift) - 1); // to remove fraction bits
+		}
 
 		int numPoints = 0;
 		int lastLat = 0, lastLon = 0;
