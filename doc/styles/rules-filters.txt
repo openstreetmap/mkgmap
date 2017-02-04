@@ -14,7 +14,7 @@ matters.
 
 | conv | `m=>ft` |
 Use for conversions between units.
-With the argument +m=>ft+ the value is converted into feet, with the
+With the argument +m\=\>ft+ the value is converted into feet, with the
 value being assumed to be in meters, unless the value includes a unit
 already.
 If any of the units are not recognised then the value is unchanged.
@@ -94,7 +94,10 @@ If there is just the one number then it is used in both cases.
 
 | height | `m=>ft` |
 This is exactly the same as the +conv+ filter, except that it prepends a special
-separation character before the value which is intended for elevations.
+separation character before the value which is intended for elevations so that 
+the Garmin software can convert it to the unit configured by the user.
+If no argument is given the default is `m=>ft`, else the target unit 
+must be ft (foot).
 
 `${ele\|height:"m=>ft"}`
 
