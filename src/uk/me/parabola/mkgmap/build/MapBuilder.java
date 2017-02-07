@@ -74,6 +74,7 @@ import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
 import uk.me.parabola.mkgmap.filters.MapFilter;
 import uk.me.parabola.mkgmap.filters.MapFilterChain;
 import uk.me.parabola.mkgmap.filters.PolygonSplitterFilter;
+//%%% import uk.me.parabola.mkgmap.filters.PolygonSplitIfNeededFilter;
 import uk.me.parabola.mkgmap.filters.RemoveEmpty;
 import uk.me.parabola.mkgmap.filters.RemoveObsoletePointsFilter;
 import uk.me.parabola.mkgmap.filters.RoundCoordsFilter;
@@ -1090,7 +1091,6 @@ public class MapBuilder implements Configurable {
 		for (MapLine line : lines) {
 			if (line.getMinResolution() > res)
 				continue;
-
 			filters.startFilter(line);
 		}
 	}
@@ -1135,6 +1135,7 @@ public class MapBuilder implements Configurable {
 		preserveHorizontalAndVerticalLines(res, shapes);
 		
 		LayerFilterChain filters = new LayerFilterChain(config);
+//%%%		filters.addFilter(new PolygonSplitIfNeededFilter());
 		if (enableLineCleanFilters && (res < 24)) {
 			filters.addFilter(new RoundCoordsFilter());
 			int sizefilterVal =  getMinSizePolygonForResolution(res);
@@ -1146,9 +1147,11 @@ public class MapBuilder implements Configurable {
 				filters.addFilter(new DouglasPeuckerFilter(reducePointErrorPolygon));
 		}
 		filters.addFilter(new RemoveObsoletePointsFilter());
+//*%%%
 		// MapArea splitting should ensure PolygonSplitterFilter never does anything, because
-		// RoundCoordsFilter might move points slightly sutch that the result self-intersects
+		// RoundCoordsFilter might move points slightly such that the result self-intersects
 		filters.addFilter(new PolygonSplitterFilter(false));
+//Behaviour now changed. new PolygonSplitIfNeededFilter delays doing anything until later filter in chain raises exception
 		filters.addFilter(new RemoveEmpty());
 		filters.addFilter(new LinePreparerFilter(div));
 		filters.addFilter(new ShapeAddFilter(div, map));
@@ -1156,7 +1159,6 @@ public class MapBuilder implements Configurable {
 		for (MapShape shape : shapes) {
 			if (shape.getMinResolution() > res)
 				continue;
-
 			filters.startFilter(shape);
 		}
 	}

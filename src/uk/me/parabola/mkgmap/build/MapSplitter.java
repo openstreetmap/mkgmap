@@ -63,7 +63,7 @@ public class MapSplitter {
 
 	// The target number of estimated bytes for one area, smaller values
 	// result in more and typically smaller areas and larger *.img files
-	private static final int WANTED_MAX_AREA_SIZE = 0x3fff; 
+	public static final int WANTED_MAX_AREA_SIZE = 0x3fff; 
 	
 	private final Zoom zoom;
 

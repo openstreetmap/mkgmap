@@ -22,10 +22,10 @@ import java.util.List;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
-import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.util.ShapeSplitter;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.net.RoadNetwork;
 import uk.me.parabola.imgfmt.app.trergn.Overview;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.FilterConfig;
@@ -35,7 +35,6 @@ import uk.me.parabola.mkgmap.filters.MapFilter;
 import uk.me.parabola.mkgmap.filters.MapFilterChain;
 import uk.me.parabola.mkgmap.filters.PolygonSplitterFilter;
 import uk.me.parabola.mkgmap.filters.PolygonSubdivSizeSplitterFilter;
-import uk.me.parabola.mkgmap.filters.ShapeMergeFilter;
 import uk.me.parabola.mkgmap.filters.PredictFilterPoints;
 import uk.me.parabola.mkgmap.general.MapDataSource;
 import uk.me.parabola.mkgmap.general.MapElement;
@@ -43,7 +42,6 @@ import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.imgfmt.app.net.RoadNetwork;
 
 /**
  * A sub area of the map.  We have to divide the map up into areas to meet the
@@ -130,6 +128,7 @@ public class MapArea implements MapDataSource {
 	/**
 	 * Add the polygons
 	 * @param src The map data.
+	 * @param resolution The current resolution of the layer.
 	 */
 	private void addPolygons(MapDataSource src, final int resolution) {
 		// don't want to do any oversize splitting here, handled better later by splitIntoArea
@@ -164,6 +163,7 @@ public class MapArea implements MapDataSource {
 		for (MapLine l : src.getLines()) {
 			if (l.getMaxResolution() < resolution)
 				continue;
+// %%% ??? if not appearing at this level no need to filter
 			filter.doFilter(l, chain);
 		}
 	}
@@ -223,7 +223,7 @@ public class MapArea implements MapDataSource {
 			}
 			return null;
 		}
-		
+
 		MapArea[] mapAreas = new MapArea[nx * ny];
 		log.info("Splitting area " + bounds + " into " + nx + "x" + ny + " pieces at resolution " + areaResolution, tooSmallToDivide);
 		List<MapArea> addedAreas = new ArrayList<>();
@@ -238,46 +238,43 @@ public class MapArea implements MapDataSource {
 		int dx30 = areas[0].getWidth() << Coord.DELTA_SHIFT;
 		int dy30 = areas[0].getHeight() << Coord.DELTA_SHIFT;
 
-/*
-		int maxWidth = areas[0].getWidth();
-		int maxHeight = areas[0].getHeight();
-		if (mapAreas.length == 1 || maxWidth < LARGE_OBJECT_DIM || maxHeight < LARGE_OBJECT_DIM {
-			// don't separate large objects
-			maxWidth = Integer.MAX_VALUE;  
-			maxHeight = Integer.MAX_VALUE; 
-		}
-Some of the logic about when to inhibit addedArea for large objects doesn't quite make sense anymore
+		// Some of the work done by PolygonSubdivSizeSplitterFilter now done here
+		final int maxSize = Math.min((1<<24)-1, Math.max(MapSplitter.MAX_DIVISION_SIZE << (MAX_RESOLUTION - areaResolution), 0x8000));
 
-reduce size if big so if had object of area size on both sides, ie overhanging by half on both 
-sides, it still wouldn't exceed the subdivision. For a given object, allow it if it fits
-in the area without problem
-
-Disable the logic about number of area as LARGE_OBJECT_DIM
-*/
-		int maxWidth = Math.min(areas[0].getWidth(), MapSplitter.MAX_DIVISION_SIZE/2);
-		int maxHeight = Math.min(areas[0].getHeight(), MapSplitter.MAX_DIVISION_SIZE/2);
+		/**
+		 * These constants control when an item (shape unless splitPolygonsIntoArea or line) is shifted into its own MapArea/SubDivision.
+		 * Generally, an item is allowed into the MapArea chosen by centre provided it is no bigger than the MapArea.
+		 * This means that there could be big items near the edges of the MapArea that stick out by almost half, so must
+		 * ensure that this doesn't cause the mapArea to exceed subDivision size limits.
+		 * When the MapArea get small, we don't want to shift lots if items into their own areas;
+		 * The *2 of LARGE_OBJECT_DIM is to keep to the same behaviour as earlier versions.
+		 */
+		final int maxWidth = Math.max(Math.min(areas[0].getWidth(), maxSize/2), LARGE_OBJECT_DIM*2);
+		final int maxHeight = Math.max(Math.min(areas[0].getHeight(), maxSize/2), LARGE_OBJECT_DIM*2);
 
 		// Now sprinkle each map element into the correct map area.
 
 		// do shapes first because want these to define the primary area
-		// and don't have a good tooSmallToDivide strategy.
-		// Some of the work done by PolygonSubdivSizeSplitterFilter now done here
-		final int maxSize = Math.min((1<<24)-1, Math.max(MapSplitter.MAX_DIVISION_SIZE << (MAX_RESOLUTION - areaResolution), 0x8000));
-		for (MapShape e : this.shapes) {
-			Area shapeBounds = e.getBounds();
-			if (splitPolygonsIntoArea || shapeBounds.getMaxDimension() > maxSize) {
-				splitIntoAreas(mapAreas, e);
-				continue;
+		// and don't have a good tooSmallToDivide strategy when not splitPolygonsIntoArea.
+		if (tooSmallToDivide) {
+			distShapesIntoNewAreas(addedAreas, mapAreas[0]);
+		} else {
+			for (MapShape e : this.shapes) {
+				Area shapeBounds = e.getBounds();
+				if (splitPolygonsIntoArea || shapeBounds.getMaxDimension() > maxSize) {
+					splitIntoAreas(mapAreas, e);
+					continue;
+				}
+				int areaIndex = pickArea(mapAreas, e, xbase30, ybase30, nx, ny, dx30, dy30);
+				if ((shapeBounds.getHeight() > maxHeight || shapeBounds.getWidth() > maxWidth) &&
+				    !areas[areaIndex].contains(shapeBounds)) {
+					MapArea largeObjectArea = new MapArea(shapeBounds, areaResolution, true); // use splitIntoAreas to deal with overflow
+					largeObjectArea.addSplitShape(e);
+					addedAreas.add(largeObjectArea);
+					continue;
+				}
+				mapAreas[areaIndex].addSplitShape(e);
 			}
-			int areaIndex = pickArea(mapAreas, e, xbase30, ybase30, nx, ny, dx30, dy30);
-			if (!areas[areaIndex].contains(shapeBounds) &&
-			    (shapeBounds.getHeight() > maxHeight || shapeBounds.getWidth() > maxWidth)) {
-				MapArea largeObjectArea = new MapArea(shapeBounds, areaResolution, true); // use splitIntoAreas to deal with overflow
-				largeObjectArea.addSplitShape(e);
-				addedAreas.add(largeObjectArea);
-				continue;
-			}
-			mapAreas[areaIndex].addSplitShape(e);
 		}
 
 		if (tooSmallToDivide) {
@@ -288,7 +285,7 @@ Disable the logic about number of area as LARGE_OBJECT_DIM
 				mapAreas[areaIndex].addPoint(p);
 			}
 		}
-		
+
 		if (tooSmallToDivide) {
 			distLinesIntoNewAreas(addedAreas, mapAreas[0]);
 		} else {
@@ -298,8 +295,8 @@ Disable the logic about number of area as LARGE_OBJECT_DIM
 					continue;
 				Area lineBounds = l.getBounds();
 				int areaIndex = pickArea(mapAreas, l, xbase30, ybase30, nx, ny, dx30, dy30);
-				if (!areas[areaIndex].contains(lineBounds) &&
-				    (lineBounds.getHeight() > maxHeight || lineBounds.getWidth() > maxWidth)) {
+				if ((lineBounds.getHeight() > maxHeight || lineBounds.getWidth() > maxWidth) &&
+				    !areas[areaIndex].contains(lineBounds)) {
 					MapArea largeObjectArea = new MapArea(l.getBounds(), areaResolution, false);
 					largeObjectArea.addLine(l);
 					addedAreas.add(largeObjectArea);
@@ -319,44 +316,47 @@ Disable the logic about number of area as LARGE_OBJECT_DIM
 		return mapAreas;
 	}
 
-	private void distPointsIntoNewAreas(List<MapArea> addedAreas, MapArea primaryArea) { // can't divide the area
-		MapArea extraArea = null;
-		int numAdded = Integer.MAX_VALUE;
+	private void distPointsIntoNewAreas(List<MapArea> addedAreas, MapArea primaryArea) {
+		MapArea extraArea = primaryArea;
 		for (MapPoint p : this.points)
 			if (p.getMinResolution() > areaResolution) // doesn't add to subDivision
 				primaryArea.addPoint(p);
 			else {
-				if (numAdded >= MapSplitter.MAX_NUM_POINTS) {
+				if (!extraArea.canAddSize(p, POINT_KIND)) {
 					extraArea = new MapArea((Area)null, areaResolution, false);
 					addedAreas.add(extraArea);
-					numAdded = 0;
 				}
 				extraArea.addPoint(p);
-				++numAdded;
 			}
 	}
 
+
 	private void distLinesIntoNewAreas(List<MapArea> addedAreas, MapArea primaryArea) {
-		MapArea extraArea = null;
-		int numAdded = Integer.MAX_VALUE;
-		int dataAdded = 0;
+		MapArea extraArea = primaryArea;
 		for (MapLine l : this.lines)
 			if (l.getMinResolution() > areaResolution) // doesn't add to subDivision
 				primaryArea.addLine(l);
-			else { // see later addSize() and MapSplitter.addAreasToList for choice of values here
-				int numPoints = PredictFilterPoints.predictedMaxNumPoints(l.getPoints(), areaResolution,
-					// assume MapBuilder.doRoads is true. subDiv.getZoom().getLevel() == 0 is maximum resolution
-					l.isRoad() && areaResolution == MAX_RESOLUTION);
-				int dataSize = 11 + numPoints * 4; 
-				if (numAdded >= MapSplitter.MAX_NUM_LINES || (dataAdded + dataSize) >= MapSplitter.MAX_XT_LINES_SIZE) {
+			else {
+				if (!extraArea.canAddSize(l, LINE_KIND)) {
 					extraArea = new MapArea((Area)null, areaResolution, false);
 					addedAreas.add(extraArea);
-					numAdded = 0;
-					dataAdded = 0;
 				}
 				extraArea.addLine(l);
-				++numAdded;
-				dataAdded += dataSize;
+			}
+	}
+
+
+	private void distShapesIntoNewAreas(List<MapArea> addedAreas, MapArea primaryArea) {
+		MapArea extraArea = primaryArea;
+		for (MapShape e : this.shapes)
+			if (e.getMinResolution() > areaResolution) // doesn't add to subDivision
+				primaryArea.addShape(e);
+			else {
+				if (!extraArea.canAddSize(e, SHAPE_KIND)) {
+					extraArea = new MapArea((Area)null, areaResolution, false);
+					addedAreas.add(extraArea);
+				}
+				extraArea.addSplitShape(e);
 			}
 	}
 
@@ -552,8 +552,9 @@ Disable the logic about number of area as LARGE_OBJECT_DIM
 			if (numPoints <= 3)
 				return;
 			numElements = 1 + ((numPoints - 1) / PolygonSplitterFilter.MAX_POINT_IN_ELEMENT);
+//%%%
 			if (numElements > 1) // polygon should get split earlier, so that doesn't happen in MapBuilder filter
-				log.warn("Polygon estimate still needs split", ((MapShape) el).getPoints().size(), numPoints, numElements, areaResolution);
+				log.error("Polygon estimate still needs split", ((MapShape) el).getPoints().size(), numPoints, numElements, areaResolution);
 			sizes[kind] += numElements * 11 + numPoints * 4; // very pessimistic, typically less than 2 bytes are needed for one point
 			if (!el.hasExtendedType())
 				nActiveShapes += numElements;
@@ -565,6 +566,63 @@ Disable the logic about number of area as LARGE_OBJECT_DIM
 			break;
 		}
 
+	}
+
+	/**
+	 * Will element fit nicely?
+	 * Limit to WANTED_MAX_AREA_SIZE which is smaller than MAX_XT_xxx_SIZE
+	 * so don't need to check down to the last detail
+	 *
+	 * @param el The element. Assume want to display it at this resolution
+	 * @param kind What kind of element this is: KIND_POINT/LINE/SHAPE.
+	 */
+	private boolean canAddSize(MapElement el, int kind) {
+
+		int numPoints;
+		int numElements;
+		int sumSize = 0;
+		for (int s : sizes)
+			sumSize += s;
+
+		switch (kind) {
+		case POINT_KIND:
+			if (getNumPoints() >= MapSplitter.MAX_NUM_POINTS)
+				return false;
+			// Points are predictably less than 10 bytes.
+			if ((sumSize + 9) > MapSplitter.WANTED_MAX_AREA_SIZE)
+				return false;
+			break;
+
+		case LINE_KIND:
+			// Estimate the size taken by lines and shapes as a constant plus
+			// a factor based on the number of points.
+			numPoints = PredictFilterPoints.predictedMaxNumPoints(((MapLine) el).getPoints(), areaResolution,
+				// assume MapBuilder.doRoads is true. subDiv.getZoom().getLevel() == 0 is maximum resolution
+				((MapLine) el).isRoad() && areaResolution == MAX_RESOLUTION);
+			if (numPoints <= 1 && !((MapLine) el).isRoad())
+				break;
+			numElements = 1 + ((numPoints - 1) / LineSplitterFilter.MAX_POINTS_IN_LINE);
+			if (getNumLines() + numElements > MapSplitter.MAX_NUM_LINES)
+				return false;
+			// very pessimistic, typically less than 2 bytes are needed for one point
+			if ((sumSize + numElements * 11 + numPoints * 4) > MapSplitter.WANTED_MAX_AREA_SIZE)
+				return false;
+			break;
+
+		case SHAPE_KIND:
+			// Estimate the size taken by lines and shapes as a constant plus
+			// a factor based on the number of points.
+			numPoints = PredictFilterPoints.predictedMaxNumPoints(((MapShape) el).getPoints(), areaResolution, false);
+			if (numPoints <= 3)
+				break;
+			numElements = 1 + ((numPoints - 1) / PolygonSplitterFilter.MAX_POINT_IN_ELEMENT);
+			// very pessimistic, typically less than 2 bytes are needed for one point
+			if ((sumSize + numElements * 11 + numPoints * 4) > MapSplitter.WANTED_MAX_AREA_SIZE)
+				return false;
+			break;
+
+		}
+		return true;
 	}
 
 	/**
@@ -609,6 +667,7 @@ Disable the logic about number of area as LARGE_OBJECT_DIM
 	 */
 	private void addSplitShape(MapShape s) {
 		if (s.getMinResolution() > areaResolution || s.getPoints().size() < PolygonSplitterFilter.MAX_POINT_IN_ELEMENT) {
+//%%%		if (true) { // %%% try filter backtrack instead
 			addShape(s);
 			return;
 		}
