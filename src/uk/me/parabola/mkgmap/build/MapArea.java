@@ -34,7 +34,6 @@ import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
 import uk.me.parabola.mkgmap.filters.MapFilter;
 import uk.me.parabola.mkgmap.filters.MapFilterChain;
 import uk.me.parabola.mkgmap.filters.PolygonSplitterFilter;
-import uk.me.parabola.mkgmap.filters.PolygonSubdivSizeSplitterFilter;
 import uk.me.parabola.mkgmap.filters.PredictFilterPoints;
 import uk.me.parabola.mkgmap.general.MapDataSource;
 import uk.me.parabola.mkgmap.general.MapElement;

@@ -73,7 +73,7 @@ import uk.me.parabola.mkgmap.filters.LinePreparerFilter;
 import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
 import uk.me.parabola.mkgmap.filters.MapFilter;
 import uk.me.parabola.mkgmap.filters.MapFilterChain;
-import uk.me.parabola.mkgmap.filters.PolygonSplitIfNeededFilter;
+import uk.me.parabola.mkgmap.filters.PolygonSplitterFilter;
 import uk.me.parabola.mkgmap.filters.RemoveEmpty;
 import uk.me.parabola.mkgmap.filters.RemoveObsoletePointsFilter;
 import uk.me.parabola.mkgmap.filters.RoundCoordsFilter;
@@ -1134,7 +1134,7 @@ public class MapBuilder implements Configurable {
 		preserveHorizontalAndVerticalLines(res, shapes);
 		
 		LayerFilterChain filters = new LayerFilterChain(config);
-		filters.addFilter(new PolygonSplitIfNeededFilter());
+		filters.addFilter(new PolygonSplitterFilter());
 		if (enableLineCleanFilters && (res < 24)) {
 			filters.addFilter(new RoundCoordsFilter());
 			int sizefilterVal =  getMinSizePolygonForResolution(res);
