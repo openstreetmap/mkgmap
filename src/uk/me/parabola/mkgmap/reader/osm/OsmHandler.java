@@ -116,6 +116,9 @@ public class OsmHandler {
 	 * Actually set the bounding box.  The boundary values are given.
 	 */
 	protected void setBBox(double minlat, double minlong, double maxlat, double maxlong) {
+		if (minlat == maxlat || minlong == maxlong) {
+			return; // silently ignore bounds with dim 0
+		}
 		Area bbox = new Area(minlat, minlong, maxlat, maxlong);
 		saver.setBoundingBox(bbox);
 	}
