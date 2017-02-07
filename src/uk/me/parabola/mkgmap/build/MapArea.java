@@ -269,11 +269,11 @@ public class MapArea implements MapDataSource {
 				if ((shapeBounds.getHeight() > maxHeight || shapeBounds.getWidth() > maxWidth) &&
 				    !areas[areaIndex].contains(shapeBounds)) {
 					MapArea largeObjectArea = new MapArea(shapeBounds, areaResolution, true); // use splitIntoAreas to deal with overflow
-					largeObjectArea.addSplitShape(e);
+					largeObjectArea.addShape(e);
 					addedAreas.add(largeObjectArea);
 					continue;
 				}
-				mapAreas[areaIndex].addSplitShape(e);
+				mapAreas[areaIndex].addShape(e);
 			}
 		}
 
@@ -356,7 +356,7 @@ public class MapArea implements MapDataSource {
 					extraArea = new MapArea((Area)null, areaResolution, false);
 					addedAreas.add(extraArea);
 				}
-				extraArea.addSplitShape(e);
+				extraArea.addShape(e);
 			}
 	}
 
@@ -552,9 +552,6 @@ public class MapArea implements MapDataSource {
 			if (numPoints <= 3)
 				return;
 			numElements = 1 + ((numPoints - 1) / PolygonSplitterFilter.MAX_POINT_IN_ELEMENT);
-//%%%
-			if (numElements > 1) // polygon should get split earlier, so that doesn't happen in MapBuilder filter
-				log.error("Polygon estimate still needs split", ((MapShape) el).getPoints().size(), numPoints, numElements, areaResolution);
 			sizes[kind] += numElements * 11 + numPoints * 4; // very pessimistic, typically less than 2 bytes are needed for one point
 			if (!el.hasExtendedType())
 				nActiveShapes += numElements;
@@ -656,34 +653,6 @@ public class MapArea implements MapDataSource {
 		shapes.add(s);
 		addToBounds(s.getBounds());
 		addSize(s, s.hasExtendedType()? XT_SHAPE_KIND : SHAPE_KIND);
-	}
-
-	/**
-	 * Add a single shape to this map area, but if there is a possibility
-	 * that it will be split by a MapBuilder filter because it has too many
-	 * points, split it now.
-	 *
-	 * @param s The shape to add.
-	 */
-	private void addSplitShape(MapShape s) {
-		if (s.getMinResolution() > areaResolution || s.getPoints().size() < PolygonSplitterFilter.MAX_POINT_IN_ELEMENT) {
-//%%%		if (true) { // %%% try filter backtrack instead
-			addShape(s);
-			return;
-		}
-
-		MapFilterChain chain = new MapFilterChain() {
-			public void doFilter(MapElement element) {
-				addShape((MapShape)element);
-			}
-		};
-
-		PolygonSplitterFilter filter = new PolygonSplitterFilter(true);
-		FilterConfig config = new FilterConfig();
-		config.setResolution(areaResolution);
-		config.setBounds(bounds);
-		filter.init(config);
-		filter.doFilter(s, chain);
 	}
 
 	/**
@@ -792,7 +761,7 @@ public class MapArea implements MapDataSource {
 	private void splitIntoAreas(MapArea[] areas, MapShape e)
 	{
 		if (areas.length == 1) { // this happens quite a lot
-			areas[0].addSplitShape(e);
+			areas[0].addShape(e);
 			return;
 		}
 		// quick check if bbox of shape lies fully inside one of the areas
@@ -817,7 +786,7 @@ public class MapArea implements MapDataSource {
 				       shapeBounds.getMaxLong()+xtra);
 		for (int areaIndex = 0; areaIndex < areas.length; ++areaIndex) {
 			if (areas[areaIndex].getBounds().contains(shapeBounds)) {
-				areas[areaIndex].addSplitShape(e);
+				areas[areaIndex].addShape(e);
 				return;
 			}
 		}
@@ -848,13 +817,13 @@ public class MapArea implements MapDataSource {
 					MapShape s = e.copy();
 					s.setPoints(subShape);
 					s.setClipped(true);
-					areas[0].addSplitShape(s);
+					areas[0].addShape(s);
 				}
 				for (List<Coord> subShape : moreList) {
 					MapShape s = e.copy();
 					s.setPoints(subShape);
 					s.setClipped(true);
-					areas[1].addSplitShape(s);
+					areas[1].addShape(s);
 				}
 				return;
 			}
@@ -866,7 +835,7 @@ public class MapArea implements MapDataSource {
 				MapShape s = e.copy();
 				s.setPoints(subShape);
 				s.setClipped(true);
-				areas[areaIndex].addSplitShape(s);
+				areas[areaIndex].addShape(s);
 			}
 		}
 	}
