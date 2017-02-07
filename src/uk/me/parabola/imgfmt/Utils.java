@@ -383,5 +383,47 @@ public class Utils {
 		return (long)(lat30 & 0xffffffffL) << 32 | (lon30 & 0xffffffffL);
 	}
 	
+	/**
+	 * Check if the line p1_1 to p1_2 cuts line p2_1 to p2_2 in two pieces and vice versa.
+	 * This is a form of intersection check where it is allowed that one line ends on the
+	 * other line or that the two lines overlap.
+	 * @param p1_1 first point of line 1
+	 * @param p1_2 second point of line 1
+	 * @param p2_1 first point of line 2
+	 * @param p2_2 second point of line 2
+	 * @return true if both lines intersect somewhere in the middle of each other
+	 */
+	public static boolean linesCutEachOther(Coord p1_1, Coord p1_2, Coord p2_1, Coord p2_2) {
+		int width1 = p1_2.getHighPrecLon() - p1_1.getHighPrecLon();
+		int width2 = p2_2.getHighPrecLon() - p2_1.getHighPrecLon();
+
+		int height1 = p1_2.getHighPrecLat() - p1_1.getHighPrecLat();
+		int height2 = p2_2.getHighPrecLat() - p2_1.getHighPrecLat();
+
+		int denominator = ((height2 * width1) - (width2 * height1));
+		if (denominator == 0) {
+			// the lines are parallel
+			// they might overlap but this is ok for this test
+			return false;
+		}
+		
+		int x1Mx3 = p1_1.getHighPrecLon() - p2_1.getHighPrecLon();
+		int y1My3 = p1_1.getHighPrecLat() - p2_1.getHighPrecLat();
+
+		double isx = (double)((width2 * y1My3) - (height2 * x1Mx3))
+				/ denominator;
+		if (isx <= 0 || isx >= 1) {
+			return false;
+		}
+		
+		double isy = (double)((width1 * y1My3) - (height1 * x1Mx3))
+				/ denominator;
+
+		if (isy <= 0 || isy >= 1) {
+			return false;
+		} 
+
+		return true;
+	}
 }
 
