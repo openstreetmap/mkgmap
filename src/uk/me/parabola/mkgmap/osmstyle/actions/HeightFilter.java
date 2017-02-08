@@ -14,6 +14,7 @@
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.scan.SyntaxException;
 
 /**
  * A {@code HeightFilter} transforms values into Garmin-tagged elevations.
@@ -24,9 +25,11 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  */
 public class HeightFilter extends ConvertFilter {
 
-    public HeightFilter(String s) {
-		super(s);
-    }
+	public HeightFilter(String s) {
+		super(s == null ? "m=>ft" : s);
+		if (s != null && !(s.endsWith("ft") || s.endsWith("feet")))
+			throw new SyntaxException(String.format("height filter reqires ft (feet) as target unit: '%s'", s));
+	}
 
 	public String doFilter(String value, Element el) {
 		String s = super.doFilter(value, el);

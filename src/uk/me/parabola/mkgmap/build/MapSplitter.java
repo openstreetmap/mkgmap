@@ -211,7 +211,22 @@ public class MapSplitter {
 	 * @return An array of map areas.  Each will be below the max size.
 	 */
 	private MapArea[] splitMaxSize(MapArea mapArea) {
-		Area bounds = mapArea.getFullBounds();
+		/**
+		 * mapArea.getBounds() comes from the original map source or parent/split MapArea.
+		 * mapArea.getFullBounds() is calculated from elements added to the MapArea.
+		 * Normally, mapArea.getBounds() and getFullBounds() are well defined and
+		 * getFullBounds() is a little bit bigger than bounds() because lines/shapes are allowed
+		 * to go slightly out of their area.
+		 * MapArea.split() should use getBounds() because otherwise can get primary area overlap
+		 * which conflicts with concept of orderByDecreasingArea.
+		 * Some map sources might not set getBounds().
+		 * If there are no elements, getFullBounds isEmpty.
+		*/
+		Area bounds = mapArea.getBounds(); 
+		if (bounds.isEmpty()) // ??? think this func is wrong for single point/horiz/vert/line
+			bounds = mapArea.getFullBounds(); 
+		if (bounds.isEmpty())
+			return null;
 
 		int shift = zoom.getShiftValue();
 		int width = bounds.getWidth() >> shift;
@@ -227,9 +242,6 @@ public class MapSplitter {
 		if (height > MAX_DIVISION_SIZE)
 			ysplit = height / MAX_DIVISION_SIZE + 1;
 
-		bounds = mapArea.getBounds();
-// getFullBounds in following causes primary area overlap which conflicts with concept of orderByDecreasingArea.
-// It is a little bit bigger because lines are allowed to go slightly out of their area.
 		log.debug("splitMaxSize: bounds", bounds, "shift", shift, "width", width, "height", height, "xsplit", xsplit, "ysplit", ysplit);
 		return mapArea.split(xsplit, ysplit, bounds, false);
 	}

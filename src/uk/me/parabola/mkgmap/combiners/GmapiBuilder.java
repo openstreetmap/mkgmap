@@ -135,7 +135,7 @@ public class GmapiBuilder implements Combiner {
 		}
 	}
 
-	private String nameWithoutExtension(File file) {
+	private static String nameWithoutExtension(File file) {
 		String name = file.getName();
 		int len = name.length();
 		if (len < 4)
@@ -157,7 +157,7 @@ public class GmapiBuilder implements Combiner {
 		unzipImg(srcImgName, destDir);
 	}
 
-	private void unzipImg(String srcImgName, Path destDir) throws IOException {
+	private static void unzipImg(String srcImgName, Path destDir) throws IOException {
 		FileSystem fs = ImgFS.openFs(srcImgName);
 		for (DirectoryEntry ent : fs.list()) {
 			String fullname = ent.getFullName();
@@ -173,7 +173,7 @@ public class GmapiBuilder implements Combiner {
 		}
 	}
 
-	private void copyToFile(ImgChannel f, Path dest) {
+	private static void copyToFile(ImgChannel f, Path dest) {
 		ByteBuffer buf = ByteBuffer.allocate(8 * 1024);
 		try (ByteChannel outchan = Files.newByteChannel(dest, CREATE, WRITE, TRUNCATE_EXISTING)) {
 			while (f.read(buf) > 0) {
@@ -190,7 +190,7 @@ public class GmapiBuilder implements Combiner {
 		return combinerMap.get(kind).getFilename();
 	}
 
-	private String displayName(String fullname) {
+	private static String displayName(String fullname) {
 		return fullname.trim().replace("\000", "");
 	}
 
@@ -260,7 +260,7 @@ public class GmapiBuilder implements Combiner {
 		}
 	}
 
-	private void xmlElement(XMLStreamWriter writer, String name, String value) throws XMLStreamException {
+	private static void xmlElement(XMLStreamWriter writer, String name, String value) throws XMLStreamException {
 		writer.writeCharacters(" ");
 		writer.writeStartElement(NS, name);
 		writer.writeCharacters(value);

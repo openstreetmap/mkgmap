@@ -40,12 +40,14 @@ public class OsmBinHandler extends OsmHandler {
 	public class BinParser extends BinaryParser {
 
 		protected void parse(Osmformat.HeaderBlock header) {
-			double multiplier = .000000001;
-			double maxLon = header.getBbox().getRight() * multiplier;
-			double minLon = header.getBbox().getLeft() * multiplier;
-			double maxLat = header.getBbox().getTop() * multiplier;
-			double minLat = header.getBbox().getBottom() * multiplier;
-
+			if (header.hasBbox()) {
+				double multiplier = .000000001;
+				double maxLon = header.getBbox().getRight() * multiplier;
+				double minLon = header.getBbox().getLeft() * multiplier;
+				double maxLat = header.getBbox().getTop() * multiplier;
+				double minLat = header.getBbox().getBottom() * multiplier;
+				setBBox(minLat, minLon, maxLat, maxLon);
+			}
 			for (String s : header.getRequiredFeaturesList()) {
 				if (s.equals("OsmSchema-V0.6"))
 					continue; // We can parse this.
@@ -56,7 +58,6 @@ public class OsmBinHandler extends OsmHandler {
 				throw new MapFailedException("File requires unknown feature: " + s);
 			}
 
-			setBBox(minLat, minLon, maxLat, maxLon);
 		}
 
 		protected void parseNodes(List<Osmformat.Node> nodes) {
