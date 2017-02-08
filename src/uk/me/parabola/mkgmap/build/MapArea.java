@@ -296,7 +296,7 @@ public class MapArea implements MapDataSource {
 				int areaIndex = pickArea(mapAreas, l, xbase30, ybase30, nx, ny, dx30, dy30);
 				if ((lineBounds.getHeight() > maxHeight || lineBounds.getWidth() > maxWidth) &&
 				    !areas[areaIndex].contains(lineBounds)) {
-					MapArea largeObjectArea = new MapArea(l.getBounds(), areaResolution, false);
+					MapArea largeObjectArea = new MapArea(lineBounds, areaResolution, false);
 					largeObjectArea.addLine(l);
 					addedAreas.add(largeObjectArea);
 					continue;
@@ -322,7 +322,7 @@ public class MapArea implements MapDataSource {
 				primaryArea.addPoint(p);
 			else {
 				if (!extraArea.canAddSize(p, POINT_KIND)) {
-					extraArea = new MapArea((Area)null, areaResolution, false);
+					extraArea = new MapArea(getBounds(), areaResolution, false);
 					addedAreas.add(extraArea);
 				}
 				extraArea.addPoint(p);
@@ -337,7 +337,7 @@ public class MapArea implements MapDataSource {
 				primaryArea.addLine(l);
 			else {
 				if (!extraArea.canAddSize(l, LINE_KIND)) {
-					extraArea = new MapArea((Area)null, areaResolution, false);
+					extraArea = new MapArea(getBounds(), areaResolution, false);
 					addedAreas.add(extraArea);
 				}
 				extraArea.addLine(l);
@@ -352,7 +352,7 @@ public class MapArea implements MapDataSource {
 				primaryArea.addShape(e);
 			else {
 				if (!extraArea.canAddSize(e, SHAPE_KIND)) {
-					extraArea = new MapArea((Area)null, areaResolution, false);
+					extraArea = new MapArea(getBounds(), areaResolution, false);
 					addedAreas.add(extraArea);
 				}
 				extraArea.addShape(e);
