@@ -175,10 +175,6 @@ public class ExpressionReader {
 			if (arg1.isType(VALUE) /*&& arg2.isType(VALUE)*/)
 				arg1 = new GetTagFunction(arg1.getKeyValue());
 
-			BinaryOp binaryOp = (BinaryOp) op;
-			binaryOp.setFirst(arg1);
-			binaryOp.setSecond(arg2);
-
 			// Deal with the case where you have: a & b=2.  The 'a' is a syntax error in this case.
 			if (op.isType(OR) || op.isType(AND)) {
 				if (arg1.isType(VALUE) || arg1.isType(FUNCTION))
@@ -198,6 +194,10 @@ public class ExpressionReader {
 				}
 
 			}
+
+			BinaryOp binaryOp = (BinaryOp) op;
+			binaryOp.setFirst(arg1);
+			binaryOp.setSecond(arg2);
 
 			// The combination foo=* is converted to exists(foo).
 			if (op.isType(EQUALS) && arg2.isType(VALUE) && ((ValueOp) arg2).isValue("*")) {
