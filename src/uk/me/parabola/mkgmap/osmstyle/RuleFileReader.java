@@ -19,15 +19,21 @@ package uk.me.parabola.mkgmap.osmstyle;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Formatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.TreeSet;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LevelInfo;
+import uk.me.parabola.mkgmap.osmstyle.actions.Action;
 import uk.me.parabola.mkgmap.osmstyle.actions.ActionList;
 import uk.me.parabola.mkgmap.osmstyle.actions.ActionReader;
+import uk.me.parabola.mkgmap.osmstyle.actions.AddTagAction;
 import uk.me.parabola.mkgmap.osmstyle.eval.AndOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.BinaryOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ExistsOp;
@@ -65,7 +71,7 @@ public class RuleFileReader {
 	private final boolean performChecks;
 	private final Map<Integer, List<Integer>> overlays;
 
-	private boolean inFinalizeSection = false;
+	private boolean inFinalizeSection;
 	
 	public RuleFileReader(FeatureKind kind, LevelInfo[] levels, RuleSet rules, boolean performChecks, 
 			Map<Integer, List<Integer>> overlays) {
@@ -157,77 +163,140 @@ public class RuleFileReader {
 			return false;
 
 		if (scanner.checkToken("include")) {
-			// Consume the 'include' token and skip spaces
-			Token token = scanner.nextToken();
-			scanner.skipSpace();
+			if (readInclude(currentLoader, scanner)) return true;
 
-			// If include is being used as a keyword then it is followed by a word or a quoted word.
-			Token next = scanner.peekToken();
-			if (next.getType() == TokType.TEXT
-					|| (next.getType() == TokType.SYMBOL && (next.isValue("'") || next.isValue("\""))))
-			{
-				String filename = scanner.nextWord();
+		} else if (scanner.checkToken("if")) {
+			if (readIf(scanner)) return true;
 
-				StyleFileLoader loader = currentLoader;
-				scanner.skipSpace();
+		} else if (scanner.checkToken("else")) {
+			if (readElse(scanner)) return true;
 
-				// The include can be followed by an optional 'from' clause. The file is read from the given
-				// style-name in that case.
-				if (scanner.checkToken("from")) {
-					scanner.nextToken();
-					String styleName = scanner.nextWord();
-					if (styleName.equals(";"))
-						throw new SyntaxException(scanner, "No style name after 'from'");
+		} else if (scanner.checkToken("end")) {
+			if (readEnd(scanner)) return true;
 
-					try {
-						loader = StyleFileLoader.createStyleLoader(null, styleName);
-					} catch (FileNotFoundException e) {
-						throw new SyntaxException(scanner, "Cannot find style: " + styleName);
-					}
-				}
-
-				scanner.validateNext(";");
-
-				try {
-					loadFile(loader, filename);
-					return true;
-				} catch (FileNotFoundException e) {
-					throw new SyntaxException(scanner, "Cannot open included file: " + filename);
-				} finally {
-					if (loader != currentLoader)
-						Utils.closeFile(loader);
-				}
-			} else {
-				// Wrong syntax for include statement, so push back token to allow a possible expression to be read
-				scanner.pushToken(token);
-			}
-		} 
-		// check if it is the start label of the <finalize> section
-		else if (scanner.checkToken("<")) {
-			Token token = scanner.nextToken();
-			if (scanner.checkToken("finalize")) {
-				Token finalizeToken = scanner.nextToken();
-				if (scanner.checkToken(">")) {
-					if (inFinalizeSection) {
-						// there are two finalize sections which is not allowed
-						throw new SyntaxException(scanner, "There is only one finalize section allowed");
-					} else {
-						// consume the > token
-						scanner.nextToken();
-						// mark start of the finalize block
-						inFinalizeSection = true;
-						finalizeRules = new RuleSet();
-						return true;
-					}
-				} else {
-					scanner.pushToken(finalizeToken);
-					scanner.pushToken(token);
-				}
-			} else {
-				scanner.pushToken(token);
-			}
+		} else if (scanner.checkToken("<")) {
+			// check if it is the start label of the <finalize> section
+			if (readFinalize(scanner)) return true;
 		}
 		scanner.skipSpace();
+		return false;
+	}
+
+	private boolean readIf(TokenScanner scanner) {
+		// Take the 'if' token
+		Token tok = scanner.nextToken();
+		scanner.skipSpace();
+
+		// If 'if'' is being used as a keyword then it is followed by a '('.
+		Token next = scanner.peekToken();
+		if (next.getType() == TokType.SYMBOL && next.isValue("(")) {
+
+			ExpressionReader expressionReader = new ExpressionReader(scanner, kind);
+			Op expr = expressionReader.readConditions();
+			scanner.validateNext("then");
+
+			ArrayList<Action> list = new ArrayList<>();
+			list.add(new AddTagAction("mkgmap:if:8898", "1", true));
+			ActionList alist = new ActionList(list, new TreeSet<>());
+
+			//saveRule(scanner, expr, alist, null);
+			return true;
+		} else {
+			// Wrong syntax for if statement, so push back token to allow a possible expression to be read
+			scanner.pushToken(tok);
+		}
+		return false;
+	}
+
+	private boolean readElse(TokenScanner scanner) {
+		Token tok = scanner.nextToken();
+		scanner.skipSpace();
+		//System.out.printf("Else: %s\n", tok.getValue());
+
+		//return false;
+		return true;
+	}
+
+	private boolean readEnd(TokenScanner scanner) {
+		Token tok = scanner.nextToken();
+		scanner.skipSpace();
+		//System.out.printf("End: %s\n", tok.getValue());
+
+		return true;  // false
+	}
+
+	private boolean readInclude(StyleFileLoader currentLoader, TokenScanner scanner) {
+		// Consume the 'include' token and skip spaces
+		Token token = scanner.nextToken();
+		scanner.skipSpace();
+
+		// If include is being used as a keyword then it is followed by a word or a quoted word.
+		Token next = scanner.peekToken();
+		if (next.getType() == TokType.TEXT
+				|| (next.getType() == TokType.SYMBOL && (next.isValue("'") || next.isValue("\""))))
+		{
+			String filename = scanner.nextWord();
+
+			StyleFileLoader loader = currentLoader;
+			scanner.skipSpace();
+
+			// The include can be followed by an optional 'from' clause. The file is read from the given
+			// style-name in that case.
+			if (scanner.checkToken("from")) {
+				scanner.nextToken();
+				String styleName = scanner.nextWord();
+				if (Objects.equals(styleName, ";"))
+					throw new SyntaxException(scanner, "No style name after 'from'");
+
+				try {
+					loader = StyleFileLoader.createStyleLoader(null, styleName);
+				} catch (FileNotFoundException e) {
+					throw new SyntaxException(scanner, "Cannot find style: " + styleName);
+				}
+			}
+
+			if (scanner.checkToken(";"))
+				scanner.nextToken();
+
+			try {
+				loadFile(loader, filename);
+				return true;
+			} catch (FileNotFoundException e) {
+				throw new SyntaxException(scanner, "Cannot open included file: " + filename);
+			} finally {
+				if (loader != currentLoader)
+					Utils.closeFile(loader);
+			}
+		} else {
+			// Wrong syntax for include statement, so push back token to allow a possible expression to be read
+			scanner.pushToken(token);
+		}
+		return false;
+	}
+
+	private boolean readFinalize(TokenScanner scanner) {
+		Token token = scanner.nextToken();
+		if (scanner.checkToken("finalize")) {
+			Token finalizeToken = scanner.nextToken();
+			if (scanner.checkToken(">")) {
+				if (inFinalizeSection) {
+					// there are two finalize sections which is not allowed
+					throw new SyntaxException(scanner, "There is only one finalize section allowed");
+				} else {
+					// consume the > token
+					scanner.nextToken();
+					// mark start of the finalize block
+					inFinalizeSection = true;
+					finalizeRules = new RuleSet();
+					return true;
+				}
+			} else {
+				scanner.pushToken(finalizeToken);
+				scanner.pushToken(token);
+			}
+		} else {
+			scanner.pushToken(token);
+		}
 		return false;
 	}
 
@@ -569,14 +638,15 @@ public class RuleFileReader {
 			RuleSet rs = new RuleSet();
 			RuleFileReader rr = new RuleFileReader(FeatureKind.POLYLINE,
 					LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"), rs, false,
-					Collections.<Integer, List <Integer>>emptyMap());
+					Collections.emptyMap());
 
 			StyleFileLoader loader = new DirectoryFileLoader(
 					new File(args[0]).getAbsoluteFile().getParentFile());
 			String fname = new File(args[0]).getName();
 			rr.load(loader, fname);
 
-			System.out.println("Result: " + rs);
+
+			StylePrinter.dumpRuleSet(new Formatter(System.out), "rules", rs);
 		} else {
 			System.err.println("Usage: RuleFileReader <file>");
 		}

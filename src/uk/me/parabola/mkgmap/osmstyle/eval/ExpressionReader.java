@@ -54,7 +54,7 @@ public class ExpressionReader {
 	public Op readConditions() {
 		while (!scanner.isEndOfFile()) {
 			scanner.skipSpace();
-			if (scanner.checkToken("[") || scanner.checkToken("{"))
+			if (scanner.checkToken("[") || scanner.checkToken("{") || scanner.checkToken("then"))
 				break;
 
 			WordInfo wordInfo = scanner.nextWordWithInfo();
