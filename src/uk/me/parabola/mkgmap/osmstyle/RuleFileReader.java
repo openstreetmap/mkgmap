@@ -21,7 +21,9 @@ import java.io.FileNotFoundException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.Formatter;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -36,13 +38,17 @@ import uk.me.parabola.mkgmap.osmstyle.actions.ActionReader;
 import uk.me.parabola.mkgmap.osmstyle.actions.AddTagAction;
 import uk.me.parabola.mkgmap.osmstyle.eval.AndOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.BinaryOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.EqualsOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ExistsOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ExpressionReader;
 import uk.me.parabola.mkgmap.osmstyle.eval.LinkedOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.NodeType;
+import uk.me.parabola.mkgmap.osmstyle.eval.NotEqualOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.NotOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.osmstyle.eval.OrOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ValueOp;
+import uk.me.parabola.mkgmap.osmstyle.function.GetTagFunction;
 import uk.me.parabola.mkgmap.osmstyle.function.StyleFunction;
 import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 import uk.me.parabola.mkgmap.reader.osm.GType;
@@ -70,6 +76,8 @@ public class RuleFileReader {
 	private RuleSet finalizeRules;
 	private final boolean performChecks;
 	private final Map<Integer, List<Integer>> overlays;
+
+	private Deque<Op> ifStack = new LinkedList<>();
 
 	private boolean inFinalizeSection;
 	
@@ -119,6 +127,7 @@ public class RuleFileReader {
 				break;
 
 			Op expr = expressionReader.readConditions();
+			expr = condExpr(expr);
 
 			ActionList actionList = actionReader.readActions();
 
@@ -195,11 +204,8 @@ public class RuleFileReader {
 			Op expr = expressionReader.readConditions();
 			scanner.validateNext("then");
 
-			ArrayList<Action> list = new ArrayList<>();
-			list.add(new AddTagAction("mkgmap:if:8898", "1", true));
-			ActionList alist = new ActionList(list, new TreeSet<>());
 
-			//saveRule(scanner, expr, alist, null);
+			ifStack.addLast(expr);
 			return true;
 		} else {
 			// Wrong syntax for if statement, so push back token to allow a possible expression to be read
@@ -211,18 +217,43 @@ public class RuleFileReader {
 	private boolean readElse(TokenScanner scanner) {
 		Token tok = scanner.nextToken();
 		scanner.skipSpace();
-		//System.out.printf("Else: %s\n", tok.getValue());
 
-		//return false;
+		Token next = scanner.peekToken();
+		if (next.getType() == TokType.SYMBOL && !next.isValue("(") && !next.isValue("!")) {
+			scanner.pushToken(tok);
+			return false;
+		}
+
+		Op expr = ifStack.removeLast();
+		NotOp not = new NotOp();
+		not.setFirst(expr);
+		ifStack.addLast(not);
+
 		return true;
 	}
 
 	private boolean readEnd(TokenScanner scanner) {
 		Token tok = scanner.nextToken();
 		scanner.skipSpace();
-		//System.out.printf("End: %s\n", tok.getValue());
+		if (ifStack.isEmpty()) {
+			scanner.pushToken(tok);
+			return false;
+		}
 
-		return true;  // false
+		ifStack.removeLast();
+		return true;
+	}
+
+	private Op condExpr(Op expr) {
+		Op result = expr;
+
+		for (Op op : ifStack) {
+			AndOp and = new AndOp();
+			and.setFirst(result);
+			and.setSecond(op);
+			result = and;
+		}
+		return result;
 	}
 
 	private boolean readInclude(StyleFileLoader currentLoader, TokenScanner scanner) {

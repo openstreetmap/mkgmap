@@ -228,7 +228,7 @@ public class StyleTester implements OsmConverter {
 
 			List<String> givenList = readGivenResults();
 			boolean noStrict = false;
-			if (Objects.equals(givenList.get(0), "NO-STRICT")) {
+			if (!givenList.isEmpty() && Objects.equals(givenList.get(0), "NO-STRICT")) {
 				givenList.remove(0);
 				noStrict = true;
 			}
