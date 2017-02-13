@@ -18,6 +18,7 @@ package uk.me.parabola.mkgmap.general;
 
 import java.util.List;
 
+import uk.me.parabola.util.ShapeSplitter;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 
@@ -25,6 +26,8 @@ import uk.me.parabola.imgfmt.app.Coord;
  * Clip objects to a bounding box.
  * 
  * TODO: migrate LineClipper and PolygonClipper into here and simplify.
+ * Actually, PolygonClipper functionality now in ShapeSplitter and it
+ * is redundant
  *
  * @author Steve Ratcliffe
  */
@@ -57,16 +60,13 @@ public class AreaClipper implements Clipper {
 			collector.addShape(shape);
 			return;
 		}
-		List<List<Coord>> list = PolygonClipper.clip(bbox, shape.getPoints());
-		if (list == null) {
-			collector.addShape(shape);
-		} else {
-			for (List<Coord> lco : list) {
-				MapShape nshape = new MapShape(shape);
-				nshape.setPoints(lco);
-				nshape.setClipped(true);
-				collector.addShape(nshape);
-			}
+		List<List<Coord>> list = ShapeSplitter.clipToBounds(shape.getPoints(), bbox, null);
+		// Should we share new points on the edge?
+		for (List<Coord> lco : list) {
+			MapShape nshape = new MapShape(shape);
+			nshape.setPoints(lco);
+			nshape.setClipped(true);
+			collector.addShape(nshape);
 		}
 	}
 

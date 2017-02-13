@@ -54,9 +54,14 @@ public class LayerFilterChain implements MapFilterChain {
 			return;
 		
 		MapFilter f = filters.get(position++);
-		f.doFilter(element, this);
-		// maintain chain position for repeated calls in the split filters 
-		position--; 
+		try {
+			f.doFilter(element, this);
+			// maintain chain position for repeated calls in the split filters 
+			position--; 
+		} catch (RuntimeException e) {
+			position--; // maintain position
+			throw e;
+		}
 	}
 
 	/**

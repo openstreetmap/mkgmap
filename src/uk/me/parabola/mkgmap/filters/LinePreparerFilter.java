@@ -51,6 +51,9 @@ public class LinePreparerFilter implements MapFilter {
 		MapLine line = (MapLine) element;
 
 		int numPoints = line.getPoints().size();
+		if (line instanceof MapShape && numPoints >= PolygonSplitterFilter.MAX_POINT_IN_ELEMENT)
+			throw new MustSplitException();
+
 		boolean first = true;
 		int minPointsRequired = (element instanceof MapShape) ? 3:2;
 		if (minPointsRequired == 3 && line.getPoints().get(0).equals(line.getPoints().get(numPoints-1)))

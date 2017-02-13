@@ -120,7 +120,7 @@ public class MapBuilder implements Configurable {
 	private List<String> copyrights = new ArrayList<>();
 
 	private boolean doRoads;
-	private Boolean driveOnLeft;
+	private Boolean driveOnLeft; // needs to be Boolean for later test:	if (driveOnLeft == null){
 	private Locator locator;
 
 	private final java.util.Map<String, Highway> highways = new HashMap<>();
@@ -939,8 +939,7 @@ public class MapBuilder implements Configurable {
 		// points (not 1)
 		for (MapPoint point : points) {
 			if (point.isCity() &&
-			    point.getMinResolution() <= res &&
-			    point.getMaxResolution() >= res) {
+			    point.getMinResolution() <= res) {
 				++pointIndex;
 				haveIndPoints = true;
 			}
@@ -949,8 +948,7 @@ public class MapBuilder implements Configurable {
 		for (MapPoint point : points) {
 
 			if (point.isCity() ||
-			    point.getMinResolution() > res ||
-			    point.getMaxResolution() < res)
+			    point.getMinResolution() > res)
 				continue;
 
 			String name = point.getName();
@@ -1008,8 +1006,7 @@ public class MapBuilder implements Configurable {
 			for (MapPoint point : points) {
 
 				if (!point.isCity() ||
-				    point.getMinResolution() > res ||
-				    point.getMaxResolution() < res)
+				    point.getMinResolution() > res)
 					continue;
 
 				String name = point.getName();
@@ -1091,9 +1088,8 @@ public class MapBuilder implements Configurable {
 		filters.addFilter(new LineAddFilter(div, map, doRoads));
 		
 		for (MapLine line : lines) {
-			if (line.getMinResolution() > res || line.getMaxResolution() < res)
+			if (line.getMinResolution() > res)
 				continue;
-
 			filters.startFilter(line);
 		}
 	}
@@ -1138,6 +1134,7 @@ public class MapBuilder implements Configurable {
 		preserveHorizontalAndVerticalLines(res, shapes);
 		
 		LayerFilterChain filters = new LayerFilterChain(config);
+		filters.addFilter(new PolygonSplitterFilter());
 		if (enableLineCleanFilters && (res < 24)) {
 			filters.addFilter(new RoundCoordsFilter());
 			int sizefilterVal =  getMinSizePolygonForResolution(res);
@@ -1148,16 +1145,14 @@ public class MapBuilder implements Configurable {
 			if(reducePointErrorPolygon > 0)
 				filters.addFilter(new DouglasPeuckerFilter(reducePointErrorPolygon));
 		}
-		filters.addFilter(new PolygonSplitterFilter());
-		filters.addFilter(new RemoveEmpty());
 		filters.addFilter(new RemoveObsoletePointsFilter());
+		filters.addFilter(new RemoveEmpty());
 		filters.addFilter(new LinePreparerFilter(div));
 		filters.addFilter(new ShapeAddFilter(div, map));
 
 		for (MapShape shape : shapes) {
-			if (shape.getMinResolution() > res || shape.getMaxResolution() < res)
+			if (shape.getMinResolution() > res)
 				continue;
-
 			filters.startFilter(shape);
 		}
 	}
@@ -1176,7 +1171,7 @@ public class MapBuilder implements Configurable {
 		if (res == 24)
 			return;
 		for (MapShape shape : shapes) {
-			if (shape.getMinResolution() > res || shape.getMaxResolution() < res)
+			if (shape.getMinResolution() > res)
 				continue;
 			int minLat = shape.getBounds().getMinLat();
 			int maxLat = shape.getBounds().getMaxLat();

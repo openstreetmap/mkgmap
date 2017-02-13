@@ -118,7 +118,7 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 
 		String baseName = GpxCreator.getGpxBaseName();
 		if (debug) {
-			GpxCreator.createAreaGpx(baseName + "bbox", getBbox());
+			GpxCreator.createAreaGpx(baseName + "bbox", getTileBounds());
 		}
 
 		// go through all polygons and check if it contains too many coords of

@@ -58,7 +58,7 @@ public class SimpleRouteTest extends Base {
 				count++;
 				System.out.println("TRE size " + size);
 				// Size varies depending on svn modified status
-				assertThat("TRE size", size, new RangeMatcher(1455, 2));
+				assertThat("TRE size", size, new RangeMatcher(1427, 2));
 				break;
 			case "LBL":
 				count++;

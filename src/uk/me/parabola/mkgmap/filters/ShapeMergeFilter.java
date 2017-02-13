@@ -61,7 +61,8 @@ public class ShapeMergeFilter{
 			count++;
 			if (shape.getPoints().get(0) != shape.getPoints().get(shape.getPoints().size()-1)){
 				// should not happen here
-				log.error("shape is not closed with identical points", shape.getOsmid());
+				log.error("shape is not closed with identical points", shape.getOsmid(),
+					  shape.getPoints().get(0).toOSMURL());
 				mergedShapes.add(shape);
 				continue;
 			}
@@ -73,7 +74,8 @@ public class ShapeMergeFilter{
 				log.error("ignoring shape with id", sh.id, "and type",
 						GType.formatType(shape.getType()), "at resolution", resolution + ", it", 
 						(shape.wasClipped() ?   "was clipped to" : "has"), 
-						shape.getPoints().size(), "points and has an empty area ");
+						shape.getPoints().size(), "points and has an empty area",
+						shape.getPoints().get(0).toOSMURL());
 				continue;
 			}
 			if (sameTypeList.isEmpty()){
