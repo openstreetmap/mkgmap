@@ -76,21 +76,29 @@ highway=primary {name '${ref|highway-symbol:box} ${name}' | '${ref|highway-symbo
 highway=secondary | highway=tertiary {name '${ref|highway-symbol:oval} ${name}' | '${ref|highway-symbol:oval}' | '${name}'; addlabel '${name} (${ref})' }
 highway=* {name '${name}' | '${ref}' }
 
+# Flag paved roads
+highway=* & (surface=asphalt | surface=paved | surface=sett | 
+    surface=concrete | surface=concrete:lanes | surface=concrete:plates | 
+    surface=paving_stones  | surface=cobblestone  | 
+   	surface=cobblestone:flattened  | surface=metal  | surface=wood) 
+{ set mkgmap:unpaved=0 }
+highway=* & tracktype=grade1 & surface!=* { set mkgmap:unpaved=0 }
+
 # Flag unpaved roads.
-highway=*
-& (surface=cobblestone | surface=compacted | surface=dirt |
-   surface=earth | surface=grass | surface=grass_paver |
-   surface=gravel | surface=grit | surface=ground | surface=mud |
-   surface=pebblestone | surface=sand | surface=unpaved |
-   mtb:scale=* |
-   tracktype ~ 'grade[2-6]' |
-   smoothness ~ '.*(bad|horrible|impassable)' |
-   sac_scale ~ '.*(mountain|alpine)_hiking' |
-   sport=via_ferrata)
+highway=* & mkgmap:unpaved!=0 & (  
+    surface=* |
+	mtb:scale=* | 
+    tracktype ~ 'grade[2-6]')
 { add mkgmap:unpaved=1 }
-(highway=bridleway | highway=path | highway=track | highway=unsurfaced)
-& surface!=* & tracktype!=* & smoothness!=* & sac_scale!=*
-{ add mkgmap:unpaved=1 }
+highway=* & (
+    mtb:scale ~ '[2-6].' |
+    sac_scale ~ '.*(mountain|alpine)_hiking' |
+    sport=via_ferrata)
+{ set mkgmap:unpaved=1 }
+(highway=bridleway | highway=path | highway=track) & mkgmap:unpaved!=0 { add mkgmap:unpaved=1 }
+(highway=unsurfaced | highway=via_ferrata) { set mkgmap:unpaved=1 }
+highway=* & mkgmap:unpaved=1 {echotags "u"}
+highway=* & mkgmap:unpaved!=1 & smoothness ~ '.*(bad|horrible|impassable)'  { add mkgmap:road-speed = '-2' } 
 
 # Convert generic path to most specific
 highway=footway & snowplowing!=no
