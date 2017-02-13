@@ -17,8 +17,6 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.Arrays;
-import java.util.Iterator;
-
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -107,19 +105,4 @@ public class TagsTest {
 		return tags;
 	}
 
-	/**
-	 * Create an iterator over the tags.  This must be initialised to the
-	 * values in SMALL_SET.
-	 * @param tags The tags containing values from SMALL_SET.
-	 * @return An iterator that has iterated over all the tags in set.
-	 */
-	private Iterator<String> iterateOverTags(Tags tags) {
-		Iterator<String> it = tags.iterator();
-		int n = SMALL_SET.length * 2;
-		for (int i = 0; i < n; i++) {
-			assertTrue(it.hasNext());
-			assertNotNull("result should be non null", it.next());
-		}
-		return it;
-	}
 }

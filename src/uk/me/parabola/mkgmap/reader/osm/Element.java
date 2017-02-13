@@ -223,17 +223,7 @@ public abstract class Element {
 		if (tags == null)
 			return "[]";
 
-		StringBuilder sb = new StringBuilder();
-		sb.append('[');
-		for (String nameval : tags) {
-			sb.append(nameval);
-			sb.append(',');
-		}
-		if (sb.length() > 1) {
-			sb.setLength(sb.length()-1);
-		}
-		sb.append(']');
-		return sb.toString();
+		return tags.toString();
 	}
 
 	/**
