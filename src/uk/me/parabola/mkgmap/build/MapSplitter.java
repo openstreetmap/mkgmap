@@ -168,7 +168,12 @@ public class MapSplitter {
 			}
 
 			if (wantSplit || mustSplit) {
-				if (bounds.getMaxDimension() > (MIN_DIMENSION << shift)) {
+				if (!area.canSplit()) {
+					if (mustSplit)
+						log.error("Single item predicted to exceed subdivision", area.getBounds().getCenter().toOSMURL());
+					else
+						log.info("Single item larger that WANTED_MAX_AREA_SIZE", area.getBounds().getCenter().toOSMURL());
+				} else if (bounds.getMaxDimension() > (MIN_DIMENSION << shift)) {
 					log.debug("splitting area in half", area, mustSplit, wantSplit);
 					MapArea[] sublist;
 					if (bounds.getWidth() > bounds.getHeight())
