@@ -116,12 +116,21 @@ leisure=track & area!=yes
 {add highway=footway; name '${ref} ${name}' | '${ref}' | '${name}' }
 
 # Roundabouts
-junction=roundabout & (highway=trunk | highway=trunk_link) [0x0c road_class=3 road_speed=2 resolution 18]
-junction=roundabout & (highway=primary | highway=primary_link) [0x0c road_class=3 road_speed=2 resolution 19]
-junction=roundabout & (highway=secondary | highway=secondary_link) [0x0c road_class=2 road_speed=2 resolution 20]
-junction=roundabout & (highway=tertiary | highway=tertiary_link) [0x0c road_class=1 road_speed=1 resolution 21]
-junction=roundabout & highway=unclassified [0x0c road_class=1 road_speed=1 resolution 21]
+junction=roundabout & (highway=trunk | highway=trunk_link) [0x0c road_class=4 road_speed=2 resolution 24 continue]
+junction=roundabout & (highway=trunk | highway=trunk_link) [0x10801 resolution 18]
+
+junction=roundabout & (highway=primary | highway=primary_link) [0x0c road_class=3 road_speed=2 resolution 24 continue]
+junction=roundabout & (highway=primary | highway=primary_link) [0x10802 resolution 19]
+
+junction=roundabout & (highway=secondary | highway=secondary_link) [0x0c road_class=2 road_speed=2 resolution 24 continue]
+junction=roundabout & (highway=secondary | highway=secondary_link) [0x10803 resolution 20]
+
+junction=roundabout & (highway=tertiary | highway=tertiary_link) [0x0c road_class=1 road_speed=1 resolution 24 continue]
+junction=roundabout & (highway=tertiary | highway=tertiary_link) [0x10804 resolution 21]
+
+junction=roundabout & (highway=unclassified | highway=minor ) [0x0c road_class=1 road_speed=1 resolution 21]
 junction=roundabout & highway=* [0x0c road_class=0 road_speed=1 resolution 22]
+
 
 # Ways that may or may not be useable
 
