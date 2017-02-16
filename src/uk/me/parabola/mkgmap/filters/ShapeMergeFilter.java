@@ -71,7 +71,7 @@ public class ShapeMergeFilter{
 			}
 			usableShapes.add(shape);
 		}
-		if (usableShapes.isEmpty())
+		if (usableShapes.size() < 2)
 			return mergedShapes;
 		
 		Comparator<MapShape> comparator = new MapShapeComparator();
@@ -232,7 +232,7 @@ public class ShapeMergeFilter{
 		List<ShapeHelper> result = new ArrayList<>(list.size() + 1);
 		ShapeHelper shNew = new ShapeHelper(toAdd);
 		for (ShapeHelper shOld : list) {
-			ShapeHelper mergeRes = tryMerge(shOld, shNew, type);
+			ShapeHelper mergeRes = tryMerge(shOld, shNew);
 			if (mergeRes == shOld){
 				result.add(shOld);
 				continue;
@@ -255,11 +255,10 @@ public class ShapeMergeFilter{
 	 * Find out if two shapes have common points. If yes, merge them.
 	 * @param sh1 1st shape1
 	 * @param sh2 2st shape2
-	 * @param type Garmin type (used for log messages)
 	 * @return merged shape or 1st shape if no common point found or {@code dupShape} 
 	 * if both shapes describe the same area. 
 	 */
-	private static ShapeHelper tryMerge(ShapeHelper sh1, ShapeHelper sh2, int type) {
+	private static ShapeHelper tryMerge(ShapeHelper sh1, ShapeHelper sh2) {
 		
 		// both clockwise or both ccw ?
 		boolean sameDir = sh1.areaTestVal > 0 && sh2.areaTestVal > 0 || sh1.areaTestVal < 0 && sh2.areaTestVal < 0;
@@ -457,7 +456,7 @@ public class ShapeMergeFilter{
  	
 	private static class ShapeHelper{
 		final private List<Coord> points;
-		long id; // TODO: remove debugging aid
+		long id; 
 		long areaTestVal;
 
 		public ShapeHelper(List<Coord> merged) {
