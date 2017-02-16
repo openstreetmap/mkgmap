@@ -71,6 +71,9 @@ public class ShapeMergeFilter{
 			}
 			usableShapes.add(shape);
 		}
+		if (usableShapes.isEmpty())
+			return mergedShapes;
+		
 		Comparator<MapShape> comparator = new MapShapeComparator();
 		usableShapes.sort(comparator);
 		int p1 = 0;
