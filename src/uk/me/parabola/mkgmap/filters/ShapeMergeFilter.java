@@ -509,21 +509,28 @@ public class ShapeMergeFilter{
 		@Override
 		public int compare(MapShape o1, MapShape o2) {
 			int d = Integer.compare(o1.getType(), o2.getType());
-			if (d == 0 && orderByDecreasingArea) {
+			if (d != 0) 
+				return d;
+			d = Boolean.compare(o1.isSkipSizeFilter(), o2.isSkipSizeFilter());
+			if (d != 0)
+				return d;
+			// XXX wasClipped() is ignored here, might be needed if later filters need it  
+			if (orderByDecreasingArea) {
 				d = Long.compare(o1.getFullArea(), o2.getFullArea());
+				if (d != 0)
+					return d;
 			}
-			if (d == 0) {
-				String n1 = o1.getName();
-				String n2 = o2.getName();
-				if (n1 == null) {
-					return (n2 == null) ? 0 : 1;
-				}
-				if (n2 == null)
-					return -1;
-
-				return java.text.Collator.getInstance().compare(n1, n2);
+			String n1 = o1.getName();
+			String n2 = o2.getName();
+			if (n1 == n2)
+				return 0;
+			if (n1 == null) {
+				return (n2 == null) ? 0 : 1;
 			}
-			return d;
+			if (n2 == null)
+				return -1;
+			
+			return java.text.Collator.getInstance().compare(n1, n2);
 		}
 	}
 }
