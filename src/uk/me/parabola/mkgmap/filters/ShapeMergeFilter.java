@@ -193,9 +193,6 @@ public class ShapeMergeFilter{
 			all.andNot(done);
 			if (all.isEmpty())
 				continue;
-			if (done.get(i)) {
-				long dd =4;
-			}
 			
 			List<ShapeHelper> result = new ArrayList<>();
 			for (int j = all.nextSetBit(0); j >= 0; j = all.nextSetBit(j+1)) {

@@ -51,8 +51,10 @@ public class Coord implements Comparable<Coord> {
 	private final static short HOUSENUMBER_NODE = 0x0400; // start/end of house number interval
 	private final static short ADDED_HOUSENUMBER_NODE = 0x0800; // node was added for house numbers
 	
-	public final static int HIGH_PREC_BITS = 30;
-	public final static int DELTA_SHIFT = 6;
+	private final static int HIGH_PREC_BITS = 30;
+	public final static int DELTA_SHIFT = HIGH_PREC_BITS - 24; 
+	private final static int MAX_DELTA = 1 << (DELTA_SHIFT - 2); // max delta abs value that is considered okay
+	private final static long FACTOR_HP = 1L << HIGH_PREC_BITS;
 	
 	public final static double R = 6378137.0; // Radius of earth at equator as defined by WGS84
 	public final static double U = R * 2 * Math.PI; // circumference of earth at equator (WGS84)
@@ -62,9 +64,8 @@ public class Coord implements Comparable<Coord> {
 	private final int longitude;
 	private byte highwayCount; // number of highways that use this point
 	private short flags; // further attributes
-	private final byte latDelta; // delta to 30 bit lat value 
-	private final byte lonDelta; // delta to 30 bit lon value
-	private final static byte MAX_DELTA = 16; // max delta abs value that is considered okay
+	private final byte latDelta; // delta to high precision latitude value 
+	private final byte lonDelta; // delta to high precision longitude value
 	private short approxDistanceToDisplayedCoord = -1;
 
 	/**
@@ -86,14 +87,15 @@ public class Coord implements Comparable<Coord> {
 	public Coord(double latitude, double longitude) {
 		this.latitude = Utils.toMapUnit(latitude);
 		this.longitude = Utils.toMapUnit(longitude);
-		int lat30 = toBit30(latitude);
-		int lon30 = toBit30(longitude);
-		this.latDelta = (byte) ((this.latitude << 6) - lat30); 
-		this.lonDelta = (byte) ((this.longitude << 6) - lon30);
+		int latHighPrec = toHighPrec(latitude);
+		int lonHighPrec = toHighPrec(longitude);
+		this.latDelta = (byte) ((this.latitude << DELTA_SHIFT) - latHighPrec); 
+		this.lonDelta = (byte) ((this.longitude << DELTA_SHIFT) - lonHighPrec);
 
 		// verify math
-		assert (this.latitude << 6) - latDelta == lat30;
-		assert (this.longitude << 6) - lonDelta == lon30;
+		if ((this.latitude << DELTA_SHIFT) - latDelta != latHighPrec)
+		assert (this.latitude << DELTA_SHIFT) - latDelta == latHighPrec;
+		assert (this.longitude << DELTA_SHIFT) - lonDelta == lonHighPrec;
 	}
 	
 	private Coord (int lat, int lon, byte latDelta, byte lonDelta){
@@ -103,12 +105,18 @@ public class Coord implements Comparable<Coord> {
 		this.lonDelta = lonDelta;
 	}
 	
-	public static Coord makeHighPrecCoord(int lat30, int lon30){
-		int lat24 = (lat30 + (1 << 5)) >> 6;  
-		int lon24 = (lon30 + (1 << 5)) >> 6;
-		byte dLat = (byte) ((lat24 << 6) - lat30);
-		byte dLon = (byte) ((lon24 << 6) - lon30);
-		return new Coord(lat24,lon24,dLat,dLon);
+	/**
+	 * Constructor for high precision values.
+	 * @param latHighPrec latitude in high precision
+	 * @param lonHighPrec longitude in high precision
+	 * @return Coord instance
+	 */
+	public static Coord makeHighPrecCoord(int latHighPrec, int lonHighPrec){
+		int lat24 = (latHighPrec + (1 << (DELTA_SHIFT - 1))) >> DELTA_SHIFT;
+		int lon24 = (lonHighPrec + (1 << (DELTA_SHIFT - 1))) >> DELTA_SHIFT;
+		byte dLat = (byte) ((lat24 << DELTA_SHIFT) - latHighPrec);
+		byte dLon = (byte) ((lon24 << DELTA_SHIFT) - lonHighPrec);
+		return new Coord(lat24, lon24, dLat, dLon);
 	}
 	
 	/**
@@ -455,10 +463,10 @@ public class Coord implements Comparable<Coord> {
 	 * Similar to code in JOSM
 	 */
 	public double distanceHaversine (Coord point){
-		double lat1 = int30ToRadians(getHighPrecLat());
-		double lat2 = int30ToRadians(point.getHighPrecLat());
-		double lon1 = int30ToRadians(getHighPrecLon());
-		double lon2 = int30ToRadians(point.getHighPrecLon());
+		double lat1 = hpToRadians(getHighPrecLat());
+		double lat2 = hpToRadians(point.getHighPrecLat());
+		double lon1 = hpToRadians(getHighPrecLon());
+		double lon2 = hpToRadians(point.getHighPrecLon());
 		double sinMidLat = Math.sin((lat1-lat2)/2);
 		double sinMidLon = Math.sin((lon1-lon2)/2);
 		double dRad = 2*Math.asin(Math.sqrt(sinMidLat*sinMidLat + Math.cos(lat1)*Math.cos(lat2)*sinMidLon*sinMidLon));
@@ -470,10 +478,10 @@ public class Coord implements Comparable<Coord> {
 	 * Distance to other point in metres following the shortest rhumb line.
 	 */
 	public double distanceOnRhumbLine(Coord point){
-		double lat1 = int30ToRadians(getHighPrecLat());
-		double lat2 = int30ToRadians(point.getHighPrecLat());
-		double lon1 = int30ToRadians(getHighPrecLon());
-		double lon2 = int30ToRadians(point.getHighPrecLon());
+		double lat1 = hpToRadians(getHighPrecLat());
+		double lat2 = hpToRadians(point.getHighPrecLat());
+		double lon1 = hpToRadians(getHighPrecLon());
+		double lon2 = hpToRadians(point.getHighPrecLon());
 		
 	    // see http://williams.best.vwh.net/avform.htm#Rhumb
 
@@ -503,13 +511,13 @@ public class Coord implements Comparable<Coord> {
 	 * the rhumb line calculations. 
 	 */
 	public Coord makeBetweenPoint(Coord other, double fraction) {
-		int dLat30 = other.getHighPrecLat() - getHighPrecLat();
-		int dLon30 = other.getHighPrecLon() - getHighPrecLon();
-		if (dLon30 == 0 || Math.abs(dLat30) < 1000000 && Math.abs(dLon30) < 1000000 ){
+		int dlatHp = other.getHighPrecLat() - getHighPrecLat();
+		int dlonHp = other.getHighPrecLon() - getHighPrecLon();
+		if (dlonHp == 0 || Math.abs(dlatHp) < 1000000 && Math.abs(dlonHp) < 1000000 ){
 			// distances are rather small, we can use flat earth approximation
-			int lat30 = (int) (getHighPrecLat() + dLat30 * fraction);
-			int lon30 = (int) (getHighPrecLon() + dLon30 * fraction);
-			return makeHighPrecCoord(lat30, lon30);
+			int latHighPrec = (int) (getHighPrecLat() + dlatHp * fraction);
+			int lonHighPrec = (int) (getHighPrecLon() + dlonHp * fraction);
+			return makeHighPrecCoord(latHighPrec, lonHighPrec);
 		}
 		double brng = this.bearingToOnRhumbLine(other, true);
 		double dist = this.distance(other) * fraction;
@@ -533,10 +541,10 @@ public class Coord implements Comparable<Coord> {
 	 */
 	public double bearingToOnGreatCircle(Coord point, boolean needHighPrec) {
 		// use high precision values for this 
-		double lat1 = int30ToRadians(getHighPrecLat());
-		double lat2 = int30ToRadians(point.getHighPrecLat());
-		double lon1 = int30ToRadians(getHighPrecLon());
-		double lon2 = int30ToRadians(point.getHighPrecLon());
+		double lat1 = hpToRadians(getHighPrecLat());
+		double lat2 = hpToRadians(point.getHighPrecLat());
+		double lon1 = hpToRadians(getHighPrecLon());
+		double lon2 = hpToRadians(point.getHighPrecLon());
 
 		double dlon = lon2 - lon1;
 
@@ -554,10 +562,10 @@ public class Coord implements Comparable<Coord> {
 	 * @param needHighPrec set to true if you need a very high precision
 	 */
 	public double bearingToOnRhumbLine(Coord point, boolean needHighPrec){
-		double lat1 = int30ToRadians(this.getHighPrecLat());
-		double lat2 = int30ToRadians(point.getHighPrecLat());
-		double lon1 = int30ToRadians(this.getHighPrecLon());
-		double lon2 = int30ToRadians(point.getHighPrecLon());
+		double lat1 = hpToRadians(this.getHighPrecLat());
+		double lat2 = hpToRadians(point.getHighPrecLat());
+		double lon1 = hpToRadians(this.getHighPrecLon());
+		double lon2 = hpToRadians(point.getHighPrecLon());
 
 		double dLon = lon2-lon1;
 	    // if dLon over 180° take shorter rhumb line across the anti-meridian:
@@ -613,66 +621,69 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	/**
-	 * Convert latitude or longitude to 30 bits value.
+	 * Convert latitude or longitude to HIGH_PREC_BITS bits value.
 	 * This allows higher precision than the 24 bits
 	 * used in map units.
-	 * @param l The lat or long as decimal degrees.
-	 * @return An integer value with 30 bit precision.
+	 * @param degrees The latitude or longitude as decimal degrees.
+	 * @return An integer value with {@code HIGH_PREC_BITS} bit precision.
 	 */
-	private static int toBit30(double l) {
-		double DELTA = 360.0D / (1 << 30) / 2; //Correct rounding
-		if (l > 0)
-			return (int) ((l + DELTA) * (1 << 30)/360);
-		return (int) ((l - DELTA) * (1 << 30)/360);
-		
+	private static int toHighPrec(double degrees) {
+		final double DELTA = 360.0D / FACTOR_HP / 2; // Correct rounding
+		double v = (degrees > 0) ? degrees + DELTA : degrees - DELTA;
+		return (int) (v * FACTOR_HP / 360);
 	}
 
-	/* Factor for conversion to radians using 30 bits
-	 * (Math.PI / 180) * (360.0 / (1 << 30)) 
+	/* Factor for conversion to radians using HIGH_PREC_BITS bits
+	 * (Math.PI / 180) * (360.0 / (1 << HIGH_PREC_BITS)) 
 	 */
-	final static double BIT30_RAD_FACTOR = 2 * Math.PI / (1 << 30);
+	final static double BIT30_RAD_FACTOR = 2 * Math.PI / FACTOR_HP;
 	
 	/**
 	 * Convert to radians using high precision 
-	 * @param val30 a longitude/latitude value with 30 bit precision
+	 * @param valHighPrec a longitude/latitude value with HIGH_PREC_BITS bit precision
 	 * @return an angle in radians.
 	 */
-	public static double int30ToRadians(int val30){
-		return BIT30_RAD_FACTOR * val30;
+	public static double hpToRadians(int valHighPrec){
+		return BIT30_RAD_FACTOR * valHighPrec;
 	}
 
 	/**
-	 * @return Latitude as signed 30 bit integer 
+	 * @return Latitude as signed HIGH_PREC_BITS bit integer 
 	 */
 	public int getHighPrecLat() {
-		return (latitude << 6) - latDelta;
+		return (latitude << DELTA_SHIFT) - latDelta;
 	}
 
 	/**
-	 * @return Longitude as signed 30 bit integer 
+	 * @return Longitude as signed HIGH_PREC_BITS bit integer 
 	 */
 	public int getHighPrecLon() {
-		return (longitude << 6) - lonDelta;
+		return (longitude << DELTA_SHIFT) - lonDelta;
 	}
 	
 	/**
 	 * @return latitude in degrees with highest avail. precision
 	 */
 	public double getLatDegrees(){
-		return (360.0D / (1 << 30)) * getHighPrecLat();
+		return (360.0D / FACTOR_HP) * getHighPrecLat();
 	}
 	
 	/**
 	 * @return longitude in degrees with highest avail. precision
 	 */
 	public double getLonDegrees(){
-		return (360.0D / (1 << 30)) * getHighPrecLon();
+		return (360.0D / FACTOR_HP) * getHighPrecLon();
 	}
 	
 	public Coord getDisplayedCoord(){
 		return new Coord(latitude,longitude);
 	}
 
+	/**
+	 * Check if the rounding to 24 bit resolution caused large error. If so, the point may be placed
+	 * at an alternative position. 
+	 * @return true if rounding error is large. 
+	 */
 	public boolean hasAlternativePos(){
 		if (getOnBoundary())
 			return false;
@@ -688,8 +699,8 @@ public class Coord implements Comparable<Coord> {
 		ArrayList<Coord> list = new ArrayList<>();
 		if (getOnBoundary())
 			return list; 
-		byte modLatDelta = 0;
-		byte modLonDelta = 0;
+		int modLatDelta = 0;
+		int modLonDelta = 0;
 		
 		int modLat = latitude;
 		int modLon = longitude;
@@ -701,19 +712,19 @@ public class Coord implements Comparable<Coord> {
 			modLon--;
 		else if (lonDelta < -MAX_DELTA)
 			modLon++;
-		int lat30 = getHighPrecLat();
-		int lon30 = getHighPrecLon();
-		modLatDelta = (byte) ((modLat<<6) - lat30);
-		modLonDelta = (byte) ((modLon<<6) - lon30);
-		assert modLatDelta >= -63 && modLatDelta <= 63;
-		assert modLonDelta >= -63 && modLonDelta <= 63;
+		int latHighPrec = getHighPrecLat();
+		int lonHighPrec = getHighPrecLon();
+		modLatDelta = (modLat << DELTA_SHIFT) - latHighPrec;
+		modLonDelta = (modLon << DELTA_SHIFT) - lonHighPrec;
+		assert modLatDelta >= Byte.MIN_VALUE  && modLatDelta <= Byte.MAX_VALUE;
+		assert modLonDelta >= Byte.MIN_VALUE   && modLonDelta <= Byte.MAX_VALUE;
 		if (modLat != latitude){
 			if (modLon != longitude)
-				list.add(new Coord(modLat, modLon, modLatDelta, modLonDelta));
-			list.add(new Coord(modLat, longitude, modLatDelta, lonDelta));
+				list.add(new Coord(modLat, modLon, (byte)modLatDelta, (byte)modLonDelta));
+			list.add(new Coord(modLat, longitude, (byte)modLatDelta, lonDelta));
 		} 
 		if (modLon != longitude)
-			list.add(new Coord(latitude, modLon, latDelta, modLonDelta));
+			list.add(new Coord(latitude, modLon, latDelta, (byte)modLonDelta));
 		/* verify math
 		for(Coord co:list){
 			double d = distance(new Coord (co.getLatitude(),co.getLongitude()));
@@ -742,8 +753,8 @@ public class Coord implements Comparable<Coord> {
 	 */
 	public Coord destOnRhumLine(double dist, double brng){
 	    double distRad = dist / R; // angular distance in radians
-		double lat1 = int30ToRadians(this.getHighPrecLat());
-		double lon1 = int30ToRadians(this.getHighPrecLon());
+		double lat1 = hpToRadians(this.getHighPrecLat());
+		double lon1 = hpToRadians(this.getHighPrecLon());
 
 	    double brngRad = Math.toRadians(brng);
 
@@ -823,7 +834,7 @@ public class Coord implements Comparable<Coord> {
 		}
 		else {
 			// scale for longitude deltas by cosine of average latitude  
-			double scale = Math.cos(Coord.int30ToRadians((aLat + bLat + pLat) / 3) );
+			double scale = Math.cos(Coord.hpToRadians((aLat + bLat + pLat) / 3) );
 			double deltaLonAP = scale * (pLon - aLon);
 			deltaLon = scale * deltaLon;
 			if (deltaLon == 0 && deltaLat == 0)

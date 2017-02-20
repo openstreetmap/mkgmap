@@ -377,10 +377,10 @@ public class Utils {
 	 * @return a long that can be used as a key in HashMaps 
 	 */
 	public static long coord2Long(Coord co){
-		int lat30 = co.getHighPrecLat();
-		int lon30 = co.getHighPrecLon();
+		int latHp = co.getHighPrecLat();
+		int lonHp = co.getHighPrecLon();
 		
-		return (long)(lat30 & 0xffffffffL) << 32 | (lon30 & 0xffffffffL);
+		return (long)(latHp & 0xffffffffL) << 32 | (lonHp & 0xffffffffL);
 	}
 	
 	/**

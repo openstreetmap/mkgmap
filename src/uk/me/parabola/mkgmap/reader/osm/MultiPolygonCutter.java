@@ -295,7 +295,7 @@ public class MultiPolygonCutter {
 			// go through the inner polygon list and use all polygons that intersect the outer polygons bbox at the start
 			Collections.sort(innerStart, (axis == CoordinateAxis.LONGITUDE ? COMP_LONG_START: COMP_LAT_START));
 			for (Area anInnerStart : innerStart) {
-				if (axis.getStart30(anInnerStart) <= axis.getStart30(outerBounds)) {
+				if (axis.getStartHighPrec(anInnerStart) <= axis.getStartHighPrec(outerBounds)) {
 					// found a touching area
 					edgeCutPoint.addArea(anInnerStart);
 				} else {
@@ -310,7 +310,7 @@ public class MultiPolygonCutter {
 			Collections.sort(innerStart, (axis == CoordinateAxis.LONGITUDE ? COMP_LONG_STOP: COMP_LAT_STOP));
 			// go through the inner polygon list and use all polygons that intersect the outer polygons bbox at the stop
 			for (Area anInnerStart : innerStart) {
-				if (axis.getStop30(anInnerStart) >= axis.getStop30(outerBounds)) {
+				if (axis.getStopHighPrec(anInnerStart) >= axis.getStopHighPrec(outerBounds)) {
 					// found a touching area
 					edgeCutPoint.addArea(anInnerStart);
 				} else {
@@ -396,9 +396,9 @@ public class MultiPolygonCutter {
 	private static final int CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD = 1<<(11 + Coord.DELTA_SHIFT);
 	private static final int CUT_POINT_CLASSIFICATION_BAD_THRESHOLD = 1<< (8 + Coord.DELTA_SHIFT);
 	private static class CutPoint implements Comparable<CutPoint>{
-		private int startPoint30 = Integer.MAX_VALUE; // 30 bits precision map units
-		private int stopPoint30 = Integer.MIN_VALUE;  // 30 bits precision map units
-		private Integer cutPoint30 = null; // 30 bits precision map units
+		private int startPoinHp = Integer.MAX_VALUE; // high precision map units
+		private int stopPointHp = Integer.MIN_VALUE;  // high precision map units
+		private Integer cutPointHp = null; // high precision map units
 		private final LinkedList<Area> areas;
 		private final Comparator<Area> comparator;
 		private final CoordinateAxis axis;
@@ -416,79 +416,79 @@ public class MultiPolygonCutter {
 		public CutPoint duplicate() {
 			CutPoint newCutPoint = new CutPoint(this.axis, this.outerBounds);
 			newCutPoint.areas.addAll(areas);
-			newCutPoint.startPoint30 = startPoint30;
-			newCutPoint.stopPoint30 = stopPoint30;
+			newCutPoint.startPoinHp = startPoinHp;
+			newCutPoint.stopPointHp = stopPointHp;
 			return newCutPoint;
 		}
 
 		private boolean isGoodCutPoint() {
 			// It is better if the cutting line is on a multiple of 2048. 
 			// Otherwise MapSource and QLandkarteGT paints gaps between the cuts
-			return getCutPoint30() % CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD == 0;
+			return getCutPointHighPrec() % CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD == 0;
 		}
 		
 		private boolean isBadCutPoint() {
-			int d1 = getCutPoint30() - startPoint30;
-			int d2 = stopPoint30 - getCutPoint30();
+			int d1 = getCutPointHighPrec() - startPoinHp;
+			int d2 = stopPointHp - getCutPointHighPrec();
 			return Math.min(d1, d2) < CUT_POINT_CLASSIFICATION_BAD_THRESHOLD;
 		}
 		
 		private boolean isStartCut() {
-			return (startPoint30 <= axis.getStart30(outerBounds));
+			return (startPoinHp <= axis.getStartHighPrec(outerBounds));
 		}
 		
 		private boolean isStopCut() {
-			return (stopPoint30 >= axis.getStop30(outerBounds));
+			return (stopPointHp >= axis.getStopHighPrec(outerBounds));
 		}
 		
 		/**
 		 * Calculates the point where the cut should be applied.
 		 * @return the point of cut
 		 */
-		private int getCutPoint30() {
-			if (cutPoint30 != null) {
+		private int getCutPointHighPrec() {
+			if (cutPointHp != null) {
 				// already calculated => just return it
-				return cutPoint30;
+				return cutPointHp;
 			}
 			
-			if (startPoint30 == stopPoint30) {
+			if (startPoinHp == stopPointHp) {
 				// there is no choice => return the one possible point 
-				cutPoint30 = startPoint30;
-				return cutPoint30;
+				cutPointHp = startPoinHp;
+				return cutPointHp;
 			}
 			
 			if (isStartCut()) {
 				// the polygons can be cut out at the start of the sector
 				// thats good because the big polygon need not to be cut into two halves
-				cutPoint30 = startPoint30;
-				return cutPoint30;
+				cutPointHp = startPoinHp;
+				return cutPointHp;
 			}
 			
 			if (isStopCut()) {
 				// the polygons can be cut out at the end of the sector
 				// thats good because the big polygon need not to be cut into two halves
-				cutPoint30 = startPoint30;
-				return cutPoint30;
+				cutPointHp = startPoinHp;
+				return cutPointHp;
 			}
 			
 			// try to cut with a good aspect ratio so try the middle of the polygon to be cut
-			int midOuter30 = axis.getStart30(outerBounds)+(axis.getStop30(outerBounds) - axis.getStart30(outerBounds)) / 2;
-			cutPoint30 = midOuter30;
+			int midOuterHp = axis.getStartHighPrec(outerBounds)+(axis.getStopHighPrec(outerBounds) - axis.getStartHighPrec(outerBounds)) / 2;
+			cutPointHp = midOuterHp;
 
-			if (midOuter30 < startPoint30) {
+			if (midOuterHp < startPoinHp) {
 				// not possible => the start point is greater than the middle so correct to the startPoint
-				cutPoint30 = startPoint30;
+				cutPointHp = startPoinHp;
 				
-				if (((cutPoint30 & ~(CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD-1)) + CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD) <= stopPoint30) {
-					cutPoint30 = ((cutPoint30 & ~(CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD-1)) + CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD);
+				if (((cutPointHp & ~(CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD-1)) + CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD) <= stopPointHp) {
+					cutPointHp = ((cutPointHp & ~(CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD-1)) + CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD);
 				}
 				
-			} else if (midOuter30 > stopPoint30) {
+			} else if (midOuterHp > stopPointHp) {
 				// not possible => the stop point is smaller than the middle so correct to the stopPoint
-				cutPoint30 = stopPoint30;
+				cutPointHp = stopPointHp;
 
-				if ((cutPoint30 & ~(CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD-1))  >= startPoint30) {
-					cutPoint30 = (cutPoint30 & ~(CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD-1));
+				if ((cutPointHp & ~(CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD-1))  >= startPoinHp) {
+					cutPointHp = (cutPointHp & ~(CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD-1));
 				}
 			}
 			
@@ -496,24 +496,24 @@ public class MultiPolygonCutter {
 			// try to find a cut point that is a multiple of 2048 to 
 			// avoid that gaps are painted by MapSource and QLandkarteGT
 			// between the cutting lines
-			int cutMod = cutPoint30 % CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD;
+			int cutMod = cutPointHp % CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD;
 			if (cutMod == 0) {
-				return cutPoint30;
+				return cutPointHp;
 			}
 			
-			int cut1 = (cutMod > 0 ? cutPoint30-cutMod : cutPoint30  - CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD- cutMod);
-			if (cut1 >= startPoint30 && cut1 <= stopPoint30) {
-				cutPoint30 = cut1;
-				return cutPoint30;
+			int cut1 = (cutMod > 0 ? cutPointHp-cutMod : cutPointHp  - CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD- cutMod);
+			if (cut1 >= startPoinHp && cut1 <= stopPointHp) {
+				cutPointHp = cut1;
+				return cutPointHp;
 			}
 			
-			int cut2 = (cutMod > 0 ? cutPoint30 + CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD -cutMod : cutPoint30 - cutMod);
-			if (cut2 >= startPoint30 && cut2 <= stopPoint30) {
-				cutPoint30 = cut2;
-				return cutPoint30;
+			int cut2 = (cutMod > 0 ? cutPointHp + CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD -cutMod : cutPointHp - cutMod);
+			if (cut2 >= startPoinHp && cut2 <= stopPointHp) {
+				cutPointHp = cut2;
+				return cutPointHp;
 			}
 			
-			return cutPoint30;
+			return cutPointHp;
 		}
 
 		public Rectangle2D getCutRectangleForArea(Area toCut, boolean firstRect) {
@@ -521,7 +521,7 @@ public class MultiPolygonCutter {
 		}
 		
 		public Rectangle2D getCutRectangleForArea(Rectangle2D areaRect, boolean firstRect) {
-			double cp = (double)  getCutPoint30() / (1<<Coord.DELTA_SHIFT);
+			double cp = (double)  getCutPointHighPrec() / (1<<Coord.DELTA_SHIFT);
 			if (axis == CoordinateAxis.LONGITUDE) {
 				double newWidth = cp-areaRect.getX();
 				if (firstRect) {
@@ -545,21 +545,21 @@ public class MultiPolygonCutter {
 
 		public void addArea(Area area) {
 			// remove all areas that do not overlap with the new area
-			while (!areas.isEmpty() && axis.getStop30(areas.getFirst()) < axis.getStart30(area)) {
+			while (!areas.isEmpty() && axis.getStopHighPrec(areas.getFirst()) < axis.getStartHighPrec(area)) {
 				// remove the first area
 				areas.removeFirst();
 			}
 
 			areas.add(area);
 			Collections.sort(areas, comparator);
-			startPoint30 = axis.getStart30(Collections.max(areas,
+			startPoinHp = axis.getStartHighPrec(Collections.max(areas,
 				(axis == CoordinateAxis.LONGITUDE ? COMP_LONG_START
 						: COMP_LAT_START)));
-			stopPoint30 = axis.getStop30(areas.getFirst());
+			stopPointHp = axis.getStopHighPrec(areas.getFirst());
 			
 			// reset the cached value => need to be recalculated the next time they are needed
 			bounds = null;
-			cutPoint30 = null;
+			cutPointHp = null;
 			minAspectRatio = null;
 		}
 
@@ -662,7 +662,7 @@ public class MultiPolygonCutter {
 		}
 
 		public String toString() {
-			return axis +" "+getNumberOfAreas()+" "+startPoint30+" "+stopPoint30+" "+getCutPoint30();
+			return axis +" "+getNumberOfAreas()+" "+startPoinHp+" "+stopPointHp+" "+getCutPointHighPrec();
 		}
 	}
 
@@ -675,34 +675,34 @@ public class MultiPolygonCutter {
 
 		private final boolean useX;
 
-		public int getStart30(Area area) {
-			return getStart30(area.getBounds2D());
+		public int getStartHighPrec(Area area) {
+			return getStartHighPrec(area.getBounds2D());
 		}
 
-		public int getStart30(Rectangle2D rect) {
+		public int getStartHighPrec(Rectangle2D rect) {
 			double val = (useX ? rect.getX() : rect.getY());
 			return (int)Math.round(val * (1<<Coord.DELTA_SHIFT));
 		}
 
-		public int getStop30(Area area) {
-			return getStop30(area.getBounds2D());
+		public int getStopHighPrec(Area area) {
+			return getStopHighPrec(area.getBounds2D());
 		}
 
-		public int getStop30(Rectangle2D rect) {
+		public int getStopHighPrec(Rectangle2D rect) {
 			double val = (useX ? rect.getMaxX() : rect.getMaxY());
 			return (int)Math.round(val * (1<<Coord.DELTA_SHIFT));
 		}
 		
 		public double getSizeOfSide(Rectangle2D rect) {
 			if (useX) {
-				int lat30 = (int)Math.round(rect.getY() * (1<<Coord.DELTA_SHIFT));
-				Coord c1 = Coord.makeHighPrecCoord(lat30, getStart30(rect));
-				Coord c2 = Coord.makeHighPrecCoord(lat30, getStop30(rect));
+				int latHp = (int)Math.round(rect.getY() * (1<<Coord.DELTA_SHIFT));
+				Coord c1 = Coord.makeHighPrecCoord(latHp, getStartHighPrec(rect));
+				Coord c2 = Coord.makeHighPrecCoord(latHp, getStopHighPrec(rect));
 				return c1.distance(c2);
 			} else {
-				int lon30 = (int)Math.round(rect.getX() * (1<<Coord.DELTA_SHIFT));
-				Coord c1 = Coord.makeHighPrecCoord(getStart30(rect), lon30);
-				Coord c2 = Coord.makeHighPrecCoord(getStop30(rect), lon30);
+				int lonHp = (int)Math.round(rect.getX() * (1<<Coord.DELTA_SHIFT));
+				Coord c1 = Coord.makeHighPrecCoord(getStartHighPrec(rect), lonHp);
+				Coord c2 = Coord.makeHighPrecCoord(getStopHighPrec(rect), lonHp);
 				return c1.distance(c2);
 			}
 		}
@@ -733,16 +733,16 @@ public class MultiPolygonCutter {
 			}
 
 			if (startPoint) {
-				int cmp = axis.getStart30(o1) - axis.getStart30(o2);
+				int cmp = axis.getStartHighPrec(o1) - axis.getStartHighPrec(o2);
 				if (cmp == 0) {
-					return axis.getStop30(o1) - axis.getStop30(o2);
+					return axis.getStopHighPrec(o1) - axis.getStopHighPrec(o2);
 				} else {
 					return cmp;
 				}
 			} else {
-				int cmp = axis.getStop30(o1) - axis.getStop30(o2);
+				int cmp = axis.getStopHighPrec(o1) - axis.getStopHighPrec(o2);
 				if (cmp == 0) {
-					return axis.getStart30(o1) - axis.getStart30(o2);
+					return axis.getStartHighPrec(o1) - axis.getStartHighPrec(o2);
 				} else {
 					return cmp;
 				}

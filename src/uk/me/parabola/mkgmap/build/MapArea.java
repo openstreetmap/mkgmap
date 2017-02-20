@@ -21,8 +21,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-
-import uk.me.parabola.util.ShapeSplitter;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.net.RoadNetwork;
@@ -31,7 +29,6 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.FilterConfig;
 import uk.me.parabola.mkgmap.filters.LineSizeSplitterFilter;
 import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
-import uk.me.parabola.mkgmap.filters.MapFilter;
 import uk.me.parabola.mkgmap.filters.MapFilterChain;
 import uk.me.parabola.mkgmap.filters.PolygonSplitterFilter;
 import uk.me.parabola.mkgmap.filters.PolygonSubdivSizeSplitterFilter;
@@ -42,6 +39,7 @@ import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.util.ShapeSplitter;
 
 /**
  * A sub area of the map.  We have to divide the map up into areas to meet the
@@ -253,10 +251,10 @@ public class MapArea implements MapDataSource {
 				log.debug("area before", mapAreas[i].getBounds());
 		}
 
-		int xbase30 = areas[0].getMinLong() << Coord.DELTA_SHIFT;
-		int ybase30 = areas[0].getMinLat() << Coord.DELTA_SHIFT;
-		int dx30 = areas[0].getWidth() << Coord.DELTA_SHIFT;
-		int dy30 = areas[0].getHeight() << Coord.DELTA_SHIFT;
+		int xbaseHp = areas[0].getMinLong() << Coord.DELTA_SHIFT;
+		int ybaseHp = areas[0].getMinLat() << Coord.DELTA_SHIFT;
+		int dxHp = areas[0].getWidth() << Coord.DELTA_SHIFT;
+		int dyHp = areas[0].getHeight() << Coord.DELTA_SHIFT;
 
 		// Some of the work done by PolygonSubdivSizeSplitterFilter now done here
 		final int maxSize = Math.min((1<<24)-1, Math.max(MapSplitter.MAX_DIVISION_SIZE << (MAX_RESOLUTION - areaResolution), 0x8000));
@@ -285,7 +283,7 @@ public class MapArea implements MapDataSource {
 					splitIntoAreas(mapAreas, e);
 					continue;
 				}
-				int areaIndex = pickArea(mapAreas, e, xbase30, ybase30, nx, ny, dx30, dy30);
+				int areaIndex = pickArea(mapAreas, e, xbaseHp, ybaseHp, nx, ny, dxHp, dyHp);
 				if ((shapeBounds.getHeight() > maxHeight || shapeBounds.getWidth() > maxWidth) &&
 				    !areas[areaIndex].contains(shapeBounds)) {
 					MapArea largeObjectArea = new MapArea(shapeBounds, areaResolution, true); // use splitIntoAreas to deal with overflow
@@ -301,7 +299,7 @@ public class MapArea implements MapDataSource {
 			distPointsIntoNewAreas(addedAreas, mapAreas[0]);
 		} else {
 			for (MapPoint p : this.points) {
-				int areaIndex = pickArea(mapAreas, p, xbase30, ybase30, nx, ny, dx30, dy30);
+				int areaIndex = pickArea(mapAreas, p, xbaseHp, ybaseHp, nx, ny, dxHp, dyHp);
 				mapAreas[areaIndex].addPoint(p);
 			}
 		}
@@ -314,7 +312,7 @@ public class MapArea implements MapDataSource {
 				if (l instanceof MapRoad == false && l.getRect().height <= 0 && l.getRect().width <= 0)
 					continue;
 				Area lineBounds = l.getBounds();
-				int areaIndex = pickArea(mapAreas, l, xbase30, ybase30, nx, ny, dx30, dy30);
+				int areaIndex = pickArea(mapAreas, l, xbaseHp, ybaseHp, nx, ny, dxHp, dyHp);
 				if ((lineBounds.getHeight() > maxHeight || lineBounds.getWidth() > maxWidth) &&
 				    !areas[areaIndex].contains(lineBounds)) {
 					MapArea largeObjectArea = new MapArea(lineBounds, areaResolution, false);
@@ -732,17 +730,17 @@ public class MapArea implements MapDataSource {
 	 * @param co
 	 */
 	private void addToBounds(Coord co) {
-		int lat30 = co.getHighPrecLat();
-		int latLower  = lat30 >> Coord.DELTA_SHIFT;
-		int latUpper  = (latLower << Coord.DELTA_SHIFT) < lat30 ? latLower + 1 : latLower;
+		int latHp = co.getHighPrecLat();
+		int latLower  = latHp >> Coord.DELTA_SHIFT;
+		int latUpper  = (latLower << Coord.DELTA_SHIFT) < latHp ? latLower + 1 : latLower;
 		if (latLower < minLat)
 			minLat = latLower;
 		if (latUpper > maxLat)
 			maxLat = latUpper;
 		
-		int lon30 = co.getHighPrecLon();
-		int lonLeft = lon30 >> Coord.DELTA_SHIFT;
-		int lonRight = (lonLeft << Coord.DELTA_SHIFT) < lon30 ? lonLeft + 1 : lonLeft;
+		int lonHp = co.getHighPrecLon();
+		int lonLeft = lonHp >> Coord.DELTA_SHIFT;
+		int lonRight = (lonLeft << Coord.DELTA_SHIFT) < lonHp ? lonLeft + 1 : lonLeft;
 		if (lonLeft < minLon)
 			minLon = lonLeft;
 		if (lonRight > maxLon)
@@ -761,30 +759,30 @@ public class MapArea implements MapDataSource {
 	 *
 	 * @param areas The available areas to choose from.
 	 * @param e The map element.
-	 * @param xbase30 The 30-bit x coord at the origin
-	 * @param ybase30 The 30-bit y coord of the origin
+	 * @param xbaseHp The high-precision x coord at the origin
+	 * @param ybaseHp The high-precision y coord of the origin
 	 * @param nx number of divisions.
 	 * @param ny number of divisions in y.
-	 * @param dx30 The size of each division (x direction)
-	 * @param dy30 The size of each division (y direction)
+	 * @param dxHp The size of each division (x direction)
+	 * @param dyHp The size of each division (y direction)
 	 * @return The index to areas where the map element fits.
 	 */
 	private static int pickArea(MapArea[] areas, MapElement e,
-			int xbase30, int ybase30,
+			int xbaseHp, int ybaseHp,
 			int nx, int ny,
-			int dx30, int dy30)
+			int dxHp, int dyHp)
 	{
 		int x = e.getLocation().getHighPrecLon();
 		int y = e.getLocation().getHighPrecLat();
-		int xcell = (x - xbase30) / dx30;
-		int ycell = (y - ybase30) / dy30;
+		int xcell = (x - xbaseHp) / dxHp;
+		int ycell = (y - ybaseHp) / dyHp;
 
 		if (xcell < 0) {
-			log.info("xcell was", xcell, "x", x, "xbase", xbase30);
+			log.info("xcell was", xcell, "x", x, "xbase", xbaseHp);
 			xcell = 0;
 		}
 		if (ycell < 0) {
-			log.info("ycell was", ycell, "y", y, "ybase", ybase30);
+			log.info("ycell was", ycell, "y", y, "ybase", ybaseHp);
 			ycell = 0;
 		}
 		

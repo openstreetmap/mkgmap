@@ -35,16 +35,16 @@ public class UtilsTest {
 		HashMap<Long,Coord> map = new HashMap<>();
 		Coord lowerLeft = new Coord(-89.0,-179.0); 
 		Coord upperRight = new Coord(89.0,179.0); 
-		for (int lat30 = -10; lat30 < 10; lat30++){
-			for (int lon30 = -10; lon30 < 10; lon30++){
+		for (int latHp = -10; latHp < 10; latHp++){
+			for (int lonHp = -10; lonHp < 10; lonHp++){
 				for (int k = 0; k < 3;k++){
 					Coord co; 
 					if (k == 0)
-						co = Coord.makeHighPrecCoord(lat30, lon30); 
+						co = Coord.makeHighPrecCoord(latHp, lonHp); 
 					else if (k == 1)
-						co = Coord.makeHighPrecCoord(lat30+lowerLeft.getHighPrecLat(), lon30+lowerLeft.getHighPrecLon());
+						co = Coord.makeHighPrecCoord(latHp+lowerLeft.getHighPrecLat(), lonHp+lowerLeft.getHighPrecLon());
 					else
-						co = Coord.makeHighPrecCoord(lat30+upperRight.getHighPrecLat(), lon30+upperRight.getHighPrecLon());
+						co = Coord.makeHighPrecCoord(latHp+upperRight.getHighPrecLat(), lonHp+upperRight.getHighPrecLon());
 					long key = Utils.coord2Long(co);
 					Coord old = map.put(key, co);
 					assertTrue("key not unique", old==null);
