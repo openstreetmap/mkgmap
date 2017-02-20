@@ -13,14 +13,13 @@
 package uk.me.parabola.mkgmap.filters;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -147,26 +146,25 @@ public class ShapeMergeFilter{
 		}
 		
 		// points with count > 1 are probably shared by different shapes, collect the shapes
-		IdentityHashMap<Coord, Set<ShapeHelper>> coord2Shape = new IdentityHashMap<>();
-		for (ShapeHelper sh : similarShapes) {
+		IdentityHashMap<Coord, BitSet> coord2Shape = new IdentityHashMap<>();
+		for (int i = 0; i < similarShapes.size(); i++) {
+			ShapeHelper sh = similarShapes.get(i);
 			boolean hit = false;
-			for (int i = 1; i < sh.getPoints().size(); i++) {
-				Coord c = sh.getPoints().get(i);
+			for (int j = 1; j < sh.getPoints().size(); j++) {
+				Coord c = sh.getPoints().get(j);
 				if (c.getHighwayCount() > 1) {
 					hit = true;
-					Set<ShapeHelper> set = coord2Shape.get(c);
+					BitSet set = coord2Shape.get(c);
 					if (set == null) {
-						set = new HashSet<>();
+						set = new BitSet();
 						coord2Shape.put(c, set);
 					}
-					if (!set.add(sh)) {
-						// point occurs multiple times in same shape, handled later
-					}
+					set.set(i);
 				}
 			}
 			
 			if (!hit) {
-				// shape shares no point with others 
+				// shape shares no point with others
 				noMerge.add(sh);
 			}
 		}
@@ -176,19 +174,32 @@ public class ShapeMergeFilter{
 		}
 		
 		List<ShapeHelper> next = new ArrayList<>();
-		
 		boolean merged = false;
-		Set<ShapeHelper> done = new HashSet<>();
-		Set<ShapeHelper> delayed = new HashSet<>();
-		for (Set<ShapeHelper> set : coord2Shape.values()) {
-			if (set.size() == 1) {
-				delayed.addAll(set);
+		BitSet done = new BitSet();
+		BitSet delayed = new BitSet();
+		
+		// loop that makes sure that shapes are processed in a predictable order
+		for (int i = 0; i < similarShapes.size(); i++) {
+			BitSet all = new BitSet();
+			for (BitSet bs : coord2Shape.values()) {
+				if (bs.get(i))
+					all.or(bs);
+			}
+			if (all.cardinality() <= 1) {
+				if (!all.isEmpty())
+					delayed.set(i);
 				continue;
 			}
-			List<ShapeHelper> result = new ArrayList<>();
-			set.removeAll(done);
+			all.andNot(done);
+			if (all.isEmpty())
+				continue;
+			if (done.get(i)) {
+				long dd =4;
+			}
 			
-			for (ShapeHelper sh : set) {
+			List<ShapeHelper> result = new ArrayList<>();
+			for (int j = all.nextSetBit(0); j >= 0; j = all.nextSetBit(j+1)) {
+				ShapeHelper sh = similarShapes.get(j);
 				int oldSize = result.size();
 				result = addWithConnectedHoles(result, sh, pattern.getType());
 				if (result.size() < oldSize + 1) {
@@ -197,14 +208,17 @@ public class ShapeMergeFilter{
 							" time(s) at resolution", resolution);
 				}
 			}
-			done.addAll(set);
+			done.or(all);
 			next.addAll(result);
 		}
-		coord2Shape = null;
 		
-		delayed.removeAll(done);
-		if (!delayed.isEmpty())
-			noMerge.addAll(delayed);
+		coord2Shape = null;
+		delayed.andNot(done);
+		if (!delayed.isEmpty()) {
+			for (int i = delayed.nextSetBit(0); i >= 0; i = delayed.nextSetBit(i+1)) {
+				noMerge.add(similarShapes.get(i));
+			}
+		}
 		similarShapes.clear();
 		similarShapes.addAll(noMerge);
 		
@@ -475,7 +489,8 @@ public class ShapeMergeFilter{
 		}
 		
 	}
-	public final static long SINGLE_POINT_AREA = 1L<<6 * 1L<<6;
+
+	public final static long SINGLE_POINT_AREA = 1L << Coord.DELTA_SHIFT * 1L << Coord.DELTA_SHIFT;
 	
 	/**
 	 * Calculate the high precision area size test value.  
