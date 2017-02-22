@@ -89,7 +89,7 @@ public class Java2DConverter {
 			// because we use closePath() to signal that
 			--n;
 		}
-		double lastLat = Integer.MAX_VALUE,lastLon = Integer.MAX_VALUE;
+		int lastLat = Integer.MAX_VALUE,lastLon = Integer.MAX_VALUE;
 		for (int i = 0; i < n; i++){
 			Coord co = polygonPoints.get(i);
 			int latHp = co.getHighPrecLat();
