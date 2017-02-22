@@ -59,10 +59,10 @@ public class ElementSaver {
 
 	// This is a calculated bounding box, which is only available if there is
 	// no given bounding box.
-	private int minLat = Utils.toMapUnit(180.0);
-	private int minLon = Utils.toMapUnit(180.0);
-	private int maxLat = Utils.toMapUnit(-180.0);
-	private int maxLon = Utils.toMapUnit(-180.0);
+	private int minLat = Integer.MAX_VALUE;
+	private int minLon = Integer.MAX_VALUE;
+	private int maxLat = Integer.MIN_VALUE;
+	private int maxLon = Integer.MIN_VALUE;
 
 	// Options
 	private final boolean ignoreTurnRestrictions;
@@ -318,7 +318,7 @@ public class ElementSaver {
 	public Area getBoundingBox() {
 		if (boundingBox != null) {
 			return boundingBox;
-		} else if (minLat == Utils.toMapUnit(180.0) && maxLat == Utils.toMapUnit(-180.0)) {
+		} else if (minLat > maxLat) {
 			return new Area(0, 0, 0, 0);
 		} else {
 			// calculate an area that is slightly larger so that high precision coordinates

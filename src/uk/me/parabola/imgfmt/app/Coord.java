@@ -93,7 +93,6 @@ public class Coord implements Comparable<Coord> {
 		this.lonDelta = (byte) ((this.longitude << DELTA_SHIFT) - lonHighPrec);
 
 		// verify math
-		if ((this.latitude << DELTA_SHIFT) - latDelta != latHighPrec)
 		assert (this.latitude << DELTA_SHIFT) - latDelta == latHighPrec;
 		assert (this.longitude << DELTA_SHIFT) - lonDelta == lonHighPrec;
 	}
@@ -636,7 +635,7 @@ public class Coord implements Comparable<Coord> {
 	/* Factor for conversion to radians using HIGH_PREC_BITS bits
 	 * (Math.PI / 180) * (360.0 / (1 << HIGH_PREC_BITS)) 
 	 */
-	final static double BIT30_RAD_FACTOR = 2 * Math.PI / FACTOR_HP;
+	final static double HIGH_PREC_RAD_FACTOR = 2 * Math.PI / FACTOR_HP;
 	
 	/**
 	 * Convert to radians using high precision 
@@ -644,7 +643,7 @@ public class Coord implements Comparable<Coord> {
 	 * @return an angle in radians.
 	 */
 	public static double hpToRadians(int valHighPrec){
-		return BIT30_RAD_FACTOR * valHighPrec;
+		return HIGH_PREC_RAD_FACTOR * valHighPrec;
 	}
 
 	/**

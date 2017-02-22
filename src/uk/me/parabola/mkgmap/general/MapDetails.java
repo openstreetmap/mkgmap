@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.net.GeneralRouteRestriction;
@@ -47,10 +46,10 @@ public class MapDetails implements MapCollector, MapDataSource {
 	private final List<MapShape> shapes = new ArrayList<MapShape>();
 	private final List<MapPoint> points = new ArrayList<MapPoint>();
 
-	private int minLatHp = Utils.toMapUnit(180.0) << Coord.DELTA_SHIFT ;
-	private int minLonHp = Utils.toMapUnit(180.0) << Coord.DELTA_SHIFT;
-	private int maxLatHp = Utils.toMapUnit(-180.0) << Coord.DELTA_SHIFT;
-	private int maxLonHp = Utils.toMapUnit(-180.0) << Coord.DELTA_SHIFT;
+	private int minLatHp = Integer.MAX_VALUE;
+	private int minLonHp = Integer.MAX_VALUE;
+	private int maxLatHp = Integer.MIN_VALUE;
+	private int maxLonHp = Integer.MIN_VALUE;
 
 	// Keep lists of all items that were used.
 	private final Map<Integer, Integer> pointOverviews = new HashMap<Integer, Integer>();

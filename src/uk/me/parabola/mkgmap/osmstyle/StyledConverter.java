@@ -90,7 +90,7 @@ public class StyledConverter implements OsmConverter {
 	private final MapCollector collector;
 
 	private Clipper clipper = Clipper.NULL_CLIPPER;
-	private Area bbox = new Area(-90.0d, -180.0d, 90.0d, 180.0d); // default is planet
+	private Area bbox = Area.PLANET;
 
 	private final List<RestrictionRelation> restrictions = new ArrayList<>();
 	private final MultiHashMap<Long, RestrictionRelation> wayRelMap = new MultiHashMap<>();

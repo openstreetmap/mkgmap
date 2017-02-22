@@ -12,9 +12,16 @@
  */
 package uk.me.parabola.imgfmt.app;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import java.util.List;
+
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import uk.me.parabola.mkgmap.filters.ShapeMergeFilter;
+import uk.me.parabola.mkgmap.reader.osm.Way;
 
 /**
  * Test some basic methods of the Coord class regarding distance and bearing calculations
@@ -91,4 +98,88 @@ public class CoordTest {
 	public void testOffset() {
 		assertEquals(pLAX, pLAX.offset(60, 100).offset(120, 100).offset(180, 100).offset(240, 100).offset(300, 100).offset(360, 100));
 	}
+	
+	@Test
+	public void testOverflow() {
+		Coord c1 = new Coord(90.0,180.0);
+		Coord c2 = new Coord(90.0,-180.0);
+		assertFalse(c1.equals(c2));
+		assertFalse(c1.highPrecEquals(c2));
+		assertEquals(0,c1.distance(c2),0.0000001);
+		assertEquals(0x800000, c1.getLongitude()); 
+	}
+	
+	@SuppressWarnings("unused")
+	@Test 
+	public void testRounding() {
+		if (Coord.DELTA_SHIFT + 24 == Integer.SIZE) {
+			Coord c1 = new Coord(61.0000001, -23.0000001);
+			Coord c2 = new Coord(61.0000000, -23.0000001);
+			Coord c3 = new Coord(61.0000001, -23.0000000);
+			assertFalse(c1.highPrecEquals(c2));
+			assertFalse(c1.highPrecEquals(c3));
+			assertFalse(c2.highPrecEquals(c3));
+			assertTrue(c1.equals(c2));
+			assertTrue(c1.equals(c3));
+			assertTrue(c2.equals(c3));
+			assertEquals(61.0000001d,c1.getLatDegrees(),0.0000001);
+			assertEquals(61.0000000d,c2.getLatDegrees(),0.0000001);
+			assertEquals(61.0000001d,c3.getLatDegrees(),0.0000001);
+			assertEquals(-23.0000001d,c1.getLonDegrees(),0.0000001);
+			assertEquals(-23.0000001d,c2.getLonDegrees(),0.0000001);
+			assertEquals(-23.0000000d,c3.getLonDegrees(),0.0000001);
+			double lat1 = -1;
+			double lat2 = 1;
+			double lon1 = -1;
+			double lon2 = 1;
+			for (int i = 0; i < 1000; i++) {
+				Coord ct1 = new Coord(lat1,lon1);
+				Coord ct2 = new Coord(lat2,lon2);
+				assertEquals(lat1,ct1.getLatDegrees(),0.0000001);
+				assertEquals(lat2,ct2.getLatDegrees(),0.0000001);
+				assertEquals(lon1,ct1.getLonDegrees(),0.0000001);
+				assertEquals(lon2,ct2.getLonDegrees(),0.0000001);
+				lat1 = Math.nextAfter((float) lat1, 90);
+				lat2 = Math.nextAfter((float) lat2, 90);
+				lon1 = Math.nextAfter((float) lon1, 180);
+				lon2 = Math.nextAfter((float) lon2, 180);
+			}
+		}
+	}
+
+	@Test
+	public void alternativePos() {
+		Coord c1 = new Coord(61.0000001, -23.0000001);
+		List<Coord> alt1 = c1.getAlternativePositions();
+		assertEquals(1, alt1.size());
+		for (Coord c : alt1) {
+			assertTrue(c.distance(c1) < 3);
+			assertTrue(c.hasAlternativePos());
+			List<Coord> altx = c.getAlternativePositions();
+			assertFalse(altx.isEmpty());
+		}
+		Coord c2 = new Coord(61.1, -23.3);
+		List<Coord> alt2 = c2.getAlternativePositions();
+		assertEquals(3, alt2.size());
+		for (Coord c : alt2) {
+			assertTrue(c.distance(c2) < 3);
+			assertTrue(c.hasAlternativePos());
+			List<Coord> altx = c.getAlternativePositions();
+			assertFalse(altx.isEmpty());
+		}
+	}
+	
+	
+	@Test
+	public void testPlanet() throws Exception {
+		final uk.me.parabola.imgfmt.app.Area planet = uk.me.parabola.imgfmt.app.Area.PLANET;
+		long testVal = ShapeMergeFilter.calcAreaSizeTestVal(planet.toCoords());
+		double areaSizeCoords = (double) testVal / (2 * (1<<Coord.DELTA_SHIFT) * (1<<Coord.DELTA_SHIFT));
+		areaSizeCoords = Math.abs(areaSizeCoords);
+		double areaSizeBounds = (double) planet.getHeight() * planet.getWidth();
+		assertEquals(areaSizeBounds, areaSizeCoords, 0.0001);
+		boolean dir = Way.clockwise(planet.toCoords()); 
+		assertFalse(dir);
+	}	
+	
 }

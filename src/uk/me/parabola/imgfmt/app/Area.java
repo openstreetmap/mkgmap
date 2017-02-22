@@ -31,6 +31,7 @@ import uk.me.parabola.log.Logger;
  */
 public class Area {
 	private static final Logger log = Logger.getLogger(Area.class);
+	public final static Area PLANET = new Area(-90.0, -180.0, 90.0, 180.0);
 
 	private final int minLat;
 	private final int minLong;
