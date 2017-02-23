@@ -271,7 +271,7 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	/**
-	 * @param b true: Mark the coordinate as  via node of a restriction relation
+	 * @param b true: Mark the coordinate as via node of a restriction relation
 	 */
 	public void setViaNodeOfRestriction(boolean b) {
 		if (b) 
@@ -304,7 +304,7 @@ public class Coord implements Comparable<Coord> {
 	/** 
 	 * Get flag for {@link ShapeMergeFilter}
 	 * The value has no meaning outside of {@link ShapeMergeFilter}
-	 * @return  
+	 * @return flag value
 	 */
 	public boolean isPartOfShape2() {
 		return (flags & PART_OF_SHAPE2) != 0;
@@ -324,7 +324,7 @@ public class Coord implements Comparable<Coord> {
 	/** 
 	 * Get flag for {@link WrongAngleFixer}
 	 * The value has no meaning outside of {@link WrongAngleFixer}
-	 * @return  
+	 * @return flag value
 	 */
 	public boolean isEndOfWay() {
 		return (flags & END_OF_WAY) != 0;
@@ -482,23 +482,23 @@ public class Coord implements Comparable<Coord> {
 		double lon1 = hpToRadians(getHighPrecLon());
 		double lon2 = hpToRadians(point.getHighPrecLon());
 		
-	    // see http://williams.best.vwh.net/avform.htm#Rhumb
+		// see http://williams.best.vwh.net/avform.htm#Rhumb
 
-	    double dLat = lat2 - lat1;
-	    double dLon = Math.abs(lon2 - lon1);
-	    // if dLon over 180° take shorter rhumb line across the anti-meridian:
-	    if (Math.abs(dLon) > Math.PI) dLon = dLon>0 ? -(2*Math.PI-dLon) : (2*Math.PI+dLon);
+		double dLat = lat2 - lat1;
+		double dLon = Math.abs(lon2 - lon1);
+		// if dLon over 180° take shorter rhumb line across the anti-meridian:
+		if (Math.abs(dLon) > Math.PI) dLon = dLon>0 ? -(2*Math.PI-dLon) : (2*Math.PI+dLon);
 
-	    // on Mercator projection, longitude distances shrink by latitude; q is the 'stretch factor'
-	    // q becomes ill-conditioned along E-W line (0/0); use empirical tolerance to avoid it
-	    double deltaPhi = Math.log(Math.tan(lat2/2+Math.PI/4)/Math.tan(lat1/2+Math.PI/4));
-	    double q = Math.abs(deltaPhi) > 10e-12 ? dLat/deltaPhi : Math.cos(lat1);
+		// on Mercator projection, longitude distances shrink by latitude; q is the 'stretch factor'
+		// q becomes ill-conditioned along E-W line (0/0); use empirical tolerance to avoid it
+		double deltaPhi = Math.log(Math.tan(lat2/2+Math.PI/4)/Math.tan(lat1/2+Math.PI/4));
+		double q = Math.abs(deltaPhi) > 10e-12 ? dLat/deltaPhi : Math.cos(lat1);
 
-	    // distance is pythagoras on 'stretched' Mercator projection
-	    double distRad = Math.sqrt(dLat*dLat + q*q*dLon*dLon); // angular distance in radians
-	    double dist = distRad * R;
+		// distance is pythagoras on 'stretched' Mercator projection
+		double distRad = Math.sqrt(dLat*dLat + q*q*dLon*dLon); // angular distance in radians
+		double dist = distRad * R;
 
-	    return dist;
+		return dist;
 		
 	}
 
@@ -567,13 +567,13 @@ public class Coord implements Comparable<Coord> {
 		double lon2 = hpToRadians(point.getHighPrecLon());
 
 		double dLon = lon2-lon1;
-	    // if dLon over 180° take shorter rhumb line across the anti-meridian:
-	    if (Math.abs(dLon) > Math.PI) dLon = dLon>0 ? -(2*Math.PI-dLon) : (2*Math.PI+dLon);
+		// if dLon over 180° take shorter rhumb line across the anti-meridian:
+		if (Math.abs(dLon) > Math.PI) dLon = dLon>0 ? -(2*Math.PI-dLon) : (2*Math.PI+dLon);
 
-	    double deltaPhi = Math.log(Math.tan(lat2/2+Math.PI/4)/Math.tan(lat1/2+Math.PI/4));
-	    
-	    double brngRad = needHighPrec ? Math.atan2(dLon, deltaPhi) : Utils.atan2_approximation(dLon, deltaPhi);
-	    return brngRad * 180 / Math.PI;
+		double deltaPhi = Math.log(Math.tan(lat2/2+Math.PI/4)/Math.tan(lat1/2+Math.PI/4));
+
+		double brngRad = needHighPrec ? Math.atan2(dLon, deltaPhi) : Utils.atan2_approximation(dLon, deltaPhi);
+		return brngRad * 180 / Math.PI;
 	}
 
 	
@@ -715,8 +715,8 @@ public class Coord implements Comparable<Coord> {
 		int lonHighPrec = getHighPrecLon();
 		modLatDelta = (modLat << DELTA_SHIFT) - latHighPrec;
 		modLonDelta = (modLon << DELTA_SHIFT) - lonHighPrec;
-		assert modLatDelta >= Byte.MIN_VALUE  && modLatDelta <= Byte.MAX_VALUE;
-		assert modLonDelta >= Byte.MIN_VALUE   && modLonDelta <= Byte.MAX_VALUE;
+		assert modLatDelta >= Byte.MIN_VALUE && modLatDelta <= Byte.MAX_VALUE;
+		assert modLonDelta >= Byte.MIN_VALUE && modLonDelta <= Byte.MAX_VALUE;
 		if (modLat != latitude){
 			if (modLon != longitude)
 				list.add(new Coord(modLat, modLon, (byte)modLatDelta, (byte)modLonDelta));
@@ -736,9 +736,9 @@ public class Coord implements Comparable<Coord> {
 	/**
 	 * @return approximate distance in cm 
 	 */
-	public short getDistToDisplayedPoint(){
-		if (approxDistanceToDisplayedCoord < 0){
-		  approxDistanceToDisplayedCoord = (short)Math.round(getDisplayedCoord().distance(this)*100);
+	public short getDistToDisplayedPoint() {
+		if (approxDistanceToDisplayedCoord < 0) {
+			approxDistanceToDisplayedCoord = (short) Math.round(getDisplayedCoord().distance(this) * 100);
 		}
 		return approxDistanceToDisplayedCoord;
 	}
@@ -751,33 +751,33 @@ public class Coord implements Comparable<Coord> {
 	 * @return a new Coord instance
 	 */
 	public Coord destOnRhumLine(double dist, double brng){
-	    double distRad = dist / R; // angular distance in radians
+		double distRad = dist / R; // angular distance in radians
 		double lat1 = hpToRadians(this.getHighPrecLat());
 		double lon1 = hpToRadians(this.getHighPrecLon());
 
-	    double brngRad = Math.toRadians(brng);
+		double brngRad = Math.toRadians(brng);
 
-	    double deltaLat = distRad * Math.cos(brngRad);
+		double deltaLat = distRad * Math.cos(brngRad);
 
-	    double lat2 = lat1 + deltaLat;
-	    // check for some daft bugger going past the pole, normalise latitude if so
-	    if (Math.abs(lat2) > Math.PI/2) lat2 = lat2>0 ? Math.PI-lat2 : -Math.PI-lat2;
-	    double lon2;
-	    // catch special case: normalised value would be -8388608  
-	    if (this.getLongitude() == 8388608 && brng == 0)
-	    	lon2 = lon1;
-	    else { 
-		    double deltaPhi = Math.log(Math.tan(lat2/2+Math.PI/4)/Math.tan(lat1/2+Math.PI/4));
-		    double q = Math.abs(deltaPhi) > 10e-12 ? deltaLat / deltaPhi : Math.cos(lat1); // E-W course becomes ill-conditioned with 0/0
+		double lat2 = lat1 + deltaLat;
+		// check for some daft bugger going past the pole, normalise latitude if so
+		if (Math.abs(lat2) > Math.PI/2) lat2 = lat2>0 ? Math.PI-lat2 : -Math.PI-lat2;
+		double lon2;
+		// catch special case: normalised value would be -8388608
+		if (this.getLongitude() == 8388608 && brng == 0)
+			lon2 = lon1;
+		else { 
+			double deltaPhi = Math.log(Math.tan(lat2/2+Math.PI/4)/Math.tan(lat1/2+Math.PI/4));
+			double q = Math.abs(deltaPhi) > 10e-12 ? deltaLat / deltaPhi : Math.cos(lat1); // E-W course becomes ill-conditioned with 0/0
 
-		    double deltaLon = distRad*Math.sin(brngRad)/q;
+			double deltaLon = distRad*Math.sin(brngRad)/q;
 
-		    lon2 = lon1 + deltaLon;
-		    
-		    lon2 = (lon2 + 3*Math.PI) % (2*Math.PI) - Math.PI; // normalise to -180..+180º
-	    }
-	    
-	    return new Coord(Math.toDegrees(lat2), Math.toDegrees(lon2));
+			lon2 = lon1 + deltaLon;
+
+			lon2 = (lon2 + 3*Math.PI) % (2*Math.PI) - Math.PI; // normalise to -180..+180º
+		}
+
+		return new Coord(Math.toDegrees(lat2), Math.toDegrees(lon2));
 	}
 	
 	/**
@@ -785,7 +785,7 @@ public class Coord implements Comparable<Coord> {
 	 * defined by coords a and b.
 	 * @param a start point
 	 * @param b end point
-	 * @return perpendicular distance in m.  
+	 * @return perpendicular distance in m.
 	 */
 	public double distToLineSegment(Coord a, Coord b){
 		double ap = a.distance(this);
@@ -811,7 +811,7 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	/**
-	 * Calculate distance to rhumb line segment a-b  
+	 * Calculate distance to rhumb line segment a-b.
 	 * @param a point a
 	 * @param b point b
 	 * @return distance in m
@@ -832,7 +832,7 @@ public class Coord implements Comparable<Coord> {
 			frac = 0; 
 		}
 		else {
-			// scale for longitude deltas by cosine of average latitude  
+			// scale for longitude deltas by cosine of average latitude
 			double scale = Math.cos(Coord.hpToRadians((aLat + bLat + pLat) / 3) );
 			double deltaLonAP = scale * (pLon - aLon);
 			deltaLon = scale * deltaLon;
