@@ -29,11 +29,16 @@ import org.junit.Test;
 public class ShapeMergeFilterTest {
 	// create one Coord instance for each point in a small test grid 
 	private static final HashMap<Integer,Coord> map = new HashMap<Integer,Coord>(){
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+
 		{
-			for (int lat30 = 0; lat30 < 100; lat30 +=5){
-				for (int lon30 = 0; lon30 < 100; lon30 += 5){
-					Coord co = Coord.makeHighPrecCoord(lat30, lon30);
-					put(lat30*1000 + lon30,co);
+			for (int latHp = 0; latHp < 100; latHp +=5){
+				for (int lonHp = 0; lonHp < 100; lonHp += 5){
+					Coord co = Coord.makeHighPrecCoord(latHp, lonHp);
+					put(latHp*1000 + lonHp,co);
 				}
 			}
 		}
@@ -41,7 +46,12 @@ public class ShapeMergeFilterTest {
 
 	@Test
 	public void testAreaTestVal(){
-		List<Coord> points = new ArrayList<Coord>(){{
+		List<Coord> points = new ArrayList<Coord>(){/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+		{
 			add(getPoint(10,10));
 			add(getPoint(30,10));
 			add(getPoint(30,30));
@@ -56,7 +66,12 @@ public class ShapeMergeFilterTest {
 	 */
 	@Test
 	public void testSimpleSharingOne(){
-		List<Coord> points1 = new ArrayList<Coord>(){{
+		List<Coord> points1 = new ArrayList<Coord>(){/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+		{
 			add(getPoint(15,10));
 			add(getPoint(30,25));
 			add(getPoint(25,30));
@@ -65,7 +80,12 @@ public class ShapeMergeFilterTest {
 			add(getPoint(15,10)); // close
 		}};
 		
-		List<Coord> points2 = new ArrayList<Coord>(){{
+		List<Coord> points2 = new ArrayList<Coord>(){/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+		{
 			add(getPoint(25,30));
 			add(getPoint(30,35));
 			add(getPoint(20,40));
@@ -80,7 +100,12 @@ public class ShapeMergeFilterTest {
 	 */
 	@Test
 	public void testSimpleNonOverlapping(){
-		List<Coord> points1 = new ArrayList<Coord>(){{
+		List<Coord> points1 = new ArrayList<Coord>(){/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+		{
 			add(getPoint(15,10));
 			add(getPoint(30,25));
 			add(getPoint(25,30));
@@ -89,7 +114,12 @@ public class ShapeMergeFilterTest {
 			add(getPoint(15,10)); // close
 		}};
 		
-		List<Coord> points2 = new ArrayList<Coord>(){{
+		List<Coord> points2 = new ArrayList<Coord>(){/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+		{
 			add(getPoint(25,30));
 			add(getPoint(30,35));
 			add(getPoint(20,40));
@@ -105,7 +135,12 @@ public class ShapeMergeFilterTest {
 
 	@Test
 	public void test3SharedPointsNonOverlapping(){
-		List<Coord> points1 = new ArrayList<Coord>(){{
+		List<Coord> points1 = new ArrayList<Coord>(){/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+		{
 			add(getPoint(15,10));
 			add(getPoint(30,25));
 			add(getPoint(25,30));
@@ -115,7 +150,12 @@ public class ShapeMergeFilterTest {
 			add(getPoint(15,10));// close
 		}};
 		
-		List<Coord> points2 = new ArrayList<Coord>(){{
+		List<Coord> points2 = new ArrayList<Coord>(){/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+		{
 			add(getPoint(25,30));
 			add(getPoint(30,35));
 			add(getPoint(20,40));
@@ -132,7 +172,12 @@ public class ShapeMergeFilterTest {
 
 	@Test
 	public void test2SharedPointsNoEdge(){
-		List<Coord> points1 = new ArrayList<Coord>(){{
+		List<Coord> points1 = new ArrayList<Coord>(){/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+		{
 			add(getPoint(15,10));
 			add(getPoint(30,25));
 			add(getPoint(25,30));
@@ -141,7 +186,12 @@ public class ShapeMergeFilterTest {
 			add(getPoint(15,10));// close
 		}};
 		
-		List<Coord> points2 = new ArrayList<Coord>(){{
+		List<Coord> points2 = new ArrayList<Coord>(){/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+		{
 			add(getPoint(25,30));
 			add(getPoint(30,35));
 			add(getPoint(20,40));
@@ -159,7 +209,12 @@ public class ShapeMergeFilterTest {
 
 	@Test
 	public void testCloseUFormed(){
-		List<Coord> points1 = new ArrayList<Coord>(){{
+		List<Coord> points1 = new ArrayList<Coord>(){/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+		{
 			// u-formed shaped (open at top)
 			add(getPoint(15,50));
 			add(getPoint(30,50));
@@ -173,7 +228,12 @@ public class ShapeMergeFilterTest {
 		}};
 
 
-		List<Coord> points2 = new ArrayList<Coord>(){{
+		List<Coord> points2 = new ArrayList<Coord>(){/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+		{
 			add(getPoint(35,50));
 			add(getPoint(35,70));
 			add(getPoint(30,70));
@@ -192,7 +252,12 @@ public class ShapeMergeFilterTest {
 
 	@Test
 	public void testFillUFormed(){
-		List<Coord> points1 = new ArrayList<Coord>(){{
+		List<Coord> points1 = new ArrayList<Coord>(){/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+		{
 			// u-formed shaped (open at top)
 			add(getPoint(15,50));
 			add(getPoint(30,50));
@@ -206,7 +271,12 @@ public class ShapeMergeFilterTest {
 		}};
 
 		
-		List<Coord> points2 = new ArrayList<Coord>(){{
+		List<Coord> points2 = new ArrayList<Coord>(){/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+		{
 			add(getPoint(30,55));
 			add(getPoint(30,65));
 			add(getPoint(20,65));
@@ -222,7 +292,12 @@ public class ShapeMergeFilterTest {
 
 	@Test
 	public void testFillHole(){
-		List<Coord> points1 = new ArrayList<Coord>(){{
+		List<Coord> points1 = new ArrayList<Coord>(){/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+		{
 			// a rectangle with a hole 
 			add(getPoint(35,50));
 			add(getPoint(35,70));
@@ -237,7 +312,12 @@ public class ShapeMergeFilterTest {
 			add(getPoint(35,50));// close
 		}};
 
-		List<Coord> points2 = new ArrayList<Coord>(){{
+		List<Coord> points2 = new ArrayList<Coord>(){/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+		{
 			add(getPoint(30,55));
 			add(getPoint(30,65));
 			add(getPoint(20,65));
@@ -249,7 +329,12 @@ public class ShapeMergeFilterTest {
 
 	@Test
 	public void testDuplicate(){
-		List<Coord> points1 = new ArrayList<Coord>(){{
+		List<Coord> points1 = new ArrayList<Coord>(){/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+		{
 			add(getPoint(30,55));
 			add(getPoint(30,65));
 			add(getPoint(20,65));
@@ -263,7 +348,12 @@ public class ShapeMergeFilterTest {
 
 	@Test
 	public void testOverlap(){
-		List<Coord> points1 = new ArrayList<Coord>(){{
+		List<Coord> points1 = new ArrayList<Coord>(){/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+		{
 			add(getPoint(30,55));
 			add(getPoint(30,65));
 			add(getPoint(20,65));
@@ -271,7 +361,12 @@ public class ShapeMergeFilterTest {
 			add(getPoint(30,55)); // close
 		}};
 
-		List<Coord> points2 = new ArrayList<Coord>(){{
+		List<Coord> points2 = new ArrayList<Coord>(){/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+		{
 			add(getPoint(30,55));
 			add(getPoint(30,65));
 			add(getPoint(25,65));
@@ -288,7 +383,12 @@ public class ShapeMergeFilterTest {
 	 */
 	@Test
 	public void testTwoWShaped(){
-		List<Coord> points1 = new ArrayList<Coord>(){{
+		List<Coord> points1 = new ArrayList<Coord>(){/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+		{
 			add(getPoint(0,5));
 			add(getPoint(35,5));
 			add(getPoint(35,20));
@@ -303,7 +403,12 @@ public class ShapeMergeFilterTest {
 			add(getPoint(0,5)); // close
 		}};
 
-		List<Coord> points2 = new ArrayList<Coord>(){{
+		List<Coord> points2 = new ArrayList<Coord>(){/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+		{
 			add(getPoint(35,35));
 			add(getPoint(35,20));
 			add(getPoint(30,15));

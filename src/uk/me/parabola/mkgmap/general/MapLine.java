@@ -78,9 +78,10 @@ public class MapLine extends MapElement {
 	public void testForConsecutivePoints(List<Coord> points) {
 		Coord last = null;
 		for (Coord co : points) {
-			if (last != null && last.equals(co))
-				log.info("Line " + getName() + " has consecutive equal points at " + co.toDegreeString());
-			else {
+			if (last != null && last.equals(co)) {
+				if (log.isInfoEnabled())
+					log.info("Line", getName() , "has consecutive equal points at" , co.toDegreeString());
+			} else {
 				addToBounds(co);
 				last = co;
 			}

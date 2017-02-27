@@ -220,8 +220,10 @@ public class ExpressionReader {
 		if (first == null)
 			throw new SyntaxException(scanner, "Invalid expression");
 
-		if (first.isType(FUNCTION))
+		if (first.isType(FUNCTION) && first.getKeyValue() != null) {
 			usedTags.add(first.getKeyValue());
+		}
+		
 
 		stack.push(op);
 	}

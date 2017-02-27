@@ -89,21 +89,21 @@ public class Java2DConverter {
 			// because we use closePath() to signal that
 			--n;
 		}
-		double lastLat = Integer.MAX_VALUE,lastLon = Integer.MAX_VALUE;
+		int lastLat = Integer.MAX_VALUE,lastLon = Integer.MAX_VALUE;
 		for (int i = 0; i < n; i++){
 			Coord co = polygonPoints.get(i);
-			int lat30 = co.getHighPrecLat();
-			int lon30 = co.getHighPrecLon();
-			double x = (double)lon30 / (1<<Coord.DELTA_SHIFT); 
-			double y = (double)lat30 / (1<<Coord.DELTA_SHIFT); 
+			int latHp = co.getHighPrecLat();
+			int lonHp = co.getHighPrecLon();
+			double x = (double)lonHp / (1<<Coord.DELTA_SHIFT); 
+			double y = (double)latHp / (1<<Coord.DELTA_SHIFT); 
 			if (i == 0)
 				path.moveTo(x, y);
 			else {
-				if (lastLon != lon30 || lastLat != lat30)
+				if (lastLon != lonHp || lastLat != latHp)
 					path.lineTo(x, y);
 			}
-			lastLon = lon30;
-			lastLat = lat30;
+			lastLon = lonHp;
+			lastLat = latHp;
 		}
 		path.closePath();
 		return path;
@@ -193,26 +193,26 @@ public class Java2DConverter {
 
 		double[] res = new double[6];
 		PathIterator pit = area.getPathIterator(null);
-		int prevLat30 = Integer.MIN_VALUE;
-		int prevLong30 = Integer.MIN_VALUE;
+		int prevLatHp = Integer.MIN_VALUE;
+		int prevLongHp = Integer.MIN_VALUE;
 
 		while (!pit.isDone()) {
 			int type = pit.currentSegment(res);
 
-			int lat30 = (int)Math.round(res[1] * (1<<Coord.DELTA_SHIFT));
-			int lon30 = (int)Math.round(res[0] * (1<<Coord.DELTA_SHIFT));
+			int latHp = (int)Math.round(res[1] * (1<<Coord.DELTA_SHIFT));
+			int lonHp = (int)Math.round(res[0] * (1<<Coord.DELTA_SHIFT));
 
 			switch (type) {
 			case PathIterator.SEG_MOVETO:
 				if (points != null)
 					log.error("area not singular");
 				points = new ArrayList<>();
-				points.add(Coord.makeHighPrecCoord(lat30, lon30));
+				points.add(Coord.makeHighPrecCoord(latHp, lonHp));
 				break;
 			case PathIterator.SEG_LINETO:
 				assert points != null;
-				if (prevLat30 != lat30 || prevLong30 != lon30) {
-					points.add(Coord.makeHighPrecCoord(lat30, lon30));
+				if (prevLatHp != latHp || prevLongHp != lonHp) {
+					points.add(Coord.makeHighPrecCoord(latHp, lonHp));
 				}
 				break;
 			case PathIterator.SEG_CLOSE:
@@ -237,8 +237,8 @@ public class Java2DConverter {
 						+ ". This is an mkgmap error.");
 			}
 
-			prevLat30 = lat30;
-			prevLong30 = lon30;
+			prevLatHp = latHp;
+			prevLongHp = lonHp;
 
 			pit.next();
 		}
@@ -264,22 +264,22 @@ public class Java2DConverter {
 		
 		List<Coord> coords = null;
 
-		int prevLat30 = Integer.MIN_VALUE;
-		int prevLong30 = Integer.MIN_VALUE;
+		int prevLatHp = Integer.MIN_VALUE;
+		int prevLongHp = Integer.MIN_VALUE;
 
 		while (!pit.isDone()) {
 			int type = pit.currentSegment(res);
 
-			int lat30 = (int) Math.round(res[1] * (1<<Coord.DELTA_SHIFT));
-			int lon30 = (int) Math.round(res[0] * (1<<Coord.DELTA_SHIFT));
+			int latHp = (int) Math.round(res[1] * (1<<Coord.DELTA_SHIFT));
+			int lonHp = (int) Math.round(res[0] * (1<<Coord.DELTA_SHIFT));
 			
 			switch (type) {
 			case PathIterator.SEG_LINETO:
-				if (prevLat30 != lat30 || prevLong30 != lon30) 
-					coords.add(Coord.makeHighPrecCoord(lat30, lon30));
+				if (prevLatHp != latHp || prevLongHp != lonHp) 
+					coords.add(Coord.makeHighPrecCoord(latHp, lonHp));
 
-				prevLat30 = lat30;
-				prevLong30 = lon30;
+				prevLatHp = latHp;
+				prevLongHp = lonHp;
 				break;
 			case PathIterator.SEG_MOVETO: 
 			case PathIterator.SEG_CLOSE:
@@ -298,13 +298,13 @@ public class Java2DConverter {
 				}
 				if (type == PathIterator.SEG_MOVETO){
 					coords = new ArrayList<>();
-					coords.add(Coord.makeHighPrecCoord(lat30, lon30));
-					prevLat30 = lat30;
-					prevLong30 = lon30;
+					coords.add(Coord.makeHighPrecCoord(latHp, lonHp));
+					prevLatHp = latHp;
+					prevLongHp = lonHp;
 				} else {
 					coords = null;
-					prevLat30 = Integer.MIN_VALUE;
-					prevLong30 = Integer.MIN_VALUE;
+					prevLatHp = Integer.MIN_VALUE;
+					prevLongHp = Integer.MIN_VALUE;
 				}
 				break;
 			default:

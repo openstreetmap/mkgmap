@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.net.GeneralRouteRestriction;
@@ -47,10 +46,10 @@ public class MapDetails implements MapCollector, MapDataSource {
 	private final List<MapShape> shapes = new ArrayList<MapShape>();
 	private final List<MapPoint> points = new ArrayList<MapPoint>();
 
-	private int minLat30 = Utils.toMapUnit(180.0) << Coord.DELTA_SHIFT ;
-	private int minLon30 = Utils.toMapUnit(180.0) << Coord.DELTA_SHIFT;
-	private int maxLat30 = Utils.toMapUnit(-180.0) << Coord.DELTA_SHIFT;
-	private int maxLon30 = Utils.toMapUnit(-180.0) << Coord.DELTA_SHIFT;
+	private int minLatHp = Integer.MAX_VALUE;
+	private int minLonHp = Integer.MAX_VALUE;
+	private int maxLatHp = Integer.MIN_VALUE;
+	private int maxLonHp = Integer.MIN_VALUE;
 
 	// Keep lists of all items that were used.
 	private final Map<Integer, Integer> pointOverviews = new HashMap<Integer, Integer>();
@@ -141,17 +140,17 @@ public class MapDetails implements MapCollector, MapDataSource {
 	 * @param p The coordinates of the point to add.
 	 */
 	public void addToBounds(Coord p) {
-		int lat30 = p.getHighPrecLat(); 
-		int lon30 = p.getHighPrecLon();
+		int latHp = p.getHighPrecLat(); 
+		int lonHp = p.getHighPrecLon();
 		
-		if (lat30 < minLat30)
-			minLat30 = lat30;
-		if (lat30 > maxLat30)
-			maxLat30 = lat30;
-		if (lon30 < minLon30)
-			minLon30 = lon30;
-		if (lon30 > maxLon30)
-			maxLon30 = lon30;
+		if (latHp < minLatHp)
+			minLatHp = latHp;
+		if (latHp > maxLatHp)
+			maxLatHp = latHp;
+		if (lonHp < minLonHp)
+			minLonHp = lonHp;
+		if (lonHp > maxLonHp)
+			maxLonHp = lonHp;
 	}
 
 	/**
@@ -160,13 +159,13 @@ public class MapDetails implements MapCollector, MapDataSource {
 	 * @return An area covering all the points in the map.
 	 */
 	public Area getBounds() {
-		int minLat = minLat30 >> Coord.DELTA_SHIFT;
-		int maxLat = maxLat30 >> Coord.DELTA_SHIFT;
-		int minLon = minLon30 >> Coord.DELTA_SHIFT;
-		int maxLon = maxLon30 >> Coord.DELTA_SHIFT;
-		if ((maxLat << Coord.DELTA_SHIFT) < maxLat30)
+		int minLat = minLatHp >> Coord.DELTA_SHIFT;
+		int maxLat = maxLatHp >> Coord.DELTA_SHIFT;
+		int minLon = minLonHp >> Coord.DELTA_SHIFT;
+		int maxLon = maxLonHp >> Coord.DELTA_SHIFT;
+		if ((maxLat << Coord.DELTA_SHIFT) < maxLatHp)
 			maxLat++;
-		if ((maxLon << Coord.DELTA_SHIFT) < maxLon30)
+		if ((maxLon << Coord.DELTA_SHIFT) < maxLonHp)
 			maxLon++;
 		return new Area(minLat, minLon, maxLat, maxLon);
 	}

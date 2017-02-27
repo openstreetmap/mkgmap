@@ -17,6 +17,9 @@ include 'inc/name';
 
 aeroway=airport [0x07 resolution 20]
 aeroway=aerodrome [0x07 resolution 20]
+aeroway=runway {name '${ref}'} [0x0e resolution 20]
+(aeroway=taxiway | aeroway=taxilane) {name '${ref}'} [0x0e resolution 24]
+aeroway=heliport [0x07 resolution 20]
 aeroway=helipad [0x0e resolution 22]
 
 amenity=kindergarten [0x0a resolution 22]

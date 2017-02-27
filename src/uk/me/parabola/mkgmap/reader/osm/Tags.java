@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.TreeSet;
 
 /**
  * Store the tags that belong to an Element.
@@ -35,7 +35,7 @@ import java.util.Map.Entry;
  *
  * @author Steve Ratcliffe
  */
-public class Tags implements Iterable<String> {
+public class Tags {
 	private static final int INIT_SIZE = 8;
 	private static final TagDict tagDict = TagDict.getInstance();  
 
@@ -177,63 +177,6 @@ public class Tags implements Iterable<String> {
 		return -1;
 	}
 
-	/**
-	 * Iterates over the tags in a special way that is used to look up in
-	 * the rules.
-	 *
-	 * If you have the tags a=b, c=d then you will get the following strings
-	 * returned: "a=b", "a=*", "c=d", "c=*".
-	 *
-	 * If you add a tag during the iteration, then it is guaranteed to
-	 * appear later in the iteration.
-	 */
-	public Iterator<String> iterator() {
-		return new Iterator<String>() {
-			private int pos;
-
-			public boolean hasNext() {
-				// After every normal entry there is a wild card entry.
-				//if (doWild)
-				//	return true;
-
-				// Normal entries in the map
-				for (int i = pos; i < capacity; i++) {
-					if (values[i] != null) {
-						pos = i;
-						return true;
-					}
-				}
-
-				return false;
-			}
-
-			/**
-			 * Get the next tag as a single string.  Also returns wild card
-			 * entries.
-			 */
-			public String next() {
-				/*if (doWild) {
-					doWild = false;
-					return wild + "=*";
-				} else*/ if (pos < capacity) {
-					for (int i = pos; i < capacity; i++) {
-						if (values[i] != null) {
-							pos = i+1;
-							return (tagDict.get(keys[i]) + "=" + values[i]);
-						}
-					}
-					pos = capacity;
-				}
-
-				return null;
-			}
-
-			public void remove() {
-				throw new UnsupportedOperationException();
-			}
-		};
-	}
-
 	public Iterator<Map.Entry<String, String>> entryIterator() {
 		return new Iterator<Map.Entry<String, String>>() {
 			private int pos;
@@ -307,51 +250,15 @@ public class Tags implements Iterable<String> {
 		return map;
 	}
 	
-	public void removeAll() {
-		Arrays.fill(keys, TagDict.INVALID_TAG_VALUE);
-		Arrays.fill(values, null);
-		keySize = 0;
-		size = 0;
-	}
-	
-	public String toString() {
-		StringBuilder s =new StringBuilder();
-		s.append("[");
-		Iterator<Entry<String,String>> tagIter = entryIterator();
-		while (tagIter.hasNext()) {
-			Entry<String,String> tag = tagIter.next();
-			if (s.length() > 1) {
-				s.append("; ");
-			}
-			s.append(tag.getKey());
-			s.append("=");
-			s.append(tag.getValue());
-		}
-		s.append("]");
-		return s.toString();
-	}
-	
-	/**
-	 * Each tag has a position in the TagDict. This routine fills an array
-	 * so that the caller can use direct access. 
-	 * The caller has to make sure that the array is large enough to hold
-	 * the values he is looking for.  
-	 * @param tagVals
-	 * @return
-	 */
-	public int expand(short[] keyArray, String[] tagVals){
-		if (tagVals == null)
-			return 0;
-		int maxKey = tagVals.length - 1;
-		int cntTags = 0;
-		for (int i = 0; i< capacity; i++){
-			short tagKey = keys[i];
-			if (tagKey != TagDict.INVALID_TAG_VALUE && values[i] != null && tagKey <= maxKey){
-				tagVals[tagKey] = values[i];
-				keyArray[cntTags++] = tagKey;
-			}
 
+	public String toString() {
+		// sort the tags by key to make the result predictable and easier to read
+		TreeSet<String> sorted = new TreeSet<>();
+		for (int i = 0; i < capacity; i++) {
+			if (values[i] != null) {
+				sorted.add(tagDict.get(keys[i]) + "=" + values[i]);
+			}
 		}
-		return cntTags;
+		return sorted.toString();
 	}
 }

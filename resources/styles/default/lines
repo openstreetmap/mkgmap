@@ -9,8 +9,9 @@
 # for more information.
 
 addr:housenumber=* {set mkgmap:execute_finalize_rules=true}
-aeroway=runway [0x27 resolution 20]
-aeroway=taxiway [0x27 resolution 24]
+
+aeroway=runway & highway!=* & is_closed()=false {name '${ref}'} [0x27 resolution 20]
+(aeroway=taxiway | aeroway=taxilane) & highway!=* & is_closed()=false {name '${ref}'} [0x27 resolution 24]
 
 # Assign the street name for house number search
 highway=* & name=* { set mkgmap:street='${name}' }
@@ -76,21 +77,29 @@ highway=primary {name '${ref|highway-symbol:box} ${name}' | '${ref|highway-symbo
 highway=secondary | highway=tertiary {name '${ref|highway-symbol:oval} ${name}' | '${ref|highway-symbol:oval}' | '${name}'; addlabel '${name} (${ref})' }
 highway=* {name '${name}' | '${ref}' }
 
+# Flag paved roads
+highway=* & (surface=asphalt | surface=paved | surface=sett | 
+    surface=concrete | surface=concrete:lanes | surface=concrete:plates | 
+    surface=paving_stones  | surface=cobblestone  | 
+   	surface=cobblestone:flattened  | surface=metal  | surface=wood) 
+{ set mkgmap:unpaved=0 }
+highway=* & tracktype=grade1 & surface!=* { set mkgmap:unpaved=0 }
+
 # Flag unpaved roads.
-highway=*
-& (surface=cobblestone | surface=compacted | surface=dirt |
-   surface=earth | surface=grass | surface=grass_paver |
-   surface=gravel | surface=grit | surface=ground | surface=mud |
-   surface=pebblestone | surface=sand | surface=unpaved |
-   mtb:scale=* |
-   tracktype ~ 'grade[2-6]' |
-   smoothness ~ '.*(bad|horrible|impassable)' |
-   sac_scale ~ '.*(mountain|alpine)_hiking' |
-   sport=via_ferrata)
+highway=* & mkgmap:unpaved!=0 & (  
+    surface=* |
+	mtb:scale=* | 
+    tracktype ~ 'grade[2-6]')
 { add mkgmap:unpaved=1 }
-(highway=bridleway | highway=path | highway=track | highway=unsurfaced)
-& surface!=* & tracktype!=* & smoothness!=* & sac_scale!=*
-{ add mkgmap:unpaved=1 }
+highway=* & (
+    mtb:scale ~ '[2-6].' |
+    sac_scale ~ '.*(mountain|alpine)_hiking' |
+    sport=via_ferrata)
+{ set mkgmap:unpaved=1 }
+(highway=bridleway | highway=path | highway=track) & mkgmap:unpaved!=0 { add mkgmap:unpaved=1 }
+(highway=unsurfaced | highway=via_ferrata) { set mkgmap:unpaved=1 }
+
+highway=* & mkgmap:unpaved!=1 & smoothness ~ '.*(bad|horrible|impassable)'  { add mkgmap:road-speed = '-2' } 
 
 # Convert generic path to most specific
 highway=footway & snowplowing!=no
@@ -108,12 +117,21 @@ leisure=track & area!=yes
 {add highway=footway; name '${ref} ${name}' | '${ref}' | '${name}' }
 
 # Roundabouts
-junction=roundabout & (highway=trunk | highway=trunk_link) [0x0c road_class=3 road_speed=2 resolution 18]
-junction=roundabout & (highway=primary | highway=primary_link) [0x0c road_class=3 road_speed=2 resolution 19]
-junction=roundabout & (highway=secondary | highway=secondary_link) [0x0c road_class=2 road_speed=2 resolution 20]
-junction=roundabout & (highway=tertiary | highway=tertiary_link) [0x0c road_class=1 road_speed=1 resolution 21]
-junction=roundabout & highway=unclassified [0x0c road_class=1 road_speed=1 resolution 21]
+junction=roundabout & (highway=trunk | highway=trunk_link) [0x0c road_class=4 road_speed=2 resolution 24 continue]
+junction=roundabout & (highway=trunk | highway=trunk_link) [0x10801 resolution 18]
+
+junction=roundabout & (highway=primary | highway=primary_link) [0x0c road_class=3 road_speed=2 resolution 24 continue]
+junction=roundabout & (highway=primary | highway=primary_link) [0x10802 resolution 19]
+
+junction=roundabout & (highway=secondary | highway=secondary_link) [0x0c road_class=2 road_speed=2 resolution 24 continue]
+junction=roundabout & (highway=secondary | highway=secondary_link) [0x10803 resolution 20]
+
+junction=roundabout & (highway=tertiary | highway=tertiary_link) [0x0c road_class=1 road_speed=1 resolution 24 continue]
+junction=roundabout & (highway=tertiary | highway=tertiary_link) [0x10804 resolution 21]
+
+junction=roundabout & (highway=unclassified | highway=minor ) [0x0c road_class=1 road_speed=1 resolution 21]
 junction=roundabout & highway=* [0x0c road_class=0 road_speed=1 resolution 22]
+
 
 # Ways that may or may not be useable
 

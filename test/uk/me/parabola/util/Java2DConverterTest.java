@@ -12,16 +12,19 @@
  */
 package uk.me.parabola.util;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.awt.geom.Area;
 import java.awt.geom.Path2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import uk.me.parabola.imgfmt.app.Coord;
-
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.mkgmap.filters.ShapeMergeFilter;
 
 public class Java2DConverterTest {
 
@@ -103,5 +106,47 @@ public class Java2DConverterTest {
 		assertTrue(singularPolygon1.get(0) ==  singularPolygon1.get(singularPolygon1.size()-1));
 		assertTrue(singularPolygon2.get(0) ==  singularPolygon2.get(singularPolygon2.size()-1));
 		assertTrue(singularPolygon3.get(0) ==  singularPolygon3.get(singularPolygon3.size()-1));
+	}
+	
+	@Test
+	public void testPolygonConversionAt180() throws Exception {
+		// various calculations near 180.0 
+		List<Coord> points1 = new ArrayList<>();
+		points1.add(new Coord(1.0,180.0));
+		points1.add(new Coord(0.0,180.0));
+		points1.add(new Coord(1.0,179.0));
+		points1.add(points1.get(0));
+		Area a1 = Java2DConverter.createArea(points1);
+		uk.me.parabola.imgfmt.app.Area bbox = Java2DConverter.createBbox(a1);
+		for (Coord co : points1)
+			assertTrue(bbox.contains(co));
+		Area awtPlanet = Java2DConverter.createBoundsArea(uk.me.parabola.imgfmt.app.Area.PLANET);
+		a1.intersect(awtPlanet);
+		assertTrue(a1.isSingular());
+		List<Coord> points2 = Java2DConverter.singularAreaToPoints(a1);
+		long testVal1 = ShapeMergeFilter.calcAreaSizeTestVal(points1);
+		long testVal2 = ShapeMergeFilter.calcAreaSizeTestVal(points2);
+		assertEquals(testVal1, testVal2);
+	}
+
+	@Test
+	public void testPolygonConversionAtMinus180() throws Exception {
+		// various calculations near 180.0 
+		List<Coord> points1 = new ArrayList<>();
+		points1.add(new Coord(-1.0,-180.0));
+		points1.add(new Coord(0.0,-180.0));
+		points1.add(new Coord(-1.0,-179.0));
+		points1.add(points1.get(0));
+		Area a1 = Java2DConverter.createArea(points1);
+		uk.me.parabola.imgfmt.app.Area bbox = Java2DConverter.createBbox(a1);
+		for (Coord co : points1)
+			assertTrue(bbox.contains(co));
+		Area awtPlanet = Java2DConverter.createBoundsArea(uk.me.parabola.imgfmt.app.Area.PLANET);
+		a1.intersect(awtPlanet);
+		assertTrue(a1.isSingular());
+		List<Coord> points2 = Java2DConverter.singularAreaToPoints(a1);
+		long testVal1 = ShapeMergeFilter.calcAreaSizeTestVal(points1);
+		long testVal2 = ShapeMergeFilter.calcAreaSizeTestVal(points2);
+		assertEquals(testVal1, testVal2);
 	}
 }

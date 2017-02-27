@@ -1641,10 +1641,10 @@ public class HousenumberGenerator {
 	 * @param spoint1 segment point 1
 	 * @param spoint2 segment point 2
 	 * @param point point
+	 * @param frac the fraction returned from {@code getFrac()} 
 	 * @return the distance in meter
 	 */
 	public static double distanceToSegment(Coord spoint1, Coord spoint2, Coord point, double frac) {
-
 		if (frac <= 0) {
 			return spoint1.distance(point);
 		} else if (frac >= 1) {
@@ -1652,7 +1652,6 @@ public class HousenumberGenerator {
 		} else {
 			return point.distToLineSegment(spoint1, spoint2);
 		}
-
 	}
 	
 	/**
@@ -1679,7 +1678,7 @@ public class HousenumberGenerator {
 			return 0;
 		else {
 			// scale for longitude deltas by cosine of average latitude  
-			double scale = Math.cos(Coord.int30ToRadians((aLat + bLat + pLat) / 3) );
+			double scale = Math.cos(Coord.hpToRadians((aLat + bLat + pLat) / 3) );
 			double deltaLonAP = scale * (pLon - aLon);
 			deltaLon = scale * deltaLon;
 			if (deltaLon == 0 && deltaLat == 0)

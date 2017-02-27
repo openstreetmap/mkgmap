@@ -143,9 +143,7 @@ public class PrecompSeaGenerator {
 	 * @return the areas of all tiles
 	 */
 	private List<uk.me.parabola.imgfmt.app.Area> getTiles() {
-		uk.me.parabola.imgfmt.app.Area earth = new uk.me.parabola.imgfmt.app.Area(
-				-90.0d, -180.0d, 90.0d, 180.0d);
-		return getTiles(earth);
+		return getTiles(uk.me.parabola.imgfmt.app.Area.PLANET);
 	}
 
 	private List<uk.me.parabola.imgfmt.app.Area> getTiles(
