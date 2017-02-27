@@ -68,21 +68,21 @@ public class RuleIndex {
 	private boolean inited;
 
 	private class TagHelper{
-		// This is an index of all rules that start with EXISTS (A=*)
-		final BitSet exists;
+		// This is an index of all rules that start with EXISTS (A=*) or (A=B)
+		final BitSet checked;
 		// This is an index of all rules that start with EQUALS (A=B) 
 		Map<String, BitSet> tagVals;
 		
-		public TagHelper(BitSet exits){
-			this.exists = exits;
+		public TagHelper(BitSet checked){
+			this.checked = checked;
 		}
 
 		public void addTag(String val, BitSet value) {
 			if (tagVals == null)
 				tagVals = new HashMap<>();
-			if (exists != null){	
+			if (checked != null){	
 				BitSet merged = new BitSet();
-				merged.or(exists);
+				merged.or(checked);
 				merged.or(value);
 				tagVals.put(val, merged);
 			} else
@@ -96,8 +96,8 @@ public class RuleIndex {
 					return (BitSet) set.clone();
 				}
 			} 
-			if (exists != null)
-				return (BitSet) exists.clone();
+			if (checked != null)
+				return (BitSet) checked.clone();
 			return new BitSet();
 		}
 	}
@@ -158,8 +158,6 @@ public class RuleIndex {
 	public void prepare() {
 		if (inited)
 			return;
-		// This is an index of all rules that start with EXISTS (A=*)
-		Map<String, BitSet> existKeys = new HashMap<String, BitSet>();
 		// This is an index of all rules that start with EQUALS (A=B)
 		Map<String, BitSet> tagVals = new HashMap<String, BitSet>();
 		
@@ -177,7 +175,6 @@ public class RuleIndex {
 
 			if (keystring.endsWith("=*")) {
 				String key = keystring.substring(0, keystring.length() - 2);
-				addNumberToMap(existKeys, key, ruleNumber);
 				addNumberToMap(tagnames, key, ruleNumber);
 			} else {
 				addNumberToMap(tagVals, keystring, ruleNumber);
@@ -208,17 +205,8 @@ public class RuleIndex {
 					// rule using the tag, no matter what the value.
 					int ind = s.indexOf('=');
 					if (ind >= 0) {
-						set = tagVals.get(s);
-
-						// Exists rules can also be triggered, so add them too.
 						String key = s.substring(0, ind);
-						BitSet set1 = existKeys.get(key);
-
-						if (set == null)
-							set = set1;
-						else if (set1 != null)
-							set.or(set1);
-
+						set = tagnames.get(key);
 					} else {
 						set = tagnames.get(s);
 					}
@@ -240,7 +228,7 @@ public class RuleIndex {
 
 						// Find every rule number set that contains the rule number that we
 						// are examining and add all the newly found rules to each such set.
-						for (Map<String, BitSet> m : Arrays.asList(existKeys, tagVals, tagnames)) {
+						for (Map<String, BitSet> m : Arrays.asList(tagVals, tagnames)) {
 							Collection<BitSet> bitSets = m.values();
 							for (BitSet bi : bitSets) {
 								if (bi.get(ruleNumber)) {
@@ -260,7 +248,7 @@ public class RuleIndex {
 
 		// compress the index: create one hash map with one entry for each key
 		int highestKey = 0;
-		for (Map.Entry<String, BitSet> entry  : existKeys.entrySet()){
+		for (Map.Entry<String, BitSet> entry  : tagnames.entrySet()){
 			Short skey = TagDict.getInstance().xlate(entry.getKey());
 			if (skey > highestKey)
 				highestKey = skey;
