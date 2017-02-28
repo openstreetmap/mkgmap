@@ -16,14 +16,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.junit.Test;
 
 import uk.me.parabola.mkgmap.filters.ShapeMergeFilter;
 import uk.me.parabola.mkgmap.reader.osm.Way;
-import uk.me.parabola.util.GpxCreator;
 
 /**
  * Test some basic methods of the Coord class regarding distance and bearing calculations
@@ -41,8 +39,7 @@ public class CoordTest {
 	Coord p61_11 = new Coord (61.0, 11.0);
 	Coord russia1 = new Coord(3069580,8388608);
 	Coord russia2 = new Coord(3105677,8388608);
-	Coord special1 = new Coord(52.2452629, 21.0833536);
-							
+	
 	/**
 	 */
 	@Test
@@ -170,46 +167,19 @@ public class CoordTest {
 			List<Coord> altx = c.getAlternativePositions();
 			assertFalse(altx.isEmpty());
 		}
-		List<Coord> alt3 = special1.getAlternativePositions();
-		GpxCreator.createGpx("e:/ld/special1", Collections.singletonList(special1), alt3);
 	}
-
-//	@Test
-//	public void alternativePos2() {
-//		double lon = 0.0;
-//		double step = 0.00000000001;
-//		int count = 0;
-//		while (count < 1000) {
-//			Coord c1 = new Coord (0,lon);
-//			Coord c2 = new Coord (0, lon+step);
-//			if (!c1.highPrecEquals(c2)) {
-//				System.out.println(count + " " + lon);
-//				count++;
-//			}
-//			lon += step;
-//		}
-//	}
+	
 	
 	@Test
 	public void testPlanet() throws Exception {
 		final uk.me.parabola.imgfmt.app.Area planet = uk.me.parabola.imgfmt.app.Area.PLANET;
-		Coord lowerLeft = new Coord(-90.0, -180.0);
-		assertEquals(planet.getMinLat(), lowerLeft.getLatitude());
-		assertEquals(-90.0, lowerLeft.getLatDegrees(), 0.0000001);
-		assertEquals(planet.getMinLong(), lowerLeft.getLongitude());
-		assertEquals(-180.0, lowerLeft.getLonDegrees(), 0.0000001);
-		Coord upperRight = new Coord(90.0, 180.0);
-		assertEquals(planet.getMaxLat(), upperRight.getLatitude());
-		assertEquals(90.0, upperRight.getLatDegrees(), 0.0000001);
-		assertEquals(planet.getMaxLong(), upperRight.getLongitude());
-		assertEquals(180.0, upperRight.getLonDegrees(), 0.0000001);
 		long testVal = ShapeMergeFilter.calcAreaSizeTestVal(planet.toCoords());
-		double areaSizeCoords = (double) testVal / (2 * (1<<6) * (1<<6));
+		double areaSizeCoords = (double) testVal / (2 * (1<<Coord.DELTA_SHIFT) * (1<<Coord.DELTA_SHIFT));
 		areaSizeCoords = Math.abs(areaSizeCoords);
 		double areaSizeBounds = (double) planet.getHeight() * planet.getWidth();
 		assertEquals(areaSizeBounds, areaSizeCoords, 0.0001);
 		boolean dir = Way.clockwise(planet.toCoords()); 
 		assertFalse(dir);
-	}
+	}	
 	
 }
