@@ -233,7 +233,7 @@
 		<javac srcdir="${src}" destdir="${build.classes}" encoding="utf-8" debug="true" includeantruntime="false">
 			<include name="**/*.java" />
 			<classpath refid="main"/>
-			<exclude name="**/dem/optional/*.java"/>
+			<exclude name="**/optional/*.java"/>
 		</javac>
 	</target>
 
