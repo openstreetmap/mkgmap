@@ -27,7 +27,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.TreeSet;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.log.Logger;
@@ -36,6 +37,7 @@ import uk.me.parabola.mkgmap.osmstyle.actions.Action;
 import uk.me.parabola.mkgmap.osmstyle.actions.ActionList;
 import uk.me.parabola.mkgmap.osmstyle.actions.ActionReader;
 import uk.me.parabola.mkgmap.osmstyle.actions.AddTagAction;
+import uk.me.parabola.mkgmap.osmstyle.actions.DeleteAction;
 import uk.me.parabola.mkgmap.osmstyle.eval.AndOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.BinaryOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.EqualsOp;
@@ -43,7 +45,6 @@ import uk.me.parabola.mkgmap.osmstyle.eval.ExistsOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ExpressionReader;
 import uk.me.parabola.mkgmap.osmstyle.eval.LinkedOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.NodeType;
-import uk.me.parabola.mkgmap.osmstyle.eval.NotEqualOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.NotOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.osmstyle.eval.OrOp;
@@ -77,7 +78,7 @@ public class RuleFileReader {
 	private final boolean performChecks;
 	private final Map<Integer, List<Integer>> overlays;
 
-	private Deque<Op> ifStack = new LinkedList<>();
+	private Deque<Op[]> ifStack = new LinkedList<>();
 
 	private boolean inFinalizeSection;
 	
@@ -120,16 +121,16 @@ public class RuleFileReader {
 		// Read all the rules in the file.
 		scanner.skipSpace();
 		while (!scanner.isEndOfFile()) {
-			if (checkCommand(loader, scanner))
+			if (checkCommand(loader, scanner, expressionReader))
 				continue;
 
 			if (scanner.isEndOfFile())
 				break;
 
 			Op expr = expressionReader.readConditions();
-			expr = condExpr(expr);
-
 			ActionList actionList = actionReader.readActions();
+			
+			expr = condExpr(expr, actionList);
 
 			// If there is an action list, then we don't need a type
 			GType type = null;
@@ -165,8 +166,9 @@ public class RuleFileReader {
 	 * @param currentLoader The current style loader. Any included files are loaded from here, if no other
 	 * style is specified.
 	 * @param scanner The current token scanner.
+	 * @param expressionReader The current expression reader
 	 */
-	private boolean checkCommand(StyleFileLoader currentLoader, TokenScanner scanner) {
+	private boolean checkCommand(StyleFileLoader currentLoader, TokenScanner scanner, ExpressionReader expressionReader) {
 		scanner.skipSpace();
 		if (scanner.isEndOfFile())
 			return false;
@@ -175,7 +177,7 @@ public class RuleFileReader {
 			if (readInclude(currentLoader, scanner)) return true;
 
 		} else if (scanner.checkToken("if")) {
-			if (readIf(scanner)) return true;
+			if (readIf(scanner, expressionReader)) return true;
 
 		} else if (scanner.checkToken("else")) {
 			if (readElse(scanner)) return true;
@@ -191,7 +193,7 @@ public class RuleFileReader {
 		return false;
 	}
 
-	private boolean readIf(TokenScanner scanner) {
+	private boolean readIf(TokenScanner scanner, ExpressionReader expressionReader) {
 		// Take the 'if' token
 		Token tok = scanner.nextToken();
 		scanner.skipSpace();
@@ -199,13 +201,22 @@ public class RuleFileReader {
 		// If 'if'' is being used as a keyword then it is followed by a '('.
 		Token next = scanner.peekToken();
 		if (next.getType() == TokType.SYMBOL && next.isValue("(")) {
-
-			ExpressionReader expressionReader = new ExpressionReader(scanner, kind);
-			Op expr = expressionReader.readConditions();
+			Op origExpr = expressionReader.readConditions();
 			scanner.validateNext("then");
-
-
-			ifStack.addLast(expr);
+			
+			// add rule expr { set <ifVar> = true } 
+			String ifVar = getNextIfVar();
+			ArrayList<Action> actions = new ArrayList<>(1);
+			actions.add(new AddTagAction(ifVar,"true", true));
+			ActionList actionList = new ActionList(actions, Collections.singleton(ifVar+"=true"));
+			saveRule(scanner, origExpr, actionList, null);
+			// create expression (<ifVar> = true) 
+			EqualsOp safeExpr = new EqualsOp();
+			safeExpr.setFirst(new GetTagFunction(ifVar));
+			safeExpr.setSecond(new ValueOp("true"));
+			Op[] ifExpressions = {origExpr, safeExpr};  
+			ifStack.addLast(ifExpressions);
+			
 			return true;
 		} else {
 			// Wrong syntax for if statement, so push back token to allow a possible expression to be read
@@ -224,10 +235,14 @@ public class RuleFileReader {
 			return false;
 		}
 
-		Op expr = ifStack.removeLast();
-		NotOp not = new NotOp();
-		not.setFirst(expr);
-		ifStack.addLast(not);
+		Op[] ifExpressions = ifStack.removeLast();
+		for (int i = 0; i < ifExpressions.length; i++) {
+			Op op = ifExpressions[i];
+			NotOp not = new NotOp();
+			not.setFirst(op);
+			ifExpressions[i] = not;
+		}
+		ifStack.addLast(ifExpressions);
 
 		return true;
 	}
@@ -244,16 +259,54 @@ public class RuleFileReader {
 		return true;
 	}
 
-	private Op condExpr(Op expr) {
+	private Op condExpr(Op expr, ActionList actionList) {
 		Op result = expr;
 
-		for (Op op : ifStack) {
+		for (Op[] ops : ifStack) {
 			AndOp and = new AndOp();
 			and.setFirst(result);
-			and.setSecond(op);
+			and.setSecond(ops[0]);
+			if (actionList != null && ops[0] != ops[1]) {
+				// check if this action can change the result of the initial if expression 
+				if (possiblyChanged(ops[0], actionList)) {
+					// the result may be changed, use the generated tag for all further rules in this if / else block
+					ops[0] = ops[1];
+				} 
+			}
 			result = and;
 		}
 		return result;
+	}
+
+	/**
+	 * Check if the expression depends on tags modified by an action in the action list. 
+	 * @param expr the expression to check
+	 * @param actionList the ActionList 
+	 * @return true if the value of the expression depends on one or more of the changeable tags
+	 */
+	private boolean possiblyChanged(Op expr, ActionList actionList) {
+		if (actionList == null)
+			return false;
+		Set<String> evaluated = expr.getEvaluatedTagKeys();
+		if (evaluated.isEmpty())
+			return false;
+		for (String tagKey : evaluated) {
+			for (String s : actionList.getChangeableTags()) {
+				int pos = s.indexOf("=");
+				String key = pos > 0 ? s.substring(0, pos) : s;
+				if (tagKey.equals(key)) {
+					return true;
+				}
+			}
+			for (Action a : actionList.getList()) {
+				if (a instanceof DeleteAction) {
+					if (a.toString().contains(tagKey)) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
 	}
 
 	private boolean readInclude(StyleFileLoader currentLoader, TokenScanner scanner) {
@@ -664,6 +717,17 @@ public class RuleFileReader {
 			rules.add(keystring, rule, actions.getChangeableTags());
 	}
 
+	
+	private static final AtomicInteger ifCounter = new AtomicInteger(0);
+	/**
+	 * 
+	 * @return a new tag key unique 
+	 */
+	public String getNextIfVar (){
+		int n = ifCounter.incrementAndGet();
+		return RuleSet.IF_PREFIX  + n;
+	}
+	
 	public static void main(String[] args) throws FileNotFoundException {
 		if (args.length > 0) {
 			RuleSet rs = new RuleSet();

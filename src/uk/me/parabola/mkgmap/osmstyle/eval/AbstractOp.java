@@ -16,7 +16,11 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import uk.me.parabola.imgfmt.ExitException;
+import uk.me.parabola.mkgmap.osmstyle.function.GetTagFunction;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 
@@ -142,4 +146,29 @@ public abstract class AbstractOp implements Op {
 		lastCachedId = -1;
 	}
 
+	@Override
+	public Set<String> getEvaluatedTagKeys() {
+		HashSet<String> set = new HashSet<>();
+		collectEvaluatedTags(set);
+		return set;
+	}
+
+	private void collectEvaluatedTags(HashSet<String> set) {
+		if (this instanceof GetTagFunction) {
+			set.add(getKeyValue());
+		} else if (this instanceof BinaryOp) {
+			set.addAll(getFirst().getEvaluatedTagKeys());
+			set.addAll(getSecond().getEvaluatedTagKeys());
+		} else if (this instanceof NumericOp) {
+			set.addAll(getFirst().getEvaluatedTagKeys());
+		}
+		else if (this.isType(NodeType.EXISTS) || this.isType(NodeType.NOT_EXISTS) || this.isType(NodeType.NOT)) {
+			set.addAll(getFirst().getEvaluatedTagKeys());
+		} else if (this instanceof GetTagFunction) {
+			set.add(getKeyValue());
+		} else if (this.getFirst() != null) {
+			System.err.println("Unhandled type of Op");
+		}
+			
+	}
 }
