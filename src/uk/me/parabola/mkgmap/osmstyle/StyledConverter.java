@@ -244,11 +244,13 @@ public class StyledConverter implements OsmConverter {
 			}
 		}
 		// flag options used in style but not specified in --style-option
-		for (String s : style.getUsedTags()) {
-			if (s != null && s.startsWith(STYLE_OPTION_PREF)) {
-				if (styleTags.get(s) == null) {
-					System.err.println("Warning: Option style-options doesn't specify '" 
-							+ s.replaceFirst(STYLE_OPTION_PREF, "") + "' (for " + s + ")");
+		if (style.getUsedTags() != null) {
+			for (String s : style.getUsedTags()) {
+				if (s != null && s.startsWith(STYLE_OPTION_PREF)) {
+					if (styleTags.get(s) == null) {
+						System.err.println("Warning: Option style-options doesn't specify '" 
+								+ s.replaceFirst(STYLE_OPTION_PREF, "") + "' (for " + s + ")");
+					}
 				}
 			}
 		}
