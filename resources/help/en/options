@@ -249,6 +249,18 @@ Style options:
 	directory or zip file containing multiple styles. If --style-file 
 	is not used, it selects one of the built-in styles. 
 
+--style-option
+	Provide a semicolon separated list of tags which can be used in the style.
+	The intended use is to make a single style more flexible, e.g.
+	you may want to use a slightly different set of rules for a map of
+	a whole continent. The tags given will be prefixed with "mkgmap:option:".
+	If no value is provided the default "true" is used.  
+	This option allows to use rules like
+	mkgmap:option:light=true & landuse=farmland {remove landuse}
+	Example: -- style-option=light;routing=car
+	will add the tags mkgmap:option:light=true and mkgmap:option:routing=car
+	to each element before style processing happens. 
+
 --list-styles
 	List the available styles. If this option is preceded by a style-file
 	option then it lists the styles available within that file.

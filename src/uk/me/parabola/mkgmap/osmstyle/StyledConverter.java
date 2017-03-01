@@ -16,9 +16,7 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
-import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 import java.util.ArrayList;
-
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
@@ -29,8 +27,10 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 
+import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -69,6 +69,7 @@ import uk.me.parabola.mkgmap.reader.osm.RestrictionRelation;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.TagDict;
+import uk.me.parabola.mkgmap.reader.osm.Tags;
 import uk.me.parabola.mkgmap.reader.osm.TypeResult;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.util.EnhancedProperties;
@@ -144,7 +145,8 @@ public class StyledConverter implements OsmConverter {
 	private final boolean linkPOIsToWays;
 	private final boolean mergeRoads;
 	private final boolean routable;
-	
+	private final Tags styleOptionTags;
+	private final static String STYLE_OPTION_PREF = "mkgmap:option:";
 
 	private LineAdder lineAdder = new LineAdder() {
 		public void add(MapLine element) {
@@ -211,8 +213,47 @@ public class StyledConverter implements OsmConverter {
 		// undocumented option - usually used for debugging only
 		mergeRoads = props.getProperty("no-mergeroads", false) == false;
 		routable = props.containsKey("route");
-		
+		String styleOption= props.getProperty("style-option",null);
+		styleOptionTags = parseStyleOption(styleOption);
 	}
+
+	/**
+	 * Handle style option parameter. Create tags which are added to each element
+	 * before style processing starts. Cross-check usage of the options with the style.
+	 * @param styleOption the user option 
+	 * @return Tags instance created from the option.
+	 */
+	private Tags parseStyleOption(String styleOption) {
+		Tags styleTags = new Tags();
+		if (styleOption != null) {
+			// expected: --style-option=car;farms=more;admin5=10
+			String[] tags = styleOption.split(";");
+			for (String t : tags) {
+				String[] pair = t.split("=");
+				String optionKey = pair[0];
+				String tagKey = STYLE_OPTION_PREF + optionKey;
+				if (!style.getUsedTags().contains(tagKey)) {
+					System.err.println("Warning: Option style-options sets tag not used in style: '" 
+							+ optionKey + "' (gives " + tagKey + ")");
+				} else {
+					String val = (pair.length == 1) ? "true" : pair[1];
+					String old = styleTags.put(tagKey, val);
+					if (old != null)
+						log.error("duplicate tag key", optionKey, "in style option", styleOption);
+				}
+			}
+		}
+		// flag options used in style but not specified in --style-option
+		for (String s : style.getUsedTags()) {
+			if (s != null && s.startsWith(STYLE_OPTION_PREF)) {
+				if (styleTags.get(s) == null) {
+					System.err.println("Warning: Option style-options doesn't specify '" 
+							+ s.replaceFirst(STYLE_OPTION_PREF, "") + "' (for " + s + ")");
+				}
+			}
+		}
+		return styleTags;
+	}	
 
 	/** One type result for ways to avoid recreating one for each way. */ 
 	private final WayTypeResult wayTypeResult = new WayTypeResult();
@@ -453,6 +494,15 @@ public class StyledConverter implements OsmConverter {
 	 * Rules to run before converting the element.
 	 */
 	private void preConvertRules(Element el) {
+		// add tags given with --style-option
+		if (styleOptionTags != null && styleOptionTags.size() > 0) {
+			Iterator<Entry<Short, String>> iter = styleOptionTags.entryShortIterator();
+			while (iter.hasNext()) {
+				Entry<Short, String> tag = iter.next();
+				el.addTag(tag.getKey(), tag.getValue());
+			}
+		}
+		
 		if (nameTagList == null)
 			return;
 
@@ -721,8 +771,7 @@ public class StyledConverter implements OsmConverter {
 			if ("right".equals(driveOn) && numDriveOnRightRoads == 0 && numDriveOnLeftRoads > 0)
 				log.warn("The drive-on-left flag is NOT set used but tile contains only drive-on-left roads");
 		}		
-		if (dol == null)
-			dol = false; // should not happen
+		assert dol != null;
 		return dol;
 	}
 
