@@ -534,6 +534,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	private Collection<Way> loadPrecompTile(InputStream is, String filename) {
 		OsmMapDataSource src = createTileReader(filename);
 		EnhancedProperties props = new EnhancedProperties();
+		props.setProperty("style", "empty"); 
 		src.config(props);
 		log.info("Started loading coastlines from", filename);
 		try{

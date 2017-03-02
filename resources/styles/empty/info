@@ -1,0 +1,8 @@
+summary: Do nothing style
+
+version=1.0
+
+# A longer description of the style.
+description {
+Used when no style processing is needed.
+}
