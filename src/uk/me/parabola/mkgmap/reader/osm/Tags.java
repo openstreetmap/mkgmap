@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.TreeSet;
 
 /**
@@ -180,21 +181,25 @@ public class Tags {
 	public Iterator<Map.Entry<String, String>> entryIterator() {
 		return new Iterator<Map.Entry<String, String>>() {
 			private int pos;
-			
+			private int done;
+
 			public boolean hasNext() {
-				for (int i = pos; i < capacity; i++) {
-					if (values[i] != null) {
-						pos = i;
-						return true;
-					}
-				}
-				return false;
+				return done < size;
 			}
 
 			public Map.Entry<String, String> next() {
+				if (done >= size)
+					throw new NoSuchElementException();
+
+				for (; pos < capacity; pos++) {
+					if (values[pos] != null) {
+						break;
+					}
+				}
 				Map.Entry<String, String> entry = new AbstractMap.SimpleEntry<>(tagDict.get(keys[pos]), values[pos]);
 
 				pos++;
+				done++;
 				return entry;
 			}
 
@@ -207,21 +212,26 @@ public class Tags {
 	public Iterator<Map.Entry<Short, String>> entryShortIterator() {
 		return new Iterator<Map.Entry<Short, String>>() {
 			private int pos;
-			
+			private int done;
+
 			public boolean hasNext() {
-				for (int i = pos; i < capacity; i++) {
-					if (values[i] != null) {
-						pos = i;
-						return true;
-					}
-				}
-				return false;
+				return done < size;
 			}
 
 			public Map.Entry<Short, String> next() {
+				if (done >= size)
+					throw new NoSuchElementException();
+
+				for (; pos < capacity; pos++) {
+					if (values[pos] != null) {
+						break;
+					}
+				}
+
 				Map.Entry<Short, String> entry = new AbstractMap.SimpleEntry<>(keys[pos], values[pos]);
 
 				pos++;
+				done++;
 				return entry;
 			}
 

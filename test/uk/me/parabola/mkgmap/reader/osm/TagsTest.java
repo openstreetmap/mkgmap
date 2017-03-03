@@ -17,6 +17,8 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.Arrays;
+import java.util.NoSuchElementException;
+
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -103,6 +105,22 @@ public class TagsTest {
 		for (String[] ts : SMALL_SET)
 			tags.put(ts[0], ts[1]);
 		return tags;
+	}
+	/**
+	 * Test removing tags.
+	 */
+	@Test(expected = NoSuchElementException.class)
+	public void testIteratorNoNext() {
+		Tags tags = new Tags();
+		tags.entryIterator().next();
+	}
+
+	@Test
+	public void testIteratorNextWithoutHasNext() {
+		Tags tags = new Tags();
+		tags.put("test", "true");
+		assertEquals(1, tags.size());
+		assertEquals("true", tags.entryIterator().next().getValue());
 	}
 
 }
