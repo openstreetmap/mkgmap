@@ -112,7 +112,8 @@ is used to assign the country location.
 | +mkgmap:admin_level9+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=9+ the element is located in | 'bounds'    
 | +mkgmap:admin_level10+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=10+ the element is located in | 'bounds'    
 | +mkgmap:admin_level11+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=11+ the element is located in | 'bounds'    
-| +mkgmap:postcode+  | Name of the postal code relation/polygon the element is located in | 'bounds'    
+| +mkgmap:postcode+  | Name of the postal code relation/polygon the element is located in | 'bounds'
+| +mkgmap:residential+  | Name of the residential relation/polygon the element is located in or 'yes' if unnamed        
 | +mkgmap:area2poi+  | The value is +true+ if the POI is derived from a polygon | 'add-pois-to-areas'    
 | +mkgmap:line2poi+  | The value is +true+ if the POI is derived from a line | 'add-pois-to-lines'    
 | +mkgmap:line2poitype+  | The tag is set for each POI generated from a line. Possible values are: +start+, +end+, +mid+, +inner+. | 'add-pois-to-lines'    
