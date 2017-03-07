@@ -1351,13 +1351,13 @@ public class BoundaryQuadTree {
 			int adminLevel1 = i1.getAdmLevel();
 			int adminLevel2 = i2.getAdmLevel();
 
-			if (i1.getName() == null || i1.getName() == "?") {
+			if (i1.getName() == null || "?".equals(i1.getName())) {
 				// admin_level tag is set but no valid name available
-				adminLevel1= BoundaryLocationPreparer.UNSET_ADMIN_LEVEL;
+				adminLevel1 = BoundaryLocationPreparer.UNSET_ADMIN_LEVEL;
 			}
-			if (i2.getName() == null || i2.getName() == "?") {
+			if (i2.getName() == null || "?".equals(i2.getName())) {
 				// admin_level tag is set but no valid name available
-				adminLevel2= BoundaryLocationPreparer.UNSET_ADMIN_LEVEL;
+				adminLevel2 = BoundaryLocationPreparer.UNSET_ADMIN_LEVEL;
 			}
 			
 			if (adminLevel1 > adminLevel2)
@@ -1365,13 +1365,6 @@ public class BoundaryQuadTree {
 			if (adminLevel1 < adminLevel2)
 				return -1;
 			
-			if (i1.getAdmLevel() == 2){
-				// prefer countries that are known by the Locator
-				if (i1.isISOName() == true && i2.isISOName() == false)
-					return 1;
-				if (i1.isISOName() == false && i2.isISOName() == true)
-					return -1;
-			}
 			boolean post1set = i1.getZip() != null;
 			boolean post2set = i2.getZip() != null;
 			if (post1set && !post2set)

@@ -67,13 +67,11 @@ public class BoundaryLocationPreparer {
 	public BoundaryLocationInfo parseTags(Tags tags){
 		String zip = getZip(tags);
 		int admLevel = getAdminLevel(tags);
-		boolean isISO = false;
 		String name = getName(tags);
 		if (locator != null){
 			if (admLevel == 2) {
 				String isoCode = locator.addCountry(tags);
 				if (isoCode != null) {
-					isISO = true;
 					name = isoCode;
 				} else {
 					log.warn("Country name",name,"not in locator config. Country may not be assigned correctly.");
@@ -81,7 +79,7 @@ public class BoundaryLocationPreparer {
 				log.debug("Coded:",name);
 			}
 		}
-		return new BoundaryLocationInfo(admLevel, name, zip, isISO);
+		return new BoundaryLocationInfo(admLevel, name, zip);
 	}
 
 	/** 
