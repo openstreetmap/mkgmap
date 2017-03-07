@@ -13,8 +13,8 @@
 package uk.me.parabola.mkgmap.reader.osm.boundary;
 
 import java.awt.geom.Area;
-import java.util.Map.Entry;
 
+import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.Tags;
 
 public class Boundary  {
@@ -29,13 +29,10 @@ public class Boundary  {
 		this.id = id;
 	}
 
-	public Boundary(Area area, Iterable<Entry<String, String>> tags, String id) {
+	public Boundary(Area area, Element el, String id) {
 		this.area = new Area(area);
 		this.id = id;
-		this.tags = new Tags();
-		for (Entry<String, String> tag : tags) {
-			this.tags.put(tag.getKey(), tag.getValue());
-		}
+		this.tags = el.getCopyOfTags();
 	}
 
 	public String getId() {

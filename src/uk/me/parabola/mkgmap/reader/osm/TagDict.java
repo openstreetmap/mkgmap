@@ -14,6 +14,8 @@ package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 import uk.me.parabola.imgfmt.MapFailedException;
 
 
@@ -87,5 +89,20 @@ public class TagDict{
 	 */
 	public int size(){
 		return list.size();
+	}
+	
+	/**
+	 * Return list of compiled tag keys for given array of key strings.
+	 * @param keys the keys
+	 * @return a ShortArrayList which might be empty but will not be null.
+	 */
+	public static ShortArrayList compileTags(String ...keys) {
+		ShortArrayList compiled = new ShortArrayList();
+		if (keys != null) {
+			for (String key : keys) {
+				compiled.add(getInstance().xlate(key));
+			}
+		}
+		return compiled;
 	}
 }

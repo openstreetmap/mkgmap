@@ -25,7 +25,7 @@ import java.util.Set;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.build.LocatorUtil;
+import uk.me.parabola.mkgmap.osmstyle.NameFinder;
 import uk.me.parabola.util.EnhancedProperties;
 
 /**
@@ -68,7 +68,7 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 	
 	private boolean poisToAreas = false;
 	private boolean poisToLines = false;
-	private List<String> nameTags;
+	private NameFinder nameFinder;
 	
 	/** Name of the bool tag that is set to true if a POI is created from an area */
 	public static final short AREA2POI_TAG = TagDict.getInstance().xlate("mkgmap:area2poi");
@@ -83,7 +83,7 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 			log.info("Disable Areas2POIHook because add-pois-to-areas and add-pois-to-lines option is not set.");
 			return false;
 		}
-		nameTags = LocatorUtil.getNameTags(props);
+		nameFinder = new NameFinder(props);
 
 		this.poiPlacementTags = getPoiPlacementTags(props);
 		
@@ -157,10 +157,10 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 	}
 	
 	public void end() {
-		log.info("Areas2POIHook started");
+		log.info(getClass().getSimpleName(), "started");
 		addPOIsToWays();
 		addPOIsToMPs();
-		log.info("Areas2POIHook finished");
+		log.info(getClass().getSimpleName(), "finished");
 	}
 	
 	private int getPlacementOrder(Element elem) {
@@ -340,24 +340,6 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 		
 	}
 
-	/**
-	 * Retrieves the name of the given element based on the name-tag-list option.
-	 * @param e an OSM element
-	 * @return the name or <code>null</code> if the element has no name
-	 */
-	private String getName(Element e) {
-//		if (e.getName()!= null) {
-//			return e.getName();
-//		}
-		for (String nameTag : nameTags) {
-			String nameTagVal = e.getTag(nameTag);
-			if (nameTagVal != null) {
-				return nameTagVal;
-			}
-		}
-		return null;
-	}
-
 	private void addPOIsToMPs() {
 		int mps2POI = 0;
 		for (Relation r : saver.getRelations().values()) {
@@ -368,7 +350,7 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 			}
 			Node admin_centre = null;
 			Node labelPOI = null;
-			String relName = getName(r);
+			String relName = nameFinder.getName(r);
 			if (relName != null){
 				for (Entry<String, Element> pair : r.getElements()){
 					String role = pair.getKey();
@@ -378,7 +360,7 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 							if ("boundary".equals(r.getTag("type")) && "administrative".equals(r.getTag("boundary"))){
 								// boundary relations may have a node with role admin_centre, if yes, use the 
 								// location of it
-								String pName = getName(el);
+								String pName = nameFinder.getName(el);
 								if (relName.equals(pName)){
 									admin_centre = (Node) el;
 									if (log.isDebugEnabled())
@@ -386,7 +368,7 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 								}
 							}
 						} else if ("label".equals(role)){
-							String label = getName(el);
+							String label = nameFinder.getName(el);
 							if (relName.equals(label)){
 								labelPOI = (Node) el;
 								log.debug("using label node as location for POI for rel",r.getId(),relName,"at",((Node) el).getLocation().toDegreeString());

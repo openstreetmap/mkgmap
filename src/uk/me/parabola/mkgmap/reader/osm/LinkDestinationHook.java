@@ -18,7 +18,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
@@ -31,7 +30,7 @@ import java.util.Set;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.build.LocatorUtil;
+import uk.me.parabola.mkgmap.osmstyle.NameFinder;
 import uk.me.parabola.mkgmap.osmstyle.function.LengthFunction;
 import uk.me.parabola.util.EnhancedProperties;
 import uk.me.parabola.util.MultiHashMap;
@@ -62,7 +61,7 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 	/** Map way ids to its restriction relations so that the relations can easily be updated when the way is split. */
 	private MultiHashMap<Long, RestrictionRelation> restrictions = new MultiHashMap<>();
 	
-	private List<String> nameTags;
+	private NameFinder nameFinder;
 
 	/** Maps which nodes contains to which ways */ 
 	private IdentityHashMap<Coord, Set<Way>> wayNodes = new IdentityHashMap<Coord, Set<Way>>();
@@ -72,7 +71,7 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 	
 	public boolean init(ElementSaver saver, EnhancedProperties props) {
 		this.saver = saver;
-		nameTags = LocatorUtil.getNameTags(props);
+		nameFinder = new NameFinder(props);
 		processDestinations = props.containsKey("process-destination");
 		processExits = props.containsKey("process-exits");
 		return processDestinations || processExits;
@@ -212,24 +211,6 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 		// second remove them from the way
 		w.getPoints().subList(from, to).clear();
 
-	}
-	
-	/**
-	 * Retrieves the name of the given element based on the name-tag-list option.
-	 * @param e an OSM element
-	 * @return the name or <code>null</code> if the element has no name
-	 */
-	private String getName(Element e) {
-		if (e.getName()!= null) {
-			return e.getName();
-		}
-		for (String nameTag : nameTags) {
-			String nameTagVal = e.getTag(nameTag);
-			if (nameTagVal != null) {
-				return nameTagVal;
-			}
-		}
-		return null;
 	}
 	
 	/**
@@ -410,7 +391,7 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 			return false;
 		}
 		return node.getTag("ref") != null || 
-				(getName(node) != null) || 
+				(nameFinder.getName(node) != null) || 
 				node.getTag("exit_to") != null;
 	}
 	
@@ -629,8 +610,8 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 										hintWay.addTag("mkgmap:exit_hint_exit_to", exitNode.getTag("exit_to"));
 									}
 								}
-								if (getName(exitNode) != null){
-									hintWay.addTag("mkgmap:exit_hint_name", getName(exitNode));
+								if (nameFinder.getName(exitNode) != null){
+									hintWay.addTag("mkgmap:exit_hint_name", nameFinder.getName(exitNode));
 								}
 								
 								if (log.isInfoEnabled())
@@ -755,7 +736,7 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 		destinationLinkWays = null;
 		linkTypes = null;
 		saver = null;
-		nameTags = null;
+		nameFinder = null;
 	}
 
 	public Set<String> getUsedTags() {

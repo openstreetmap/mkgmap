@@ -12,14 +12,14 @@
  */
 package uk.me.parabola.mkgmap.reader.osm.boundary;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Pattern;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.build.Locator;
-import uk.me.parabola.mkgmap.build.LocatorUtil;
+import uk.me.parabola.mkgmap.osmstyle.NameFinder;
+import uk.me.parabola.mkgmap.reader.osm.TagDict;
 import uk.me.parabola.mkgmap.reader.osm.Tags;
 import uk.me.parabola.mkgmap.reader.osm.boundary.Boundary;
 import uk.me.parabola.util.EnhancedProperties;
@@ -35,28 +35,17 @@ import uk.me.parabola.util.EnhancedProperties;
 public class BoundaryLocationPreparer {
 	private static final Logger log = Logger.getLogger(BoundaryLocationPreparer.class);
 
-	private Locator locator;
+	private final Locator locator;
 	private static final Pattern COMMA_OR_SEMICOLON_PATTERN = Pattern.compile("[,;]+");
-	// tag keys for name resolution
-	private final List<String> nameList;
-	
+	private final NameFinder nameFinder;
 
 	/**
 	 * Create a preparer. 
 	 * @param props The program properties or null. 
 	 */
 	public BoundaryLocationPreparer(EnhancedProperties props) {
-		if (props == null){
-			this.locator = null;
-			this.nameList = new ArrayList<String>();
-			for (String name: BoundaryLocationPreparer.LEVEL2_NAMES){
-				this.nameList.add(name);
-			}
-		}
-		else{
-			this.locator = new Locator(props);
-			this.nameList = LocatorUtil.getNameTags(props);
-		}
+		locator = (props != null) ? new Locator(props) : null;
+		nameFinder = new NameFinder(props);
 	}
 
 	/**
@@ -68,16 +57,14 @@ public class BoundaryLocationPreparer {
 		String zip = getZip(tags);
 		int admLevel = getAdminLevel(tags);
 		String name = getName(tags);
-		if (locator != null){
-			if (admLevel == 2) {
-				String isoCode = locator.addCountry(tags);
-				if (isoCode != null) {
-					name = isoCode;
-				} else {
-					log.warn("Country name",name,"not in locator config. Country may not be assigned correctly.");
-				}
-				log.debug("Coded:",name);
+		if (admLevel == 2 && locator != null) {
+			String isoCode = locator.addCountry(tags);
+			if (isoCode != null) {
+				name = isoCode;
+			} else {
+				log.warn("Country name",name,"not in locator config. Country may not be assigned correctly.");
 			}
+			log.debug("Coded:",name);
 		}
 		return new BoundaryLocationInfo(admLevel, name, zip);
 	}
@@ -98,61 +85,45 @@ public class BoundaryLocationPreparer {
 		return preparedLocationInfo;
 	}
 	
-	
-	/** 
-	 * These tags are used to retrieve the name of admin_level=2 boundaries. They need to
-	 * be handled special because their name is changed to the 3 letter ISO code using
-	 * the Locator class and the LocatorConfig.xml file. 
-	 */
-	private static final String[] LEVEL2_NAMES = new String[]{"name","name:en","int_name"};
-	
 	/**
 	 * Try to extract the name of the boundary. 
 	 * @param tags the boundary tags
 	 * @return a name or null if no usable name tag was found
 	 */
 	private String getName(Tags tags) {
-		if ("2".equals(tags.get("admin_level"))) {
-			for (String enNameTag : LEVEL2_NAMES)
-			{
-				String nameTagValue = tags.get(enNameTag);
-				if (nameTagValue == null) {
-					continue;
+		if ("2".equals(tags.get(admin_levelTagKey))) {
+			// admin_level=2 boundaries. They need to be handled special because their name is changed 
+			// to the 3 letter ISO code using the Locator class and the LocatorConfig.xml file. 
+			for (short nameTagKey : Locator.PREFERRED_NAME_TAG_KEYS) {
+				String nameTagValue = tags.get(nameTagKey);
+				if (nameTagValue != null) {
+					return getFirstPart(nameTagValue);
 				}
-
-				String[] nameParts = COMMA_OR_SEMICOLON_PATTERN.split(nameTagValue);
-				if (nameParts.length == 0) {
-					continue;
-				}
-				return nameParts[0].trim().intern();
 			}
 		}
-		
-		for (String nameTag : nameList) {
-			String nameTagValue = tags.get(nameTag);
-			if (nameTagValue == null) {
-				continue;
-			}
-
-			String[] nameParts = COMMA_OR_SEMICOLON_PATTERN.split(nameTagValue);
-			if (nameParts.length == 0) {
-				continue;
-			}
-			return nameParts[0].trim().intern();
-		}
-		
+		String name = nameFinder.getName(tags);
+		if (name != null)
+			return getFirstPart(name);
 		return null;
 	}
 
+	private static String getFirstPart(String name) {
+		String[] nameParts = COMMA_OR_SEMICOLON_PATTERN.split(name);
+		return nameParts[0].trim().intern();
+	}
+	
+	private static final short postal_codeTagKey = TagDict.getInstance().xlate("postal_code");
+	private static final short boudaryTagKey = TagDict.getInstance().xlate("boundary");
 	/**
 	 * Try to extract a zip code from the the tags of a boundary. 
 	 * @param tags the boundary tags
 	 * @return null if no zip code was found, else a String that should be a zip code. 
 	 */
 	private String getZip(Tags tags) {
-		String zip = tags.get("postal_code");
+		String zip = tags.get(postal_codeTagKey);
 		if (zip == null) {
-			if ("postal_code".equals(tags.get("boundary"))){
+			if ("postal_code".equals(tags.get(boudaryTagKey))){
+				// unlikely
 				String name = tags.get("name"); 
 				if (name == null) {
 					name = getName(tags);
@@ -169,6 +140,7 @@ public class BoundaryLocationPreparer {
 	}
 
 	public static final int UNSET_ADMIN_LEVEL = 100; // must be higher than real levels
+	private static final short admin_levelTagKey = TagDict.getInstance().xlate("admin_level");
 	/**
 	 * translate the admin_level tag to an integer. 
 	 * @param tags the boundary tags
@@ -176,7 +148,7 @@ public class BoundaryLocationPreparer {
 	 * the conversion failed. 
 	 */
 	private static int getAdminLevel(Tags tags) {
-		String level = tags.get("admin_level");
+		String level = tags.get(admin_levelTagKey);
 		if (level == null) {
 			return UNSET_ADMIN_LEVEL;
 		}

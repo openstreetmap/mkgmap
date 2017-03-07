@@ -16,7 +16,6 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -25,6 +24,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import uk.me.parabola.imgfmt.app.trergn.TREHeader;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.osmstyle.NameFinder;
 import uk.me.parabola.mkgmap.reader.osm.Tags;
 
 import org.w3c.dom.Document;
@@ -287,10 +287,10 @@ public class LocatorConfig {
 	 * name tags. The first available value of the tags in the nameTags list is returned.
 	 * 
 	 * @param isoCode the three letter ISO code
-	 * @param nameTags the list of name tags 
+	 * @param nameFinder the list of name tags 
 	 * @return the full country name (<code>null</code> if unknown)
 	 */
-	public synchronized String getCountryName(String isoCode, List<String> nameTags) {
+	public synchronized String getCountryName(String isoCode, NameFinder nameFinder) {
 		Tags countryTags = countryTagMap.get(isoCode);
 		if (countryTags==null) {
 			// no tags for this country available
@@ -298,16 +298,7 @@ public class LocatorConfig {
 			return defaultCountryNames.get(isoCode);
 		}
 		
-		// search for the first available tag of the nameTags list
-		for (String nameTag : nameTags) {
-			String name = countryTags.get(nameTag);
-			if (name != null) {
-				return name;
-			}
-		}
-		
-		// last try: just the simple "name" tag
-		return countryTags.get("name");
+		return nameFinder.getName(countryTags);
 	}
 
 	public synchronized int getRegionOffset(String iso)

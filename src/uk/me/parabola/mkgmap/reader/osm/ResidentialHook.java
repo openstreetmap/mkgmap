@@ -14,12 +14,13 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.build.LocatorUtil;
+import uk.me.parabola.mkgmap.osmstyle.NameFinder;
 import uk.me.parabola.mkgmap.reader.osm.boundary.Boundary;
 import uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryQuadTree;
 import uk.me.parabola.util.EnhancedProperties;
@@ -37,13 +38,13 @@ public class ResidentialHook extends OsmReadingHooksAdaptor {
 	private BoundaryQuadTree residentialBoundaries;
 	
 	private ElementSaver saver;
-	private EnhancedProperties props;
+	private NameFinder nameFinder;
 
 	public boolean init(ElementSaver saver, EnhancedProperties props) {
-		this.props = props;
-		this.saver = saver;
 		if (props.getProperty("residential-hook", true) == false)
 			return false; 
+		this.nameFinder = new NameFinder(props);
+		this.saver = saver;
 		return true;
 	}
 
@@ -82,16 +83,6 @@ public class ResidentialHook extends OsmReadingHooksAdaptor {
 	private static final short fakeResidentialKey = TagDict.getInstance().xlate("mkgmap:admin_level11");
 	
 	private BoundaryQuadTree buildResidentialBoundaryTree() {
-		List<String> nameTags = LocatorUtil.getNameTags(props);
-		ShortArrayList nameTagList;
-		if (nameTags != null){
-			nameTagList = new ShortArrayList();
-			for(String n : nameTags)
-				nameTagList.add(TagDict.getInstance().xlate(n));
-		} else 
-			nameTagList = null;
-		
-		
 		List<Boundary> residentials = new ArrayList<>();
 		Tags tags = new Tags();
 		tags.put("admin_level", "11");
@@ -100,14 +91,14 @@ public class ResidentialHook extends OsmReadingHooksAdaptor {
 			if (way.hasIdenticalEndPoints() && "residential".equals(way.getTag(landuseTagKey))) {
 				if ("polyline".equals(way.getTag(styleFilterTagKey)))
 					continue;
-				String name = getNameTag(nameTagList, way);
+				String name = nameFinder.getName(way);
 				tags.put(nameTagKey, name == null ? "yes": name);
 				Boundary b = new Boundary(Java2DConverter.createArea(way.getPoints()), tags, "w"+way.getId());
 				residentials.add(b);
 			}
 		}
 		
-		return new BoundaryQuadTree(saver.getBoundingBox(), residentials, props);
+		return new BoundaryQuadTree(saver.getBoundingBox(), residentials, null);
 	}
 
 	/**
@@ -135,25 +126,13 @@ public class ResidentialHook extends OsmReadingHooksAdaptor {
 		}
 	}
 	
-	/**
-	 * Set name tag according to name-tag-list.
-	 * @param nameTagList
-	 * @param el
-	 * @return 
-	 */
-	private String getNameTag(ShortArrayList nameTagList, Element el) {
-		if (nameTagList == null)
-			return el.getTag(nameTagKey);
-
-		for (short tagKey : nameTagList) {
-			String val = el.getTag(tagKey);
-			if (val != null) {
-				return val;
-			}
-		}
-		return null;
+	@Override
+	public Set<String> getUsedTags() {
+		Set<String> used = new HashSet<>();
+		used.add("landuse");
+		used.add("name");
+		return used;
 	}
-
 }
 
 

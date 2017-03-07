@@ -43,7 +43,6 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Option;
 import uk.me.parabola.mkgmap.OptionProcessor;
 import uk.me.parabola.mkgmap.Options;
-import uk.me.parabola.mkgmap.build.LocatorUtil;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LineAdder;
 import uk.me.parabola.mkgmap.general.MapLine;
@@ -97,9 +96,6 @@ public class StyleImpl implements Style {
 	// Set if this style is based on another one.
 	private final List<StyleImpl> baseStyles = new ArrayList<StyleImpl>();
 
-	// A list of tag names to be used as the element name
-	private List<String> nameTagList;
-
 	// Options from the option file that are used outside this file.
 	private final Map<String, String> generalOptions = new HashMap<String, String>();
 
@@ -139,7 +135,6 @@ public class StyleImpl implements Style {
 		location = loc;
 		fileLoader = StyleFileLoader.createStyleLoader(loc, name);
 		this.performChecks = performChecks;
-		nameTagList = LocatorUtil.getNameTags(props);
 		
 		// There must be a version file, if not then we don't create the style.
 		checkVersion();
@@ -231,10 +226,6 @@ public class StyleImpl implements Style {
 		String s = getOption("extra-used-tags");
 		if (s != null && s.trim().isEmpty() == false)
 			set.addAll(Arrays.asList(COMMA_OR_SPACE_PATTERN.split(s)));
-
-		// These tags are passed on the command line and so must be added
-		if (nameTagList != null)
-			set.addAll(nameTagList);
 
 		// There are a lot of tags that are used within mkgmap that 
 		InputStream is = this.getClass().getResourceAsStream("/styles/builtin-tag-list");

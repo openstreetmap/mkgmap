@@ -53,7 +53,7 @@ public class BoundaryRelation extends MultiPolygonRelation {
 			if (outerResultArea == null) {
 				return null;
 			}
-			boundary = new Boundary(outerResultArea, this.getTagEntryIterator(),"r"+this.getId());
+			boundary = new Boundary(outerResultArea, this, "r"+this.getId());
 			outerResultArea = null;
 		}
 		return boundary;
