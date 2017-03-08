@@ -70,8 +70,10 @@ public class ShapeMergeFilter{
 			}
 			usableShapes.add(shape);
 		}
-		if (usableShapes.size() < 2)
+		if (usableShapes.size() < 2) {
+			mergedShapes.addAll(usableShapes);
 			return mergedShapes;
+		}
 		
 		Comparator<MapShape> comparator = new MapShapeComparator();
 		usableShapes.sort(comparator);
