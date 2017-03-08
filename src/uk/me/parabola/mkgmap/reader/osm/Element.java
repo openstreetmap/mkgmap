@@ -33,8 +33,15 @@ public abstract class Element {
 	private long id;
 	private long originalId;
 
+	/**
+	 * returns a copy of the tags or a new instance if the element has no tags
+	 */
+	public Tags getCopyOfTags() {
+		return tags == null ? new Tags() : tags.copy(); 
+	}
+	
 	public int getTagCount() {
-		return (tags == null ? 0 : tags.size());
+		return tags == null ? 0 : tags.size();
 	}
 	
 	/**

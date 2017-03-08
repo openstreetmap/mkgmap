@@ -18,8 +18,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.osmstyle.NameFinder;
+import uk.me.parabola.mkgmap.reader.osm.TagDict;
 import uk.me.parabola.mkgmap.reader.osm.Tags;
 import uk.me.parabola.util.EnhancedProperties;
 import uk.me.parabola.util.KdTree;
@@ -34,8 +37,7 @@ public class Locator {
 	private final KdTree<MapPoint> cityFinder = new KdTree<>();
 	private final List<MapPoint> placesMap  =  new ArrayList<MapPoint>();
 
-	/** Contains the tags defined by the option name-tag-list */
-	private final List<String> nameTags;
+	private final NameFinder nameFinder;
 
 	private final LocatorConfig locConfig = LocatorConfig.get();
 
@@ -48,7 +50,7 @@ public class Locator {
 	}
 	
 	public Locator(EnhancedProperties props) {
-		this.nameTags = LocatorUtil.getNameTags(props);
+		this.nameFinder = new NameFinder(props);
 		this.locationAutofill = new HashSet<String>(LocatorUtil.parseAutofillOption(props));
 	}
 	
@@ -97,10 +99,9 @@ public class Locator {
 		if (country == null) {
 			return null;
 		}
-		
 		String iso = locConfig.getCountryISOCode(country);
 		if (iso != null) {
-			String normedCountryName = locConfig.getCountryName(iso, nameTags);
+			String normedCountryName = locConfig.getCountryName(iso, nameFinder);
 			if (normedCountryName != null) {
 				log.debug("Country:",country,"ISO:",iso,"Norm:",normedCountryName);
 				return normedCountryName;
@@ -132,19 +133,17 @@ public class Locator {
 		}
 	}
 	
-	private final static String[] PREFERRED_NAME_TAGS = {"name","name:en","int_name"};
+	public final static ShortArrayList PREFERRED_NAME_TAG_KEYS = TagDict.compileTags("name","name:en","int_name");
 	
-	public String getCountryISOCode(Tags countryTags) {
-		for (String nameTag : PREFERRED_NAME_TAGS) {
-			String nameValue = countryTags.get(nameTag);
-			String isoCode = getCountryISOCode(nameValue);
+	public String getCountryISOCode(Tags tags) {
+		for (short nameTagKey : PREFERRED_NAME_TAG_KEYS) {
+			String isoCode = getCountryISOCode(tags.get(nameTagKey));
 			if (isoCode != null) {
 				return isoCode;
 			}
 		}
 
-		for (String countryStr : countryTags.getTagsWithPrefix("name:", false)
-				.values()) {
+		for (String countryStr : tags.getTagsWithPrefix("name:", false).values()) {
 			String isoCode = getCountryISOCode(countryStr);
 			if (isoCode != null) {
 				return isoCode;

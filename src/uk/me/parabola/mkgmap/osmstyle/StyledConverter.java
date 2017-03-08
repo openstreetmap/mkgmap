@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 
-import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -43,7 +42,6 @@ import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.imgfmt.app.trergn.MapObject;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.build.LocatorConfig;
-import uk.me.parabola.mkgmap.build.LocatorUtil;
 import uk.me.parabola.mkgmap.filters.LineSizeSplitterFilter;
 import uk.me.parabola.mkgmap.general.AreaClipper;
 import uk.me.parabola.mkgmap.general.Clipper;
@@ -86,7 +84,7 @@ public class StyledConverter implements OsmConverter {
 	private static final Logger log = Logger.getLogger(StyledConverter.class);
 	private static final Logger roadLog = Logger.getLogger(StyledConverter.class.getName()+".roads");
 
-	private final ShortArrayList nameTagList;
+	private final NameFinder nameFinder; 
 
 	private final MapCollector collector;
 
@@ -161,13 +159,7 @@ public class StyledConverter implements OsmConverter {
 	public StyledConverter(Style style, MapCollector collector, EnhancedProperties props) {
 		this.collector = collector;
 
-		List<String> nameTags = LocatorUtil.getNameTags(props);
-		if (nameTags != null){
-			nameTagList = new ShortArrayList();
-			for(String n : nameTags)
-				nameTagList.add(TagDict.getInstance().xlate(n));
-		} else 
-			nameTagList = null;
+		nameFinder = new NameFinder(props);
 		this.style = style;
 		pointMap = new HashMap<>();
 		wayRules = style.getWayRules();
@@ -491,7 +483,6 @@ public class StyledConverter implements OsmConverter {
 	}
 	
 
-	private static final short nameTagKey = TagDict.getInstance().xlate("name");  
 	/**
 	 * Rules to run before converting the element.
 	 */
@@ -505,19 +496,7 @@ public class StyledConverter implements OsmConverter {
 			}
 		}
 		
-		if (nameTagList == null)
-			return;
-
-		for (short tagKey : nameTagList) {
-			String val = el.getTag(tagKey);
-			if (val != null) {
-				if (tagKey != nameTagKey) {
-					// add or replace name 
-					el.addTag(nameTagKey, val);
-				}
-				break;
-			}
-		}
+		nameFinder.setNameWithNameTagList(el);
 	}
 
 	/**

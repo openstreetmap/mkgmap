@@ -42,6 +42,7 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Version;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
+import uk.me.parabola.mkgmap.osmstyle.NameFinder;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
 import uk.me.parabola.mkgmap.osmstyle.StyledConverter;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
@@ -69,6 +70,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 			new HighwayHooks(),
 			new LocationHook(),
 			new POIGeneratorHook(),
+			new ResidentialHook(),
 			new HousenumberHooks(),
 	};
 	protected OsmConverter converter;
@@ -290,6 +292,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 		setStyle(style);
 
 		usedTags.addAll(style.getUsedTags());
+		usedTags.addAll(NameFinder.getNameTags(props));
 		converter = new StyledConverter(style, mapper, props);
 	}
 
