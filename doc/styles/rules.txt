@@ -827,6 +827,41 @@ will result in
 Actions in the finalize section are not persistent in terms of the +continue+ or
 +continue with_actions+ statement
 
+== Style syntax extension if then else ==
+
+To avoid the repition of expressions you can use the following syntax: 
+if (<<Tag_tests,tests>>) then 
+  rule(s) 
+end
+or 
+if (<<Tag_tests,tests>>) then 
+  rule(s) 
+else 
+  rules(s) 
+end
+
+So, instead of 
+[source]
+----
+boundary=administrative & admin_level<3 [0x1e resolution 12]
+boundary=administrative & admin_level<5 [0x1d resolution 19]
+boundary=administrative & admin_level<7 [0x1c resolution 21]
+boundary=administrative & admin_level<9 [0x1c resolution 22] 
+----
+you may write
+[source]
+----
+if (boundary=administrative) then
+	admin_level<3 [0x1e resolution 12]
+	admin_level<5 [0x1d resolution 19]
+	admin_level<7 [0x1c resolution 21]
+	admin_level<9 [0x1c resolution 22]
+end 
+----
+
+If statements may also be nested and you can also use them in combination
+with the include statement. 
+
 == Troubleshooting ==
 
 For each node/way/relation, mkgmap goes through the tags exactly once in
