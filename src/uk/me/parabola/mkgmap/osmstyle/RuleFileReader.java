@@ -127,10 +127,10 @@ public class RuleFileReader {
 			if (scanner.isEndOfFile())
 				break;
 
-			Op expr = expressionReader.readConditions();
+			Op expr = expressionReader.readConditions(ifStack);
 			ActionList actionList = actionReader.readActions();
 			
-			expr = condExpr(expr, actionList);
+			checkIfStack(actionList);
 
 			// If there is an action list, then we don't need a type
 			GType type = null;
@@ -259,23 +259,23 @@ public class RuleFileReader {
 		return true;
 	}
 
-	private Op condExpr(Op expr, ActionList actionList) {
-		Op result = expr;
-
+	/**
+	 * Check if one of the actions in the actionList would change the result of a previously read if expression.
+	 * If so, use the alternative expression with the generated tag.
+	 * @param actionList
+	 */
+	private void checkIfStack(ActionList actionList) {
+		if (actionList == null)
+			return;
 		for (Op[] ops : ifStack) {
-			AndOp and = new AndOp();
-			and.setFirst(result);
-			and.setSecond(ops[0]);
-			if (actionList != null && ops[0] != ops[1]) {
+			if (ops[0] != ops[1]) {
 				// check if this action can change the result of the initial if expression 
 				if (possiblyChanged(ops[0], actionList)) {
 					// the result may be changed, use the generated tag for all further rules in this if / else block
 					ops[0] = ops[1];
 				} 
 			}
-			result = and;
 		}
-		return result;
 	}
 
 	/**
