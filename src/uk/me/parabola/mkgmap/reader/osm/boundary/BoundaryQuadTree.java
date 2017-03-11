@@ -87,10 +87,13 @@ public class BoundaryQuadTree {
 		"mkgmap:admin_level9",
 		"mkgmap:admin_level10",
 		"mkgmap:admin_level11",
-		"mkgmap:postcode"
+		"mkgmap:postcode",
+		"mkgmap:other" // for use in residential hook
 	};
 	// 11: the position of "mkgmap:postcode" in the above array
 	public final static short POSTCODE_ONLY = 1 << 11;   
+	// 12: the position of "mkgmap:other" in the above array
+	public final static short NAME_ONLY = 1 << 12;   
 	
 	/**
 	 * Create a quadtree with the data in an open stream. 
@@ -1127,6 +1130,9 @@ public class BoundaryQuadTree {
 			if (bInfo.getAdmLevel() != BoundaryLocationPreparer.UNSET_ADMIN_LEVEL){
 				locTags.put(BoundaryQuadTree.mkgmapTagsArray[bInfo.getAdmLevel()-1], bInfo.getName());
 			}
+			if (locTags.size() == 0 && bInfo.getName() != null) {
+				locTags.put("mkgmap:other", bInfo.getName());
+			}
 			if (locationDataSrc != null && locationDataSrc.isEmpty() == false){
 				// the common format of refInfo is 
 				// 2:r19884;4:r20039;6:r998818
@@ -1296,8 +1302,9 @@ public class BoundaryQuadTree {
 							errMsg = "different " + zipKey;
 							break;
 						}
-					}
-					else{
+					} else if (testMask == NAME_ONLY) {
+						break; // happens with ResidentialHook, silently ignore it
+					} else {
 						errAdmLevel = k+1;
 						errMsg = new String ("same admin_level (" + errAdmLevel + ")");
 						break;
