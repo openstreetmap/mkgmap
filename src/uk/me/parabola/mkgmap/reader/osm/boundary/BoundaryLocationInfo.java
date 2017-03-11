@@ -26,8 +26,8 @@ public class BoundaryLocationInfo  {
 
 	BoundaryLocationInfo (int admLevel, String name, String zip){
 		this.admLevel = admLevel;
-		if (admLevel > 0 && name == null)
-			this.name = "not_set"; // TODO: review
+		if (name == null && admLevel != BoundaryLocationPreparer.UNSET_ADMIN_LEVEL)
+			this.name = "?";
 		else 
 			this.name = name;
 		this.zip = zip;

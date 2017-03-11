@@ -37,4 +37,9 @@ public abstract class Relation extends Element {
 	public String kind() {
 		return "relation";
 	}
+	
+	public String toString() {
+		return "RELATION: " + getId();
+	}
+	
 }
