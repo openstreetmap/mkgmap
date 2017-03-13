@@ -106,13 +106,13 @@ public class BoundaryLocationPreparer {
 			// to the 3 letter ISO code using the Locator class and the LocatorConfig.xml file. 
 			for (short nameTagKey : Locator.PREFERRED_NAME_TAG_KEYS) {
 				String nameTagValue = tags.get(nameTagKey);
-				if (nameTagValue != null) {
+				if (nameTagValue != null && !nameTagValue.isEmpty()) {
 					return getFirstPart(nameTagValue);
 				}
 			}
 		}
 		String name = nameFinder.getName(tags);
-		if (name != null)
+		if (name != null && !name.isEmpty())
 			return getFirstPart(name);
 		return null;
 	}
