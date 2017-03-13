@@ -106,20 +106,22 @@ public class BoundaryLocationPreparer {
 			// to the 3 letter ISO code using the Locator class and the LocatorConfig.xml file. 
 			for (short nameTagKey : Locator.PREFERRED_NAME_TAG_KEYS) {
 				String nameTagValue = tags.get(nameTagKey);
-				if (nameTagValue != null && !nameTagValue.isEmpty()) {
+				if (nameTagValue != null) {
 					return getFirstPart(nameTagValue);
 				}
 			}
 		}
 		String name = nameFinder.getName(tags);
-		if (name != null && !name.isEmpty())
+		if (name != null)
 			return getFirstPart(name);
 		return null;
 	}
 
 	private static String getFirstPart(String name) {
 		String[] nameParts = COMMA_OR_SEMICOLON_PATTERN.split(name);
-		return nameParts[0].trim().intern();
+		if (nameParts.length > 0)
+			return nameParts[0].trim().intern();
+		return null;
 	}
 	
 	private static final short postal_codeTagKey = TagDict.getInstance().xlate("postal_code");
