@@ -18,10 +18,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -145,34 +143,47 @@ public class ShapeMergeFilter{
 		
 		// abuse highway count to find identical points in different shapes
 		similarShapes.forEach(sh -> sh.getPoints().forEach(Coord::resetHighwayCount));
-		for (ShapeHelper sh : similarShapes) {
-			for (int i = 1; i < sh.getPoints().size(); i++) {
-				sh.getPoints().get(i).incHighwayCount();
-			}
-		}
+		similarShapes.forEach(sh -> sh.getPoints().forEach(Coord::incHighwayCount));
+		// decrement counter for duplicated start/end node
+		similarShapes.forEach(sh -> sh.getPoints().get(0).decHighwayCount());
 		
 		// points with count > 1 are probably shared by different shapes, collect the shapes
 		IdentityHashMap<Coord, BitSet> coord2Shape = new IdentityHashMap<>();
+		BitSet[] candidates = new BitSet[similarShapes.size()];
+		
 		for (int i = 0; i < similarShapes.size(); i++) {
-			ShapeHelper sh = similarShapes.get(i);
-			boolean hit = false;
-			for (int j = 1; j < sh.getPoints().size(); j++) {
-				Coord c = sh.getPoints().get(j);
+			ShapeHelper sh0 = similarShapes.get(i);
+			List<Coord> sharedPoints = new ArrayList<>(); 
+			for (int j = 1; j < sh0.getPoints().size(); j++) {
+				Coord c = sh0.getPoints().get(j);
 				if (c.getHighwayCount() > 1) {
-					hit = true;
-					BitSet set = coord2Shape.get(c);
-					if (set == null) {
-						set = new BitSet();
-						coord2Shape.put(c, set);
-					}
-					set.set(i);
+					sharedPoints.add(c);
 				}
 			}
-			if (hit)
-				toMerge.set(i);
-			else {
-				// shape shares no point with others
-				noMerge.add(sh);
+			if (sharedPoints.size() == 0 || sh0.getPoints().size() - sharedPoints.size()> PolygonSplitterFilter.MAX_POINT_IN_ELEMENT) {
+				// merge will not work 
+				noMerge.add(sh0);
+				continue;
+			}
+			
+			assert candidates[i] == null;
+			candidates[i] = new BitSet();
+			BitSet curr = candidates[i];
+			curr.set(i);
+			
+			toMerge.set(i);
+			for (Coord c: sharedPoints) { 
+				BitSet set = coord2Shape.get(c);
+				if (set == null) {
+					set = new BitSet();
+					coord2Shape.put(c, set);
+				} else { 
+					for (int j = set.nextSetBit(0); j >= 0; j = set.nextSetBit(j + 1)) {
+						candidates[j].set(i);
+					}
+					curr.or(set);
+				}
+				set.set(i);
 			}
 		}
 		if (coord2Shape.isEmpty()) {
@@ -183,30 +194,21 @@ public class ShapeMergeFilter{
 		List<ShapeHelper> next = new ArrayList<>();
 		boolean merged = false;
 		BitSet done = new BitSet();
-		BitSet delayed = new BitSet();
-		// remove duplicated sets
-		Set<BitSet> todo = new LinkedHashSet<>(coord2Shape.values());
-		coord2Shape = null;
+		BitSet delayed = new BitSet();  
 
-		// loop that makes sure that shapes are processed in a predictable order
 		for (int i = toMerge.nextSetBit(0); i >= 0; i = toMerge.nextSetBit(i + 1)) {
 			if (done.get(i))
 				continue;
-			BitSet all = new BitSet();
-			// find all shapes which might be merged with the current one
-			for (BitSet bs : todo) {
-				if (bs.get(i))
-					all.or(bs);
-			}
+			BitSet all = candidates[i];
 			if (all.cardinality() <= 1) {
 				if (!all.isEmpty())
 					delayed.set(i);
 				continue;
 			}
 			all.andNot(done);
+			
 			if (all.isEmpty())
 				continue;
-			
 			List<ShapeHelper> result = new ArrayList<>();
 			for (int j = all.nextSetBit(0); j >= 0; j = all.nextSetBit(j + 1)) {
 				ShapeHelper sh = similarShapes.get(j);
@@ -285,7 +287,7 @@ public class ShapeMergeFilter{
 	 * @return merged shape or 1st shape if no common point found or {@code dupShape} 
 	 * if both shapes describe the same area. 
 	 */
-	private static ShapeHelper tryMerge(ShapeHelper sh1, ShapeHelper sh2) {
+	private ShapeHelper tryMerge(ShapeHelper sh1, ShapeHelper sh2) {
 		
 		// both clockwise or both ccw ?
 		boolean sameDir = sh1.areaTestVal > 0 && sh2.areaTestVal > 0 || sh1.areaTestVal < 0 && sh2.areaTestVal < 0;
@@ -492,7 +494,7 @@ public class ShapeMergeFilter{
 		}
 
 		public ShapeHelper(ShapeHelper other) {
-			this.points = new ArrayList<>(other.getPoints());
+			this.points = other.points;
 			this.areaTestVal = other.areaTestVal;
 			this.id = other.id;
 		}
