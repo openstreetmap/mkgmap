@@ -18,8 +18,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -139,6 +141,8 @@ public class ShapeMergeFilter{
 			return;
 
 		List<ShapeHelper> noMerge = new ArrayList<>();
+		BitSet toMerge = new BitSet(similarShapes.size());
+		
 		// abuse highway count to find identical points in different shapes
 		similarShapes.forEach(sh -> sh.getPoints().forEach(Coord::resetHighwayCount));
 		for (ShapeHelper sh : similarShapes) {
@@ -164,8 +168,9 @@ public class ShapeMergeFilter{
 					set.set(i);
 				}
 			}
-			
-			if (!hit) {
+			if (hit)
+				toMerge.set(i);
+			else {
 				// shape shares no point with others
 				noMerge.add(sh);
 			}
@@ -179,11 +184,17 @@ public class ShapeMergeFilter{
 		boolean merged = false;
 		BitSet done = new BitSet();
 		BitSet delayed = new BitSet();
-		
+		// remove duplicated sets
+		Set<BitSet> todo = new LinkedHashSet<>(coord2Shape.values());
+		coord2Shape = null;
+
 		// loop that makes sure that shapes are processed in a predictable order
-		for (int i = 0; i < similarShapes.size(); i++) {
+		for (int i = toMerge.nextSetBit(0); i >= 0; i = toMerge.nextSetBit(i + 1)) {
+			if (done.get(i))
+				continue;
 			BitSet all = new BitSet();
-			for (BitSet bs : coord2Shape.values()) {
+			// find all shapes which might be merged with the current one
+			for (BitSet bs : todo) {
 				if (bs.get(i))
 					all.or(bs);
 			}
@@ -197,7 +208,7 @@ public class ShapeMergeFilter{
 				continue;
 			
 			List<ShapeHelper> result = new ArrayList<>();
-			for (int j = all.nextSetBit(0); j >= 0; j = all.nextSetBit(j+1)) {
+			for (int j = all.nextSetBit(0); j >= 0; j = all.nextSetBit(j + 1)) {
 				ShapeHelper sh = similarShapes.get(j);
 				int oldSize = result.size();
 				result = addWithConnectedHoles(result, sh, pattern.getType());
@@ -207,11 +218,12 @@ public class ShapeMergeFilter{
 							" time(s) at resolution", resolution);
 				}
 			}
+			// XXX : not exact, there may be other combinations of shapes which can be merged
+			// e.g. merge of shape 1 + 2 may not work but 2 and 3 could still be candidates.
 			done.or(all);
 			next.addAll(result);
 		}
 		
-		coord2Shape = null;
 		delayed.andNot(done);
 		if (!delayed.isEmpty()) {
 			for (int i = delayed.nextSetBit(0); i >= 0; i = delayed.nextSetBit(i+1)) {
@@ -221,9 +233,11 @@ public class ShapeMergeFilter{
 		similarShapes.clear();
 		similarShapes.addAll(noMerge);
 		
-		if (merged) {
+		if (merged) 
 			tryMerge(pattern, next);
-		}
+		
+		// Maybe add final step which calls addWithConnectedHoles for all remaining shapes
+		// this will find a few more merges but is still slow for maps with lots of islands 
 		similarShapes.addAll(next);
 	}
 
@@ -467,9 +481,9 @@ public class ShapeMergeFilter{
 		return merged;
 	}
  	
-	private static class ShapeHelper{
+	private static class ShapeHelper {
 		final private List<Coord> points;
-		long id; 
+		long id;
 		long areaTestVal;
 
 		public ShapeHelper(List<Coord> merged) {
@@ -486,9 +500,8 @@ public class ShapeMergeFilter{
 		public List<Coord> getPoints() {
 			return points;
 		}
-		
 	}
-
+	
 	public final static long SINGLE_POINT_AREA = 1L << Coord.DELTA_SHIFT * 1L << Coord.DELTA_SHIFT;
 	
 	/**
@@ -544,7 +557,7 @@ public class ShapeMergeFilter{
 			if (n2 == null)
 				return -1;
 			
-			return java.text.Collator.getInstance().compare(n1, n2);
+			return n1.compareTo(n2);
 		}
 	}
 }
