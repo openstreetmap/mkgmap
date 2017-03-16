@@ -829,33 +829,41 @@ Actions in the finalize section are not persistent in terms of the +continue+ or
 
 == Style syntax extension if then else ==
 
-To avoid the repition of expressions you can use the following syntax: 
-if (<<Tag_tests,tests>>) then 
-  rule(s) 
+To avoid the repetition of expressions you can use the following syntax: 
+if (<<Tag_tests,tests>>) then
+  i-rule(s)  
 end
 or 
 if (<<Tag_tests,tests>>) then 
   rule(s) 
 else 
-  rules(s) 
+  e-rules(s) 
 end
+
+[NOTE]
+Rules within +if+ and +end+ must be written with an expression.
+The shortest valid expression is a pair of round brackets +()+.
 
 So, instead of 
 [source]
 ----
+boundary=administrative { name '${mkgmap:boundary_name}' }
 boundary=administrative & admin_level<3 [0x1e resolution 12]
 boundary=administrative & admin_level<5 [0x1d resolution 19]
 boundary=administrative & admin_level<7 [0x1c resolution 21]
-boundary=administrative & admin_level<9 [0x1c resolution 22] 
+boundary=administrative & admin_level<9 [0x1c resolution 22]
+boundary=administrative [0x1c resolution 22] 
 ----
 you may write
 [source]
 ----
 if (boundary=administrative) then
+	() { name '${mkgmap:boundary_name}' }
 	admin_level<3 [0x1e resolution 12]
 	admin_level<5 [0x1d resolution 19]
 	admin_level<7 [0x1c resolution 21]
 	admin_level<9 [0x1c resolution 22]
+	() [0x1c resolution 22]
 end 
 ----
 
