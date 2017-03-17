@@ -67,7 +67,11 @@ public class ScriptedStyleTest {
 		for (File file : files) {
 			setup();
 			String name = file.getCanonicalPath();
-			StyleTester.runSimpleTest(name);
+			try {
+				StyleTester.runSimpleTest(name);
+			} catch (Exception e) {
+				assertFalse(name, true);
+			}
 			String result = output.toString();
 
 			// Make sure that the result does not contain an error
