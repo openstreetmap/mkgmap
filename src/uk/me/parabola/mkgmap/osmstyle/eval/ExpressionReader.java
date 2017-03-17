@@ -13,6 +13,8 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
@@ -52,11 +54,22 @@ public class ExpressionReader {
 	 * or by end of file.
 	 */
 	public Op readConditions() {
+		return readConditions(Collections.emptyList());
+	}
+	
+	/**
+	 * Read the conditions.  They are terminated by a '[' or '{' character
+	 * or by end of file.
+	 * @param ifStack expressions of enclosing if / else 
+	 */
+	public Op readConditions(Collection <Op[]> ifStack) {
+		boolean consumedNonBlank = false;
 		while (!scanner.isEndOfFile()) {
 			scanner.skipSpace();
 			if (scanner.checkToken("[") || scanner.checkToken("{") || scanner.checkToken("then"))
 				break;
 
+			consumedNonBlank = true;
 			WordInfo wordInfo = scanner.nextWordWithInfo();
 			if (isOperation(wordInfo)) {
 				saveOp(wordInfo.getText());
@@ -84,15 +97,45 @@ public class ExpressionReader {
 		while (!opStack.isEmpty())
 			runOp(scanner);
 
+		if (consumedNonBlank && !ifStack.isEmpty() && stack.size() <= 1) {
+			// add expressions from enclosing if /else statements
+			Op op = null;
+			if (!stack.isEmpty())
+				op = stack.pop();
+			stack.push(appendIfExpr(op, ifStack));
+		}
+			
 		// The stack should contain one entry which is the complete tree
-		if (stack.size() != 1)
-			throw new SyntaxException(scanner, "Stack size is "+stack.size());
+		if (stack.size() != 1) {
+			throw new SyntaxException(scanner, "Stack size is "+stack.size()+" (missing or incomplete expression)");
+		}
 
 		assert stack.size() == 1;
 		Op op = stack.pop();
 		if (op instanceof ValueOp)
 			throw new SyntaxException(scanner, "Incomplete expression, just a single symbol: " + op);
 		return op;
+	}
+
+	/**
+	 * Append previously read if/else expressions.
+	 * @param expr
+	 * @param ifStack
+	 * @return
+	 */
+	private Op appendIfExpr(Op expr, Collection<Op[]> ifStack) {
+		Op result = expr;
+		for (Op[] ops : ifStack) {
+			if (result != null) {
+				AndOp and = new AndOp();
+				and.setFirst(result);
+				and.setSecond(ops[0]);
+				result = and;
+			} else 
+				result = ops[0];
+			
+		}
+		return result;
 	}
 
 	/**

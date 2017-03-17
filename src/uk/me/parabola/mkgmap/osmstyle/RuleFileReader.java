@@ -127,20 +127,36 @@ public class RuleFileReader {
 			if (scanner.isEndOfFile())
 				break;
 
-			Op expr = expressionReader.readConditions();
+			Op expr = expressionReader.readConditions(ifStack);
 			ActionList actionList = actionReader.readActions();
+			checkIfStack(actionList);
 			
-			expr = condExpr(expr, actionList);
-
+			List<GType> types = new ArrayList<>();
+			while (scanner.checkToken("[")) {
+				GType type = typeReader.readType(scanner, performChecks, overlays);
+				types.add(type);
+				scanner.skipSpace();
+			};
+			
 			// If there is an action list, then we don't need a type
-			GType type = null;
-			if (scanner.checkToken("["))
-				type = typeReader.readType(scanner, performChecks, overlays);
-			else if (actionList == null)
+			if (types.isEmpty() && (actionList.isEmpty()))
 				throw new SyntaxException(scanner, "No type definition given");
 
-			saveRule(scanner, expr, actionList, type);
-			scanner.skipSpace();
+			if (types.isEmpty())
+				saveRule(scanner, expr, actionList, null);
+			
+			if (types.size() >= 2 && actionList.isModifyingTags()) {
+				throw new SyntaxException(scanner, "Combination of multiple type definitions with tag modifying action is not allowed.");
+			}
+			for (int i = 0; i < types.size(); i++) {
+				GType type = types.get(i);
+				if (i + 1 < types.size()) {
+					type.setContinueSearch(true);
+				}
+				// No need to create a deep copy of expr
+				saveRule(scanner, expr, actionList, type);
+				actionList = new ActionList(Collections.emptyList(), Collections.emptySet());
+			}
 		}
 
 		rules.addUsedTags(expressionReader.getUsedTags());
@@ -259,23 +275,23 @@ public class RuleFileReader {
 		return true;
 	}
 
-	private Op condExpr(Op expr, ActionList actionList) {
-		Op result = expr;
-
+	/**
+	 * Check if one of the actions in the actionList would change the result of a previously read if expression.
+	 * If so, use the alternative expression with the generated tag.
+	 * @param actionList
+	 */
+	private void checkIfStack(ActionList actionList) {
+		if (actionList.isEmpty())
+			return;
 		for (Op[] ops : ifStack) {
-			AndOp and = new AndOp();
-			and.setFirst(result);
-			and.setSecond(ops[0]);
-			if (actionList != null && ops[0] != ops[1]) {
+			if (ops[0] != ops[1]) {
 				// check if this action can change the result of the initial if expression 
 				if (possiblyChanged(ops[0], actionList)) {
 					// the result may be changed, use the generated tag for all further rules in this if / else block
 					ops[0] = ops[1];
 				} 
 			}
-			result = and;
 		}
-		return result;
 	}
 
 	/**
@@ -285,8 +301,6 @@ public class RuleFileReader {
 	 * @return true if the value of the expression depends on one or more of the changeable tags
 	 */
 	private boolean possiblyChanged(Op expr, ActionList actionList) {
-		if (actionList == null)
-			return false;
 		Set<String> evaluated = expr.getEvaluatedTagKeys();
 		if (evaluated.isEmpty())
 			return false;
