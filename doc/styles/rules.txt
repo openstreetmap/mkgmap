@@ -835,7 +835,9 @@ To avoid the repetition of expressions you can use the following syntax:
 if (<<Tag_tests,tests>>) then
   i-rule(s)  
 end
-or 
+
+or
+ 
 if (<<Tag_tests,tests>>) then 
   rule(s) 
 else 
@@ -870,7 +872,17 @@ end
 ----
 
 If statements may also be nested and you can also use them in combination
-with the include statement. 
+with the include statement.  
+
+[source]
+----
+if (mkgmap:option:route=car) then
+	include inc/car-rules;
+end 
+if (mkgmap:option:route=bicycle) then
+	include inc/cycle-rules;
+end 
+----
                          
 == Troubleshooting ==
 
@@ -913,14 +925,17 @@ For a roundabout you may want to use the special Garmin type 0xc in combination 
 that shows the road importance. You can do this with two rules like this
 [source]
 ----
-junction=roundabout & (highway=tertiary | highway=tertiary_link) [0x0c road_class=1 road_speed=1 resolution 24 continue]
-junction=roundabout & (highway=tertiary | highway=tertiary_link) [0x10804 resolution 21] 
+junction=roundabout & (highway=tertiary | highway=tertiary_link)
+    [0x0c road_class=1 road_speed=1 resolution 24 continue]
+junction=roundabout & (highway=tertiary | highway=tertiary_link) 
+    [0x10804 resolution 21] 
 ----
 
 or shorter with one rule that has two type definitions 
 [source]
 ----
-junction=roundabout & (highway=tertiary | highway=tertiary_link) [0x0c road_class=1 road_speed=1 resolution 24] [0x10804 resolution 21]
+junction=roundabout & (highway=tertiary | highway=tertiary_link) 
+    [0x0c road_class=1 road_speed=1 resolution 24] [0x10804 resolution 21]
 ----
 
 === More involved examples ===
