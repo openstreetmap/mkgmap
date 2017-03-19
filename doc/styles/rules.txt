@@ -23,7 +23,9 @@ The three possible parts are:
 * The second part is the <<Action_block,action block>> that can be used to do things with the tags of objects that match the tests and is contained in curly braces `{...}`.
 * The third part is the <<Element_type,element type definition>> and sets
 the Garmin type and sometimes other parameters that will be used if the tests match. This part is contained
-in square brackets `[...]`.
+in square brackets `[...]`. 
+
+If you want to add two or more different map elements you can do this with repeated square brackets following one expression `[...]`  
 
 Here is an example of a rule containing all three sections:
 
@@ -869,7 +871,7 @@ end
 
 If statements may also be nested and you can also use them in combination
 with the include statement. 
-
+                         
 == Troubleshooting ==
 
 For each node/way/relation, mkgmap goes through the tags exactly once in
@@ -906,6 +908,20 @@ amenity=bank [0x2f06 level 3]
 
 This will be explained in more detail in the following sections along
 with how to use more than one tag to make the choice.
+
+For a roundabout you may want to use the special Garmin type 0xc in combination with an overlaying way
+that shows the road importance. You can do this with two rules like this
+[source]
+----
+junction=roundabout & (highway=tertiary | highway=tertiary_link) [0x0c road_class=1 road_speed=1 resolution 24 continue]
+junction=roundabout & (highway=tertiary | highway=tertiary_link) [0x10804 resolution 21] 
+----
+
+or shorter with one rule that has two type definitions 
+[source]
+----
+junction=roundabout & (highway=tertiary | highway=tertiary_link) [0x0c road_class=1 road_speed=1 resolution 24] [0x10804 resolution 21]
+----
 
 === More involved examples ===
 A few tips and tricks showing how the rules can be used to

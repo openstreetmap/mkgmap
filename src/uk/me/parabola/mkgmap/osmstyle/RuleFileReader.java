@@ -146,7 +146,7 @@ public class RuleFileReader {
 				saveRule(scanner, expr, actionList, null);
 			
 			if (types.size() >= 2 && actionList.isModifyingTags()) {
-				throw new SyntaxException(scanner, "Combination of multiple type definitions with tag modifying action is not allowed.");
+				throw new SyntaxException(scanner, "Combination of multiple type definitions with tag modifying action is not yet supported.");
 			}
 			for (int i = 0; i < types.size(); i++) {
 				GType type = types.get(i);
