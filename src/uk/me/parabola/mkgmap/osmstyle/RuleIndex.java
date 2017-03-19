@@ -308,7 +308,7 @@ public class RuleIndex {
 			RuleDetails rd = iter.next();
 			if (rd.getRule() instanceof ActionRule) {
 				ActionRule ar = (ActionRule) rd.getRule();
-				if (ar.toString().contains("set " + RuleSet.IF_PREFIX)) {
+				if (ar.toString().contains("set " + RuleFileReader.IF_PREFIX)) {
 					boolean needed = false;
 					for (String ifVars : usedIfVars) {
 						if (ar.toString().contains("set " + ifVars)) {
@@ -335,7 +335,7 @@ public class RuleIndex {
 		if (expr == null)
 			return;
 		for (String usedTag : expr.getEvaluatedTagKeys()) {
-			if (usedTag.startsWith(RuleSet.IF_PREFIX))
+			if (usedTag.startsWith(RuleFileReader.IF_PREFIX))
 				usedIfVars.add(usedTag);
 		}
 	}

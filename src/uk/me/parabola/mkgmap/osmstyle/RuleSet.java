@@ -52,7 +52,6 @@ public class RuleSet implements Rule, Iterable<Rule> {
 	// identifies cached values 
 	int cacheId;
 	boolean compiled = false;
-	static final String IF_PREFIX = "mkgmap:if:"; 
 
 	private final static short executeFinalizeRulesTagKey = TagDict.getInstance().xlate("mkgmap:execute_finalize_rules");
 

@@ -78,6 +78,7 @@ public class RuleFileReader {
 	private final Map<Integer, List<Integer>> overlays;
 
 	private Deque<Op[]> ifStack = new LinkedList<>();
+	public static final String IF_PREFIX = "mkgmap:if:"; 
 
 	private boolean inFinalizeSection;
 	
@@ -737,7 +738,7 @@ public class RuleFileReader {
 	 * @return a new tag key unique 
 	 */
 	public String getNextIfVar (){
-		return RuleSet.IF_PREFIX  + ++ifCounter;
+		return IF_PREFIX  + ++ifCounter;
 	}
 	
 	public static void main(String[] args) throws FileNotFoundException {
