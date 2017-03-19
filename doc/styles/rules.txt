@@ -877,10 +877,10 @@ with the include statement.
 [source]
 ----
 if (mkgmap:option:route=car) then
-	include inc/car-rules;
+	include "inc/car-rules";
 end 
 if (mkgmap:option:route=bicycle) then
-	include inc/cycle-rules;
+	include "inc/cycle-rules";
 end 
 ----
                          
