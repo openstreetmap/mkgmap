@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.log.Logger;
@@ -732,14 +731,13 @@ public class RuleFileReader {
 	}
 
 	
-	private static final AtomicInteger ifCounter = new AtomicInteger(0);
+	private int ifCounter;
 	/**
 	 * 
 	 * @return a new tag key unique 
 	 */
 	public String getNextIfVar (){
-		int n = ifCounter.incrementAndGet();
-		return RuleSet.IF_PREFIX  + n;
+		return RuleSet.IF_PREFIX  + ++ifCounter;
 	}
 	
 	public static void main(String[] args) throws FileNotFoundException {
