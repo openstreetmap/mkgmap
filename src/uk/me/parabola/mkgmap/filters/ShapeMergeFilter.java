@@ -525,6 +525,7 @@ public class ShapeMergeFilter{
 		while (polyIter.hasNext()) {
 			Coord c1 = c2;
 			c2 = polyIter.next();
+			//TODO: doesn't work when high precision values use 32 bit 
 			signedAreaSize += (long) (c2.getHighPrecLon() + c1.getHighPrecLon())
 					* (c1.getHighPrecLat() - c2.getHighPrecLat());
 		}

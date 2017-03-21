@@ -108,15 +108,11 @@ public class Utils {
 	 * A map unit is an integer value that is 1/(2^24) degrees of latitude or
 	 * longitude.
 	 *
-	 * @param l The lat or long as decimal degrees.
+	 * @param degrees The lat or long as decimal degrees.
 	 * @return An integer value in map units.
 	 */
-	public static int toMapUnit(double l) {
-		double DELTA = 360.0D / (1 << 24) / 2; //Correct rounding
-		if (l > 0)
-			return (int) ((l + DELTA) * (1 << 24)/360);
-		else
-			return (int) ((l - DELTA) * (1 << 24)/360);
+	public static int toMapUnit(double degrees) {
+		return (int)Math.round(degrees / 360D * (1 << 24));
 	}
 
 	/**
@@ -217,14 +213,17 @@ public class Utils {
 
 	/**
 	 * Rounds an integer up to the nearest multiple of {@code 2^shift}.
-	 * Works with both positive and negative integers.
+	 * Works with both positive and negative integers as long as they are in the range of Garmin units.
 	 * @param val the integer to round up.
 	 * @param shift the power of two to round up to.
 	 * @return the rounded integer.
 	 */
 	public static int roundUp(int val, int shift) {
-		return (val + (1 << shift) - 1) >>> shift << shift;
-	} 
+		assert shift >= 0;
+		if (shift == 0)
+			return val;
+		return (((val >> (shift - 1)) + 1) >> 1) << shift;
+	}
 	
 	/**
 	 * Calculates the angle between the two segments (c1,c2),(c2,c3).
