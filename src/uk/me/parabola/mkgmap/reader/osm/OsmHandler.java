@@ -30,7 +30,6 @@ public class OsmHandler {
 	protected ElementSaver saver;
 	protected OsmReadingHooks hooks;
 
-	private final Map<String, Long> fakeIdMap = new HashMap<String, Long>();
 	private Map<String,Set<String>> deletedTags;
 	private Map<String, String> usedTags;
 
@@ -121,28 +120,6 @@ public class OsmHandler {
 		}
 		Area bbox = new Area(minlat, minlong, maxlat, maxlong);
 		saver.setBoundingBox(bbox);
-	}
-
-	/**
-	 * Convert an id as a string to a number. If the id is not a number, then create
-	 * a unique number instead.
-	 * @param id The id as a string. Does not have to be a numeric quantity.
-	 * @return A long id, either parsed from the input, or a unique id generated internally.
-	 */
-	protected long idVal(String id) {
-		try {
-			// attempt to parse id as a number
-			return Long.parseLong(id);
-		} catch (NumberFormatException e) {
-			// if that fails, fake a (hopefully) unique value
-			Long fakeIdVal = fakeIdMap.get(id);
-			if(fakeIdVal == null) {
-				fakeIdVal = FakeIdGenerator.makeFakeId();
-				fakeIdMap.put(id, fakeIdVal);
-			}
-			//System.out.printf("%s = 0x%016x\n", id, fakeIdVal);
-			return fakeIdVal;
-		}
 	}
 
 	public void setElementSaver(ElementSaver elementSaver) {

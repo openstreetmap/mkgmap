@@ -16,12 +16,16 @@ package uk.me.parabola.mkgmap.reader.osm.xml;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 import uk.me.parabola.mkgmap.reader.osm.GeneralRelation;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.OsmHandler;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.util.EnhancedProperties;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
@@ -55,13 +59,36 @@ public class Osm5XmlHandler extends OsmHandler {
 	// Options
 	private final boolean ignoreBounds;
 	// Current state.
-	protected Node currentNode;
-	protected Way currentWay;
-	protected Relation currentRelation;
-	protected long currentElementId;
+	private Node currentNode;
+	private Way currentWay;
+	private Relation currentRelation;
+	private long currentElementId;
+	private final Map<String, Long> fakeIdMap = new HashMap<String, Long>();
 
 	public Osm5XmlHandler(EnhancedProperties props) {
 		ignoreBounds = props.getProperty("ignore-osm-bounds", false);
+	}
+
+	/**
+	 * Convert an id as a string to a number. If the id is not a number, then create
+	 * a unique number instead.
+	 * @param id The id as a string. Does not have to be a numeric quantity.
+	 * @return A long id, either parsed from the input, or a unique id generated internally.
+	 */
+	private long idVal(String id) {
+		try {
+			// attempt to parse id as a number
+			return Long.parseLong(id);
+		} catch (NumberFormatException e) {
+			// if that fails, fake a (hopefully) unique value
+			Long fakeIdVal = fakeIdMap.get(id);
+			if(fakeIdVal == null) {
+				fakeIdVal = FakeIdGenerator.makeFakeId();
+				fakeIdMap.put(id, fakeIdVal);
+			}
+			//System.out.printf("%s = 0x%016x\n", id, fakeIdVal);
+			return fakeIdVal;
+		}
 	}
 
 	/**
