@@ -112,8 +112,12 @@ public class OsmHandler {
 		// that the same string is always used so saving some memory.
 		if (usedTags != null)
 			key = usedTags.get(key);
+		
 		if (key != null && removeFixme && val.length() >= 5) {
-			if (FIXME_PATTERN.matcher(val).matches()) {
+			// remove tags with value fixme if the key is NOT fixme
+			if ("fixme".equals(key) || "FIXME".equals(key)) {
+				// keep fixme no matter what value it has
+			} else if (FIXME_PATTERN.matcher(val).matches()) {
 				return null;
 			}
 		}
