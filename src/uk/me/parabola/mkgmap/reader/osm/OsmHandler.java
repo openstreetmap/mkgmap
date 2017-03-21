@@ -16,6 +16,7 @@ package uk.me.parabola.mkgmap.reader.osm;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -33,10 +34,14 @@ public class OsmHandler {
 	private Map<String,Set<String>> deletedTags;
 	private Map<String, String> usedTags;
 
+	/** Pattern for values containing fixme, fix_me etc. */
+	private static final Pattern FIXME_PATTERN = Pattern.compile("(?i)fix[ _]?+me");
+	private boolean removeFixme;
+	
 	// Node references within a way
-	protected long firstNodeRef;
-	protected long lastNodeRef;
-	protected boolean missingNodeRef;
+	private long firstNodeRef;
+	private long lastNodeRef;
+	private boolean missingNodeRef;
 
 	/** 
 	 * Tag that is set to <code>true</code> if one or more tags are not loaded. 
@@ -106,8 +111,12 @@ public class OsmHandler {
 		// By returning the value stored in usedTags, instead of the key, we ensure
 		// that the same string is always used so saving some memory.
 		if (usedTags != null)
-			return usedTags.get(key);
-
+			key = usedTags.get(key);
+		if (key != null && removeFixme && val.length() >= 5) {
+			if (FIXME_PATTERN.matcher(val).matches()) {
+				return null;
+			}
+		}
 		return key;
 	}
 
@@ -174,5 +183,13 @@ public class OsmHandler {
 		} else {
 			missingNodeRef = true;
 		}
+	}
+
+	/**
+	 * Enable removal of tags / value pairs where value matches the fixme pattern.
+	 * @param b true: enable the filter
+	 */
+	public void setDeleteFixmeValues(boolean b) {
+		this.removeFixme = b;
 	}
 }

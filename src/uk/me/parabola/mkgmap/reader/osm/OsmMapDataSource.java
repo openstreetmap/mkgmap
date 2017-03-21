@@ -200,6 +200,9 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 			Map<String, Set<String>> deltags = readDeleteTagsFile(deleteTagsFileName);
 			handler.setTagsToDelete(deltags);
 		}
+		if (getConfig().getProperty("ignore-fixme-values", false)) {
+			handler.setDeleteFixmeValues(true);
+		}
 	}
 	
 	protected void createElementSaver() {
