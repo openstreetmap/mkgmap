@@ -95,23 +95,23 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 	public void end() {
 		long t1 = System.currentTimeMillis();
 		log.info("Starting with location hook");
-		
-		Area bbox = saver.getBoundingBox();
+
 		Area nodesBounds = saver.getDataBoundingBox();
-		// calculate the needed bounding box
-		Area searchBounds = bbox.intersect(nodesBounds);
-		boundaryGrid = new BoundaryGrid(boundaryDirName, searchBounds, props);
-		processLocationRelevantElements();
+		if (nodesBounds != null) {
+			Area bbox = saver.getBoundingBox();
+			// calculate the needed bounding box
+			Area searchBounds = bbox.intersect(nodesBounds);
+			boundaryGrid = new BoundaryGrid(boundaryDirName, searchBounds, props);
+			processLocationRelevantElements();
 
-		boundaryGrid = null;
-		
+			boundaryGrid = null;
+		}
 		long dt = (System.currentTimeMillis() - t1);
-		log.info("======= LocationHook Stats =====");             
-		log.info("QuadTree searches    :", cntQTSearch);             
-		log.info("unsuccesfull         :", cntNotFnd);             
-		log.info("unsuccesfull for ways:", cntwayNotFnd);             
+		log.info("======= LocationHook Stats =====");
+		log.info("QuadTree searches    :", cntQTSearch);
+		log.info("unsuccesfull         :", cntNotFnd);
+		log.info("unsuccesfull for ways:", cntwayNotFnd);
 		log.info("Location hook finished in", dt, "ms");
-
 	}
 
 	/**

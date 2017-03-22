@@ -336,11 +336,13 @@ public class BoundaryUtil {
 	 */
 	public static List<String> getRequiredBoundaryFileNames(uk.me.parabola.imgfmt.app.Area bbox) {
 		List<String> names = new ArrayList<>();
-		for (int latSplit = getSplitBegin(bbox.getMinLat()); latSplit <= BoundaryUtil
-				.getSplitBegin(bbox.getMaxLat()); latSplit += RASTER) {
-			for (int lonSplit = getSplitBegin(bbox.getMinLong()); lonSplit <= BoundaryUtil
-					.getSplitBegin(bbox.getMaxLong()); lonSplit += RASTER) {
-				names.add("bounds_"+ getKey(latSplit, lonSplit) + ".bnd");
+		if (!bbox.isEmpty()) {
+			for (int latSplit = getSplitBegin(bbox.getMinLat()); latSplit <= BoundaryUtil
+					.getSplitBegin(bbox.getMaxLat()); latSplit += RASTER) {
+				for (int lonSplit = getSplitBegin(bbox.getMinLong()); lonSplit <= BoundaryUtil
+						.getSplitBegin(bbox.getMaxLong()); lonSplit += RASTER) {
+					names.add("bounds_"+ getKey(latSplit, lonSplit) + ".bnd");
+				}
 			}
 		}
 		return names;

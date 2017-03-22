@@ -323,15 +323,19 @@ public class ElementSaver {
 	}
 
 	/**
-	 * Get the bounding box of all nodes.
+	 * Get the bounding box of all nodes. Returns null if no point was read.
 	 */
 	public Area getDataBoundingBox() {
+		if (minLat > maxLat) {
+			return null;
+		} else {
 			// calculate an area that is slightly larger so that high precision coordinates
 			// are safely within the bbox.
 			return new Area(Math.max(Utils.toMapUnit(-90.0), minLat-1), 
 					Math.max(Utils.toMapUnit(-180.0), minLon-1),
 					Math.min(Utils.toMapUnit(90.0), maxLat+1),
-					Math.min(Utils.toMapUnit(180.0), maxLon+1)); 
+					Math.min(Utils.toMapUnit(180.0), maxLon+1));
+		}
 	}
 
 	public void deferRelation(long id, Relation rel, String role) {
