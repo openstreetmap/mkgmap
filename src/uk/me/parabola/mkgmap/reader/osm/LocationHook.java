@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
+import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryGrid;
@@ -94,8 +95,12 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 	public void end() {
 		long t1 = System.currentTimeMillis();
 		log.info("Starting with location hook");
-
-		boundaryGrid = new BoundaryGrid(boundaryDirName, saver.getBoundingBox(), props);
+		
+		Area bbox = saver.getBoundingBox();
+		Area nodesBounds = saver.getDataBoundingBox();
+		// calculate the needed bounding box
+		Area searchBounds = bbox.intersect(nodesBounds);
+		boundaryGrid = new BoundaryGrid(boundaryDirName, searchBounds, props);
 		processLocationRelevantElements();
 
 		boundaryGrid = null;
