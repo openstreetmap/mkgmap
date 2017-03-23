@@ -17,6 +17,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Test;
@@ -27,17 +28,10 @@ public class MapLineTest {
 
 	@Test
 	public void TestInsertPointsAtStart(){
-		List<Coord> points1 = new ArrayList<Coord>(){{
-			add(new Coord(30,55));
-			add(new Coord(30,65));
-			add(new Coord(20,65));
-			add(new Coord(20,55));
-		}};
-		List<Coord> points2 = new ArrayList<Coord>(){{
-			add(new Coord(10,20));
-			add(new Coord(30,30));
-			add(new Coord(30,55));
-		}};
+		List<Coord> points1 = new ArrayList<>(
+				Arrays.asList(new Coord(30, 55), new Coord(30, 65), new Coord(20, 65), new Coord(20, 55)));
+		List<Coord> points2 = new ArrayList<>(
+				Arrays.asList(new Coord(10, 20), new Coord(30, 30), new Coord(30, 55)));
 
 		MapLine ml = new MapLine();
 		ml.setPoints(new ArrayList<>(points1));
