@@ -29,7 +29,7 @@ import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
+import uk.me.parabola.mkgmap.reader.osm.bin.OsmBinCoastDataSource;
 import uk.me.parabola.mkgmap.reader.osm.xml.Osm5CoastDataSource;
 import uk.me.parabola.util.EnhancedProperties;
 
@@ -38,28 +38,12 @@ public final class CoastlineFileLoader {
 	private static final Logger log = Logger
 			.getLogger(CoastlineFileLoader.class);
 
-	private static final List<Class<? extends LoadableMapDataSource>> coastFileLoaders;
+	private static final List<OsmMapDataSource> coastFileLoaders;
 
 	static {
-		String[] sources = {
-				"uk.me.parabola.mkgmap.reader.osm.bin.OsmBinCoastDataSource",
-				// must be last as it is the default
-				"uk.me.parabola.mkgmap.reader.osm.xml.Osm5CoastDataSource", };
-
-		coastFileLoaders = new ArrayList<Class<? extends LoadableMapDataSource>>();
-
-		for (String source : sources) {
-			try {
-				@SuppressWarnings({ "unchecked" })
-				Class<? extends LoadableMapDataSource> c = (Class<? extends LoadableMapDataSource>) Class
-						.forName(source);
-				coastFileLoaders.add(c);
-			} catch (ClassNotFoundException e) {
-				// not available, try the rest
-			} catch (NoClassDefFoundError e) {
-				// not available, try the rest
-			}
-		}
+		coastFileLoaders = new ArrayList<>();
+		coastFileLoaders.add(new OsmBinCoastDataSource());
+		//coastFileLoaders.add(new Osm5CoastDataSource()); not needed in list, is fall back option 
 	}
 
 	private final Set<String> coastlineFiles;
@@ -106,18 +90,16 @@ public final class CoastlineFileLoader {
 	}
 
 	public static OsmMapDataSource createMapReader(String name) {
-		for (Class<? extends LoadableMapDataSource> loader : coastFileLoaders) {
-			try {
-				LoadableMapDataSource src = loader.newInstance();
-				if (name != null && src instanceof OsmMapDataSource
-						&& src.isFileSupported(name))
-					return (OsmMapDataSource) src;
-			} catch (InstantiationException e) {
-				// try the next one.
-			} catch (IllegalAccessException e) {
-				// try the next one.
-			} catch (NoClassDefFoundError e) {
-				// try the next one
+		for (OsmMapDataSource loader : coastFileLoaders) {
+			if (name != null && loader.isFileSupported(name)) {
+				try {
+					OsmMapDataSource src = loader.getClass().newInstance();
+					return src;
+				} catch (InstantiationException e) {
+					// try the next one.
+				} catch (IllegalAccessException e) {
+					// try the next one.
+				}
 			}
 		}
 

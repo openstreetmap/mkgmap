@@ -46,8 +46,8 @@ import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LineClipper;
-import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
+import uk.me.parabola.mkgmap.reader.osm.bin.OsmBinPrecompSeaDataSource;
 import uk.me.parabola.mkgmap.reader.osm.xml.Osm5PrecompSeaDataSource;
 import uk.me.parabola.util.EnhancedProperties;
 import uk.me.parabola.util.Java2DConverter;
@@ -116,30 +116,13 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	 */
 	private static final long seaSize = Long.MAX_VALUE-2; // sea is BIG
 
-	private static final List<Class<? extends LoadableMapDataSource>> precompSeaLoader;
-
+	private static final List<OsmMapDataSource > precompSeaLoader;
 	static {
-		String[] sources = {
-				"uk.me.parabola.mkgmap.reader.osm.bin.OsmBinPrecompSeaDataSource",
-				// must be last as it is the default
-				"uk.me.parabola.mkgmap.reader.osm.xml.Osm5PrecompSeaDataSource", };
-
-		precompSeaLoader = new ArrayList<Class<? extends LoadableMapDataSource>>();
-
-		for (String source : sources) {
-			try {
-				@SuppressWarnings({ "unchecked" })
-				Class<? extends LoadableMapDataSource> c = (Class<? extends LoadableMapDataSource>) Class
-						.forName(source);
-				precompSeaLoader.add(c);
-			} catch (ClassNotFoundException e) {
-				// not available, try the rest
-			} catch (NoClassDefFoundError e) {
-				// not available, try the rest
-			}
-		}
+		precompSeaLoader = new ArrayList<>();
+		precompSeaLoader.add(new OsmBinPrecompSeaDataSource());
+		//precompSeaLoader.add(new Osm5PrecompSeaDataSource()); // not needed in list, is fall back option 
 	}
-	
+
 	/**
 	 * Sort out options from the command line.
 	 * Returns true only if the option to generate the sea is active, so that
@@ -499,24 +482,16 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		way.addTag(MultiPolygonRelation.STYLE_FILTER_TAG, MultiPolygonRelation.STYLE_FILTER_LINE);
 	}
 	
-	/**
-	 * Creates a reader for the given filename of the precomiled sea tile.
-	 * @param filename precompiled sea tile 
-	 * @return the reader for the tile
-	 */
 	private static OsmMapDataSource createTileReader(String filename) {
-		for (Class<? extends LoadableMapDataSource> loader : precompSeaLoader) {
-			try {
-				LoadableMapDataSource src = loader.newInstance();
-				if (filename != null && src instanceof OsmMapDataSource
-						&& src.isFileSupported(filename))
-					return (OsmMapDataSource) src;
-			} catch (InstantiationException e) {
-				// try the next one.
-			} catch (IllegalAccessException e) {
-				// try the next one.
-			} catch (NoClassDefFoundError e) {
-				// try the next one
+		for (OsmMapDataSource loader : precompSeaLoader) {
+			if (filename != null && loader.isFileSupported(filename)) {
+				try {
+					return loader.getClass().newInstance();
+				} catch (InstantiationException e) {
+					// try the next one.
+				} catch (IllegalAccessException e) {
+					// try the next one.
+				}
 			}
 		}
 

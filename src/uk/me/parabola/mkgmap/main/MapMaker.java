@@ -31,7 +31,7 @@ import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.build.MapBuilder;
 import uk.me.parabola.mkgmap.combiners.OverviewBuilder;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
-import uk.me.parabola.mkgmap.reader.plugin.MapReader;
+import uk.me.parabola.mkgmap.reader.MapReader;
 
 /**
  * Main routine for the command line map-making utility.
