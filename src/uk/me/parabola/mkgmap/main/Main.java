@@ -55,13 +55,11 @@ import uk.me.parabola.mkgmap.combiners.MdrBuilder;
 import uk.me.parabola.mkgmap.combiners.MdxBuilder;
 import uk.me.parabola.mkgmap.combiners.NsisBuilder;
 import uk.me.parabola.mkgmap.combiners.OverviewBuilder;
-import uk.me.parabola.mkgmap.combiners.OverviewMap;
 import uk.me.parabola.mkgmap.combiners.TdbBuilder;
 import uk.me.parabola.mkgmap.osmstyle.StyleFileLoader;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
-import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.srt.SrtTextReader;
 import uk.me.parabola.util.EnhancedProperties;
@@ -344,8 +342,7 @@ public class Main implements ArgumentProcessor {
 	 */
 	private void addTdbBuilder() {
 		if (!tdbBuilderAdded ){
-			OverviewMap overviewSource = new OverviewMapDataSource();
-			OverviewBuilder overviewBuilder = new OverviewBuilder(overviewSource);
+			OverviewBuilder overviewBuilder = new OverviewBuilder();
 			addCombiner("img", overviewBuilder);
 			TdbBuilder tdbBuilder = new TdbBuilder(overviewBuilder);
 			addCombiner("tdb", tdbBuilder);

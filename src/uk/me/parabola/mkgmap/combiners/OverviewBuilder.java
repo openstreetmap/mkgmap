@@ -39,6 +39,7 @@ import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.mkgmap.srt.SrtTextReader;
 
 /**
@@ -63,8 +64,8 @@ public class OverviewBuilder implements Combiner {
 	private LevelInfo[] wantedLevels;
 
 
-	public OverviewBuilder(OverviewMap overviewSource) {
-		this.overviewSource = overviewSource;
+	public OverviewBuilder() {
+		this.overviewSource = new OverviewMapDataSource();
 	}
 
 	public void init(CommandArgs args) {
