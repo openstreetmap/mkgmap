@@ -84,7 +84,7 @@ public final class CoastlineFileLoader {
 		OsmMapDataSource src = createMapReader(name);
 		src.config(getConfig());
 		log.info("Started loading coastlines from", name);
-		src.load(name);
+		src.load(name, false);
 		log.info("Finished loading coastlines from", name);
 		return src;
 	}

@@ -151,7 +151,7 @@ public class MapMaker implements MapProcessor {
 		LoadableMapDataSource src = MapReader.createMapReader(name);
 		src.config(args.getProperties());
 		log.info("Started loading", name);
-		src.load(name);
+		src.load(name, args.getProperties().getProperty("transparent", false) == false);
 		log.info("Finished loading", name);
 		return src;
 	}

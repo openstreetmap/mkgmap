@@ -25,10 +25,6 @@ public class OsmBinBoundaryDataSource
 
 	private BoundarySaver saver;
 
-	protected void addBackground(boolean mapHasPolygon4B) {
-		// do not add a background polygon
-	}
-
 	protected OsmReadingHooks[] getPossibleHooks() {
 		return new OsmReadingHooks[] { new MultiPolygonFinishHook() };
 	}

@@ -103,20 +103,13 @@ public abstract class MapperBasedMapDataSource implements MapDataSource, Configu
 	/**
 	 * We add the background polygons if the map is not transparent.
 	 */
-	protected void addBackground() {
-		addBackground(false);
-	}
+	public void addBackground() {
+		MapShape background = new MapShape();
+		background.setPoints(mapper.getBounds().toCoords());
+		background.setType(0x4b); // background type
+		background.setMinResolution(0); // On all levels
 
-	protected void addBackground(boolean mapHasPolygon4B) {
-		if (!mapHasPolygon4B && !getConfig().getProperty("transparent", false)) {
-
-			MapShape background = new MapShape();
-			background.setPoints(mapper.getBounds().toCoords());
-			background.setType(0x4b); // background type
-			background.setMinResolution(0); // On all levels
-
-			mapper.addShape(background);
-		}
+		mapper.addShape(background);
 	}
 
 	public void addBoundaryLine(Area area, int type, String name) {

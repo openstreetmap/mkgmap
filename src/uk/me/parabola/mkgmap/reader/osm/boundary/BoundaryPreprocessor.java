@@ -130,7 +130,7 @@ public class BoundaryPreprocessor implements Runnable {
 		dataSource.setBoundarySaver(saver);
 		log.info("Started loading", boundaryFilename);
 		try {
-			dataSource.load(boundaryFilename);
+			dataSource.load(boundaryFilename, false);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			return false;

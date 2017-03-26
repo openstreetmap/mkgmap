@@ -51,7 +51,5 @@ public class O5mBinMapDataSource extends OsmMapDataSource {
 		
 		// now convert the saved elements
 		elementSaver.convert(getConverter());
-
-		addBackground();
 	}
 }

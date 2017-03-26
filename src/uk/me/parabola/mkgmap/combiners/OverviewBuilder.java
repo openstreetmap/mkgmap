@@ -52,7 +52,7 @@ import uk.me.parabola.mkgmap.srt.SrtTextReader;
 public class OverviewBuilder implements Combiner {
 	Logger log = Logger.getLogger(OverviewBuilder.class);
 	public static final String OVERVIEW_PREFIX = "ovm_";
-	private final OverviewMap overviewSource;
+	private final OverviewMapDataSource overviewSource;
 	private String areaName;
 	private String overviewMapname;
 	private String overviewMapnumber;
@@ -87,7 +87,7 @@ public class OverviewBuilder implements Combiner {
 	}
 
 	public void onFinish() {
-		addBackground();
+		overviewSource.addBackground();
 		calcLevels();
 		writeOverviewMap();
 	}
@@ -142,18 +142,6 @@ public class OverviewBuilder implements Combiner {
 			} else
 				setRes(maxRes);	
 		}
-	}
-
-	/**
-	 * Add background polygon that covers the whole area of the overview map. 
-	 */
-	private void addBackground() {
-		MapShape background = new MapShape();
-		background.setType(0x4b); // background type
-		background.setMinResolution(0); // On all levels
-		background.setPoints(overviewSource.getBounds().toCoords());
-
-		overviewSource.addShape(background);
 	}
 
 	/**

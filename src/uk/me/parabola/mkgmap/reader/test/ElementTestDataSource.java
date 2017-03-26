@@ -45,9 +45,11 @@ public class ElementTestDataSource extends MapperBasedMapDataSource implements L
 	/**
 	 * Load a map by generating it in code.
 	 * @param name The name of the map to generate.
+	 * @param addBackground ignored
 	 * @throws FileNotFoundException If the name is not recognised.
 	 */
-	public void load(String name) throws FileNotFoundException {
+	@Override
+	public void load(String name, boolean addBackground) throws FileNotFoundException {
 		if ("test-map:all-elements".equals(name)) {
 			AllElements all = new AllElements(configProps);
 			all.load(mapper);
