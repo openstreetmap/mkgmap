@@ -2,6 +2,7 @@
 # name, brand, operator, ref
 
 # delete FIXME values (they should be better used in maintenance maps)
+# better use option --ignore-fixme-values
 ref ~ '(?i)fix[ _]?+me'		{ delete ref; } 
 operator ~ '(?i)fix[ _]?+me'	{ delete operator; }
 brand ~ '(?i)fix[ _]?+me'		{ delete brand; }

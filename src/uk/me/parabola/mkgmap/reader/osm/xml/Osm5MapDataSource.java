@@ -70,8 +70,6 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 				// now convert the saved elements
 				elementSaver.convert(getConverter());
 
-				addBackground();
-
 			} catch (IOException e) {
 				throw new FormatException("Error reading file", e);
 			}

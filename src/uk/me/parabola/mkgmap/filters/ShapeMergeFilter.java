@@ -70,8 +70,10 @@ public class ShapeMergeFilter{
 			}
 			usableShapes.add(shape);
 		}
-		if (usableShapes.size() < 2)
+		if (usableShapes.size() < 2) {
+			mergedShapes.addAll(usableShapes);
 			return mergedShapes;
+		}
 		
 		Comparator<MapShape> comparator = new MapShapeComparator();
 		usableShapes.sort(comparator);
@@ -137,35 +139,51 @@ public class ShapeMergeFilter{
 			return;
 
 		List<ShapeHelper> noMerge = new ArrayList<>();
+		BitSet toMerge = new BitSet(similarShapes.size());
+		
 		// abuse highway count to find identical points in different shapes
 		similarShapes.forEach(sh -> sh.getPoints().forEach(Coord::resetHighwayCount));
-		for (ShapeHelper sh : similarShapes) {
-			for (int i = 1; i < sh.getPoints().size(); i++) {
-				sh.getPoints().get(i).incHighwayCount();
-			}
-		}
+		similarShapes.forEach(sh -> sh.getPoints().forEach(Coord::incHighwayCount));
+		// decrement counter for duplicated start/end node
+		similarShapes.forEach(sh -> sh.getPoints().get(0).decHighwayCount());
 		
 		// points with count > 1 are probably shared by different shapes, collect the shapes
 		IdentityHashMap<Coord, BitSet> coord2Shape = new IdentityHashMap<>();
+		BitSet[] candidates = new BitSet[similarShapes.size()];
+		
 		for (int i = 0; i < similarShapes.size(); i++) {
-			ShapeHelper sh = similarShapes.get(i);
-			boolean hit = false;
-			for (int j = 1; j < sh.getPoints().size(); j++) {
-				Coord c = sh.getPoints().get(j);
+			ShapeHelper sh0 = similarShapes.get(i);
+			List<Coord> sharedPoints = new ArrayList<>(); 
+			for (int j = 1; j < sh0.getPoints().size(); j++) {
+				Coord c = sh0.getPoints().get(j);
 				if (c.getHighwayCount() > 1) {
-					hit = true;
-					BitSet set = coord2Shape.get(c);
-					if (set == null) {
-						set = new BitSet();
-						coord2Shape.put(c, set);
-					}
-					set.set(i);
+					sharedPoints.add(c);
 				}
 			}
+			if (sharedPoints.size() == 0 || sh0.getPoints().size() - sharedPoints.size()> PolygonSplitterFilter.MAX_POINT_IN_ELEMENT) {
+				// merge will not work 
+				noMerge.add(sh0);
+				continue;
+			}
 			
-			if (!hit) {
-				// shape shares no point with others
-				noMerge.add(sh);
+			assert candidates[i] == null;
+			candidates[i] = new BitSet();
+			BitSet curr = candidates[i];
+			curr.set(i);
+			
+			toMerge.set(i);
+			for (Coord c: sharedPoints) { 
+				BitSet set = coord2Shape.get(c);
+				if (set == null) {
+					set = new BitSet();
+					coord2Shape.put(c, set);
+				} else { 
+					for (int j = set.nextSetBit(0); j >= 0; j = set.nextSetBit(j + 1)) {
+						candidates[j].set(i);
+					}
+					curr.or(set);
+				}
+				set.set(i);
 			}
 		}
 		if (coord2Shape.isEmpty()) {
@@ -176,26 +194,23 @@ public class ShapeMergeFilter{
 		List<ShapeHelper> next = new ArrayList<>();
 		boolean merged = false;
 		BitSet done = new BitSet();
-		BitSet delayed = new BitSet();
-		
-		// loop that makes sure that shapes are processed in a predictable order
-		for (int i = 0; i < similarShapes.size(); i++) {
-			BitSet all = new BitSet();
-			for (BitSet bs : coord2Shape.values()) {
-				if (bs.get(i))
-					all.or(bs);
-			}
+		BitSet delayed = new BitSet();  
+
+		for (int i = toMerge.nextSetBit(0); i >= 0; i = toMerge.nextSetBit(i + 1)) {
+			if (done.get(i))
+				continue;
+			BitSet all = candidates[i];
 			if (all.cardinality() <= 1) {
 				if (!all.isEmpty())
 					delayed.set(i);
 				continue;
 			}
 			all.andNot(done);
+			
 			if (all.isEmpty())
 				continue;
-			
 			List<ShapeHelper> result = new ArrayList<>();
-			for (int j = all.nextSetBit(0); j >= 0; j = all.nextSetBit(j+1)) {
+			for (int j = all.nextSetBit(0); j >= 0; j = all.nextSetBit(j + 1)) {
 				ShapeHelper sh = similarShapes.get(j);
 				int oldSize = result.size();
 				result = addWithConnectedHoles(result, sh, pattern.getType());
@@ -205,11 +220,12 @@ public class ShapeMergeFilter{
 							" time(s) at resolution", resolution);
 				}
 			}
+			// XXX : not exact, there may be other combinations of shapes which can be merged
+			// e.g. merge of shape 1 + 2 may not work but 2 and 3 could still be candidates.
 			done.or(all);
 			next.addAll(result);
 		}
 		
-		coord2Shape = null;
 		delayed.andNot(done);
 		if (!delayed.isEmpty()) {
 			for (int i = delayed.nextSetBit(0); i >= 0; i = delayed.nextSetBit(i+1)) {
@@ -219,9 +235,11 @@ public class ShapeMergeFilter{
 		similarShapes.clear();
 		similarShapes.addAll(noMerge);
 		
-		if (merged) {
+		if (merged) 
 			tryMerge(pattern, next);
-		}
+		
+		// Maybe add final step which calls addWithConnectedHoles for all remaining shapes
+		// this will find a few more merges but is still slow for maps with lots of islands 
 		similarShapes.addAll(next);
 	}
 
@@ -269,7 +287,7 @@ public class ShapeMergeFilter{
 	 * @return merged shape or 1st shape if no common point found or {@code dupShape} 
 	 * if both shapes describe the same area. 
 	 */
-	private static ShapeHelper tryMerge(ShapeHelper sh1, ShapeHelper sh2) {
+	private ShapeHelper tryMerge(ShapeHelper sh1, ShapeHelper sh2) {
 		
 		// both clockwise or both ccw ?
 		boolean sameDir = sh1.areaTestVal > 0 && sh2.areaTestVal > 0 || sh1.areaTestVal < 0 && sh2.areaTestVal < 0;
@@ -465,9 +483,9 @@ public class ShapeMergeFilter{
 		return merged;
 	}
  	
-	private static class ShapeHelper{
+	private static class ShapeHelper {
 		final private List<Coord> points;
-		long id; 
+		long id;
 		long areaTestVal;
 
 		public ShapeHelper(List<Coord> merged) {
@@ -476,7 +494,7 @@ public class ShapeMergeFilter{
 		}
 
 		public ShapeHelper(ShapeHelper other) {
-			this.points = new ArrayList<>(other.getPoints());
+			this.points = other.points;
 			this.areaTestVal = other.areaTestVal;
 			this.id = other.id;
 		}
@@ -484,9 +502,8 @@ public class ShapeMergeFilter{
 		public List<Coord> getPoints() {
 			return points;
 		}
-		
 	}
-
+	
 	public final static long SINGLE_POINT_AREA = 1L << Coord.DELTA_SHIFT * 1L << Coord.DELTA_SHIFT;
 	
 	/**
@@ -508,6 +525,7 @@ public class ShapeMergeFilter{
 		while (polyIter.hasNext()) {
 			Coord c1 = c2;
 			c2 = polyIter.next();
+			//TODO: doesn't work when high precision values use 32 bit 
 			signedAreaSize += (long) (c2.getHighPrecLon() + c1.getHighPrecLon())
 					* (c1.getHighPrecLat() - c2.getHighPrecLat());
 		}
@@ -542,7 +560,7 @@ public class ShapeMergeFilter{
 			if (n2 == null)
 				return -1;
 			
-			return java.text.Collator.getInstance().compare(n1, n2);
+			return n1.compareTo(n2);
 		}
 	}
 }

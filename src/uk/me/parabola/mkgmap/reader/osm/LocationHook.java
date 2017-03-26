@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
+import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryGrid;
@@ -95,18 +96,22 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 		long t1 = System.currentTimeMillis();
 		log.info("Starting with location hook");
 
-		boundaryGrid = new BoundaryGrid(boundaryDirName, saver.getBoundingBox(), props);
-		processLocationRelevantElements();
+		Area nodesBounds = saver.getDataBoundingBox();
+		if (nodesBounds != null) {
+			Area bbox = saver.getBoundingBox();
+			// calculate the needed bounding box
+			Area searchBounds = bbox.intersect(nodesBounds);
+			boundaryGrid = new BoundaryGrid(boundaryDirName, searchBounds, props);
+			processLocationRelevantElements();
 
-		boundaryGrid = null;
-		
+			boundaryGrid = null;
+		}
 		long dt = (System.currentTimeMillis() - t1);
-		log.info("======= LocationHook Stats =====");             
-		log.info("QuadTree searches    :", cntQTSearch);             
-		log.info("unsuccesfull         :", cntNotFnd);             
-		log.info("unsuccesfull for ways:", cntwayNotFnd);             
+		log.info("======= LocationHook Stats =====");
+		log.info("QuadTree searches    :", cntQTSearch);
+		log.info("unsuccesfull         :", cntNotFnd);
+		log.info("unsuccesfull for ways:", cntwayNotFnd);
 		log.info("Location hook finished in", dt, "ms");
-
 	}
 
 	/**

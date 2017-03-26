@@ -14,6 +14,7 @@
 package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -57,24 +58,22 @@ public class RoadMerger {
 	/** 
 	 * For these tags two ways need to have an equal value so that their roads can be merged.
 	 */
-	private final static Set<String> mergeTagsEqualValue = new HashSet<String>() {
-		{
-			add("mkgmap:label:1");
-			add("mkgmap:label:2");
-			add("mkgmap:label:3");
-			add("mkgmap:label:4");
-			add("mkgmap:postal_code");
-			add("mkgmap:city");
-			add("mkgmap:region");
-			add("mkgmap:country");
-			add("mkgmap:is_in");
-			add("mkgmap:skipSizeFilter");
-			add("mkgmap:synthesised");
-			add("mkgmap:highest-resolution-only");
-			add("mkgmap:flare-check");
-			add("mkgmap:numbers");
-		}
-	};
+	private final static Set<String> mergeTagsEqualValue = new HashSet<>(Arrays.asList( 
+			"mkgmap:label:1",
+			"mkgmap:label:2",
+			"mkgmap:label:3",
+			"mkgmap:label:4",
+			"mkgmap:postal_code",
+			"mkgmap:city",
+			"mkgmap:region",
+			"mkgmap:country",
+			"mkgmap:is_in",
+			"mkgmap:skipSizeFilter",
+			"mkgmap:synthesised",
+			"mkgmap:highest-resolution-only",
+			"mkgmap:flare-check",
+			"mkgmap:numbers"
+			));
 
 
 	/**

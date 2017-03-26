@@ -13,8 +13,6 @@
 
 package uk.me.parabola.mkgmap.osmstyle.housenumber;
 
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -27,6 +25,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.net.NumberStyle;
@@ -727,9 +726,6 @@ public class ExtNumbers {
 			double len1 = segmentLength * minFraction0To1; // dist to first 
 			double len2 = segmentLength * maxFraction0To1; 
 			double len3 = (1-maxFraction0To1) * segmentLength;
-			double expectedError = c1.getDisplayedCoord().distance(new Coord(c1.getLatitude()+1,c1.getLongitude()));
-			double maxDistBefore = expectedError;
-			double maxDistAfter = expectedError;
 			if (reason == SR_FIX_ERROR && worstHouse != null){
 				wantedFraction = worstHouse.getSegmentFrac();
 				if (wantedFraction < minFraction0To1 || wantedFraction > maxFraction0To1){
@@ -738,6 +734,8 @@ public class ExtNumbers {
 			}
 			boolean allowSplitBetween = true;
 			boolean forceEmpty = false;
+			List<Double> wantedFractions = new ArrayList<>();
+			
 			if (reason == SR_OPT_LEN){
 				if (log.isDebugEnabled()){
 					if (maxFraction0To1 != minFraction0To1){
@@ -748,84 +746,98 @@ public class ExtNumbers {
 				if (len2 - len1 < 10 && getHouses(Numbers.LEFT).size() <= 1 && getHouses(Numbers.RIGHT).size() <= 1){
 					// one house or two opposite houses  
 					// we try to split so that the house(s) are near the middle of one part
-					wantedFraction = wantedFraction * 2 - (wantedFraction > 0.5 ? 1 : 0);
+					wantedFraction = midFraction * 2 - (midFraction > 0.5 ? 1 : 0);
 					allowSplitBetween = false;
 				} else {
 					if (len1 > MAX_LOCATE_ERROR / 2){
 						// create empty segment at start
-						wantedFraction = minFraction0To1 * 0.999;  
+						wantedFractions.add(minFraction0To1 * 0.999);
 						forceEmpty = true;
 					} 
-					if (len3 > MAX_LOCATE_ERROR / 2 && len3 > len1){
+					if (len3 > MAX_LOCATE_ERROR / 2){
 						// create empty segment at end
-						wantedFraction = maxFraction0To1 * 1.001;
+						if (!wantedFractions.isEmpty()  && len3 > len1)
+							wantedFractions.add(0, maxFraction0To1 * 1.001);
+						else 
+							wantedFractions.add(maxFraction0To1 * 1.001);
 						forceEmpty = true;
 					}
 				}
 			}
-			double partLen = wantedFraction * segmentLength ;
-			double shorterLen = Math.min(partLen , segmentLength - partLen);
-			if (shorterLen < 10){
-				if (reason == SR_FIX_ERROR && minFraction0To1 == maxFraction0To1)
-					return dupNode(midFraction, SR_FIX_ERROR);
-				double splitFrac = len1 < len3 ? minFraction0To1 : maxFraction0To1;
-				return dupNode(splitFrac, SR_OPT_LEN);
-			}
+			if (wantedFractions.isEmpty())
+				wantedFractions.add(wantedFraction);
+			
 			double usedFraction = 0;
 			double bestDist = Double.MAX_VALUE;
-			if (wantedFraction < minFraction0To1){
-				maxDistAfter = 0;
-			}
-			if (wantedFraction > maxFraction0To1){
-				maxDistBefore = 0;
-			}
-			for (;;){
-				Coord wanted = c1.makeBetweenPoint(c2, wantedFraction);
-				Map<Double, List<Coord>> candidates = rasterLineNearPoint2(c1, c2, wanted, maxDistBefore, maxDistAfter);
-				boolean foundGood = false;
-				for (Entry<Double, List<Coord>> entry : candidates.entrySet()){
-					if (foundGood)
-						break;
-					bestDist = entry.getKey();
-					for (Coord candidate: entry.getValue()){
-						toAdd = candidate;
-						usedFraction = HousenumberGenerator.getFrac(c1, c2, toAdd);
-						if (usedFraction <= 0 || usedFraction >= 1)
-							toAdd = null;
-						else if (usedFraction > minFraction0To1 && wantedFraction < minFraction0To1 || usedFraction < maxFraction0To1 && wantedFraction > maxFraction0To1){
-							toAdd = null;
-						} else if (allowSplitBetween == false && usedFraction > minFraction0To1 && usedFraction < maxFraction0To1){
-							toAdd = null;
-						} else {
-							if (bestDist > 0.2){
-								double angle = Utils.getDisplayedAngle(c1, toAdd, c2);
-								if (Math.abs(angle) > 3){
-									toAdd = null;
-									continue;
-								}
-							}
-							foundGood = true;
+			for (int w = 0; w < wantedFractions.size(); w++) {
+				wantedFraction = wantedFractions.get(w);
+				double partLen = wantedFraction * segmentLength ;
+				double shorterLen = Math.min(partLen , segmentLength - partLen);
+				if (shorterLen < 10){
+					if (reason == SR_FIX_ERROR && minFraction0To1 == maxFraction0To1)
+						return dupNode(midFraction, SR_FIX_ERROR);
+					double splitFrac = len1 < len3 ? minFraction0To1 : maxFraction0To1;
+					return dupNode(splitFrac, SR_OPT_LEN);
+				}
+				double expectedError = c1.getDisplayedCoord().distance(new Coord(c1.getLatitude()+1,c1.getLongitude()));
+				double maxDistBefore = expectedError;
+				double maxDistAfter = expectedError;
+
+				if (wantedFraction < minFraction0To1){
+					maxDistAfter = 0;
+				}
+				if (wantedFraction > maxFraction0To1){
+					maxDistBefore = 0;
+				}
+				for (;;){
+					Coord wanted = c1.makeBetweenPoint(c2, wantedFraction);
+					Map<Double, List<Coord>> candidates = rasterLineNearPoint2(c1, c2, wanted, maxDistBefore, maxDistAfter);
+					boolean foundGood = false;
+					for (Entry<Double, List<Coord>> entry : candidates.entrySet()){
+						if (foundGood)
 							break;
+						bestDist = entry.getKey();
+						for (Coord candidate: entry.getValue()){
+							toAdd = candidate;
+							usedFraction = HousenumberGenerator.getFrac(c1, c2, toAdd);
+							if (usedFraction <= 0 || usedFraction >= 1)
+								toAdd = null;
+							else if (usedFraction > minFraction0To1 && wantedFraction < minFraction0To1 || usedFraction < maxFraction0To1 && wantedFraction > maxFraction0To1){
+								toAdd = null;
+							} else if (allowSplitBetween == false && usedFraction > minFraction0To1 && usedFraction < maxFraction0To1){
+								toAdd = null;
+							} else {
+								if (bestDist > 0.2){
+									double angle = Utils.getDisplayedAngle(c1, toAdd, c2);
+									if (Math.abs(angle) > 3){
+										toAdd = null;
+										continue;
+									}
+								}
+								foundGood = true;
+								break;
+							}
 						}
 					}
+					if (foundGood){
+						break;
+					}
+					toAdd = null;
+					boolean tryAgain = false;
+					if (maxDistBefore > 0 && maxDistBefore < segmentLength * wantedFraction) {
+						maxDistBefore *= 2;
+						tryAgain = true;
+					}
+					if (maxDistAfter > 0 && maxDistAfter < segmentLength * (1 - wantedFraction)) {
+						maxDistAfter *= 2;
+						tryAgain = true;
+					}
+					if (!tryAgain)
+						break;
 				}
-				if (foundGood){
+				if (toAdd != null)
 					break;
-				}
-				toAdd = null;
-				boolean tryAgain = false;
-				if (maxDistBefore > 0 && maxDistBefore < segmentLength * wantedFraction) {
-					maxDistBefore *= 2;
-					tryAgain = true;
-				}
-				if (maxDistAfter > 0 && maxDistAfter < segmentLength * (1 - wantedFraction)) {
-					maxDistAfter *= 2;
-					tryAgain = true;
-				}
-				if (!tryAgain)
-					break;
-			} 			
-			
+			}
 			boolean addOK = true;
 			if (toAdd == null)
 				addOK = false;
@@ -838,19 +850,17 @@ public class ExtNumbers {
 			if (!addOK){
 				if (reason == SR_FIX_ERROR && minFraction0To1 == maxFraction0To1)
 					return dupNode(midFraction, SR_FIX_ERROR);
-				if (Math.min(len1, len3) < MAX_LOCATE_ERROR ){
-					double splitFrac = -1;
-					if (reason == SR_OPT_LEN){
-						if (wantedFraction <= minFraction0To1)
-							splitFrac = minFraction0To1;
-						else if (wantedFraction >= maxFraction0To1)
-							splitFrac = maxFraction0To1;
-						if (splitFrac <= 0.5 && len1 >= MAX_LOCATE_ERROR || splitFrac > 0.5 && len3 >= MAX_LOCATE_ERROR){
-							splitFrac = -1;
-						}
+				
+				if (Math.min(len1, len3) < MAX_LOCATE_ERROR) {
+					double splitFrac = midFraction;
+					if (splitFrac <= 0.5) {
+						if (splitFrac * segmentLength > MAX_LOCATE_ERROR)
+							splitFrac = Math.max(minFraction0To1, MAX_LOCATE_ERROR / segmentLength);
+					} else {
+						if ((1-splitFrac) * segmentLength > MAX_LOCATE_ERROR)
+							splitFrac = Math.min(maxFraction0To1, (segmentLength-MAX_LOCATE_ERROR) / segmentLength);
+						
 					}
-					if (splitFrac < 0)
-						splitFrac = (minFraction0To1 != maxFraction0To1) ? midFraction : minFraction0To1;
 					return dupNode(splitFrac, SR_OPT_LEN);
 				}
 				if(reason == SR_FIX_ERROR)

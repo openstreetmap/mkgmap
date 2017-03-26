@@ -19,6 +19,7 @@ package uk.me.parabola.imgfmt.app.trergn;
 import uk.me.parabola.imgfmt.ReadFailedException;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.CommonHeader;
+import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Section;
@@ -108,8 +109,8 @@ public class TREHeader extends CommonHeader {
 		int minLat = reader.get3();
 		int minLon = reader.get3();
 		// fix problem with value 0x800000 that is interpreted as a negative value
-		if (maxLon <  minLon && maxLon == -8388608 )
-			maxLon = 8388608; // its 180 degrees, not -180
+		if (maxLon <  minLon && maxLon == Coord.MIN_GARMIN_LONGITUDE)
+			maxLon = Coord.MAX_GARMIN_LONGITUDE; // its 180 degrees, not -180
 		
 		setBounds(new Area(minLat, minLon, maxLat, maxLon));
 		log.info("read area is", getBounds());

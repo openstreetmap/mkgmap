@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.build.Locator;
 import uk.me.parabola.mkgmap.osmstyle.NameFinder;
+import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.TagDict;
 import uk.me.parabola.mkgmap.reader.osm.Tags;
 import uk.me.parabola.mkgmap.reader.osm.boundary.Boundary;
@@ -69,6 +70,15 @@ public class BoundaryLocationPreparer {
 		return new BoundaryLocationInfo(admLevel, name, zip);
 	}
 
+	/**
+	 * Extract location relevant information from tags of the element
+	 * @param el the element
+	 * @return a new BoundaryLocationInfo instance 
+	 */
+	public BoundaryLocationInfo parseTags(Element el){
+		return parseTags(el.getCopyOfTags());
+	}
+
 	/** 
 	 * Extract and prepare tag infos from BoundaryList 
 	 * @param boundaries list of boundaries
@@ -109,11 +119,13 @@ public class BoundaryLocationPreparer {
 
 	private static String getFirstPart(String name) {
 		String[] nameParts = COMMA_OR_SEMICOLON_PATTERN.split(name);
-		return nameParts[0].trim().intern();
+		if (nameParts.length > 0)
+			return nameParts[0].trim().intern();
+		return null;
 	}
 	
 	private static final short postal_codeTagKey = TagDict.getInstance().xlate("postal_code");
-	private static final short boudaryTagKey = TagDict.getInstance().xlate("boundary");
+	private static final short boundaryTagKey = TagDict.getInstance().xlate("boundary");
 	/**
 	 * Try to extract a zip code from the the tags of a boundary. 
 	 * @param tags the boundary tags
@@ -122,7 +134,7 @@ public class BoundaryLocationPreparer {
 	private String getZip(Tags tags) {
 		String zip = tags.get(postal_codeTagKey);
 		if (zip == null) {
-			if ("postal_code".equals(tags.get(boudaryTagKey))){
+			if ("postal_code".equals(tags.get(boundaryTagKey))){
 				// unlikely
 				String name = tags.get("name"); 
 				if (name == null) {
@@ -148,19 +160,18 @@ public class BoundaryLocationPreparer {
 	 * the conversion failed. 
 	 */
 	private static int getAdminLevel(Tags tags) {
-		String level = tags.get(admin_levelTagKey);
-		if (level == null) {
-			return UNSET_ADMIN_LEVEL;
+		if ("administrative".equals(tags.get(boundaryTagKey))) {
+			String level = tags.get(admin_levelTagKey);
+			if (level != null) {
+				try {
+					int res = Integer.parseInt(level);
+					if (res >= 2 && res <= 11)
+						return res;
+				} catch (NumberFormatException nfe) {
+				}
+			}
 		}
-		try {
-			Integer res = Integer.valueOf(level);
-			if (res < 2 || res > 11)
-				return UNSET_ADMIN_LEVEL;
-			else
-				return res;
-		} catch (NumberFormatException nfe) {
-			return UNSET_ADMIN_LEVEL;
-		}
+		return UNSET_ADMIN_LEVEL;
 	}
 } 
 

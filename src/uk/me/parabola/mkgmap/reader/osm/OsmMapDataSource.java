@@ -135,9 +135,11 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	}
 	
 	@Override
-	public void load(String name) throws FileNotFoundException, FormatException {
+	public void load(String name, boolean addBackground) throws FileNotFoundException, FormatException {
 		InputStream is = Utils.openFile(name);
 		load(is);
+		if (addBackground)
+			addBackground();
 	}
 
 	/**
@@ -199,6 +201,9 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 		if(deleteTagsFileName != null) {
 			Map<String, Set<String>> deltags = readDeleteTagsFile(deleteTagsFileName);
 			handler.setTagsToDelete(deltags);
+		}
+		if (getConfig().getProperty("ignore-fixme-values", false)) {
+			handler.setDeleteFixmeValues(true);
 		}
 	}
 	

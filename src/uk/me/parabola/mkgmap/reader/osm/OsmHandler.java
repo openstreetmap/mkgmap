@@ -16,6 +16,7 @@ package uk.me.parabola.mkgmap.reader.osm;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -30,14 +31,17 @@ public class OsmHandler {
 	protected ElementSaver saver;
 	protected OsmReadingHooks hooks;
 
-	private final Map<String, Long> fakeIdMap = new HashMap<String, Long>();
 	private Map<String,Set<String>> deletedTags;
 	private Map<String, String> usedTags;
 
+	/** Pattern for values containing fixme, fix_me etc. */
+	private static final Pattern FIXME_PATTERN = Pattern.compile("(?i)fix[ _]?+me");
+	private boolean removeFixme;
+	
 	// Node references within a way
-	protected long firstNodeRef;
-	protected long lastNodeRef;
-	protected boolean missingNodeRef;
+	private long firstNodeRef;
+	private long lastNodeRef;
+	private boolean missingNodeRef;
 
 	/** 
 	 * Tag that is set to <code>true</code> if one or more tags are not loaded. 
@@ -107,8 +111,16 @@ public class OsmHandler {
 		// By returning the value stored in usedTags, instead of the key, we ensure
 		// that the same string is always used so saving some memory.
 		if (usedTags != null)
-			return usedTags.get(key);
-
+			key = usedTags.get(key);
+		
+		if (key != null && removeFixme && val.length() >= 5) {
+			// remove tags with value fixme if the key is NOT fixme
+			if ("fixme".equals(key) || "FIXME".equals(key)) {
+				// keep fixme no matter what value it has
+			} else if (FIXME_PATTERN.matcher(val).matches()) {
+				return null;
+			}
+		}
 		return key;
 	}
 
@@ -121,28 +133,6 @@ public class OsmHandler {
 		}
 		Area bbox = new Area(minlat, minlong, maxlat, maxlong);
 		saver.setBoundingBox(bbox);
-	}
-
-	/**
-	 * Convert an id as a string to a number. If the id is not a number, then create
-	 * a unique number instead.
-	 * @param id The id as a string. Does not have to be a numeric quantity.
-	 * @return A long id, either parsed from the input, or a unique id generated internally.
-	 */
-	protected long idVal(String id) {
-		try {
-			// attempt to parse id as a number
-			return Long.parseLong(id);
-		} catch (NumberFormatException e) {
-			// if that fails, fake a (hopefully) unique value
-			Long fakeIdVal = fakeIdMap.get(id);
-			if(fakeIdVal == null) {
-				fakeIdVal = FakeIdGenerator.makeFakeId();
-				fakeIdMap.put(id, fakeIdVal);
-			}
-			//System.out.printf("%s = 0x%016x\n", id, fakeIdVal);
-			return fakeIdVal;
-		}
 	}
 
 	public void setElementSaver(ElementSaver elementSaver) {
@@ -197,5 +187,13 @@ public class OsmHandler {
 		} else {
 			missingNodeRef = true;
 		}
+	}
+
+	/**
+	 * Enable removal of tags / value pairs where value matches the fixme pattern.
+	 * @param b true: enable the filter
+	 */
+	public void setDeleteFixmeValues(boolean b) {
+		this.removeFixme = b;
 	}
 }

@@ -51,6 +51,15 @@ public class UtilsTest {
 				}
 			}
 		}
-		
+	}
+	
+	@Test
+	public void testRoundUp() {
+		assertEquals(1, Utils.roundUp(1, 0));
+		assertEquals(-1, Utils.roundUp(-1, 0));
+		assertEquals(2, Utils.roundUp(1, 1));
+		assertEquals(0, Utils.roundUp(-1, 1));
+		assertEquals(2, Utils.roundUp(2, 1));
+		assertEquals(-2, Utils.roundUp(-2, 1));
 	}
 }

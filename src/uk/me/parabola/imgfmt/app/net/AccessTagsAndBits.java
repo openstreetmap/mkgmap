@@ -43,50 +43,55 @@ public final class AccessTagsAndBits {
 	public static final byte R_FERRY        = 0x020;
 	public static final byte R_ROUNDABOUT   = 0x040;
 
-	public final static Map<String, Byte> ACCESS_TAGS = new LinkedHashMap<String, Byte>(){{
-		put("mkgmap:foot", FOOT);
-		put("mkgmap:bicycle", BIKE);
-		put("mkgmap:car", CAR);
-		put("mkgmap:delivery", DELIVERY);
-		put("mkgmap:truck", TRUCK);
-		put("mkgmap:bus", BUS);
-		put("mkgmap:taxi", TAXI);
-		put("mkgmap:emergency", EMERGENCY);
-	}};
+	public static final Map<String, Byte> ACCESS_TAGS;
+	public static final Map<Short, Byte> ACCESS_TAGS_COMPILED;
+	static {
+		ACCESS_TAGS = new LinkedHashMap<>();
+		ACCESS_TAGS.put("mkgmap:foot", FOOT);
+		ACCESS_TAGS.put("mkgmap:bicycle", BIKE);
+		ACCESS_TAGS.put("mkgmap:car", CAR);
+		ACCESS_TAGS.put("mkgmap:delivery", DELIVERY);
+		ACCESS_TAGS.put("mkgmap:truck", TRUCK);
+		ACCESS_TAGS.put("mkgmap:bus", BUS);
+		ACCESS_TAGS.put("mkgmap:taxi", TAXI);
+		ACCESS_TAGS.put("mkgmap:emergency", EMERGENCY);
 
-	public final static Map<Short, Byte> ACCESS_TAGS_COMPILED = new LinkedHashMap<Short, Byte>(){{
-		for (Map.Entry<String, Byte> entry : ACCESS_TAGS.entrySet())
-			put(TagDict.getInstance().xlate(entry.getKey()),entry.getValue());
-	}};
+		ACCESS_TAGS_COMPILED = new LinkedHashMap<>();
+		for (Map.Entry<String, Byte> entry : ACCESS_TAGS.entrySet()) {
+			ACCESS_TAGS_COMPILED.put(TagDict.getInstance().xlate(entry.getKey()), entry.getValue());
+		}
+	};
 
-	public final static Map<String, Byte> ROUTE_TAGS = new LinkedHashMap<String, Byte>(){{
-		put("mkgmap:throughroute", R_THROUGHROUTE);
-		put("mkgmap:carpool", R_CARPOOL); 
-		put("oneway", R_ONEWAY);
-		put("mkgmap:toll", R_TOLL);
-		put("mkgmap:unpaved", R_UNPAVED);
-		put("mkgmap:ferry", R_FERRY);
-		put("junction", R_ROUNDABOUT);
-	}};
+	public static final Map<String, Byte> ROUTE_TAGS;
+	static {
+		ROUTE_TAGS = new LinkedHashMap<>();
+		ROUTE_TAGS.put("mkgmap:throughroute", R_THROUGHROUTE);
+		ROUTE_TAGS.put("mkgmap:carpool", R_CARPOOL);
+		ROUTE_TAGS.put("oneway", R_ONEWAY);
+		ROUTE_TAGS.put("mkgmap:toll", R_TOLL);
+		ROUTE_TAGS.put("mkgmap:unpaved", R_UNPAVED);
+		ROUTE_TAGS.put("mkgmap:ferry", R_FERRY);
+		ROUTE_TAGS.put("junction", R_ROUNDABOUT);
+	}
 
-	public static byte evalAccessTags(Element el){
+	public static byte evalAccessTags(Element el) {
 		byte noAccess = 0;
-		for (Map.Entry<Short,Byte> entry : ACCESS_TAGS_COMPILED.entrySet()){
+		for (Map.Entry<Short, Byte> entry : ACCESS_TAGS_COMPILED.entrySet()) {
 			if (el.tagIsLikeNo(entry.getKey()))
 				noAccess |= entry.getValue();
 		}
 		return  (byte) ~noAccess;
 	}
 
-
-	private static final short carpoolTagKey = TagDict.getInstance().xlate("mkgmap:carpool"); 
-	private static final short tollTagKey = TagDict.getInstance().xlate("mkgmap:toll"); 
-	private static final short unpavedTagKey = TagDict.getInstance().xlate("mkgmap:unpaved"); 
-	private static final short ferryTagKey = TagDict.getInstance().xlate("mkgmap:ferry"); 
-	private static final short throughrouteTagKey = TagDict.getInstance().xlate("mkgmap:throughroute"); 
-	private static final short junctionTagKey = TagDict.getInstance().xlate("junction"); 
-	private static final short onewayTagKey = TagDict.getInstance().xlate("oneway"); 
-	public static byte evalRouteTags(Element el){
+	private static final short carpoolTagKey = TagDict.getInstance().xlate("mkgmap:carpool");
+	private static final short tollTagKey = TagDict.getInstance().xlate("mkgmap:toll");
+	private static final short unpavedTagKey = TagDict.getInstance().xlate("mkgmap:unpaved");
+	private static final short ferryTagKey = TagDict.getInstance().xlate("mkgmap:ferry");
+	private static final short throughrouteTagKey = TagDict.getInstance().xlate("mkgmap:throughroute");
+	private static final short junctionTagKey = TagDict.getInstance().xlate("junction");
+	private static final short onewayTagKey = TagDict.getInstance().xlate("oneway");
+	
+	public static byte evalRouteTags(Element el) {
 		byte routeFlags = 0;
 
 		// Style has to set "yes"

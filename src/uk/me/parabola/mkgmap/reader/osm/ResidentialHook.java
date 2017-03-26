@@ -80,12 +80,11 @@ public class ResidentialHook extends OsmReadingHooksAdaptor {
 	private static final short landuseTagKey = TagDict.getInstance().xlate("landuse"); 
 	private static final short nameTagKey = TagDict.getInstance().xlate("name");  
 	private static final short styleFilterTagKey = TagDict.getInstance().xlate("mkgmap:stylefilter");
-	private static final short fakeResidentialKey = TagDict.getInstance().xlate("mkgmap:admin_level11");
+	private static final short otherKey = TagDict.getInstance().xlate("mkgmap:other");
 	
 	private BoundaryQuadTree buildResidentialBoundaryTree() {
 		List<Boundary> residentials = new ArrayList<>();
 		Tags tags = new Tags();
-		tags.put("admin_level", "11");
 		
 		for (Way way : saver.getWays().values()) {
 			if (way.hasIdenticalEndPoints() && "residential".equals(way.getTag(landuseTagKey))) {
@@ -122,7 +121,7 @@ public class ResidentialHook extends OsmReadingHooksAdaptor {
 		}
 
 		if (residentialTags != null) {
-			elem.addTag("mkgmap:residential", residentialTags.get(fakeResidentialKey));
+			elem.addTag("mkgmap:residential", residentialTags.get(otherKey));
 		}
 	}
 	

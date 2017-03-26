@@ -19,6 +19,7 @@ package uk.me.parabola.mkgmap.reader.overview;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
+
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.net.GeneralRouteRestriction;
@@ -60,7 +61,7 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 	/*
 	 * This is never called as isFileSupported always returns false.
 	 */
-	public void load(String name) throws FileNotFoundException, FormatException {
+	public void load(String name, boolean addBackground) throws FileNotFoundException, FormatException {
 		throw new FileNotFoundException("This is not supposed to be called");
 	}
 

@@ -53,10 +53,11 @@ public interface LoadableMapDataSource extends MapDataSource, Configurable {
 	 * format.
 	 *
 	 * @param name The name of the resource to be loaded.
+	 * @param addBackground set to true if 0x4b polygon is wanted
 	 * @throws FileNotFoundException When the file or resource is not found.
 	 * @throws FormatException For any kind of malformed input.
 	 */
-	public void load(String name)
+	public void load(String name, boolean addBackground)
 			throws FileNotFoundException, FormatException;
 
 	/**

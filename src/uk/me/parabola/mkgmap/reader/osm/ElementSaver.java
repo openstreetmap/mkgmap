@@ -57,8 +57,7 @@ public class ElementSaver {
 	// This is an explicitly given bounding box from the input file command line etc.
 	private Area boundingBox;
 
-	// This is a calculated bounding box, which is only available if there is
-	// no given bounding box.
+	// This is a calculated bounding box
 	private int minLat = Integer.MAX_VALUE;
 	private int minLon = Integer.MAX_VALUE;
 	private int maxLat = Integer.MIN_VALUE;
@@ -97,17 +96,15 @@ public class ElementSaver {
 	 */
 	public void addPoint(long id, Coord co) {
 		coordMap.put(id, co);
-		if (boundingBox == null) {
-			if (co.getLatitude() < minLat)
-				minLat = co.getLatitude();
-			if (co.getLatitude() > maxLat)
-				maxLat = co.getLatitude();
+		if (co.getLatitude() < minLat)
+			minLat = co.getLatitude();
+		if (co.getLatitude() > maxLat)
+			maxLat = co.getLatitude();
 
-			if (co.getLongitude() < minLon)
-				minLon = co.getLongitude();
-			if (co.getLongitude() > maxLon)
-				maxLon = co.getLongitude();
-		}
+		if (co.getLongitude() < minLon)
+			minLon = co.getLongitude();
+		if (co.getLongitude() > maxLon)
+			maxLon = co.getLongitude();
 	}
 
 	/**
@@ -321,12 +318,23 @@ public class ElementSaver {
 		} else if (minLat > maxLat) {
 			return new Area(0, 0, 0, 0);
 		} else {
+			return getDataBoundingBox();
+		}
+	}
+
+	/**
+	 * Get the bounding box of all nodes. Returns null if no point was read.
+	 */
+	public Area getDataBoundingBox() {
+		if (minLat > maxLat) {
+			return null;
+		} else {
 			// calculate an area that is slightly larger so that high precision coordinates
 			// are safely within the bbox.
 			return new Area(Math.max(Utils.toMapUnit(-90.0), minLat-1), 
 					Math.max(Utils.toMapUnit(-180.0), minLon-1),
 					Math.min(Utils.toMapUnit(90.0), maxLat+1),
-					Math.min(Utils.toMapUnit(180.0), maxLon+1)); 
+					Math.min(Utils.toMapUnit(180.0), maxLon+1));
 		}
 	}
 

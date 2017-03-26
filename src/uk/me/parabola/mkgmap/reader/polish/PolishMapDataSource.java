@@ -96,7 +96,6 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private int lineNo;
 
 	private boolean havePolygon4B;
-	private Boolean driveOnLeft;
 
 	// Use to decode labels if they are not in cp1252
 	private CharsetDecoder dec;
@@ -107,13 +106,8 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		return name.endsWith(".mp") || name.endsWith(".MP") || name.endsWith(".mp.gz");
 	}
 
-	/**
-	 * Load the .osm file and produce the intermediate format.
-	 *
-	 * @param name The filename to read.
-	 * @throws FileNotFoundException If the file does not exist.
-	 */
-	public void load(String name) throws FileNotFoundException, FormatException {
+	@Override
+	public void load(String name, boolean addBackground) throws FileNotFoundException, FormatException {
 		Reader reader;
 		try {
 			reader = new InputStreamReader(Utils.openFile(name), READING_CHARSET);
@@ -151,7 +145,8 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			throw new FormatException("Reading file failed", e);
 		}
 
-		addBackground(havePolygon4B);
+		if (addBackground && !havePolygon4B)
+			addBackground();
 		coordMap = null;
 	}
 

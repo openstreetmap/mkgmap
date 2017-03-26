@@ -31,7 +31,7 @@ import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.build.MapBuilder;
 import uk.me.parabola.mkgmap.combiners.OverviewBuilder;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
-import uk.me.parabola.mkgmap.reader.plugin.MapReader;
+import uk.me.parabola.mkgmap.reader.MapReader;
 
 /**
  * Main routine for the command line map-making utility.
@@ -151,7 +151,7 @@ public class MapMaker implements MapProcessor {
 		LoadableMapDataSource src = MapReader.createMapReader(name);
 		src.config(args.getProperties());
 		log.info("Started loading", name);
-		src.load(name);
+		src.load(name, args.getProperties().getProperty("transparent", false) == false);
 		log.info("Finished loading", name);
 		return src;
 	}

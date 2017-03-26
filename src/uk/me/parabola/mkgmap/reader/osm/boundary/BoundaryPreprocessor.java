@@ -35,28 +35,12 @@ import uk.me.parabola.mkgmap.reader.osm.LocationHook;
  */
 public class BoundaryPreprocessor implements Runnable {
 	private static final Logger log = Logger.getLogger(BoundaryPreprocessor.class);
-	private static final List<Class<? extends LoadableBoundaryDataSource>> loaders;
+	private static final List<LoadableBoundaryDataSource> loaders;
 	static {
-		String[] sources = {
-				"uk.me.parabola.mkgmap.reader.osm.boundary.OsmBinBoundaryDataSource",
-				"uk.me.parabola.mkgmap.reader.osm.boundary.O5mBinBoundaryDataSource",
-				// must be last as it is the default
-				"uk.me.parabola.mkgmap.reader.osm.boundary.Osm5BoundaryDataSource", };
-
 		loaders = new ArrayList<>();
-
-		for (String source : sources) {
-			try {
-				@SuppressWarnings({ "unchecked" })
-				Class<? extends LoadableBoundaryDataSource> c = (Class<? extends LoadableBoundaryDataSource>) Class
-						.forName(source);
-				loaders.add(c);
-			} catch (ClassNotFoundException e) {
-				// not available, try the rest
-			} catch (NoClassDefFoundError e) {
-				// not available, try the rest
-			}
-		}
+		loaders.add(new OsmBinBoundaryDataSource());
+		loaders.add(new O5mBinBoundaryDataSource());
+//		loaders.add(new Osm5BoundaryDataSource()); not needed in list, is fall back option
 	}
 
 	/**
@@ -70,17 +54,14 @@ public class BoundaryPreprocessor implements Runnable {
 	 *         resource.
 	 */
 	private static LoadableBoundaryDataSource createMapReader(String name) {
-		for (Class<? extends LoadableBoundaryDataSource> loader : loaders) {
+		for (LoadableBoundaryDataSource loader : loaders) {
+			if (name != null && loader.isFileSupported(name))
 			try {
-				LoadableBoundaryDataSource src = loader.newInstance();
-				if (name != null && src.isFileSupported(name))
-					return src;
+				return loader.getClass().newInstance();
 			} catch (InstantiationException e) {
 				// try the next one.
 			} catch (IllegalAccessException e) {
 				// try the next one.
-			} catch (NoClassDefFoundError e) {
-				// try the next one
 			}
 		}
 
@@ -149,7 +130,7 @@ public class BoundaryPreprocessor implements Runnable {
 		dataSource.setBoundarySaver(saver);
 		log.info("Started loading", boundaryFilename);
 		try {
-			dataSource.load(boundaryFilename);
+			dataSource.load(boundaryFilename, false);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			return false;

@@ -22,10 +22,6 @@ public class Osm5PrecompSeaDataSource extends Osm5MapDataSource {
 
 	private static final Set<String> coastlineTags = Collections.singleton("natural");
 	
-	protected void addBackground(boolean mapHasPolygon4B) {
-		// do not add a background polygon
-	}
-	
 	protected OsmReadingHooks[] getPossibleHooks() {
 		// no hooks
 		return new OsmReadingHooks[] {};

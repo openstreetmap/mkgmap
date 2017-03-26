@@ -691,6 +691,10 @@ TAG=VALUE or TAG=*. Blank lines and lines that start with
 a # or ; are ignored. All tag/value pairs in the OSM input are
 compared with these patterns and those that match are deleted.
 <p>
+;--ignore-fixme-values
+: 	Tells mkgmap to ignore all tags for which the value matches the pattern
+"(?i)fix[ _]?+me".	
+<p>
 ;--tdbfile
 : 	Write files that are essential to running with MapSource, a .tdb file and
 an overview map.

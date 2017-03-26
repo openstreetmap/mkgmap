@@ -316,4 +316,9 @@ public class Area {
 		coords.add(start);
 		return coords;
 	}
+
+	public Area intersect(Area other) {
+		return new Area(Math.max(minLat, other.minLat), Math.max(minLong, other.minLong),
+				Math.min(maxLat, other.maxLat), Math.min(maxLong, other.maxLong));
+	}
 }
