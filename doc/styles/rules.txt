@@ -876,10 +876,10 @@ with the include statement.
 
 [source]
 ----
-if (mkgmap:option:route=car) then
+if (mkgmap:option:routing=car) then
 	include "inc/car-rules";
 end 
-if (mkgmap:option:route=bicycle) then
+if (mkgmap:option:routing=bicycle) then
 	include "inc/cycle-rules";
 end 
 ----
