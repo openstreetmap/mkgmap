@@ -58,12 +58,5 @@ public class OsmBinMapDataSource extends OsmMapDataSource {
 		} catch (IOException e) {
 			throw new FormatException("Failed to read binary file");
 		}
-		elementSaver.finishLoading();
-
-		osmReadingHooks.end();
-		osmReadingHooks = null;
-		
-		// now convert the saved elements
-		elementSaver.convert(getConverter());
 	}
 }

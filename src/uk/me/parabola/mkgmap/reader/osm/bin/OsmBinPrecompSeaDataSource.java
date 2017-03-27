@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.Set;
 
 import uk.me.parabola.mkgmap.reader.osm.OsmReadingHooks;
-import uk.me.parabola.mkgmap.reader.osm.PrecompSeaElementSaver;
 
 public class OsmBinPrecompSeaDataSource extends OsmBinMapDataSource {
 	
@@ -30,9 +29,4 @@ public class OsmBinPrecompSeaDataSource extends OsmBinMapDataSource {
 	public Set<String> getUsedTags() {
 		return coastlineTags;
 	}
-
-	protected void createElementSaver() {
-		elementSaver = new PrecompSeaElementSaver(getConfig());
-	}
-
 }

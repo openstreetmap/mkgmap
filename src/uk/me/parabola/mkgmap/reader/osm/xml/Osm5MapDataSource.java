@@ -62,14 +62,6 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 				// parse the xml file
 				parser.parse(is, saxHandler);
 
-				elementSaver.finishLoading();
-
-				osmReadingHooks.end();
-				osmReadingHooks = null;
-				
-				// now convert the saved elements
-				elementSaver.convert(getConverter());
-
 			} catch (IOException e) {
 				throw new FormatException("Error reading file", e);
 			}

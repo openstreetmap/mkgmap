@@ -43,13 +43,5 @@ public class O5mBinMapDataSource extends OsmMapDataSource {
 		setupHandler(handler);
 
 		handler.parse();
-		handler = null;
-		elementSaver.finishLoading();
-
-		osmReadingHooks.end();
-		osmReadingHooks = null;
-		
-		// now convert the saved elements
-		elementSaver.convert(getConverter());
 	}
 }

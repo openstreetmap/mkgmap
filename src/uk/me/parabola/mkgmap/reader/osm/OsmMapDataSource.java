@@ -138,6 +138,14 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	public void load(String name, boolean addBackground) throws FileNotFoundException, FormatException {
 		InputStream is = Utils.openFile(name);
 		load(is);
+		elementSaver.finishLoading();
+
+		osmReadingHooks.end();
+		osmReadingHooks = null;
+		
+		// now convert the saved elements
+		elementSaver.convert(getConverter());
+		
 		if (addBackground)
 			addBackground();
 	}
