@@ -23,7 +23,9 @@ The three possible parts are:
 * The second part is the <<Action_block,action block>> that can be used to do things with the tags of objects that match the tests and is contained in curly braces `{...}`.
 * The third part is the <<Element_type,element type definition>> and sets
 the Garmin type and sometimes other parameters that will be used if the tests match. This part is contained
-in square brackets `[...]`.
+in square brackets `[...]`. 
+
+If you want to add two or more different map elements you can do this with repeated square brackets following one expression `[...]`  
 
 Here is an example of a rule containing all three sections:
 
@@ -827,6 +829,61 @@ will result in
 Actions in the finalize section are not persistent in terms of the +continue+ or
 +continue with_actions+ statement
 
+== Style syntax extension if then else ==
+
+To avoid the repetition of expressions you can use the following syntax: 
+if (<<Tag_tests,tests>>) then
+  i-rule(s)  
+end
+
+or
+ 
+if (<<Tag_tests,tests>>) then 
+  rule(s) 
+else 
+  e-rules(s) 
+end
+
+[NOTE]
+Rules within +if+ and +end+ must be written with an expression.
+The shortest valid expression is a pair of round brackets +()+.
+
+So, instead of 
+[source]
+----
+boundary=administrative { name '${mkgmap:boundary_name}' }
+boundary=administrative & admin_level<3 [0x1e resolution 12]
+boundary=administrative & admin_level<5 [0x1d resolution 19]
+boundary=administrative & admin_level<7 [0x1c resolution 21]
+boundary=administrative & admin_level<9 [0x1c resolution 22]
+boundary=administrative [0x1c resolution 22] 
+----
+you may write
+[source]
+----
+if (boundary=administrative) then
+	() { name '${mkgmap:boundary_name}' }
+	admin_level<3 [0x1e resolution 12]
+	admin_level<5 [0x1d resolution 19]
+	admin_level<7 [0x1c resolution 21]
+	admin_level<9 [0x1c resolution 22]
+	() [0x1c resolution 22]
+end 
+----
+
+If statements may also be nested and you can also use them in combination
+with the include statement.  
+
+[source]
+----
+if (mkgmap:option:routing=car) then
+	include "inc/car-rules";
+end 
+if (mkgmap:option:routing=bicycle) then
+	include "inc/cycle-rules";
+end 
+----
+                         
 == Troubleshooting ==
 
 For each node/way/relation, mkgmap goes through the tags exactly once in
@@ -863,6 +920,23 @@ amenity=bank [0x2f06 level 3]
 
 This will be explained in more detail in the following sections along
 with how to use more than one tag to make the choice.
+
+For a roundabout you may want to use the special Garmin type 0xc in combination with an overlaying way
+that shows the road importance. You can do this with two rules like this
+[source]
+----
+junction=roundabout & (highway=tertiary | highway=tertiary_link)
+    [0x0c road_class=1 road_speed=1 resolution 24 continue]
+junction=roundabout & (highway=tertiary | highway=tertiary_link) 
+    [0x10804 resolution 21] 
+----
+
+or shorter with one rule that has two type definitions 
+[source]
+----
+junction=roundabout & (highway=tertiary | highway=tertiary_link) 
+    [0x0c road_class=1 road_speed=1 resolution 24] [0x10804 resolution 21]
+----
 
 === More involved examples ===
 A few tips and tricks showing how the rules can be used to

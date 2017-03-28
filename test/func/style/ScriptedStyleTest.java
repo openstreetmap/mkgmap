@@ -55,20 +55,23 @@ public class ScriptedStyleTest {
 		assertTrue(d.isDirectory());
 
 		// Only run files ending in .test
-		FilenameFilter filter = new FilenameFilter() {
-			public boolean accept(File dir, String name) {
-				if (name.endsWith(".test"))
-					return true;
-				return false;
-			}
+		FilenameFilter filter = (dir, name) -> {
+			if (name.endsWith(".test"))
+				return true;
+			return false;
 		};
 
 		int count = 0;
 		File[] files = d.listFiles(filter);
+		assert files != null;
 		for (File file : files) {
 			setup();
 			String name = file.getCanonicalPath();
-			StyleTester.runSimpleTest(name);
+			try {
+				StyleTester.runSimpleTest(name);
+			} catch (Exception e) {
+				assertFalse(name, true);
+			}
 			String result = output.toString();
 
 			// Make sure that the result does not contain an error
@@ -96,6 +99,6 @@ public class ScriptedStyleTest {
 		StyleTester.setOut(ps);
 
 		// Make sure that there is a given result set
-		StyleTester.forceUseOfGiven(true);
+		StyleTester.forceUseOfGiven();
 	}
 }

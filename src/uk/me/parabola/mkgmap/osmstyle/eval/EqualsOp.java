@@ -29,14 +29,6 @@ public class EqualsOp extends AbstractBinaryOp {
 		setType(NodeType.EQUALS);
 	}
 
-	public void setFirst(Op first) {
-		super.setFirst(first);
-	}
-
-	public void setSecond(Op second) {
-		super.setSecond(second);
-	}
-
 	public boolean eval(Element el) {
 		String s = first.value(el);
 		if (s == null)

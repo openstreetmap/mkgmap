@@ -18,10 +18,13 @@ import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
+import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.TagDict;
 
@@ -138,7 +141,8 @@ public class RuleIndex {
 	public BitSet getRulesForTag(short tagKey, String tagVal) {
 		TagHelper th;
 		if (tagKeyArray != null){
-			if (tagKey >= 0 & tagKey < tagKeyArray.length){
+			assert tagKey > 0;
+			if (tagKey < tagKeyArray.length){
 				th = tagKeyArray[tagKey];
 			} else 
 				th = null;
@@ -166,6 +170,9 @@ public class RuleIndex {
 
 		// Maps a rule number to the tags that might be changed by that rule
 		Map<Integer, List<String>> changeTags = new HashMap<Integer, List<String>>();
+		
+		// remove unnecessary rules
+		filterRules();
 		
 		for (int i = 0; i < ruleDetails.size(); i++){
 			int ruleNumber = i;
@@ -247,11 +254,8 @@ public class RuleIndex {
 		}
 
 		// compress the index: create one hash map with one entry for each key
-		int highestKey = 0;
 		for (Map.Entry<String, BitSet> entry  : tagnames.entrySet()){
 			Short skey = TagDict.getInstance().xlate(entry.getKey());
-			if (skey > highestKey)
-				highestKey = skey;
 			tagKeyMap.put(skey, new TagHelper(entry.getValue()));
 		}
 		for (Map.Entry<String, BitSet> entry  : tagVals.entrySet()){
@@ -260,8 +264,6 @@ public class RuleIndex {
 			if (ind >= 0) {
 				short key = TagDict.getInstance().xlate(keyString.substring(0, ind));
 				String val = keyString.substring(ind+1);
-				if (key > highestKey)
-					highestKey = key;
 				TagHelper th = tagKeyMap.get(key);
 				if (th == null){
 					th = new TagHelper(null);
@@ -270,8 +272,10 @@ public class RuleIndex {
 				th.addTag(val, entry.getValue());
 			}
 		}
-		if (highestKey > 0 && highestKey < 1024){
-			tagKeyArray = new TagHelper[highestKey+1];
+		Optional<Short> minKey = tagKeyMap.keySet().stream().min(Short::compare);
+		if (minKey.isPresent() && minKey.get() > 0){
+			Optional<Short> maxKey = tagKeyMap.keySet().stream().max(Short::compare);
+			tagKeyArray = new TagHelper[maxKey.get() + 1];
 			for (Map.Entry<Short, TagHelper> entry  : tagKeyMap.entrySet()){
 				tagKeyArray[entry.getKey()] = entry.getValue();
 			}
@@ -279,6 +283,61 @@ public class RuleIndex {
 		}
 			
 		inited = true;
+	}
+
+	/**
+	 * Remove dead rules.
+	 * @param styleOptionTags
+	 */
+	private void filterRules() {
+		List<RuleDetails> filteredRules = new ArrayList<>(ruleDetails);
+		Set<String> usedIfVars = new HashSet<>();
+		for (RuleDetails rd : filteredRules) {
+			findIfVarUsage(rd.getRule(), usedIfVars);
+		}
+		removeUnused(filteredRules, usedIfVars);
+		ruleDetails.clear();
+		ruleDetails.addAll(filteredRules);
+	}
+
+	private void removeUnused(List<RuleDetails> filteredRules, Set<String> usedIfVars) {
+		if (usedIfVars.isEmpty())
+			return;
+		Iterator<RuleDetails> iter = filteredRules.iterator();
+		while (iter.hasNext()) {
+			RuleDetails rd = iter.next();
+			if (rd.getRule() instanceof ActionRule) {
+				ActionRule ar = (ActionRule) rd.getRule();
+				if (ar.toString().contains("set " + RuleFileReader.IF_PREFIX)) {
+					boolean needed = false;
+					for (String ifVars : usedIfVars) {
+						if (ar.toString().contains("set " + ifVars)) {
+							needed = true;
+						}
+					}
+					if (!needed)
+						iter.remove();
+				}
+			}
+		}
+	}
+
+	private void findIfVarUsage(Rule rule, Set<String> usedIfVars) {
+		if (rule == null)
+			return;
+//		if (rule.getFinalizeRule() != null)
+//			findIfVarUsage(rule.getFinalizeRule(), usedIfVars);
+		Op expr = null;
+		if (rule instanceof ExpressionRule) 
+			expr = ((ExpressionRule) rule).getOp();
+		else if (rule instanceof ActionRule)
+			expr = ((ActionRule) rule).getOp();
+		if (expr == null)
+			return;
+		for (String usedTag : expr.getEvaluatedTagKeys()) {
+			if (usedTag.startsWith(RuleFileReader.IF_PREFIX))
+				usedIfVars.add(usedTag);
+		}
 	}
 
 	private static void addNumberToMap(Map<String, BitSet> map, String key, int ruleNumber) {

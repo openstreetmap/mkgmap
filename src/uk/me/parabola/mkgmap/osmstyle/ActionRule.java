@@ -48,7 +48,7 @@ public class ActionRule implements Rule {
 	/** Finalize rules must not have an element type definition so the add method must never be called. */
 	private final static TypeResult finalizeTypeResult = new TypeResult() {
 		public void add(Element el, GType type) {
-			throw new UnsupportedOperationException("Finalize rules must not contain an action block.");
+			throw new UnsupportedOperationException("Finalize rules must not contain an element type definition.");
 		}
 	};	
 	

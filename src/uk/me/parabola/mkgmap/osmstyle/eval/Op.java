@@ -12,6 +12,8 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
+import java.util.Set;
+
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
@@ -93,5 +95,10 @@ public interface Op {
 	 * Used when building the node tree. Higher numbers bind more tightly.
 	 */
 	public int priority();
+
+	/**
+	 * @return a set with the tag keys which are evaluated, maybe empty 
+	 */
+	public Set<String> getEvaluatedTagKeys();
 
 }

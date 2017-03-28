@@ -13,6 +13,8 @@
 
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
+import java.util.Set;
+
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
@@ -154,5 +156,10 @@ public class LinkedOp implements Op {
 	
 	public boolean isFirstPart(){
 		return first;
+	}
+
+	@Override
+	public Set<String> getEvaluatedTagKeys() {
+		return wrapped.getEvaluatedTagKeys();
 	}
 }

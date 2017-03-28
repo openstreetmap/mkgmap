@@ -1,0 +1,27 @@
+
+#
+# Test for an if-else where a rule modifies the if expression
+#
+
+WAY 1
+A=1
+B=1
+
+WAY 2
+A=1
+B=2
+
+<<<lines>>>
+
+if (B=1) then
+   A=1 {set B=0}
+   C!=* {set C=1}
+else
+	A=1 [0x2 resolution 24]		
+end
+C=1	[0x1 resolution 24]
+ 
+<<<results>>>
+NO-STRICT
+WAY 1: Line 0x1, labels=[null, null, null, null], res=24-24 (1/1),(2/2),
+WAY 2: Line 0x2, labels=[null, null, null, null], res=24-24 (1/1),(2/2),

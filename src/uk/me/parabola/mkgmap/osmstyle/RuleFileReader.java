@@ -19,24 +19,36 @@ package uk.me.parabola.mkgmap.osmstyle;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.Formatter;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LevelInfo;
+import uk.me.parabola.mkgmap.osmstyle.actions.Action;
 import uk.me.parabola.mkgmap.osmstyle.actions.ActionList;
 import uk.me.parabola.mkgmap.osmstyle.actions.ActionReader;
+import uk.me.parabola.mkgmap.osmstyle.actions.AddTagAction;
+import uk.me.parabola.mkgmap.osmstyle.actions.DeleteAction;
 import uk.me.parabola.mkgmap.osmstyle.eval.AndOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.BinaryOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.EqualsOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ExistsOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ExpressionReader;
 import uk.me.parabola.mkgmap.osmstyle.eval.LinkedOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.NodeType;
+import uk.me.parabola.mkgmap.osmstyle.eval.NotOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.osmstyle.eval.OrOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ValueOp;
+import uk.me.parabola.mkgmap.osmstyle.function.GetTagFunction;
 import uk.me.parabola.mkgmap.osmstyle.function.StyleFunction;
 import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 import uk.me.parabola.mkgmap.reader.osm.GType;
@@ -65,7 +77,10 @@ public class RuleFileReader {
 	private final boolean performChecks;
 	private final Map<Integer, List<Integer>> overlays;
 
-	private boolean inFinalizeSection = false;
+	private Deque<Op[]> ifStack = new LinkedList<>();
+	public static final String IF_PREFIX = "mkgmap:if:"; 
+
+	private boolean inFinalizeSection;
 	
 	public RuleFileReader(FeatureKind kind, LevelInfo[] levels, RuleSet rules, boolean performChecks, 
 			Map<Integer, List<Integer>> overlays) {
@@ -106,25 +121,42 @@ public class RuleFileReader {
 		// Read all the rules in the file.
 		scanner.skipSpace();
 		while (!scanner.isEndOfFile()) {
-			if (checkCommand(loader, scanner))
+			if (checkCommand(loader, scanner, expressionReader))
 				continue;
 
 			if (scanner.isEndOfFile())
 				break;
 
-			Op expr = expressionReader.readConditions();
-
+			Op expr = expressionReader.readConditions(ifStack);
 			ActionList actionList = actionReader.readActions();
-
+			checkIfStack(actionList);
+			
+			List<GType> types = new ArrayList<>();
+			while (scanner.checkToken("[")) {
+				GType type = typeReader.readType(scanner, performChecks, overlays);
+				types.add(type);
+				scanner.skipSpace();
+			};
+			
 			// If there is an action list, then we don't need a type
-			GType type = null;
-			if (scanner.checkToken("["))
-				type = typeReader.readType(scanner, performChecks, overlays);
-			else if (actionList == null)
+			if (types.isEmpty() && (actionList.isEmpty()))
 				throw new SyntaxException(scanner, "No type definition given");
 
-			saveRule(scanner, expr, actionList, type);
-			scanner.skipSpace();
+			if (types.isEmpty())
+				saveRule(scanner, expr, actionList, null);
+			
+			if (types.size() >= 2 && actionList.isModifyingTags()) {
+				throw new SyntaxException(scanner, "Combination of multiple type definitions with tag modifying action is not yet supported.");
+			}
+			for (int i = 0; i < types.size(); i++) {
+				GType type = types.get(i);
+				if (i + 1 < types.size()) {
+					type.setContinueSearch(true);
+				}
+				// No need to create a deep copy of expr
+				saveRule(scanner, expr, actionList, type);
+				actionList = new ActionList(Collections.emptyList(), Collections.emptySet());
+			}
 		}
 
 		rules.addUsedTags(expressionReader.getUsedTags());
@@ -150,84 +182,219 @@ public class RuleFileReader {
 	 * @param currentLoader The current style loader. Any included files are loaded from here, if no other
 	 * style is specified.
 	 * @param scanner The current token scanner.
+	 * @param expressionReader The current expression reader
 	 */
-	private boolean checkCommand(StyleFileLoader currentLoader, TokenScanner scanner) {
+	private boolean checkCommand(StyleFileLoader currentLoader, TokenScanner scanner, ExpressionReader expressionReader) {
 		scanner.skipSpace();
 		if (scanner.isEndOfFile())
 			return false;
 
 		if (scanner.checkToken("include")) {
-			// Consume the 'include' token and skip spaces
-			Token token = scanner.nextToken();
-			scanner.skipSpace();
+			if (readInclude(currentLoader, scanner)) return true;
 
-			// If include is being used as a keyword then it is followed by a word or a quoted word.
-			Token next = scanner.peekToken();
-			if (next.getType() == TokType.TEXT
-					|| (next.getType() == TokType.SYMBOL && (next.isValue("'") || next.isValue("\""))))
-			{
-				String filename = scanner.nextWord();
+		} else if (scanner.checkToken("if")) {
+			if (readIf(scanner, expressionReader)) return true;
 
-				StyleFileLoader loader = currentLoader;
-				scanner.skipSpace();
+		} else if (scanner.checkToken("else")) {
+			if (readElse(scanner)) return true;
 
-				// The include can be followed by an optional 'from' clause. The file is read from the given
-				// style-name in that case.
-				if (scanner.checkToken("from")) {
-					scanner.nextToken();
-					String styleName = scanner.nextWord();
-					if (styleName.equals(";"))
-						throw new SyntaxException(scanner, "No style name after 'from'");
+		} else if (scanner.checkToken("end")) {
+			if (readEnd(scanner)) return true;
 
-					try {
-						loader = StyleFileLoader.createStyleLoader(null, styleName);
-					} catch (FileNotFoundException e) {
-						throw new SyntaxException(scanner, "Cannot find style: " + styleName);
-					}
-				}
-
-				scanner.validateNext(";");
-
-				try {
-					loadFile(loader, filename);
-					return true;
-				} catch (FileNotFoundException e) {
-					throw new SyntaxException(scanner, "Cannot open included file: " + filename);
-				} finally {
-					if (loader != currentLoader)
-						Utils.closeFile(loader);
-				}
-			} else {
-				// Wrong syntax for include statement, so push back token to allow a possible expression to be read
-				scanner.pushToken(token);
-			}
-		} 
-		// check if it is the start label of the <finalize> section
-		else if (scanner.checkToken("<")) {
-			Token token = scanner.nextToken();
-			if (scanner.checkToken("finalize")) {
-				Token finalizeToken = scanner.nextToken();
-				if (scanner.checkToken(">")) {
-					if (inFinalizeSection) {
-						// there are two finalize sections which is not allowed
-						throw new SyntaxException(scanner, "There is only one finalize section allowed");
-					} else {
-						// consume the > token
-						scanner.nextToken();
-						// mark start of the finalize block
-						inFinalizeSection = true;
-						finalizeRules = new RuleSet();
-						return true;
-					}
-				} else {
-					scanner.pushToken(finalizeToken);
-					scanner.pushToken(token);
-				}
-			} else {
-				scanner.pushToken(token);
-			}
+		} else if (scanner.checkToken("<")) {
+			// check if it is the start label of the <finalize> section
+			if (readFinalize(scanner)) return true;
 		}
 		scanner.skipSpace();
+		return false;
+	}
+
+	private boolean readIf(TokenScanner scanner, ExpressionReader expressionReader) {
+		// Take the 'if' token
+		Token tok = scanner.nextToken();
+		scanner.skipSpace();
+
+		// If 'if'' is being used as a keyword then it is followed by a '('.
+		Token next = scanner.peekToken();
+		if (next.getType() == TokType.SYMBOL && next.isValue("(")) {
+			Op origExpr = expressionReader.readConditions();
+			scanner.validateNext("then");
+			
+			// add rule expr { set <ifVar> = true } 
+			String ifVar = getNextIfVar();
+			ArrayList<Action> actions = new ArrayList<>(1);
+			actions.add(new AddTagAction(ifVar,"true", true));
+			ActionList actionList = new ActionList(actions, Collections.singleton(ifVar+"=true"));
+			saveRule(scanner, origExpr, actionList, null);
+			// create expression (<ifVar> = true) 
+			EqualsOp safeExpr = new EqualsOp();
+			safeExpr.setFirst(new GetTagFunction(ifVar));
+			safeExpr.setSecond(new ValueOp("true"));
+			Op[] ifExpressions = {origExpr, safeExpr};  
+			ifStack.addLast(ifExpressions);
+			
+			return true;
+		} else {
+			// Wrong syntax for if statement, so push back token to allow a possible expression to be read
+			scanner.pushToken(tok);
+		}
+		return false;
+	}
+
+	private boolean readElse(TokenScanner scanner) {
+		Token tok = scanner.nextToken();
+		scanner.skipSpace();
+
+		Token next = scanner.peekToken();
+		if (next.getType() == TokType.SYMBOL && !next.isValue("(") && !next.isValue("!")) {
+			scanner.pushToken(tok);
+			return false;
+		}
+
+		Op[] ifExpressions = ifStack.removeLast();
+		for (int i = 0; i < ifExpressions.length; i++) {
+			Op op = ifExpressions[i];
+			NotOp not = new NotOp();
+			not.setFirst(op);
+			ifExpressions[i] = not;
+		}
+		ifStack.addLast(ifExpressions);
+
+		return true;
+	}
+
+	private boolean readEnd(TokenScanner scanner) {
+		Token tok = scanner.nextToken();
+		scanner.skipSpace();
+		if (ifStack.isEmpty()) {
+			scanner.pushToken(tok);
+			return false;
+		}
+
+		ifStack.removeLast();
+		return true;
+	}
+
+	/**
+	 * Check if one of the actions in the actionList would change the result of a previously read if expression.
+	 * If so, use the alternative expression with the generated tag.
+	 * @param actionList
+	 */
+	private void checkIfStack(ActionList actionList) {
+		if (actionList.isEmpty())
+			return;
+		for (Op[] ops : ifStack) {
+			if (ops[0] != ops[1]) {
+				// check if this action can change the result of the initial if expression 
+				if (possiblyChanged(ops[0], actionList)) {
+					// the result may be changed, use the generated tag for all further rules in this if / else block
+					ops[0] = ops[1];
+				} 
+			}
+		}
+	}
+
+	/**
+	 * Check if the expression depends on tags modified by an action in the action list. 
+	 * @param expr the expression to check
+	 * @param actionList the ActionList 
+	 * @return true if the value of the expression depends on one or more of the changeable tags
+	 */
+	private boolean possiblyChanged(Op expr, ActionList actionList) {
+		Set<String> evaluated = expr.getEvaluatedTagKeys();
+		if (evaluated.isEmpty())
+			return false;
+		for (String tagKey : evaluated) {
+			for (String s : actionList.getChangeableTags()) {
+				int pos = s.indexOf("=");
+				String key = pos > 0 ? s.substring(0, pos) : s;
+				if (tagKey.equals(key)) {
+					return true;
+				}
+			}
+			for (Action a : actionList.getList()) {
+				if (a instanceof DeleteAction) {
+					if (a.toString().contains(tagKey)) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	private boolean readInclude(StyleFileLoader currentLoader, TokenScanner scanner) {
+		// Consume the 'include' token and skip spaces
+		Token token = scanner.nextToken();
+		scanner.skipSpace();
+
+		// If include is being used as a keyword then it is followed by a word or a quoted word.
+		Token next = scanner.peekToken();
+		if (next.getType() == TokType.TEXT
+				|| (next.getType() == TokType.SYMBOL && (next.isValue("'") || next.isValue("\""))))
+		{
+			String filename = scanner.nextWord();
+
+			StyleFileLoader loader = currentLoader;
+			scanner.skipSpace();
+
+			// The include can be followed by an optional 'from' clause. The file is read from the given
+			// style-name in that case.
+			if (scanner.checkToken("from")) {
+				scanner.nextToken();
+				String styleName = scanner.nextWord();
+				if (Objects.equals(styleName, ";"))
+					throw new SyntaxException(scanner, "No style name after 'from'");
+
+				try {
+					loader = StyleFileLoader.createStyleLoader(null, styleName);
+				} catch (FileNotFoundException e) {
+					throw new SyntaxException(scanner, "Cannot find style: " + styleName);
+				}
+			}
+
+			if (scanner.checkToken(";"))
+				scanner.nextToken();
+
+			try {
+				loadFile(loader, filename);
+				return true;
+			} catch (FileNotFoundException e) {
+				throw new SyntaxException(scanner, "Cannot open included file: " + filename);
+			} finally {
+				if (loader != currentLoader)
+					Utils.closeFile(loader);
+			}
+		} else {
+			// Wrong syntax for include statement, so push back token to allow a possible expression to be read
+			scanner.pushToken(token);
+		}
+		return false;
+	}
+
+	private boolean readFinalize(TokenScanner scanner) {
+		Token token = scanner.nextToken();
+		if (scanner.checkToken("finalize")) {
+			Token finalizeToken = scanner.nextToken();
+			if (scanner.checkToken(">")) {
+				if (inFinalizeSection) {
+					// there are two finalize sections which is not allowed
+					throw new SyntaxException(scanner, "There is only one finalize section allowed");
+				} else {
+					// consume the > token
+					scanner.nextToken();
+					// mark start of the finalize block
+					inFinalizeSection = true;
+					finalizeRules = new RuleSet();
+					return true;
+				}
+			} else {
+				scanner.pushToken(finalizeToken);
+				scanner.pushToken(token);
+			}
+		} else {
+			scanner.pushToken(token);
+		}
 		return false;
 	}
 
@@ -564,19 +731,30 @@ public class RuleFileReader {
 			rules.add(keystring, rule, actions.getChangeableTags());
 	}
 
+	
+	private int ifCounter;
+	/**
+	 * 
+	 * @return a new tag key unique 
+	 */
+	public String getNextIfVar (){
+		return IF_PREFIX  + ++ifCounter;
+	}
+	
 	public static void main(String[] args) throws FileNotFoundException {
 		if (args.length > 0) {
 			RuleSet rs = new RuleSet();
 			RuleFileReader rr = new RuleFileReader(FeatureKind.POLYLINE,
 					LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"), rs, false,
-					Collections.<Integer, List <Integer>>emptyMap());
+					Collections.emptyMap());
 
 			StyleFileLoader loader = new DirectoryFileLoader(
 					new File(args[0]).getAbsoluteFile().getParentFile());
 			String fname = new File(args[0]).getName();
 			rr.load(loader, fname);
 
-			System.out.println("Result: " + rs);
+
+			StylePrinter.dumpRuleSet(new Formatter(System.out), "rules", rs);
 		} else {
 			System.err.println("Usage: RuleFileReader <file>");
 		}

@@ -84,7 +84,7 @@ public class StylePrinter {
 			return ": " + str;
 	}
 
-	private void dumpRuleSet(Formatter fmt, String name, RuleSet set) {
+	static void dumpRuleSet(Formatter fmt, String name, RuleSet set) {
 		fmt.format("<<<%s>>>\n", name);
 		for (Rule rule : set) {
 			fmt.format("%s\n", rule.toString());

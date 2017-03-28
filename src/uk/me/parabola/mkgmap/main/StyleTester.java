@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -130,8 +131,6 @@ public class StyleTester implements OsmConverter {
 
 	private final OsmConverter converter;
 
-	// The file may contain a known good set of results.  They are saved here
-	private final List<String> givenResults = new ArrayList<String>();
 	private static boolean forceUseOfGiven;
 	private static boolean showMatches;
 	private static boolean print = true;
@@ -143,7 +142,7 @@ public class StyleTester implements OsmConverter {
 			converter = makeStyleConverter(stylefile, coll);
 	}
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String... args) throws IOException {
 		String[] a = processOptions(args);
 		if (a.length == 1)
 			runSimpleTest(a[0]);
@@ -155,8 +154,8 @@ public class StyleTester implements OsmConverter {
 		StyleTester.out = out;
 	}
 
-	private static String[] processOptions(String[] args) {
-		List<String> a = new ArrayList<String>();
+	private static String[] processOptions(String... args) {
+		List<String> a = new ArrayList<>();
 		for (String s : args) {
 			if (s.startsWith("--reference")) {
 				System.out.println("# using reference method of calculation");
@@ -227,17 +226,18 @@ public class StyleTester implements OsmConverter {
 			BufferedReader br = new BufferedReader(reader);
 			List<Way> ways = readSimpleTestFile(br);
 
-			List<MapElement> results = new ArrayList<MapElement>();
+			List<String> givenList = readGivenResults();
+			boolean noStrict = false;
+			if (!givenList.isEmpty() && Objects.equals(givenList.get(0), "NO-STRICT")) {
+				givenList.remove(0);
+				noStrict = true;
+			}
 
-			List<MapElement> strictResults = new ArrayList<MapElement>();
-
-			OsmConverter strict = new StyleTester("styletester.style", new LocalMapCollector(strictResults), true);
-			List<String> givenList = ((StyleTester) strict).givenResults;
-
-			List<String> all = new ArrayList<String>();
+			List<String> all = new ArrayList<>();
+			List<MapElement> strictResults = new ArrayList<>();
+			List<MapElement> results = new ArrayList<>();
 			for (Way w : ways) {
 				OsmConverter normal = new StyleTester("styletester.style", new LocalMapCollector(results), false);
-				strict = new StyleTester("styletester.style", new LocalMapCollector(strictResults), true);
 
 				String prefix = "WAY " + w.getId() + ": ";
 				normal.convertWay(w.copy());
@@ -246,19 +246,21 @@ public class StyleTester implements OsmConverter {
 				all.addAll(Arrays.asList(actual));
 				results.clear();
 
-				strict.convertWay(w.copy());
-				strict.end();
-				String[] expected = formatResults(prefix, strictResults);
-				strictResults.clear();
-
 				printResult(actual);
 
-				if (!Arrays.deepEquals(actual, expected)) {
-					out.println("ERROR expected result is:");
-					printResult(expected);
+				if (!noStrict) {
+					OsmConverter strict = new StyleTester("styletester.style", new LocalMapCollector(strictResults), true);
+					strict.convertWay(w.copy());
+					strict.end();
+					String[] expected = formatResults(prefix, strictResults);
+					strictResults.clear();
+
+					if (!Arrays.deepEquals(actual, expected)) {
+						out.println("ERROR expected result is:");
+						printResult(expected);
+					}
 				}
 
-				out.println();
 			}
 
 			String[] given = givenList.toArray(new String[givenList.size()]);
@@ -273,6 +275,27 @@ public class StyleTester implements OsmConverter {
 		}
 	}
 
+	private static List<String> readGivenResults() {
+		List<String> givenResults = new ArrayList<>();
+
+		//BufferedReader br = null;
+		try (StyleFileLoader fileLoader = StyleFileLoader.createStyleLoader(STYLETESTER_STYLE, null);
+			Reader reader = fileLoader.open("results");
+			BufferedReader br = new BufferedReader(reader)
+		) {
+			String line;
+			while ((line = br.readLine()) != null) {
+				line = line.trim();
+				if (line.isEmpty())
+					continue;
+				givenResults.add(line);
+			}
+		} catch (IOException e) {
+			// there are no known good results given, that is OK
+		}
+
+		return givenResults;
+	}
 
 	public void convertWay(Way way) {
 		converter.convertWay(way);
@@ -310,7 +333,7 @@ public class StyleTester implements OsmConverter {
 	 * The style does not need to include 'version' as this is added for you.
 	 */
 	private static List<Way> readSimpleTestFile(BufferedReader br) throws IOException {
-		List<Way> ways = new ArrayList<Way>();
+		List<Way> ways = new ArrayList<>();
 
 		String line;
 		while ((line = br.readLine()) != null) {
@@ -427,9 +450,7 @@ public class StyleTester implements OsmConverter {
 			field.setAccessible(true);
 			int tabA = (Integer) field.get(roadDef);
 			return tabA & 0x7;
-		} catch (NoSuchFieldException e) {
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
+		} catch (NoSuchFieldException | IllegalAccessException e) {
 			e.printStackTrace();
 		}
 		return 0;
@@ -485,8 +506,8 @@ public class StyleTester implements OsmConverter {
 		return new StyledConverter(style, coll, new EnhancedProperties());
 	}
 
-	public static void forceUseOfGiven(boolean force) {
-		forceUseOfGiven = force;
+	public static void forceUseOfGiven() {
+		forceUseOfGiven = true;
 	}
 
 	/**
@@ -509,37 +530,16 @@ public class StyleTester implements OsmConverter {
 		 * @throws FileNotFoundException If the file doesn't exist.  This can include
 		 * the version file being missing.
 		 */
-		public ReferenceStyle(String loc, String name) throws FileNotFoundException {
+		ReferenceStyle(String loc, String name) throws FileNotFoundException {
 			super(loc, name);
 			fileLoader = StyleFileLoader.createStyleLoader(loc, name);
 
 			setupReader();
-			readGivenResults();
 		}
 
 		private void setupReader() {
 			String l = LevelInfo.DEFAULT_LEVELS;
 			levels = LevelInfo.createFromString(l);
-		}
-
-		private void readGivenResults() {
-			givenResults.clear();
-			BufferedReader br = null;
-			try {
-				Reader reader = fileLoader.open("results");
-				br = new BufferedReader(reader);
-				String line;
-				while ((line = br.readLine()) != null) {
-					line = line.trim();
-					if (line.isEmpty())
-						continue;
-					givenResults.add(line);
-				}
-			} catch (IOException e) {
-				// there are no known good results given, that is OK
-			} finally {
-				Utils.closeFile(br);
-			}
 		}
 
 		/**
@@ -624,8 +624,8 @@ public class StyleTester implements OsmConverter {
 		 * the file, this should work.
 		 */
 		private class ReferenceRuleSet implements Rule {
-			private final List<Rule> rules = new ArrayList<Rule>();
-			int cacheId = 0;
+			private final List<Rule> rules = new ArrayList<>();
+			int cacheId;
 			
 			public void add(Rule rule) {
 				rules.add(rule);
@@ -658,7 +658,7 @@ public class StyleTester implements OsmConverter {
 					if (a.isResolved())
 						break;
 				}
-				if (showMatches && !tagsBefore.equals(el.toTagString()))
+				if (showMatches && !Objects.equals(tagsBefore, el.toTagString()))
 					out.println("# Way tags after: " + el.toTagString());
 			}
 
@@ -689,7 +689,7 @@ public class StyleTester implements OsmConverter {
 
 			@Override
 			public boolean containsExpression(String exp) {
-				if (rules == null) {
+				if (rules.isEmpty()) {
 					// this method must be called after prepare() is called so
 					// that we have rules to which the finalize rules can be applied
 					throw new IllegalStateException("First call prepare() before setting the finalize rules");
@@ -717,9 +717,9 @@ public class StyleTester implements OsmConverter {
 			private final ReferenceRuleSet rules;
 			private ReferenceRuleSet finalizeRules;
 			private TokenScanner scanner;
-			private boolean inFinalizeSection = false;
+			private boolean inFinalizeSection;
 
-			public SimpleRuleFileReader(FeatureKind kind, LevelInfo[] levels, ReferenceRuleSet rules) {
+			SimpleRuleFileReader(FeatureKind kind, LevelInfo[] levels, ReferenceRuleSet rules) {
 				this.rules = rules;
 				typeReader = new TypeReader(kind, levels);
 			}
@@ -772,7 +772,7 @@ public class StyleTester implements OsmConverter {
 				if (scanner.isEndOfFile())
 					return false;
 
-				if (inFinalizeSection == false && scanner.checkToken("<")) {
+				if (!inFinalizeSection && scanner.checkToken("<")) {
 					Token token = scanner.nextToken();
 					if (scanner.checkToken("finalize")) {
 						Token finalizeToken = scanner.nextToken();
@@ -868,7 +868,7 @@ public class StyleTester implements OsmConverter {
 				start = System.currentTimeMillis();
 			}
 			if (print) {
-				String[] strings = formatResults("", Arrays.<MapElement>asList(line));
+				String[] strings = formatResults("", Collections.singletonList(line));
 				printResult(strings);
 			}
 		}
@@ -877,7 +877,7 @@ public class StyleTester implements OsmConverter {
 
 		public void addRoad(MapRoad road) {
 			if (print) {
-				String[] strings = formatResults("", Collections.<MapElement>singletonList(road));
+				String[] strings = formatResults("", Collections.singletonList(road));
 				printResult(strings);
 			}
 		}

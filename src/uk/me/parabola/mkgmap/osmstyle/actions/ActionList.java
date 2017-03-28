@@ -40,4 +40,17 @@ public class ActionList {
 	public Set<String> getChangeableTags() {
 		return changeableTags;
 	}
+
+	public boolean isModifyingTags() {
+		if (!isEmpty()) {
+			if (!changeableTags.isEmpty())
+				return true;
+			for (Action a : list) {
+				if (a instanceof DeleteAction) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 }
