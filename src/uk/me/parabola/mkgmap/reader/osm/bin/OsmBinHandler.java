@@ -12,8 +12,11 @@
  */
 package uk.me.parabola.mkgmap.reader.osm.bin;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.reader.osm.Element;
@@ -21,10 +24,10 @@ import uk.me.parabola.mkgmap.reader.osm.GeneralRelation;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.OsmHandler;
 import uk.me.parabola.mkgmap.reader.osm.Way;
-import uk.me.parabola.util.EnhancedProperties;
 
 import crosby.binary.BinaryParser;
 import crosby.binary.Osmformat;
+import crosby.binary.file.BlockInputStream;
 
 /**
  * Handler for Scott Crosby's binary format, based on the Google
@@ -34,9 +37,32 @@ import crosby.binary.Osmformat;
  */
 public class OsmBinHandler extends OsmHandler {
 
-	public OsmBinHandler(EnhancedProperties props) {
+	public OsmBinHandler() {
 	}
 
+	@Override
+	public boolean isFileSupported(String name) {
+		// The extension for the protobuf format is now fixed at .pbf
+		// Previously we temporarily used the .bin extension to
+		// indicate Scott's format. The .bin extension remains here for the
+		// time being, but may be removed.  Please use .pbf.
+		return name.endsWith(".pbf") || name.endsWith(".bin");
+	}
+
+	@Override
+	public void parse(InputStream is) {
+		try {
+			BinParser reader = new BinParser();
+			BlockInputStream stream = new BlockInputStream(is, reader);
+			stream.process();
+		} catch (NoClassDefFoundError e) {
+			throw new FormatException("Failed to read binary file, probably missing protobuf.jar");
+		} catch (IOException e) {
+			throw new FormatException("Failed to read binary file");
+		} 
+	}
+	
+	
 	public class BinParser extends BinaryParser {
 
 		protected void parse(Osmformat.HeaderBlock header) {
@@ -222,4 +248,5 @@ public class OsmBinHandler extends OsmHandler {
 		public void complete() {
 		}
 	}
+
 }

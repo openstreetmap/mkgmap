@@ -13,11 +13,13 @@
 
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 
@@ -26,7 +28,7 @@ import uk.me.parabola.imgfmt.app.Coord;
  * 
  * @author Steve Ratcliffe
  */
-public class OsmHandler {
+public abstract class OsmHandler {
 	// Elements that are read are saved/further processed by these two classes.
 	protected ElementSaver saver;
 	protected OsmReadingHooks hooks;
@@ -37,6 +39,9 @@ public class OsmHandler {
 	/** Pattern for values containing fixme, fix_me etc. */
 	private static final Pattern FIXME_PATTERN = Pattern.compile("(?i)fix[ _]?+me");
 	private boolean removeFixme;
+
+	// Options
+	private boolean ignoreBounds;
 	
 	// Node references within a way
 	private long firstNodeRef;
@@ -196,4 +201,33 @@ public class OsmHandler {
 	public void setDeleteFixmeValues(boolean b) {
 		this.removeFixme = b;
 	}
+
+	public boolean isIgnoreBounds() {
+		return ignoreBounds;
+	}
+
+	public void setIgnoreBounds(boolean ignoreBounds) {
+		this.ignoreBounds = ignoreBounds;
+	}
+	
+	/**
+	 * Determines if the file (or other resource) is supported by this map
+	 * data source.  The implementation may do this however it likes, eg
+	 * by extension or by opening up the file and reading part of it.
+	 *
+	 * @param name The file (or other resource) to check.
+	 * @return True if the OSM handler supports that file.
+	 */
+	public abstract boolean isFileSupported(String name);
+
+	/**
+	 * Load osm data from open stream.  
+	 * You would implement this interface to allow reading data from
+	 * zipped files.
+	 *
+	 * @param is the already opened stream.
+	 * @throws FormatException For any kind of malformed input.
+	 */
+	
+	public abstract void parse(InputStream is) throws FormatException; 
 }

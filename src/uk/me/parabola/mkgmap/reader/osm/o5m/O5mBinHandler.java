@@ -51,7 +51,7 @@ public class O5mBinHandler extends OsmHandler{
 	private static final String[] REL_REF_TYPES = {"node", "way", "relation", "?"};
 	private static final double FACTOR = 1d/1000000000; // used with 100*<Val>*FACTOR 
 	
-	private final BufferedInputStream fis;
+	private BufferedInputStream fis;
 	private InputStream is;
 	private ByteArrayInputStream bis;
 	
@@ -81,11 +81,22 @@ public class O5mBinHandler extends OsmHandler{
 	/**
 	 * A parser for the o5m format
 	 * @param processor A mapProcessor instance
-	 * @param stream The InputStream that contains the OSM data in o5m format 
 	 * @param skipArray An Array of longs that is used to hold information of file position of the first occurrence of 
 	 * each known 05m data type (esp. nodes, ways, and relations). 
 	 */
-	O5mBinHandler(InputStream stream) {
+	public O5mBinHandler() {
+	}
+
+	@Override
+	public boolean isFileSupported(String name) {
+		return name.endsWith(".o5m") || name.endsWith(".o5m.gz");
+	}
+
+	/**
+	 * parse the input stream
+	 */
+	@Override
+	public void parse(InputStream stream){
 		this.fis = new BufferedInputStream(stream);
 		is = fis;
 		this.cnvBuffer = new byte[4000]; // OSM data should not contain string pairs with length > 512
@@ -94,12 +105,6 @@ public class O5mBinHandler extends OsmHandler{
 		this.stringPair = new String[2];
 		this.lastRef = new long[3];
 		reset();
-	}
-
-	/**
-	 * parse the input stream
-	 */
-	public void parse(){
 		try {
 			int start = is.read();
 			++countBytes;

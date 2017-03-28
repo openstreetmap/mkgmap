@@ -47,8 +47,6 @@ import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LineClipper;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
-import uk.me.parabola.mkgmap.reader.osm.bin.OsmBinPrecompSeaDataSource;
-import uk.me.parabola.mkgmap.reader.osm.xml.Osm5PrecompSeaDataSource;
 import uk.me.parabola.util.EnhancedProperties;
 import uk.me.parabola.util.Java2DConverter;
 
@@ -115,13 +113,6 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	 * which is equivalent to Long.MAX_VALUE-2.
 	 */
 	private static final long seaSize = Long.MAX_VALUE-2; // sea is BIG
-
-	private static final List<OsmMapDataSource > precompSeaLoader;
-	static {
-		precompSeaLoader = new ArrayList<>();
-		precompSeaLoader.add(new OsmBinPrecompSeaDataSource());
-		//precompSeaLoader.add(new Osm5PrecompSeaDataSource()); // not needed in list, is fall back option 
-	}
 
 	/**
 	 * Sort out options from the command line.
@@ -482,24 +473,6 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		way.addTag(MultiPolygonRelation.STYLE_FILTER_TAG, MultiPolygonRelation.STYLE_FILTER_LINE);
 	}
 	
-	private static OsmMapDataSource createTileReader(String filename) {
-		for (OsmMapDataSource loader : precompSeaLoader) {
-			if (filename != null && loader.isFileSupported(filename)) {
-				try {
-					return loader.getClass().newInstance();
-				} catch (InstantiationException e) {
-					// try the next one.
-				} catch (IllegalAccessException e) {
-					// try the next one.
-				}
-			}
-		}
-
-		// Give up and assume it is in the XML format. If it isn't we will get
-		// an error soon enough anyway.
-		return new Osm5PrecompSeaDataSource();
-	}
-	
 	/**
 	 * Loads the precomp sea tile with the given filename.
 	 * @param filename the filename of the precomp sea tile
@@ -507,13 +480,13 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	 * @throws FileNotFoundException if the tile could not be found
 	 */
 	private Collection<Way> loadPrecompTile(InputStream is, String filename) {
-		OsmMapDataSource src = createTileReader(filename);
+		OsmPrecompSeaDataSource src = new OsmPrecompSeaDataSource();
 		EnhancedProperties props = new EnhancedProperties();
 		props.setProperty("style", "empty"); 
 		src.config(props);
 		log.info("Started loading coastlines from", filename);
 		try{
-			src.load(is);
+			src.parse(is, filename);
 		} catch (FormatException e) {
 			log.error("Failed to read " + filename);
 			log.error(e);

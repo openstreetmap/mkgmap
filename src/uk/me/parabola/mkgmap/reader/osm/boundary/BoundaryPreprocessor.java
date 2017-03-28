@@ -14,7 +14,6 @@ package uk.me.parabola.mkgmap.reader.osm.boundary;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -35,42 +34,7 @@ import uk.me.parabola.mkgmap.reader.osm.LocationHook;
  */
 public class BoundaryPreprocessor implements Runnable {
 	private static final Logger log = Logger.getLogger(BoundaryPreprocessor.class);
-	private static final List<LoadableBoundaryDataSource> loaders;
-	static {
-		loaders = new ArrayList<>();
-		loaders.add(new OsmBinBoundaryDataSource());
-		loaders.add(new O5mBinBoundaryDataSource());
-//		loaders.add(new Osm5BoundaryDataSource()); not needed in list, is fall back option
-	}
 
-	/**
-	 * Return a suitable boundary map reader. The name of the resource to be
-	 * read is passed in. This is usually a file name, but could be something
-	 * else.
-	 * 
-	 * @param name
-	 *            The resource name to be read.
-	 * @return A LoadableBoundaryDataSource that is capable of reading the
-	 *         resource.
-	 */
-	private static LoadableBoundaryDataSource createMapReader(String name) {
-		for (LoadableBoundaryDataSource loader : loaders) {
-			if (name != null && loader.isFileSupported(name))
-			try {
-				return loader.getClass().newInstance();
-			} catch (InstantiationException e) {
-				// try the next one.
-			} catch (IllegalAccessException e) {
-				// try the next one.
-			}
-		}
-
-		// Give up and assume it is in the XML format. If it isn't we will get
-		// an error soon enough anyway.
-		return new Osm5BoundaryDataSource();
-	}
-
-	
 	private String boundaryFilename;
 	private String outDir;
 	private ExecutorService threadPool;
@@ -126,7 +90,7 @@ public class BoundaryPreprocessor implements Runnable {
 	private boolean createRawData(){
 		File boundsDirectory = new File(outDir);
 		BoundarySaver saver = new BoundarySaver(boundsDirectory, BoundarySaver.RAW_DATA_FORMAT);
-		LoadableBoundaryDataSource dataSource = createMapReader(boundaryFilename);
+		OsmBoundaryDataSource dataSource = new OsmBoundaryDataSource();
 		dataSource.setBoundarySaver(saver);
 		log.info("Started loading", boundaryFilename);
 		try {

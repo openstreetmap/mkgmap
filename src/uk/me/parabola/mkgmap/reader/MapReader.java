@@ -20,9 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
-import uk.me.parabola.mkgmap.reader.osm.bin.OsmBinMapDataSource;
-import uk.me.parabola.mkgmap.reader.osm.o5m.O5mBinMapDataSource;
-import uk.me.parabola.mkgmap.reader.osm.xml.Osm5MapDataSource;
+import uk.me.parabola.mkgmap.reader.osm.OsmMapDataSource;
 import uk.me.parabola.mkgmap.reader.polish.PolishMapDataSource;
 import uk.me.parabola.mkgmap.reader.test.ElementTestDataSource;
 
@@ -39,11 +37,9 @@ public class MapReader {
 	private static final List<LoadableMapDataSource> loaders;
 	static {
 		loaders = new ArrayList<>();
-		loaders.add(new OsmBinMapDataSource());
-		loaders.add(new O5mBinMapDataSource());
 		loaders.add(new PolishMapDataSource());
 		loaders.add(new ElementTestDataSource());
-		//loaders.add(new Osm5MapDataSource()); not needed in list, is fall back option
+		loaders.add(new OsmMapDataSource()); // must be last
 	}
 
 	/**
@@ -66,8 +62,6 @@ public class MapReader {
 			}
 		}
 
-		// Give up and assume it is in the XML format. If it isn't we will get an
-		// error soon enough anyway.
-		return new Osm5MapDataSource();
+		throw new UnsupportedOperationException("Don't know how to read " + name); 
 	}
 }

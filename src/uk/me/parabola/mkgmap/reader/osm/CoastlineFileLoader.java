@@ -29,22 +29,12 @@ import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.reader.osm.bin.OsmBinCoastDataSource;
-import uk.me.parabola.mkgmap.reader.osm.xml.Osm5CoastDataSource;
 import uk.me.parabola.util.EnhancedProperties;
 
 public final class CoastlineFileLoader {
 
 	private static final Logger log = Logger
 			.getLogger(CoastlineFileLoader.class);
-
-	private static final List<OsmMapDataSource> coastFileLoaders;
-
-	static {
-		coastFileLoaders = new ArrayList<>();
-		coastFileLoaders.add(new OsmBinCoastDataSource());
-		//coastFileLoaders.add(new Osm5CoastDataSource()); not needed in list, is fall back option 
-	}
 
 	private final Set<String> coastlineFiles;
 	private final Collection<CoastlineWay> coastlines = new ArrayList<CoastlineWay>();
@@ -81,32 +71,12 @@ public final class CoastlineFileLoader {
 
 	private OsmMapDataSource loadFromFile(String name)
 			throws FileNotFoundException, FormatException {
-		OsmMapDataSource src = createMapReader(name);
+		OsmMapDataSource src = new OsmCoastDataSource();
 		src.config(getConfig());
 		log.info("Started loading coastlines from", name);
 		src.load(name, false);
 		log.info("Finished loading coastlines from", name);
 		return src;
-	}
-
-	public static OsmMapDataSource createMapReader(String name) {
-		for (OsmMapDataSource loader : coastFileLoaders) {
-			if (name != null && loader.isFileSupported(name)) {
-				try {
-					OsmMapDataSource src = loader.getClass().newInstance();
-					return src;
-				} catch (InstantiationException e) {
-					// try the next one.
-				} catch (IllegalAccessException e) {
-					// try the next one.
-				}
-			}
-		}
-
-		// Give up and assume it is in the XML format. If it isn't we will get
-		// an
-		// error soon enough anyway.
-		return new Osm5CoastDataSource();
 	}
 
 	private Collection<Way> loadFile(String filename)

@@ -13,6 +13,7 @@
 
 package uk.me.parabola.mkgmap.reader.osm.xml;
 
+import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.reader.osm.Element;
@@ -22,10 +23,15 @@ import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.OsmHandler;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
-import uk.me.parabola.util.EnhancedProperties;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
@@ -43,8 +49,8 @@ import org.xml.sax.helpers.DefaultHandler;
  *
  * @author Steve Ratcliffe
  */
-public class Osm5XmlHandler extends OsmHandler {
-	private static final Logger log = Logger.getLogger(Osm5XmlHandler.class);
+public class OsmXmlHandler extends OsmHandler {
+	private static final Logger log = Logger.getLogger(OsmXmlHandler.class);
 
 	// Set to the currently processing element.
 	private int mode;
@@ -56,8 +62,6 @@ public class Osm5XmlHandler extends OsmHandler {
 	private static final int MODE_RELATION = 4;
 	private static final int MODE_BOUNDS = 5;
 
-	// Options
-	private final boolean ignoreBounds;
 	// Current state.
 	private Node currentNode;
 	private Way currentWay;
@@ -65,10 +69,39 @@ public class Osm5XmlHandler extends OsmHandler {
 	private long currentElementId;
 	private final Map<String, Long> fakeIdMap = new HashMap<String, Long>();
 
-	public Osm5XmlHandler(EnhancedProperties props) {
-		ignoreBounds = props.getProperty("ignore-osm-bounds", false);
+	public OsmXmlHandler() {
 	}
 
+	@Override
+	public boolean isFileSupported(String name) {
+		// This is the default format so say supported if we get this far,
+		// this one must always be last for this reason.
+		return true;
+	}
+
+	@Override
+	public void parse(InputStream is) throws FormatException {
+		try {
+			SAXParserFactory parserFactory = SAXParserFactory.newInstance();
+			parserFactory.setXIncludeAware(true);
+			parserFactory.setNamespaceAware(true);
+			SAXParser parser = parserFactory.newSAXParser();
+
+			try {
+				SaxHandler saxHandler = new SaxHandler();
+
+				// parse the xml file
+				parser.parse(is, saxHandler);
+
+			} catch (IOException e) {
+				throw new FormatException("Error reading file", e);
+			}
+		} catch (SAXException e) {
+			throw new FormatException("Error parsing file", e);
+		} catch (ParserConfigurationException e) {
+			throw new FormatException("Internal error configuring xml parser", e);
+		}
+	}
 	/**
 	 * Convert an id as a string to a number. If the id is not a number, then create
 	 * a unique number instead.
@@ -134,14 +167,14 @@ public class Osm5XmlHandler extends OsmHandler {
 
 				} else if (qName.equals("bound")) {
 					mode = MODE_BOUND;
-					if(!ignoreBounds) {
+					if(!isIgnoreBounds()) {
 						String box = attributes.getValue("box");
 						setupBBoxFromBound(box);
 					}
 
 				} else if (qName.equals("bounds")) {
 					mode = MODE_BOUNDS;
-					if(!ignoreBounds)
+					if(!isIgnoreBounds())
 						setupBBoxFromBounds(attributes);
 				}
 

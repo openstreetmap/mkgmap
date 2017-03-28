@@ -46,6 +46,9 @@ import uk.me.parabola.mkgmap.osmstyle.NameFinder;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
 import uk.me.parabola.mkgmap.osmstyle.StyledConverter;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
+import uk.me.parabola.mkgmap.reader.osm.bin.OsmBinHandler;
+import uk.me.parabola.mkgmap.reader.osm.o5m.O5mBinHandler;
+import uk.me.parabola.mkgmap.reader.osm.xml.OsmXmlHandler;
 import uk.me.parabola.util.EnhancedProperties;
 
 /**
@@ -54,9 +57,7 @@ import uk.me.parabola.util.EnhancedProperties;
  *
  * @author Steve Ratcliffe
  */
-public abstract class OsmMapDataSource extends MapperBasedMapDataSource
-		implements LoadableMapDataSource, LoadableOsmDataSource
-{
+public class OsmMapDataSource extends MapperBasedMapDataSource implements LoadableMapDataSource {
 	private static final Logger log = Logger.getLogger(OsmMapDataSource.class);
 
 	private Style style;
@@ -78,6 +79,15 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	protected ElementSaver elementSaver;
 	protected OsmReadingHooks osmReadingHooks;
 	private static final LocalDateTime now = LocalDateTime.now();
+	
+	protected static final List<OsmHandler> handlers;
+	static {
+		handlers = new ArrayList<>();
+		handlers.add(new OsmBinHandler());
+		handlers.add(new O5mBinHandler());
+		handlers.add(new OsmXmlHandler()); // must be last
+	}
+
 
 	/**
 	 * Get the maps levels to be used for the current map.  This can be
@@ -137,7 +147,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	@Override
 	public void load(String name, boolean addBackground) throws FileNotFoundException, FormatException {
 		InputStream is = Utils.openFile(name);
-		load(is);
+		parse(is, name);
 		elementSaver.finishLoading();
 
 		osmReadingHooks.end();
@@ -148,6 +158,23 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 		
 		if (addBackground)
 			addBackground();
+	}
+
+	protected void parse(InputStream is, String name) {
+		for (OsmHandler h : handlers) {
+			if (h.isFileSupported(name)) {
+				try {
+					OsmHandler handler = h.getClass().newInstance();
+					setupHandler(handler);
+					handler.parse(is);
+					break;
+				} catch (InstantiationException | IllegalAccessException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		
 	}
 
 	/**
@@ -197,6 +224,8 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	protected void setupHandler(OsmHandler handler) {
 		createElementSaver();
 		createConverter();
+		
+		handler.setIgnoreBounds(getConfig().getProperty("ignore-osm-bounds", false));
 		
 		osmReadingHooks = pluginChain(elementSaver, getConfig());
 
@@ -320,5 +349,10 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	@Override
 	public Boolean getDriveOnLeft(){
 		return converter.getDriveOnLeft();
+	}
+
+	@Override
+	public boolean isFileSupported(String name) {
+		return true; // we always try xml reader if nothing else matched
 	}
 }
