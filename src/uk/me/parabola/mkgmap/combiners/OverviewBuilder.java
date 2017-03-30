@@ -52,7 +52,7 @@ import uk.me.parabola.mkgmap.srt.SrtTextReader;
 public class OverviewBuilder implements Combiner {
 	Logger log = Logger.getLogger(OverviewBuilder.class);
 	public static final String OVERVIEW_PREFIX = "ovm_";
-	private final OverviewMapDataSource overviewSource;
+	private OverviewMapDataSource overviewSource;
 	private String areaName;
 	private String overviewMapname;
 	private String overviewMapnumber;
@@ -62,6 +62,7 @@ public class OverviewBuilder implements Combiner {
 	private List<String[]> copyrightMsgs = new ArrayList<String[]>();
 	private List<String[]> licenseInfos = new ArrayList<String[]>();
 	private LevelInfo[] wantedLevels;
+	private Area bounds;
 
 
 	public OverviewBuilder() {
@@ -90,6 +91,8 @@ public class OverviewBuilder implements Combiner {
 		overviewSource.addBackground();
 		calcLevels();
 		writeOverviewMap();
+		bounds = overviewSource.getBounds();
+		overviewSource = null; // release memory
 	}
 
 	@Override
@@ -388,7 +391,11 @@ public class OverviewBuilder implements Combiner {
 	}
 
 	public Area getBounds() {
-		return overviewSource.getBounds();
+		if (bounds != null)
+			return bounds;
+		if (overviewSource != null)
+			return overviewSource.getBounds();
+		return new Area(1, 1, -1, -1); // return invalid bbox
 	}
 
 	/**
