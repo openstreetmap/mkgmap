@@ -296,6 +296,8 @@ public class MDRFile extends ImgFile {
 			mdr18.setPoiTypes(mdr19.getPoiTypes());
 			mdr19.release();
 			writeSection(writer, 18, mdr18);
+		} else  {
+			mdr19.release();
 		}
 
 		writeSection(writer, 10, mdr10);

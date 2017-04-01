@@ -14,11 +14,14 @@ package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.imgfmt.app.srt.MultiSortKey;
+import uk.me.parabola.imgfmt.app.srt.DoubleSortKey;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 
@@ -45,19 +48,24 @@ public class Mdr7 extends MdrMapSection {
 	private List<Mdr7Record> streets = new ArrayList<>();
 
 	private final int u2size = 1;
+	private Set<String> exclNames;
 
 	public Mdr7(MdrConfig config) {
 		setConfig(config);
 		Sort sort = config.getSort();
 		splitName = config.isSplitName();
+		exclNames = config.getMdr7Excl();
 		codepage = sort.getCodepage();
 		isMulti = sort.isMulti();
+		
 	}
 
 	public void addStreet(int mapId, String name, int lblOffset, int strOff, Mdr5Record mdrCity) {
 		if (name.isEmpty())
 			return;
-
+		if (exclNames.contains(name))
+			return;
+		
 		// Find a name prefix, which is either a shield or a word ending 0x1e. We are treating
 		// a shield as a prefix of length one.
 		int prefix = 0;
@@ -85,6 +93,9 @@ public class Mdr7 extends MdrMapSection {
 		st.setCity(mdrCity);
 		st.setPrefixOffset((byte) prefix);
 		st.setSuffixOffset((byte) suffix);
+		if (exclNames.contains(st.getInitialPart()))
+			return;
+
 		allStreets.add(st);
 
 		if (!splitName)
@@ -123,7 +134,8 @@ public class Mdr7 extends MdrMapSection {
 				st.setPrefixOffset((byte) prefix);
 				st.setSuffixOffset((byte) suffix);
 				//System.out.println(st.getName() + ": add partial " + st.getPartialName());
-				allStreets.add(st);
+				if (!exclNames.contains(st.getPartialName()))
+					allStreets.add(st);
 				start = false;
 			}
 
@@ -169,12 +181,20 @@ public class Mdr7 extends MdrMapSection {
 	protected void preWriteImpl() {
 		Sort sort = getConfig().getSort();
 		List<SortKey<Mdr7Record>> sortedStreets = new ArrayList<>(allStreets.size());
+		Map<String, byte[]> cache = new HashMap<>();
+		
 		for (Mdr7Record m : allStreets) {
-			sortedStreets.add(new MultiSortKey<>(
-					sort.createSortKey(m, m.getPartialName()),
-					sort.createSortKey(m, m.getInitialPart(), m.getMapIndex()),
-					null));
+			if (splitName) {
+				String key = m.getPartialName();
+				SortKey<Mdr7Record> k1 = sort.createSortKey(m, key, 0, cache);
+				key = m.getInitialPart();
+				SortKey<Mdr7Record> k2 = sort.createSortKey(m, key, m.getMapIndex(), cache);
+				sortedStreets.add(new DoubleSortKey<>(k1, k2));
+			} else {
+				sortedStreets.add(sort.createSortKey(m, m.getName(), m.getMapIndex(), cache));
+			}
 		}
+		cache = null;
 		Collections.sort(sortedStreets);
 
 		// De-duplicate the street names so that there is only one entry
@@ -200,6 +220,7 @@ public class Mdr7 extends MdrMapSection {
 			// release memory 
 			sortedStreets.set(i, null);
 		}
+		return;
 	}
 
 	public void writeSectData(ImgFileWriter writer) {

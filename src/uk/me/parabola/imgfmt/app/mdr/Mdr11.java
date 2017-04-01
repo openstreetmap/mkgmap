@@ -14,9 +14,13 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 import uk.me.parabola.imgfmt.app.trergn.Point;
 
@@ -54,9 +58,16 @@ public class Mdr11 extends MdrMapSection {
 	 * de-duplicated in the index in the same way that streets and cities are.
 	 */
 	protected void preWriteImpl() {
-		List<SortKey<Mdr11Record>> keys = MdrUtils.sortList(getConfig().getSort(), pois);
-
+		Sort sort = getConfig().getSort();
+		List<SortKey<Mdr11Record>> keys = new ArrayList<>(pois.size());
+		Map<String, byte[]> cache = new HashMap<>();
+		for (Mdr11Record poi : pois) {
+			keys.add(sort.createSortKey(poi, poi.getName(), poi.getMapIndex(), cache));
+		}
+		cache = null;
 		pois.clear();
+		Collections.sort(keys);
+		
 		for (SortKey<Mdr11Record> sk : keys) {
 			Mdr11Record poi = sk.getObject();
 

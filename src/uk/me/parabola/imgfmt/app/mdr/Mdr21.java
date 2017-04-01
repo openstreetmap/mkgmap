@@ -58,7 +58,8 @@ public class Mdr21 extends Mdr2x {
 
 			keys.add(sort.createSortKey(s, name, s.getIndex(), cache));
 		}
-
+		cache = null;
+		
 		Collections.sort(keys);
 
 		String lastName = null;

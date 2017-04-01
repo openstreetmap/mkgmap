@@ -13,6 +13,10 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import uk.me.parabola.imgfmt.app.srt.Sort;
 
@@ -33,7 +37,8 @@ public class MdrConfig {
 	private Sort sort;
 	private File outputDir;
 	private boolean splitName;
-
+	private Set<String> mdr7Excl = Collections.emptySet();
+	
 	/**
 	 * True if we are creating the file, rather than reading it.
 	 */
@@ -95,5 +100,18 @@ public class MdrConfig {
 
 	public boolean isSplitName() {
 		return splitName;
+	}
+
+	public Set<String> getMdr7Excl() {
+		return Collections.unmodifiableSet(mdr7Excl);
+	}
+
+	public void setMdr7Excl(String s) {
+		if (s == null)
+			this.mdr7Excl = Collections.emptySet();
+		else {
+			mdr7Excl = new HashSet<>(Arrays.asList(s.split(",")));
+		}
+		
 	}
 }

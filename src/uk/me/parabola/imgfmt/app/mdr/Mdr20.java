@@ -83,6 +83,7 @@ public class Mdr20 extends Mdr2x {
 
 			keys.add(key);
 		}
+		cache = null;
 		Collections.sort(keys);
 
 		Collator collator = getConfig().getSort().getCollator();

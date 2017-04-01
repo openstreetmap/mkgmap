@@ -22,6 +22,7 @@ import java.nio.charset.CodingErrorAction;
 import java.text.CollationKey;
 import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -165,6 +166,9 @@ public class Sort {
 	 * @return A sort key.
 	 */
 	public <T> SortKey<T> createSortKey(T object, String s, int second, Map<String, byte[]> cache) {
+		if (s.length() == 0)
+			return new SrtSortKey<>(object, ZERO_KEY, second);
+		
 		// If there is a cache then look up and return the key.
 		// This is primarily for memory management, not for speed.
 		byte[] key;
@@ -194,14 +198,16 @@ public class Sort {
 			// We need +1 for the null bytes, we also +2 for a couple of expanded characters. For a complete
 			// german map this was always enough in tests.
 			key = new byte[(chars.length + 1 + 2) * 4];
+			int needed = 0;
 			try {
-				fillCompleteKey(chars, key);
+				needed = fillCompleteKey(chars, key);
 			} catch (ArrayIndexOutOfBoundsException e) {
 				// Ok try again with the max possible key size allocated.
 				key = new byte[(chars.length+1) * 4 * maxExpSize];
-				fillCompleteKey(chars, key);
+				needed = fillCompleteKey(chars, key);
 			}
-
+			if ((key.length >> 3) > (needed >> 3))
+				key = Arrays.copyOf(key, needed);
 			if (cache != null)
 				cache.put(s, key);
 
@@ -240,14 +246,16 @@ public class Sort {
 		// We need +1 for the null bytes, we also +2 for a couple of expanded characters. For a complete
 		// german map this was always enough in tests.
 		key = new byte[(encText.length + 1 + 2) * 4];
+		int needed = 0;
 		try {
-			fillCompleteKey(encText, key);
+			needed = fillCompleteKey(encText, key);
 		} catch (ArrayIndexOutOfBoundsException e) {
 			// Ok try again with the max possible key size allocated.
 			key = new byte[encText.length * 4 * maxExpSize + 4];
-			fillCompleteKey(encText, key);
+			needed = fillCompleteKey(encText, key);
 		}
-
+		if ((key.length >> 3) > (needed >> 3))
+			key = Arrays.copyOf(key, needed);
 		if (cache != null)
 			cache.put(label, key);
 
@@ -284,11 +292,12 @@ public class Sort {
 	 *
 	 * @param bVal The string for which we are creating the sort key.
 	 * @param key The sort key. This will be filled in.
+	 * @return the needed number of bytes in case the buffer was large enough
 	 */
-	private void fillCompleteKey(char[] bVal, byte[] key) {
+	private int fillCompleteKey(char[] bVal, byte[] key) {
 		int start = fillKey(Collator.PRIMARY, bVal, key, 0);
 		start = fillKey(Collator.SECONDARY, bVal, key, start);
-		fillKey(Collator.TERTIARY, bVal, key, start);
+		return fillKey(Collator.TERTIARY, bVal, key, start);
 	}
 
 	/**
@@ -629,6 +638,9 @@ public class Sort {
 		}
 
 		public int compare(String source, String target) {
+			if (source == target)
+				return 0;
+			
 			char[] chars1;
 			char[] chars2;
 			if (isMulti()) {
