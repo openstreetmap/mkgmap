@@ -61,7 +61,7 @@ public class PredictFilterPoints {
 				numPoints = 1; // always have one/first point
 			else {
 				if (lat != lastLat || lon != lastLon ||
-				    (checkPreserved && p instanceof CoordNode && p.preserved()))
+				    (checkPreserved && (p instanceof CoordNode || p.preserved())))
 					++numPoints;
 			}
 			lastLat = lat;
