@@ -206,8 +206,14 @@ public class Sort {
 				key = new byte[(chars.length+1) * 4 * maxExpSize];
 				needed = fillCompleteKey(chars, key);
 			}
-			if ((key.length >> 3) > (needed >> 3))
+			// check if we can save bytes by copying
+			int neededBytes = needed;
+			int padding2 = 8 - (needed & 7);
+			if (padding2 != 8)
+				neededBytes += padding2;
+			if (neededBytes < key.length)
 				key = Arrays.copyOf(key, needed);
+
 			if (cache != null)
 				cache.put(s, key);
 
