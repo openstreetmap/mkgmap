@@ -92,7 +92,7 @@ public class LineSplitterFilter implements MapFilter {
 			if (wantedSize < MAX_POINTS_IN_LINE / 2)
 				log.error("size?",npoints,pos,wantedSize);
 			if (!last && line instanceof MapRoad)  
-				((MapRoad)line).setSegmentsFollowing(true);
+				((MapRoad)l).setSegmentsFollowing(true);
 			next.doFilter(l);
 			
 			if (last)
