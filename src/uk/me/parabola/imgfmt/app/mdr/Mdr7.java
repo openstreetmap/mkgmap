@@ -44,8 +44,8 @@ public class Mdr7 extends MdrMapSection {
 	private final boolean isMulti;
 	private final boolean splitName;
 
-	private List<Mdr7Record> allStreets = new ArrayList<>();
-	private List<Mdr7Record> streets = new ArrayList<>();
+	private ArrayList<Mdr7Record> allStreets = new ArrayList<>();
+	private ArrayList<Mdr7Record> streets = new ArrayList<>();
 
 	private final int u2size = 1;
 	private Set<String> exclNames;
@@ -93,9 +93,6 @@ public class Mdr7 extends MdrMapSection {
 		st.setCity(mdrCity);
 		st.setPrefixOffset((byte) prefix);
 		st.setSuffixOffset((byte) suffix);
-		if (exclNames.contains(st.getInitialPart()))
-			return;
-
 		allStreets.add(st);
 
 		if (!splitName)
@@ -179,6 +176,7 @@ public class Mdr7 extends MdrMapSection {
 	 * as it requires a lot of heap to store the sort keys. 	  	 
 	 */
 	protected void preWriteImpl() {
+		allStreets.trimToSize();
 		Sort sort = getConfig().getSort();
 		List<SortKey<Mdr7Record>> sortedStreets = new ArrayList<>(allStreets.size());
 		Map<String, byte[]> cache = new HashMap<>();
@@ -220,6 +218,7 @@ public class Mdr7 extends MdrMapSection {
 			// release memory 
 			sortedStreets.set(i, null);
 		}
+		streets.trimToSize();
 		return;
 	}
 
