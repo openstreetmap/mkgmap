@@ -49,7 +49,7 @@ public class Coord implements Comparable<Coord> {
 	private static final short ON_BOUNDARY_MASK = 0x0001; // bit in flags is true if point lies on a boundary
 	private static final short PRESERVED_MASK = 0x0002; // bit in flags is true if point should not be filtered out
 	private static final short REPLACED_MASK = 0x0004;  // bit in flags is true if point was replaced 
-	// 0x0008 currently unused
+	private static final short TREAT_AS_NODE_MASK = 0x0008; // used by Display tool 
 	private static final short FIXME_NODE_MASK = 0x0010; // bit in flags is true if a node with this coords has a fixme tag
 	private static final short REMOVE_MASK = 0x0020; // bit in flags is true if this point should be removed
 	private static final short VIA_NODE_MASK = 0x0040; // bit in flags is true if a node with this coords is the via node of a RestrictionRelation
@@ -244,6 +244,26 @@ public class Coord implements Comparable<Coord> {
 			this.flags &= ~REPLACED_MASK; 
 	}
 
+	/** 
+	 * Should this Coord be treated like a Garmin node in short arc removal?
+	 * The value has no meaning outside of short arc removal.
+	 * @return true if this coord should be treated like a Garmin node, else false
+	 */
+	public boolean isTreatAsNode() {
+		return (flags & TREAT_AS_NODE_MASK) != 0;
+	}
+
+	/**
+	 * Mark the Coord to be treated like a Node in short arc removal 
+	 * @param treatAsNode true or false
+	 */
+	public void setTreatAsNode(boolean treatAsNode) {
+		if (treatAsNode) 
+			this.flags |= TREAT_AS_NODE_MASK;
+		else 
+			this.flags &= ~TREAT_AS_NODE_MASK; 
+	} 
+	
 	/**
 	 * Does this coordinate belong to a node with a fixme tag?
 	 * Note that the value is set after evaluating the points style. 
