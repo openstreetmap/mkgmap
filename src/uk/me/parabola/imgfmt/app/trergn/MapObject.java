@@ -18,8 +18,6 @@ package uk.me.parabola.imgfmt.app.trergn;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
@@ -42,7 +40,6 @@ public abstract class MapObject {
 
 	// The label(s) for this object
 	private Label label;
-	private List<Label> refLabels;
 
 	// The type of road etc.
 	private int type;
@@ -66,7 +63,7 @@ public abstract class MapObject {
 
 	public abstract void write(OutputStream stream) throws IOException;
 
-	int getDeltaLat() {
+	protected int getDeltaLat() {
 		return deltaLat;
 	}
 
@@ -76,12 +73,6 @@ public abstract class MapObject {
 
 	public void setLabel(Label label) {
 		this.label = label;
-	}
-
-	public void addRefLabel(Label refLabel) {
-		if(refLabels == null)
-			refLabels = new ArrayList<Label>();
-		refLabels.add(refLabel);
 	}
 
 	public int getType() {
@@ -150,10 +141,6 @@ public abstract class MapObject {
 
 	public Label getLabel() {
 		return label;
-	}
-
-	public List<Label> getRefLabels() {
-		return refLabels;
 	}
 
 	protected byte[] getExtTypeExtraBytes() {

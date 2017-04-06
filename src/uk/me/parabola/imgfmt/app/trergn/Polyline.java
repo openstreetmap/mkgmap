@@ -58,6 +58,9 @@ public class Polyline extends MapObject {
 	// Set if it is a one-way street for example.
 	private boolean direction;
 
+	// further labels, if any
+	private List<Label> refLabels;
+
 	// The actual points that make up the line.
 	private final List<Coord> points = new ArrayList<Coord>();
 
@@ -122,7 +125,6 @@ public class Polyline extends MapObject {
 			roaddef.addOffsetTarget(file.position(),
 					FLAG_NETINFO | (loff & FLAG_EXTRABIT));
 			// also add ref label(s) if present
-			List<Label> refLabels = getRefLabels();
 			if(refLabels != null)
 				for(Label rl : refLabels)
 					roaddef.addLabel(rl);
@@ -299,4 +301,12 @@ public class Polyline extends MapObject {
 			return false;
 		return roaddef.hasHouseNumbers();
 	}
+
+	public void addRefLabel(Label refLabel) {
+		if(refLabels == null)
+			refLabels = new ArrayList<Label>();
+		refLabels.add(refLabel);
+	}
+
+	
 }
