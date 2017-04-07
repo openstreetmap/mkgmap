@@ -184,10 +184,8 @@ public class Mdr7 extends MdrMapSection {
 		
 		for (Mdr7Record m : allStreets) {
 			if (splitName) {
-				String key = m.getPartialName();
-				SortKey<Mdr7Record> k1 = sort.createSortKey(m, key, 0, cache);
-				key = m.getInitialPart();
-				SortKey<Mdr7Record> k2 = sort.createSortKey(m, key, m.getMapIndex(), cache);
+				SortKey<Mdr7Record> k1 = sort.createSortKey(m, m.getPartialName(), m.getMapIndex(), cache);
+				SortKey<Mdr7Record> k2 = sort.createSortKey(m, m.getName(), 0, cache);
 				sortedStreets.add(new DoubleSortKey<>(k1, k2));
 			} else {
 				sortedStreets.add(sort.createSortKey(m, m.getName(), m.getMapIndex(), cache));

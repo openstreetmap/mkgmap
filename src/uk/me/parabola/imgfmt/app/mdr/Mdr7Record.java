@@ -114,10 +114,6 @@ public class Mdr7Record extends RecordBase implements NamedRecord {
 		return name + " in " + city.getName();
 	}
 
-	public String getInitialPart() {
-		return name.substring(0, (nameOffset & 0xff));
-	}
-
 	@Override
 	public int hashCode() {
 		final int prime = 31;
