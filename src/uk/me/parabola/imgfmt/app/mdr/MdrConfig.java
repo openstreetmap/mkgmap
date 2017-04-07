@@ -16,6 +16,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import uk.me.parabola.imgfmt.app.srt.Sort;
@@ -38,6 +39,7 @@ public class MdrConfig {
 	private File outputDir;
 	private boolean splitName;
 	private Set<String> mdr7Excl = Collections.emptySet();
+	private Set<String> mdr7Del = Collections.emptySet();
 	
 	/**
 	 * True if we are creating the file, rather than reading it.
@@ -106,12 +108,33 @@ public class MdrConfig {
 		return Collections.unmodifiableSet(mdr7Excl);
 	}
 
-	public void setMdr7Excl(String s) {
-		if (s == null)
-			this.mdr7Excl = Collections.emptySet();
+	public void setMdr7Excl(String exclList) {
+		mdr7Excl = StringToSet(exclList);
+	}
+
+	public Set<String> getMdr7Del() {
+		return Collections.unmodifiableSet(mdr7Del);
+	}
+
+	public void setMdr7Del(String delList) {
+		mdr7Del = StringToSet(delList);
+	}
+	
+	private Set<String> StringToSet (String opt) {
+		Set<String> set;
+		if (opt == null)
+			set = Collections.emptySet();
 		else {
-			mdr7Excl = new HashSet<>(Arrays.asList(s.split(",")));
+			if (opt.startsWith("'") || opt.startsWith("\""))
+				opt = opt.substring(1);
+			if (opt.endsWith("'") || opt.endsWith("\""))
+				opt = opt.substring(0, opt.length() - 1);
+			List<String> list = Arrays.asList(opt.split(","));
+			set = new HashSet<>(list.size(), 0.25f);
+			for (String s : list) {
+				set.add(s.trim());
+			}
 		}
-		
+		return set;
 	}
 }

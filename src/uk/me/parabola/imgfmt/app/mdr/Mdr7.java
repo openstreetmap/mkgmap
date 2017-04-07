@@ -63,8 +63,6 @@ public class Mdr7 extends MdrMapSection {
 	public void addStreet(int mapId, String name, int lblOffset, int strOff, Mdr5Record mdrCity) {
 		if (name.isEmpty())
 			return;
-		if (exclNames.contains(name))
-			return;
 		
 		// Find a name prefix, which is either a shield or a word ending 0x1e. We are treating
 		// a shield as a prefix of length one.

@@ -13,6 +13,7 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.Arrays;
+import java.util.Set;
 
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.FileBackedImgFileWriter;
@@ -71,12 +72,13 @@ public class MDRFile extends ImgFile {
 
 	private final MdrSection[] sections;
 	private PointerSizes sizes;
+	private Set<String> mdr7Del; 
 
 	public MDRFile(ImgChannel chan, MdrConfig config) {
 		Sort sort = config.getSort();
 
 		forDevice = config.isForDevice();
-
+		mdr7Del = config.getMdr7Del();
 		mdrHeader = new MDRHeader(config.getHeaderLen());
 		mdrHeader.setSort(sort);
 		setHeader(mdrHeader);
@@ -221,6 +223,29 @@ public class MDRFile extends ImgFile {
 				continue;
 			
 			String name = lab.getText();
+			if (!mdr7Del.isEmpty()) {
+				String[] parts = name.split(" ");
+				int pos = parts.length;
+				if (parts != null) {
+					for (int i = parts.length-1; i >= 0; i--) {
+						if(!mdr7Del.contains(parts[i])) {
+							break;
+						}
+						pos = i;
+					}
+					if (pos == 0)
+						continue;
+					if (pos < parts.length) {
+						StringBuilder sb = new StringBuilder();
+						for (int i = 0; i +1 < pos; i++) {
+							sb.append(parts[i]);
+							sb.append(" ");
+						}
+						sb.append(parts[pos-1]);
+						name = sb.toString();
+					}
+				}
+			}
 			String cleanName = cleanUpName(name);
 			int strOff = createString(cleanName);
 

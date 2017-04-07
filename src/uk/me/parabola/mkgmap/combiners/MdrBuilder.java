@@ -113,6 +113,7 @@ public class MdrBuilder implements Combiner {
 		config.setSort(sort);
 		config.setSplitName(args.get("split-name-index", false));
 		config.setMdr7Excl(args.get("mdr7-excl", null));
+		config.setMdr7Del(args.get("mdr7-del", null));
 
 		// Wrap the MDR channel with the MDRFile object
 		mdrFile = new MDRFile(mdrChan, config);
