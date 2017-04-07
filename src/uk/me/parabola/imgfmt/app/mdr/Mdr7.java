@@ -13,8 +13,10 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,7 +46,8 @@ public class Mdr7 extends MdrMapSection {
 	private final boolean isMulti;
 	private final boolean splitName;
 
-	private ArrayList<Mdr7Record> allStreets = new ArrayList<>();
+//	private ArrayList<Mdr7Record> allStreets = new ArrayList<>();
+	private Collection<Mdr7Record> allStreets = new LinkedHashSet<>();
 	private ArrayList<Mdr7Record> streets = new ArrayList<>();
 
 	private final int u2size = 1;
@@ -174,7 +177,7 @@ public class Mdr7 extends MdrMapSection {
 	 * as it requires a lot of heap to store the sort keys. 	  	 
 	 */
 	protected void preWriteImpl() {
-		allStreets.trimToSize();
+		allStreets = new ArrayList<>(allStreets);
 		Sort sort = getConfig().getSort();
 		List<SortKey<Mdr7Record>> sortedStreets = new ArrayList<>(allStreets.size());
 		Map<String, byte[]> cache = new HashMap<>();
@@ -343,7 +346,10 @@ public class Mdr7 extends MdrMapSection {
 	}
 
 	public List<Mdr7Record> getStreets() {
-		return Collections.unmodifiableList(allStreets);
+		if (allStreets instanceof ArrayList) {
+			return Collections.unmodifiableList((ArrayList<Mdr7Record>) allStreets);
+		}
+		throw new IllegalStateException("preWriteImpl was not yet called");
 	}
 	
 	public List<Mdr7Record> getSortedStreets() {
