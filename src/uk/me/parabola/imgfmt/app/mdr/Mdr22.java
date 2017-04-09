@@ -51,6 +51,8 @@ public class Mdr22 extends Mdr2x {
 		List<SortKey<Mdr7Record>> keys = new ArrayList<>();
 		Map<String, byte[]> cache = new HashMap<>();
 		for (Mdr7Record s : inStreets) {
+			if (s.getNameOffset() != 0) 
+				continue;  // ignore entries produced by the --x-split-name-index option 
 			Mdr5Record city = s.getCity();
 			if (city == null) continue;
 
