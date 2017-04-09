@@ -22,13 +22,12 @@ import java.util.Locale;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.mkgmap.filters.ShapeMergeFilter;
-import uk.me.parabola.mkgmap.osmstyle.WrongAngleFixer;
 
 /**
- * A point coordinate in extended map-units. A map unit is 360/2^24 degrees, we
- * use a higher resolution (see HIGH_PREC_BITS). In some places <i>shifted</i>
- * coordinates are used, which means that they are divided by some power of two
- * to save space in the file.
+ * A point coordinate in unshifted map-units.
+ * A map unit is 360/2^24 degrees.  In some places <i>shifted</i> coordinates
+ * are used, which means that they are divided by some power of two to save
+ * space in the file.
  *
  * You can create one of these with lat/long by calling the constructor with
  * double args.
@@ -36,94 +35,87 @@ import uk.me.parabola.mkgmap.osmstyle.WrongAngleFixer;
  * See also http://www.movable-type.co.uk/scripts/latlong.html
  *
  * @author Steve Ratcliffe
- * @author Gerd Petermann
  */
 public class Coord implements Comparable<Coord> {
-	// GARMIN coord values 
-	public static final int MAX_GARMIN_LONGITUDE = 1 << 23; //8388608
-	public static final int MIN_GARMIN_LONGITUDE = -1 << 23; //-8388608
-	public static final int MAX_GARMIN_LATITUDE = 1 << 22; // 4194304
-	public static final int MIN_GARMIN_LATIITUDE = -1 << 22; //-4194304
-
+	private final static short ON_BOUNDARY_MASK = 0x0001; // bit in flags is true if point lies on a boundary
+	private final static short PRESERVED_MASK = 0x0002; // bit in flags is true if point should not be filtered out
+	private final static short REPLACED_MASK = 0x0004;  // bit in flags is true if point was replaced 
+	private final static short TREAT_AS_NODE_MASK = 0x0008; // bit in flags is true if point should be treated as a node 
+	private final static short FIXME_NODE_MASK = 0x0010; // bit in flags is true if a node with this coords has a fixme tag
+	private final static short REMOVE_MASK = 0x0020; // bit in flags is true if this point should be removed
+	private final static short VIA_NODE_MASK = 0x0040; // bit in flags is true if a node with this coords is the via node of a RestrictionRelation
 	
-	private static final short ON_BOUNDARY_MASK = 0x0001; // bit in flags is true if point lies on a boundary
-	private static final short PRESERVED_MASK = 0x0002; // bit in flags is true if point should not be filtered out
-	private static final short REPLACED_MASK = 0x0004;  // bit in flags is true if point was replaced 
-	private static final short TREAT_AS_NODE_MASK = 0x0008; // used by Display tool 
-	private static final short FIXME_NODE_MASK = 0x0010; // bit in flags is true if a node with this coords has a fixme tag
-	private static final short REMOVE_MASK = 0x0020; // bit in flags is true if this point should be removed
-	private static final short VIA_NODE_MASK = 0x0040; // bit in flags is true if a node with this coords is the via node of a RestrictionRelation
+	private final static short PART_OF_BAD_ANGLE = 0x0080; // bit in flags is true if point should be treated as a node
+	private final static short PART_OF_SHAPE2 = 0x0100; // use only in ShapeMerger
+	private final static short END_OF_WAY = 0x0200; // use only in WrongAngleFixer
+	private final static short HOUSENUMBER_NODE = 0x0400; // start/end of house number interval
+	private final static short ADDED_HOUSENUMBER_NODE = 0x0800; // node was added for house numbers
 	
-	private static final short PART_OF_BAD_ANGLE = 0x0080; // bit in flags is true if point should be treated as a node
-	private static final short PART_OF_SHAPE2 = 0x0100; // use only in ShapeMerger
-	private static final short END_OF_WAY = 0x0200; // use only in WrongAngleFixer
-	private static final short HOUSENUMBER_NODE = 0x0400; // start/end of house number interval
-	private static final short ADDED_HOUSENUMBER_NODE = 0x0800; // node was added for house numbers
+	private final static int HIGH_PREC_BITS = 30;
+	public final static int DELTA_SHIFT = HIGH_PREC_BITS - 24; 
+	private final static int MAX_DELTA = 1 << (DELTA_SHIFT - 2); // max delta abs value that is considered okay
+	private final static long FACTOR_HP = 1L << HIGH_PREC_BITS;
 	
-	private static final int HIGH_PREC_BITS = 30; // TODO : 31 or 32 cause overflow problems
-	public static final int DELTA_SHIFT = HIGH_PREC_BITS - 24; 
-	private static final long FACTOR_HP = 1L << HIGH_PREC_BITS;
-	private static final int DELTA_HALF = 1 << (DELTA_SHIFT - 1);
+	public final static double R = 6378137.0; // Radius of earth at equator as defined by WGS84
+	public final static double U = R * 2 * Math.PI; // circumference of earth at equator (WGS84)
+	public final static double MEAN_EARTH_RADIUS = 6371000; // earth is a flattened sphere
 	
-	public static final double R = 6378137.0; // Radius of earth at equator as defined by WGS84
-	public static final double U = R * 2 * Math.PI; // circumference of earth at equator (WGS84)
-	public static final double MEAN_EARTH_RADIUS = 6371000; // earth is a flattened sphere
-	
-	private final int latHp;
-	private final int lonHp;
+	private final int latitude;
+	private final int longitude;
 	private byte highwayCount; // number of highways that use this point
-	private short approxDistanceToDisplayedCoord = -1; // value is calculated in get method
 	private short flags; // further attributes
-	
-	// for high precision to garmin calculations
-	private byte posFlags; 
-	private static final byte LAT_DEC = 0x1; // decrement latitude
-	private static final byte LAT_INC = 0x2; // increment latitude
-	private static final byte LON_DEC = 0x4; // decrement longitude 
-	private static final byte LON_INC = 0x8; // increment longitude
+	private final byte latDelta; // delta to high precision latitude value 
+	private final byte lonDelta; // delta to high precision longitude value
+	private short approxDistanceToDisplayedCoord = -1;
 
 	/**
 	 * Construct from co-ordinates that are already in map-units.
-	 * @param latitude24 The latitude in map units.
-	 * @param longitude24 The longitude in map units.
+	 * @param latitude The latitude in map units.
+	 * @param longitude The longitude in map units.
 	 */
-	public Coord(int latitude24, int longitude24) {
-		latHp = garminToHighPrec(latitude24);
-		lonHp = garminToHighPrec(longitude24);
+	public Coord(int latitude, int longitude) {
+		this.latitude = latitude;
+		this.longitude = longitude;
+		latDelta = lonDelta = 0;
 	}
 
-	@SuppressWarnings("unused")
-	public static int garminToHighPrec (int latLon24) {
-		if (HIGH_PREC_BITS == 32 && latLon24 == 0x800000) {
-			// catch overflow 
-			return Integer.MAX_VALUE; 
-		}
-		return latLon24 << DELTA_SHIFT;
-	}
 	/**
 	 * Construct from regular latitude and longitude.
 	 * @param latitude The latitude in degrees.
 	 * @param longitude The longitude in degrees.
 	 */
 	public Coord(double latitude, double longitude) {
-		latHp = toHighPrec(latitude);
-		lonHp = toHighPrec(longitude);
+		this.latitude = Utils.toMapUnit(latitude);
+		this.longitude = Utils.toMapUnit(longitude);
+		int latHighPrec = toHighPrec(latitude);
+		int lonHighPrec = toHighPrec(longitude);
+		this.latDelta = (byte) ((this.latitude << DELTA_SHIFT) - latHighPrec); 
+		this.lonDelta = (byte) ((this.longitude << DELTA_SHIFT) - lonHighPrec);
+
+		// verify math
+		assert (this.latitude << DELTA_SHIFT) - latDelta == latHighPrec;
+		assert (this.longitude << DELTA_SHIFT) - lonDelta == lonHighPrec;
 	}
 	
-	private Coord(int latHighPrec, int lonHighPrec, boolean highPrec) {
-		latHp = latHighPrec;
-		lonHp = lonHighPrec;
+	private Coord (int lat, int lon, byte latDelta, byte lonDelta){
+		this.latitude = lat;
+		this.longitude = lon;
+		this.latDelta = latDelta;
+		this.lonDelta = lonDelta;
 	}
-
 	
 	/**
-	 * Factory for high precision values.
+	 * Constructor for high precision values.
 	 * @param latHighPrec latitude in high precision
 	 * @param lonHighPrec longitude in high precision
 	 * @return Coord instance
 	 */
 	public static Coord makeHighPrecCoord(int latHighPrec, int lonHighPrec){
-		return new Coord(latHighPrec, lonHighPrec, true);
+		int lat24 = (latHighPrec + (1 << (DELTA_SHIFT - 1))) >> DELTA_SHIFT;
+		int lon24 = (lonHighPrec + (1 << (DELTA_SHIFT - 1))) >> DELTA_SHIFT;
+		byte dLat = (byte) ((lat24 << DELTA_SHIFT) - latHighPrec);
+		byte dLon = (byte) ((lon24 << DELTA_SHIFT) - lonHighPrec);
+		return new Coord(lat24, lon24, dLat, dLon);
 	}
 	
 	/**
@@ -132,39 +124,19 @@ public class Coord implements Comparable<Coord> {
 	 * @param other
 	 */
 	public Coord(Coord other) {
+		this.latitude = other.latitude;
+		this.longitude = other.longitude;
+		this.latDelta = other.latDelta;
+		this.lonDelta = other.lonDelta;
 		this.approxDistanceToDisplayedCoord = other.approxDistanceToDisplayedCoord;
-		this.latHp = other.latHp;
-		this.lonHp = other.lonHp;
-		this.posFlags = other.posFlags;
 	}
 
-	/**
-	 * @return latitude in Garmin (24 bit) precision.
-	 */
 	public int getLatitude() {
-		int lat24 = (latHp + DELTA_HALF) >> DELTA_SHIFT;
-		if ((posFlags & LAT_DEC) != 0)
-			--lat24; 
-		else if ((posFlags & LAT_INC) != 0)
-			++lat24;
-		return lat24;
+		return latitude;
 	}
 
-	/**
-	 * @return longitude in Garmin (24 bit) precision
-	 */
-	@SuppressWarnings("unused")
 	public int getLongitude() {
-		int lon24;
-		if (HIGH_PREC_BITS == 32 && lonHp == Integer.MAX_VALUE)
-			lon24 = (lonHp >> DELTA_SHIFT) + 1;
-		else 
-			lon24 = (lonHp + DELTA_HALF) >> DELTA_SHIFT;
-		if ((posFlags & LON_DEC) != 0)
-			--lon24; 
-		else if ((posFlags & LON_INC) != 0)
-			++lon24;
-		return lon24;
+		return longitude;
 	}
 
 	/**
@@ -408,7 +380,7 @@ public class Coord implements Comparable<Coord> {
 		// max lat: 4194304
 		// max lon: 8388608
 		// max hashCode: 2118123520 < 2147483647 (Integer.MAX_VALUE)
-		return 503 * getLatitude() + getLongitude();
+		return 503 * latitude + longitude;
 	}
 
 	/**
@@ -418,7 +390,7 @@ public class Coord implements Comparable<Coord> {
 		if (obj == null || !(obj instanceof Coord))
 			return false;
 		Coord other = (Coord) obj;
-		return getLatitude() == other.getLatitude() && getLongitude() == other.getLongitude();
+		return latitude == other.latitude && longitude == other.longitude;
 	}
 	
 	/**
@@ -527,6 +499,7 @@ public class Coord implements Comparable<Coord> {
 		double dist = distRad * R;
 
 		return dist;
+		
 	}
 
 	/**
@@ -610,12 +583,12 @@ public class Coord implements Comparable<Coord> {
 	 * This ordering is used for sorting entries in NOD3.
 	 */
 	public int compareTo(Coord other) {
-		if (getLongitude() == other.getLongitude()) {
-			if (getLatitude() == other.getLatitude())
+		if (longitude == other.getLongitude()) {
+			if (latitude == other.getLatitude())
 				return 0;
-			return getLatitude() > other.getLatitude() ? 1 : -1;
+			return latitude > other.getLatitude() ? 1 : -1;
 		}
-		return getLongitude() > other.getLongitude() ? 1 : -1;
+		return longitude > other.getLongitude() ? 1 : -1;
 	}			
 
 	/**
@@ -624,7 +597,7 @@ public class Coord implements Comparable<Coord> {
 	 * @return a string representation of the object.
 	 */
 	public String toString() {
-		return (getLatitude()) + "/" + (getLongitude());
+		return (latitude) + "/" + (longitude);
 	}
 
 	public String toDegreeString() {
@@ -653,14 +626,16 @@ public class Coord implements Comparable<Coord> {
 	 * @param degrees The latitude or longitude as decimal degrees.
 	 * @return An integer value with {@code HIGH_PREC_BITS} bit precision.
 	 */
-	public static int toHighPrec(double degrees) {
-		return (int) Math.round(degrees / 360D * FACTOR_HP);
+	private static int toHighPrec(double degrees) {
+		final double DELTA = 360.0D / FACTOR_HP / 2; // Correct rounding
+		double v = (degrees > 0) ? degrees + DELTA : degrees - DELTA;
+		return (int) (v * FACTOR_HP / 360);
 	}
 
 	/* Factor for conversion to radians using HIGH_PREC_BITS bits
 	 * (Math.PI / 180) * (360.0 / (1 << HIGH_PREC_BITS)) 
 	 */
-	private static final double HIGH_PREC_RAD_FACTOR = 2 * Math.PI / FACTOR_HP;
+	final static double HIGH_PREC_RAD_FACTOR = 2 * Math.PI / FACTOR_HP;
 	
 	/**
 	 * Convert to radians using high precision 
@@ -672,21 +647,17 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	/**
-	 * @return Latitude from input data as signed HIGH_PREC_BITS bit integer. 
-	 * When this instance was created from double values, the returned value 
-	 * is as close as possible to the original (OSM / polish) position.  
+	 * @return Latitude as signed HIGH_PREC_BITS bit integer 
 	 */
 	public int getHighPrecLat() {
-		return latHp;
+		return (latitude << DELTA_SHIFT) - latDelta;
 	}
 
 	/**
-	 * @return Longitude from input data as signed HIGH_PREC_BITS bit integer 
-	 * When this instance was created from double values, the returned value 
-	 * is as close as possible to the original (OSM / polish) position.  
+	 * @return Longitude as signed HIGH_PREC_BITS bit integer 
 	 */
 	public int getHighPrecLon() {
-		return lonHp;
+		return (longitude << DELTA_SHIFT) - lonDelta;
 	}
 	
 	/**
@@ -704,29 +675,17 @@ public class Coord implements Comparable<Coord> {
 	}
 	
 	public Coord getDisplayedCoord(){
-		return new Coord(getLatitude(), getLongitude());
+		return new Coord(latitude,longitude);
 	}
 
-	private int getLatDelta () {
-		return latHp - (getLatitude() << DELTA_SHIFT);
-	}
-
-	private int getLonDelta () {
-		return lonHp - (getLongitude() << DELTA_SHIFT);
-	}
-
-	/** gives the size of a bbox around the displayed coord */
-	private static final int MAX_DELTA = 1 << (DELTA_SHIFT - 2); // max delta abs value that is considered okay
 	/**
 	 * Check if the rounding to 24 bit resolution caused large error. If so, the point may be placed
 	 * at an alternative position. 
-	 * @return true if rounding error is large.
+	 * @return true if rounding error is large. 
 	 */
 	public boolean hasAlternativePos(){
 		if (getOnBoundary())
 			return false;
-		int latDelta = getLatDelta();
-		int lonDelta = getLonDelta();
 		return (Math.abs(latDelta) > MAX_DELTA || Math.abs(lonDelta) > MAX_DELTA);
 	}
 	/**
@@ -739,50 +698,47 @@ public class Coord implements Comparable<Coord> {
 		ArrayList<Coord> list = new ArrayList<>();
 		if (getOnBoundary())
 			return list; 
-
-		int latDelta = getLatDelta();
-		int lonDelta = getLonDelta();
+		int modLatDelta = 0;
+		int modLonDelta = 0;
 		
-		boolean up = false;
-		boolean down = false;
-		boolean left = false;
-		boolean right = false;
-		
+		int modLat = latitude;
+		int modLon = longitude;
 		if (latDelta > MAX_DELTA)
-			up = true;
+			modLat--;
 		else if (latDelta < -MAX_DELTA)
-			down = true;
+			modLat++;
 		if (lonDelta > MAX_DELTA)
-			right= true;
+			modLon--;
 		else if (lonDelta < -MAX_DELTA)
-			left = true;
-		if (down || up) {
-			if (left || right) {
-				Coord mod2 = new Coord(this);
-				mod2.posFlags |= (left ? LON_DEC : LON_INC);
-				mod2.posFlags |= (down ? LAT_DEC : LAT_INC);
-				list.add(mod2);
-			}
-			Coord mod1 = new Coord(this);
-			mod1.posFlags |= (down ? LAT_DEC : LAT_INC);
-			list.add(mod1);
-			
+			modLon++;
+		int latHighPrec = getHighPrecLat();
+		int lonHighPrec = getHighPrecLon();
+		modLatDelta = (modLat << DELTA_SHIFT) - latHighPrec;
+		modLonDelta = (modLon << DELTA_SHIFT) - lonHighPrec;
+		assert modLatDelta >= Byte.MIN_VALUE && modLatDelta <= Byte.MAX_VALUE;
+		assert modLonDelta >= Byte.MIN_VALUE && modLonDelta <= Byte.MAX_VALUE;
+		if (modLat != latitude){
+			if (modLon != longitude)
+				list.add(new Coord(modLat, modLon, (byte)modLatDelta, (byte)modLonDelta));
+			list.add(new Coord(modLat, longitude, (byte)modLatDelta, lonDelta));
+		} 
+		if (modLon != longitude)
+			list.add(new Coord(latitude, modLon, latDelta, (byte)modLonDelta));
+		/* verify math
+		for(Coord co:list){
+			double d = distance(new Coord (co.getLatitude(),co.getLongitude()));
+			assert d < 3.0;
 		}
-		if (left || right) {
-			Coord mod = new Coord(this);
-			mod.posFlags |= (left ? LON_DEC : LON_INC);
-			list.add(mod);
-			
-		}
+		*/
 		return list;
 	}
 	
 	/**
 	 * @return approximate distance in cm 
 	 */
-	public short getDistToDisplayedPoint(){
-		if (approxDistanceToDisplayedCoord < 0){
-			approxDistanceToDisplayedCoord = (short)Math.round(getDisplayedCoord().distance(this)*100);
+	public short getDistToDisplayedPoint() {
+		if (approxDistanceToDisplayedCoord < 0) {
+			approxDistanceToDisplayedCoord = (short) Math.round(getDisplayedCoord().distance(this) * 100);
 		}
 		return approxDistanceToDisplayedCoord;
 	}
@@ -808,7 +764,7 @@ public class Coord implements Comparable<Coord> {
 		if (Math.abs(lat2) > Math.PI/2) lat2 = lat2>0 ? Math.PI-lat2 : -Math.PI-lat2;
 		double lon2;
 		// catch special case: normalised value would be -8388608
-		if (this.getLongitude() == MAX_GARMIN_LONGITUDE && brng == 0)
+		if (this.getLongitude() == 8388608 && brng == 0)
 			lon2 = lon1;
 		else { 
 			double deltaPhi = Math.log(Math.tan(lat2/2+Math.PI/4)/Math.tan(lat1/2+Math.PI/4));
@@ -911,4 +867,5 @@ public class Coord implements Comparable<Coord> {
 		double newLon = lon + Math.atan2(Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(lat), Math.cos(angularDistance) - Math.sin(lat) * Math.sin(newLat));
 		return new Coord(Math.toDegrees(newLat), Math.toDegrees(newLon));
 	}
+	
 }

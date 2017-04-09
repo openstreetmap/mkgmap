@@ -37,8 +37,8 @@ public class CoordTest {
 	Coord p1_11 = new Coord (1.0, 11.0);
 	Coord p60_10 = new Coord (60.0, 10.0);
 	Coord p61_11 = new Coord (61.0, 11.0);
-	Coord russia1 = new Coord(3069580,Coord.MAX_GARMIN_LONGITUDE);
-	Coord russia2 = new Coord(3105677,Coord.MAX_GARMIN_LONGITUDE);
+	Coord russia1 = new Coord(3069580,8388608);
+	Coord russia2 = new Coord(3105677,8388608);
 	
 	/**
 	 */
@@ -148,37 +148,21 @@ public class CoordTest {
 	}
 
 	@Test
-	public void testAlternativePos() {
-		final double MAX_GRID_DIST = Coord.U / (1 << 24);
-		final double MAX_DIST = MAX_GRID_DIST * 1.5;
+	public void alternativePos() {
 		Coord c1 = new Coord(61.0000001, -23.0000001);
 		List<Coord> alt1 = c1.getAlternativePositions();
 		assertEquals(1, alt1.size());
 		for (Coord c : alt1) {
-			assertTrue(c.distance(c1) == 0);
-			assertTrue(c.getDisplayedCoord().distance(c1.getDisplayedCoord()) <= MAX_DIST);
+			assertTrue(c.distance(c1) < 3);
 			assertTrue(c.hasAlternativePos());
 			List<Coord> altx = c.getAlternativePositions();
 			assertFalse(altx.isEmpty());
 		}
-		
 		Coord c2 = new Coord(61.1, -23.3);
 		List<Coord> alt2 = c2.getAlternativePositions();
 		assertEquals(3, alt2.size());
 		for (Coord c : alt2) {
-			assertTrue(c.distance(c2) == 0);
-			assertTrue(c.getDisplayedCoord().distance(c2.getDisplayedCoord()) <= MAX_DIST);
-			assertTrue(c.hasAlternativePos());
-			List<Coord> altx = c.getAlternativePositions();
-			assertFalse(altx.isEmpty());
-		}
-
-		Coord c3 = new Coord(0.1, -179.999991);
-		List<Coord> alt3 = c3.getAlternativePositions();
-		assertEquals(3, alt3.size());
-		for (Coord c : alt3) {
-			assertTrue(c.distance(c3) == 0);
-			assertTrue(c.getDisplayedCoord().distance(c3.getDisplayedCoord()) <= MAX_DIST);
+			assertTrue(c.distance(c2) < 3);
 			assertTrue(c.hasAlternativePos());
 			List<Coord> altx = c.getAlternativePositions();
 			assertFalse(altx.isEmpty());
