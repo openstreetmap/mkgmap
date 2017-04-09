@@ -114,17 +114,19 @@ public class Mdr7Record extends RecordBase implements NamedRecord {
 		return name + " in " + city.getName();
 	}
 
+	public String getInitialPart() {
+		return name.substring(0, (nameOffset & 0xff) + (prefixOffset & 0xff));
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-//		result = prime * result + ((city == null) ? 0 : city.hashCode());
 		result = prime * result + labelOffset;
-//		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		result = prime * result + nameOffset;
 		result = prime * result + outNameOffset;
 		result = prime * result + prefixOffset;
-		result = prime * result + stringOffset;
+		result = prime * result + stringOffset; // XXX probably not needed
 		result = prime * result + suffixOffset;
 		result = prime * result + getMapIndex();
 		return result;
@@ -149,17 +151,12 @@ public class Mdr7Record extends RecordBase implements NamedRecord {
 			return false;
 		if (prefixOffset != other.prefixOffset)
 			return false;
-		if (stringOffset != other.stringOffset)
+		if (stringOffset != other.stringOffset) // XXX probably not needed
 			return false;
 		if (suffixOffset != other.suffixOffset)
 			return false;
 		if (city != other.getCity()) 
 			return false;
-//		if (name == null) {
-//			if (other.name != null)
-//				return false;
-//		} else if (!name.equals(other.name))
-//			return false;
 		return true;
 	}
 }

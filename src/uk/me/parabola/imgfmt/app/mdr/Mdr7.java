@@ -183,13 +183,10 @@ public class Mdr7 extends MdrMapSection {
 		Map<String, byte[]> cache = new HashMap<>();
 		
 		for (Mdr7Record m : allStreets) {
-			if (splitName) {
 				SortKey<Mdr7Record> k1 = sort.createSortKey(m, m.getPartialName(), 0, cache);
-				SortKey<Mdr7Record> k2 = sort.createSortKey(m, m.getName(), m.getMapIndex(), cache);
+				SortKey<Mdr7Record> k2 = sort.createSortKey(m, m.getInitialPart(), m.getMapIndex(), cache);
 				sortedStreets.add(new DoubleSortKey<>(k1, k2));
-			} else {
-				sortedStreets.add(sort.createSortKey(m, m.getName(), m.getMapIndex(), cache));
-			}
+//				System.out.println("'" + m.getName() + "' '" + m.getPartialName() + "' '" + m.getInitialPart() +"' " + m.getMapIndex()); 
 		}
 		cache = null;
 		Collections.sort(sortedStreets);
@@ -201,10 +198,9 @@ public class Mdr7 extends MdrMapSection {
 		for (int i = 0; i < sortedStreets.size(); i++){ 
 			SortKey<Mdr7Record> sk = sortedStreets.get(i);
 			Mdr7Record r = sk.getObject();
-			if (r.getMapIndex() == last.getMapIndex()
-					&& r.getName().equals(last.getName())  // currently think equals is correct, not collator.compare()
-					&& r.getPartialName().equals(last.getPartialName()))
-			{
+			if (r.getMapIndex() == last.getMapIndex() 
+					&& r.getPartialName().equals(last.getPartialName())
+					&& r.getInitialPart().equals(last.getInitialPart()))			{
 				// This has the same name (and map number) as the previous one. Save the pointer to that one
 				// which is going into the file.
 				r.setIndex(recordNumber);
