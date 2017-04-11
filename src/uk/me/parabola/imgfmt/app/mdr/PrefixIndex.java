@@ -67,8 +67,11 @@ public class PrefixIndex extends MdrSection {
 		int outRecord = 0; // record number of the index
 		for (NamedRecord r : list) {
 			inRecord++;
-
-			String prefix = getPrefix(r.getName());
+			String prefix ;
+			if (r instanceof Mdr7Record)
+				prefix = getPrefix(((Mdr7Record) r).getPartialName());
+			else 
+				prefix = getPrefix(r.getName());
 			if (collator.compare(prefix, lastPrefix) != 0) {
 				outRecord++;
 
