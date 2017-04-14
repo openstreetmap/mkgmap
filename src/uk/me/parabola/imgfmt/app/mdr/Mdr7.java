@@ -183,10 +183,9 @@ public class Mdr7 extends MdrMapSection {
 		Map<String, byte[]> cache = new HashMap<>();
 		
 		for (Mdr7Record m : allStreets) {
-				SortKey<Mdr7Record> k1 = sort.createSortKey(m, m.getPartialName(), 0, cache);
-				SortKey<Mdr7Record> k2 = sort.createSortKey(m, m.getInitialPart(), m.getMapIndex(), cache);
-				sortedStreets.add(new DoubleSortKey<>(k1, k2));
-//				System.out.println("'" + m.getName() + "' '" + m.getPartialName() + "' '" + m.getInitialPart() +"' " + m.getMapIndex()); 
+			SortKey<Mdr7Record> k1 = sort.createSortKey(m, m.getPartialName(), 0, cache);
+			SortKey<Mdr7Record> k2 = sort.createSortKey(m, m.getInitialPart(), m.getMapIndex(), cache);
+			sortedStreets.add(new DoubleSortKey<>(k1, k2));
 		}
 		cache = null;
 		Collections.sort(sortedStreets);
@@ -194,21 +193,19 @@ public class Mdr7 extends MdrMapSection {
 		// De-duplicate the street names so that there is only one entry
 		// per map for the same name.
 		int recordNumber = 0;
-		Mdr7Record last = new Mdr7Record();
+		SortKey<Mdr7Record> lastKey = null;
 		for (int i = 0; i < sortedStreets.size(); i++){ 
 			SortKey<Mdr7Record> sk = sortedStreets.get(i);
 			Mdr7Record r = sk.getObject();
-			if (r.getMapIndex() == last.getMapIndex() 
-					&& r.getPartialName().equals(last.getPartialName())
-					&& r.getInitialPart().equals(last.getInitialPart()))			{
+			if (lastKey != null && sk.compareTo(lastKey) == 0) {
 				// This has the same name (and map number) as the previous one. Save the pointer to that one
 				// which is going into the file.
 				r.setIndex(recordNumber);
 			} else {
 				recordNumber++;
-				last = r;
 				r.setIndex(recordNumber);
 				streets.add(r);
+				lastKey = sk;
 			}
 			// release memory 
 			sortedStreets.set(i, null);
