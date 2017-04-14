@@ -225,25 +225,26 @@ public class MDRFile extends ImgFile {
 			String name = lab.getText();
 			if (!mdr7Del.isEmpty()) {
 				String[] parts = name.split(" ");
-					int pos = parts.length;
-					for (int i = parts.length-1; i >= 0; i--) {
-						if(!mdr7Del.contains(parts[i])) {
-							break;
-						}
-						pos = i;
+				int pos = parts.length;
+				for (int i = parts.length - 1; i >= 0; i--) {
+					if (!mdr7Del.contains(parts[i])) {
+						break;
 					}
-					if (pos == 0)
-						continue;
-					if (pos < parts.length) {
-						StringBuilder sb = new StringBuilder();
-						for (int i = 0; i +1 < pos; i++) {
-							sb.append(parts[i]);
-							sb.append(" ");
-						}
-						sb.append(parts[pos-1]);
-						name = sb.toString(); // XXX maybe add -intern()
+					pos = i;
+				}
+				if (pos == 0)
+					continue;
+				if (pos < parts.length) {
+					StringBuilder sb = new StringBuilder();
+					for (int i = 0; i + 1 < pos; i++) {
+						sb.append(parts[i]);
+						sb.append(" ");
 					}
+					sb.append(parts[pos - 1]);
+					name = sb.toString(); // XXX maybe add -intern()
+				}
 			}
+			
 			String cleanName = cleanUpName(name);
 			int strOff = createString(cleanName);
 
