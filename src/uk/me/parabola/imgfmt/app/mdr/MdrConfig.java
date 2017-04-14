@@ -17,7 +17,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import uk.me.parabola.imgfmt.app.srt.Sort;
 
@@ -122,6 +124,7 @@ public class MdrConfig {
 	
 	private Set<String> StringToSet (String opt) {
 		Set<String> set;
+
 		if (opt == null)
 			set = Collections.emptySet();
 		else {
@@ -130,7 +133,7 @@ public class MdrConfig {
 			if (opt.endsWith("'") || opt.endsWith("\""))
 				opt = opt.substring(0, opt.length() - 1);
 			List<String> list = Arrays.asList(opt.split(","));
-			set = new HashSet<>(list.size(), 0.25f);
+			set = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
 			for (String s : list) {
 				set.add(s.trim());
 			}
