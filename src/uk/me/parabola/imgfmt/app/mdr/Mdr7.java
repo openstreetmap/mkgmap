@@ -13,10 +13,9 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,9 +45,10 @@ public class Mdr7 extends MdrMapSection {
 	private final boolean isMulti;
 	private final boolean splitName;
 
-//	private ArrayList<Mdr7Record> allStreets = new ArrayList<>();
-	private Collection<Mdr7Record> allStreets = new LinkedHashSet<>();
+	private Set<Mdr7Record> roadOneMap= new HashSet<>();
+	private ArrayList<Mdr7Record> allStreets = new ArrayList<>();
 	private ArrayList<Mdr7Record> streets = new ArrayList<>();
+	private int lastMaxIndex = -1;
 
 	private final int u2size = 1;
 	private Set<String> exclNames;
@@ -60,7 +60,6 @@ public class Mdr7 extends MdrMapSection {
 		exclNames = config.getMdr7Excl();
 		codepage = sort.getCodepage();
 		isMulti = sort.isMulti();
-		
 	}
 
 	public void addStreet(int mapId, String name, int lblOffset, int strOff, Mdr5Record mdrCity) {
@@ -94,7 +93,7 @@ public class Mdr7 extends MdrMapSection {
 		st.setCity(mdrCity);
 		st.setPrefixOffset((byte) prefix);
 		st.setSuffixOffset((byte) suffix);
-		allStreets.add(st);
+		storeMdr7(st);
 
 		if (!splitName)
 			return;
@@ -133,13 +132,30 @@ public class Mdr7 extends MdrMapSection {
 				st.setSuffixOffset((byte) suffix);
 				//System.out.println(st.getName() + ": add partial " + st.getPartialName());
 				if (!exclNames.contains(st.getPartialName()))
-					allStreets.add(st);
+					storeMdr7(st);
+
 				start = false;
 			}
 
 			outOffset += outSize(c);
 			if (outOffset > MAX_NAME_OFFSET)
 				break;
+		}
+	}
+
+	/**
+	 * Store in array if not already done
+	 * @param st the mdr7 record
+	 */
+	private void storeMdr7(Mdr7Record st) {
+		if (lastMaxIndex != st.getMapIndex()) {
+			// we process all roads of one map tile sequentially, so we can clear the set with each new map tile
+			lastMaxIndex = st.getMapIndex();
+			roadOneMap.clear(); 
+		}
+		
+		if (roadOneMap.add(st)) {
+			allStreets.add(st);
 		}
 	}
 
@@ -177,7 +193,9 @@ public class Mdr7 extends MdrMapSection {
 	 * as it requires a lot of heap to store the sort keys. 	  	 
 	 */
 	protected void preWriteImpl() {
-		allStreets = new ArrayList<>(allStreets);
+		// free memory
+		roadOneMap = null; 
+		allStreets.trimToSize();
 		Sort sort = getConfig().getSort();
 		List<SortKey<Mdr7Record>> sortedStreets = new ArrayList<>(allStreets.size());
 		Map<String, byte[]> cache = new HashMap<>();
@@ -337,10 +355,7 @@ public class Mdr7 extends MdrMapSection {
 	}
 
 	public List<Mdr7Record> getStreets() {
-		if (allStreets instanceof ArrayList) {
-			return Collections.unmodifiableList((ArrayList<Mdr7Record>) allStreets);
-		}
-		throw new IllegalStateException("preWriteImpl was not yet called");
+		return Collections.unmodifiableList((ArrayList<Mdr7Record>) allStreets);
 	}
 	
 	public List<Mdr7Record> getSortedStreets() {
