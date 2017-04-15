@@ -18,7 +18,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 
@@ -62,19 +61,15 @@ public class Mdr22 extends Mdr2x {
 			// For memory use, we re-use country name part of the key.
 			keys.add(sort.createSortKey(s, name, s.getIndex(), cache));
 		}
+		cache = null;
 		Collections.sort(keys);
 
-		int record = 0;
 
-		String lastName = null;
-		int lastMapid = 0;
-		
+		int lastIndex = -1;
+		int record = 0;
 		for (SortKey<Mdr7Record> key : keys) {
 			Mdr7Record street = key.getObject();
-
-			String name = street.getName();
-			int mapid = street.getMapIndex();
-			if (mapid != lastMapid || !name.equals(lastName)) {
+			if (street.getIndex() != lastIndex) {
 				record++;
 				streets.add(street);
 
@@ -85,10 +80,10 @@ public class Mdr22 extends Mdr2x {
 					mdr29.setMdr22(record);
 				}
 
-				lastMapid = mapid;
-				lastName = name;
+				lastIndex = street.getIndex();
 			}
 		}
+		return;
 	}
 
 	protected boolean sameGroup(Mdr7Record street1, Mdr7Record street2) {
