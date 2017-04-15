@@ -91,6 +91,7 @@ public class Mdr20 extends Mdr2x {
 		Mdr5Record lastCity = null;
 		int record = 0;
 		int cityRecord = 1;
+		int lastIndex = -1;
 
 		for (SortKey<Mdr7Record> key : keys) {
 			Mdr7Record street = key.getObject();
@@ -99,7 +100,6 @@ public class Mdr20 extends Mdr2x {
 
 			boolean citySameByName = city.isSameByName(collator, lastCity);
 
-			int lastIndex = -1;
 
 			// Only save a single copy of each street name.
 			if (!citySameByName || lastIndex != street.getIndex())
