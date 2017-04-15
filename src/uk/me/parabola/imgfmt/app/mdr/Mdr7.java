@@ -211,10 +211,13 @@ public class Mdr7 extends MdrMapSection {
 		// De-duplicate the street names so that there is only one entry
 		// per map for the same name.
 		int recordNumber = 0;
+		allStreets.clear();
 		SortKey<Mdr7Record> lastKey = null;
 		for (int i = 0; i < sortedStreets.size(); i++){ 
 			SortKey<Mdr7Record> sk = sortedStreets.get(i);
 			Mdr7Record r = sk.getObject();
+			if (r.getCity() != null)
+				allStreets.add(r);
 			if (lastKey != null && sk.compareTo(lastKey) == 0) {
 				// This has the same name (and map number) as the previous one. Save the pointer to that one
 				// which is going into the file.
