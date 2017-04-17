@@ -448,9 +448,14 @@ public class Sort {
 			CodePosition cp = new CodePosition();
 			cp.setPrimary((char) getPrimary(b & 0xff));
 
-			// Currently sort without secondary or tertiary differences to the base letters.
-			cp.setSecondary((byte) getSecondary(b & 0xff));
-			cp.setTertiary((byte) getTertiary(b & 0xff));
+			// We do not want the character to sort fully equal to the expanded characters (or any other
+			// character so adjust the ordering at other strengths.  May need further tweaks.
+			int secondary = getSecondary(b & 0xff);
+			cp.setSecondary((byte) (secondary + 7));
+
+			int tertiary = getTertiary(b & 0xff);
+			cp.setTertiary((byte) (tertiary + 2));
+
 			expansions.add(cp);
 		}
 	}
