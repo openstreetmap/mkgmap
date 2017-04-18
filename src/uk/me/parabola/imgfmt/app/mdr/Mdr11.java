@@ -14,8 +14,6 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +29,7 @@ import uk.me.parabola.imgfmt.app.trergn.Point;
  * @author Steve Ratcliffe
  */
 public class Mdr11 extends MdrMapSection {
-	private List<Mdr11Record> pois = new ArrayList<>();
+	private ArrayList<Mdr11Record> pois = new ArrayList<>();
 	private Mdr10 mdr10;
 
 	public Mdr11(MdrConfig config) {
@@ -58,21 +56,20 @@ public class Mdr11 extends MdrMapSection {
 	 * de-duplicated in the index in the same way that streets and cities are.
 	 */
 	protected void preWriteImpl() {
+		pois.trimToSize();
 		Sort sort = getConfig().getSort();
-		List<SortKey<Mdr11Record>> keys = new ArrayList<>(pois.size());
-		Map<String, byte[]> cache = new HashMap<>();
-		for (Mdr11Record poi : pois) {
-			keys.add(sort.createSortKey(poi, poi.getName(), poi.getMapIndex(), cache));
-		}
-		cache = null;
-		pois.clear();
-		Collections.sort(keys);
-		
-		for (SortKey<Mdr11Record> sk : keys) {
-			Mdr11Record poi = sk.getObject();
 
+		LargeListSorter<Mdr11Record> sorter = new LargeListSorter<Mdr11Record>(sort) {
+			
+			@Override
+			protected SortKey<Mdr11Record> makeKey(Mdr11Record r, Sort sort, Map<String, byte[]> cache) {
+				return sort.createSortKey(r, r.getName(), r.getMapIndex(), cache);
+			}
+		};
+//		System.out.println("sorting " + pois.size() + " pois by name"); 
+		sorter.sort(pois);
+		for (Mdr11Record poi : pois) {
 			mdr10.addPoiType(poi);
-			pois.add(poi);
 		}
 	}
 
