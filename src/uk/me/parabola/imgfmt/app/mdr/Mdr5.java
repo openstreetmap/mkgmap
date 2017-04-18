@@ -96,6 +96,94 @@ public class Mdr5 extends MdrMapSection {
 				lastCity = c;
 			}
 		}
+		// calculate positions for the different road indexes
+		calcMdr20SortPos();
+		calcMdr21SortPos();
+		calcMdr22SortPos();
+	}
+	
+	/**
+	 * Calculate a position when sorting by name, region, and country- This is used for MDR20. 
+	 */
+	private void calcMdr20SortPos() {
+		List<SortKey<Mdr5Record>> sortKeys = new ArrayList<>(allCities.size());
+		Sort sort = getConfig().getSort();
+		for (Mdr5Record m : allCities) {
+			if (m.getName() == null)
+				continue;
+
+			// Sort by city name, region name, and country name .
+			SortKey<Mdr5Record> sortKey = sort.createSortKey(m, m.getName());
+			SortKey<Mdr5Record> regionKey = sort.createSortKey(null, m.getRegionName());
+			SortKey<Mdr5Record> countryKey = sort.createSortKey(null, m.getCountryName());
+			sortKey = new MultiSortKey<>(sortKey, regionKey, countryKey);
+			sortKeys.add(sortKey);
+		}
+		Collections.sort(sortKeys);
+
+		SortKey<Mdr5Record> lastKey = null;
+		int pos = 0;
+		for (SortKey<Mdr5Record> key : sortKeys) {
+			Mdr5Record c = key.getObject();
+			if (lastKey == null || key.compareTo(lastKey) != 0)
+				pos++;
+			c.setMdr20SortPos(pos);
+			lastKey = key;
+		}
+	}
+
+	/**
+	 * Calculate a position when sorting by region- This is used for MDR21. 
+	 */
+	private void calcMdr21SortPos() {
+		List<SortKey<Mdr5Record>> sortKeys = new ArrayList<>(allCities.size());
+		Sort sort = getConfig().getSort();
+		for (Mdr5Record m : allCities) {
+			if (m.getRegionName() == null) 
+				continue;
+
+			// Sort by region name.
+			sortKeys.add(sort.createSortKey(m, m.getRegionName()));
+		}
+		Collections.sort(sortKeys);
+
+		SortKey<Mdr5Record> lastKey = null;
+		int pos = 0;
+		for (SortKey<Mdr5Record> key : sortKeys) {
+			Mdr5Record c = key.getObject();
+			if (lastKey == null || key.compareTo(lastKey) != 0)
+				pos++;
+			c.setMdr21SortPos(pos);
+			lastKey = key;
+		}
+	}
+
+	/**
+	 * Calculate a position when sorting by country- This is used for MDR22. 
+	 */
+
+	private void calcMdr22SortPos() {
+		List<SortKey<Mdr5Record>> sortKeys = new ArrayList<>(allCities.size());
+		Sort sort = getConfig().getSort();
+		for (Mdr5Record m : allCities) {
+			if (m.getCountryName() == null)
+				continue;
+
+			// Sort by country name .
+			SortKey<Mdr5Record> countryKey = sort.createSortKey(m, m.getCountryName());
+			sortKeys.add(countryKey);
+		}
+		Collections.sort(sortKeys);
+
+		SortKey<Mdr5Record> lastKey = null;
+		int pos = 0;
+		for (SortKey<Mdr5Record> key : sortKeys) {
+			Mdr5Record c = key.getObject();
+			if (lastKey == null || key.compareTo(lastKey) != 0)
+				pos++;
+			c.setMdr22SortPos(pos);
+			lastKey = key;
+		}
 	}
 
 	public void writeSectData(ImgFileWriter writer) {

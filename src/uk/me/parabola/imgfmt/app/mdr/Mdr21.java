@@ -14,18 +14,15 @@ package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-
-import uk.me.parabola.imgfmt.app.srt.Sort;
-import uk.me.parabola.imgfmt.app.srt.SortKey;
 
 /**
  * This section contains the streets sorted by region.
  * There is no pointer from region, unlike in the case with cities.
  * 
  * @author Steve Ratcliffe
+ * @author Gerd Petermann
  */
 public class Mdr21 extends Mdr2x {
 
@@ -40,31 +37,24 @@ public class Mdr21 extends Mdr2x {
 	 * @param inStreets The list of streets from mdr7.
 	 */
 	public void buildFromStreets(List<Mdr7Record> inStreets) {
-		Sort sort = getConfig().getSort();
-
-		List<SortKey<Mdr7Record>> keys = new ArrayList<>();
-		Map<String, byte[]> cache = new HashMap<>();
-
-		for (Mdr7Record s : inStreets) {
-			Mdr5Record city = s.getCity();
-			if (city == null) continue;
-
-			Mdr13Record region = city.getMdrRegion();
-			if (region == null) continue;
-
-			String name = region.getName();
-			if (name == null)
-				continue;
-
-			keys.add(sort.createSortKey(s, name, s.getIndex(), cache));
+		ArrayList<Mdr7Record> sorted = new ArrayList<>(inStreets.size());
+		for (Mdr7Record street : inStreets) {
+			if (street.getCity() != null && street.getCity().getMdrRegion() != null)
+				sorted.add(street);
 		}
-		cache = null;
-		Collections.sort(keys);
+		Collections.sort(sorted, new Comparator<Mdr7Record>() {
+			public int compare(Mdr7Record o1, Mdr7Record o2) {
+				int d = Integer.compare(o1.getCity().getMdr21SortPos(), o2.getCity().getMdr21SortPos());
+				if (d != 0)
+					return d;
+				return Integer.compare(o1.getIndex(), o2.getIndex());
+			}
+		});
+
 
 		int lastIndex = -1;
 		int record = 0;
-		for (SortKey<Mdr7Record> key : keys) {
-			Mdr7Record street = key.getObject();
+		for (Mdr7Record street : sorted) {
 			if (lastIndex != street.getIndex()) {
 				record++;
 				streets.add(street);

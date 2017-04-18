@@ -45,7 +45,7 @@ public class Mdr7 extends MdrMapSection {
 	private final boolean isMulti;
 	private final boolean splitName;
 
-	private Set<Mdr7Record> roadOneMap= new HashSet<>();
+	private Set<Mdr7Record> roadsPerMap= new HashSet<>();
 	private ArrayList<Mdr7Record> allStreets = new ArrayList<>();
 	private ArrayList<Mdr7Record> streets = new ArrayList<>();
 	private int lastMaxIndex = -1;
@@ -151,10 +151,10 @@ public class Mdr7 extends MdrMapSection {
 		if (lastMaxIndex != st.getMapIndex()) {
 			// we process all roads of one map tile sequentially, so we can clear the set with each new map tile
 			lastMaxIndex = st.getMapIndex();
-			roadOneMap.clear(); 
+			roadsPerMap.clear(); 
 		}
 		
-		if (roadOneMap.add(st)) {
+		if (roadsPerMap.add(st)) {
 			allStreets.add(st);
 		}
 	}
@@ -194,30 +194,23 @@ public class Mdr7 extends MdrMapSection {
 	 */
 	protected void preWriteImpl() {
 		// free memory
-		roadOneMap = null; 
-		allStreets.trimToSize();
+		roadsPerMap = null; 
+//		allStreets.trimToSize();
 		Sort sort = getConfig().getSort();
-		List<SortKey<Mdr7Record>> sortedStreets = new ArrayList<>(allStreets.size());
-		Map<String, byte[]> cache = new HashMap<>();
+		ArrayList<Mdr7Record> sorted = new ArrayList<>(allStreets);
+		allStreets.clear();
+		mergeSort(0, sorted, 0, sorted.size());
 		
-		for (Mdr7Record m : allStreets) {
-			SortKey<Mdr7Record> k1 = sort.createSortKey(m, m.getPartialName(), 0, cache);
-			SortKey<Mdr7Record> k2 = sort.createSortKey(m, m.getInitialPart(), m.getMapIndex(), cache);
-			sortedStreets.add(new DoubleSortKey<>(k1, k2));
-		}
-		cache = null;
-		Collections.sort(sortedStreets);
-
 		// De-duplicate the street names so that there is only one entry
 		// per map for the same name.
 		int recordNumber = 0;
 		allStreets.clear();
 		SortKey<Mdr7Record> lastKey = null;
-		for (int i = 0; i < sortedStreets.size(); i++){ 
-			SortKey<Mdr7Record> sk = sortedStreets.get(i);
-			Mdr7Record r = sk.getObject();
+		for (int i = 0; i < sorted.size(); i++) {
+			Mdr7Record r = sorted.get(i);
 			if (r.getCity() != null)
 				allStreets.add(r);
+			SortKey<Mdr7Record> sk = makeKey(sorted, i, sort, null);
 			if (lastKey != null && sk.compareTo(lastKey) == 0) {
 				// This has the same name (and map number) as the previous one. Save the pointer to that one
 				// which is going into the file.
@@ -228,11 +221,96 @@ public class Mdr7 extends MdrMapSection {
 				streets.add(r);
 				lastKey = sk;
 			}
-			// release memory 
-			sortedStreets.set(i, null);
 		}
+		allStreets.trimToSize();
 		streets.trimToSize();
 		return;
+	}
+
+	/**
+	 * A merge sort implementation which sorts large chunks using a cache for the keys 
+	 * @param depth recursion depth
+	 * @param list list to sort
+	 * @param start position of first element in list 
+	 * @param len number of elements in list 
+	 */
+	private void mergeSort(int depth, ArrayList<Mdr7Record> list, int start, int len) {
+		Sort sort = getConfig().getSort();
+		// we split if the number is very high and recursion is not too deep
+		if (len > 1_000_000 && depth < 3) {
+			mergeSort(depth+1,list, start, len / 2); // left
+			mergeSort(depth+1,list, start + len / 2, len - len / 2); // right
+			merge(list,start,len,sort);
+		} else {
+			// sort one chunk
+//			System.out.println("sorting list of roads. positions " + start + " to " + (start + len - 1));
+			Map<String, byte[]> cache = new HashMap<>();
+			List<SortKey<Mdr7Record>> keys = new ArrayList<>(len);
+
+			for (int i = start; i < start + len; i++) {
+				keys.add(makeKey(list, i, sort, cache));
+			}
+			cache = null;
+			Collections.sort(keys);
+			
+			for (int i = 0; i < keys.size(); i++){ 
+				SortKey<Mdr7Record> sk = keys.get(i);
+				Mdr7Record r = sk.getObject();
+				list.set(start+i, r);
+			}
+			return;
+		}
+	}
+	
+	
+	private void merge(ArrayList<Mdr7Record> list, int start, int len, Sort sort) {
+//		System.out.println("merging positions " + start + " to " + (start + len - 1));
+		int pos1 = start;
+		int pos2 = start + len / 2;
+		int stop1 = start + len / 2;
+		int stop2 = start + len;
+		boolean fetch1 = true;
+		boolean fetch2 = true;
+		List<Mdr7Record> merged = new ArrayList<>();
+		SortKey<Mdr7Record> sk1 = null;
+		SortKey<Mdr7Record> sk2 = null;
+		while (pos1 < stop1 &&  pos2 < stop2) {
+			if (fetch1 && pos1 < stop1) {
+				sk1 = makeKey(list, pos1, sort, null);
+				fetch1 = false;
+			}
+			if (fetch2 && pos2 < stop2) {
+				sk2 = makeKey(list, pos2, sort, null);
+				fetch2 = false;
+			}
+			int d = sk1.compareTo(sk2);
+			if (d <= 0) {
+				merged.add(sk1.getObject());
+				fetch1 = true;
+				pos1++;
+			} else {
+				merged.add(sk2.getObject());
+				fetch2 = true;
+				pos2++;
+			}
+		}
+		while (pos1 < stop1) {
+			merged.add(list.get(pos1++));
+		}
+		while (pos2 < stop2) {
+			merged.add(list.get(pos2++));
+		}
+		assert merged.size() == len;
+		for (int i = 0; i < len; i++) {
+			list.set(start+i, merged.get(i));
+		}
+	}
+
+	private SortKey<Mdr7Record> makeKey(ArrayList<Mdr7Record> list, int pos, Sort sort, Map<String, byte[]> cache) {
+		Mdr7Record m = list.get(pos);
+		SortKey<Mdr7Record> k1 = sort.createSortKey(m, m.getPartialName(), 0, cache);
+		SortKey<Mdr7Record> k2 = sort.createSortKey(m, m.getInitialPart(), m.getMapIndex(), cache);
+		return new DoubleSortKey<>(k1, k2);
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
