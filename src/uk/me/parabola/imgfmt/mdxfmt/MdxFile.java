@@ -74,16 +74,12 @@ public class MdxFile {
 	 * Write the file out to the given filename.
 	 */
 	public void write(String filename) throws IOException {
-		FileOutputStream stream = new FileOutputStream(filename);
-		FileChannel chan = stream.getChannel();
-		ByteBuffer buf = ByteBuffer.allocate(1024);
-		buf.order(ByteOrder.LITTLE_ENDIAN);
+		try (FileOutputStream stream = new FileOutputStream(filename); FileChannel chan = stream.getChannel();) {
+			ByteBuffer buf = ByteBuffer.allocate(1024);
+			buf.order(ByteOrder.LITTLE_ENDIAN);
 
-		try {
 			writeHeader(chan, buf);
 			writeBody(chan, buf);
-		} finally {
-			chan.close();
 		}
 	}
 
