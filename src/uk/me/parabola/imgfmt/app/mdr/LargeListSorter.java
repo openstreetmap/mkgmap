@@ -39,7 +39,7 @@ public abstract class LargeListSorter<T extends NamedRecord> {
 	 * Sort list in place.
 	 * @param list list of records.
 	 */
-	public void sort(ArrayList<T> list) {
+	public void sort(List<T> list) {
 		mergeSort(0, list, 0, list.size());
 	}
 	
@@ -50,7 +50,7 @@ public abstract class LargeListSorter<T extends NamedRecord> {
 	 * @param start position of first element in list 
 	 * @param len number of elements in list 
 	 */
-	private void mergeSort(int depth, ArrayList<T> list, int start, int len) {
+	private void mergeSort(int depth, List<T> list, int start, int len) {
 		// we split if the number is very high and recursion is not too deep
 		if (len > 1_000_000 && depth < 3) {
 			mergeSort(depth+1,list, start, len / 2); // left
@@ -78,7 +78,7 @@ public abstract class LargeListSorter<T extends NamedRecord> {
 	}
 	
 	
-	private void merge(ArrayList<T> list, int start, int len) {
+	private void merge(List<T> list, int start, int len) {
 //		System.out.println("merging positions " + start + " to " + (start + len - 1));
 		int pos1 = start;
 		int pos2 = start + len / 2;
