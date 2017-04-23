@@ -92,9 +92,7 @@ public class Mdr22 extends Mdr2x {
 	 * Unknown flag
 	 */
 	public int getExtraValue() {
-		if (isForDevice())
-			return 0x600e;
-		else
-			return 0x11000;
+		int magic = isForDevice() ? 0x600e : 0x11000;
+		return magic;
 	}
 }

@@ -12,6 +12,7 @@
  */
 package uk.me.parabola.imgfmt.app.mdr;
 
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,21 +26,28 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  */
 public abstract class Mdr2x extends MdrMapSection implements HasHeaderFlags {
 	protected List<Mdr7Record> streets = new ArrayList<>();
-
+	protected int partialInfoSize = 0;
+	protected static final int HAS_LABEL = 0x02;
+	protected static final int HAS_NAME_OFFSET = 0x04;
+	
 	/**
 	 * Write out the contents of this section.
 	 *
 	 * @param writer Where to write it.
 	 */
 	public void writeSectData(ImgFileWriter writer) {
-		String lastName = null;
 		Mdr7Record prev = null;
+		Collator collator = getConfig().getSort().getCollator();
+		collator.setStrength(Collator.SECONDARY);
 
 		int size = getSizes().getStreetSizeFlagged();
-
-		boolean hasLabel = hasFlag(0x2);
-
-		String lastPartial = null;
+		int magic = getExtraValue();
+		boolean writeLabel = (magic & HAS_LABEL) != 0;  // A guess
+		boolean writeNameOffset = (magic & HAS_NAME_OFFSET) != 0;  // A guess, but less so
+		int partialInfoSize = ((magic >> 3) & 0x7);
+		int partialBShift = ((magic >> 6) & 0xf);
+		int partialBMask = (1 << partialBShift) - 1;
+		
 		int recordNumber = 0;
 		for (Mdr7Record street : streets) {
 			assert street.getMapIndex() == street.getCity().getMapIndex() : street.getMapIndex() + "/" + street.getCity().getMapIndex();
@@ -47,35 +55,33 @@ public abstract class Mdr2x extends MdrMapSection implements HasHeaderFlags {
 
 			int index = street.getIndex();
 
-			String name = street.getName();
-
+			int rr = street.checkRepeat(prev, collator);
 			int repeat = 1;
-			if (name.equals(lastName) && sameGroup(street, prev))
-				repeat = 0;
-
-			if (hasLabel) {
+			if (writeLabel) {
 				putMapIndex(writer, street.getMapIndex());
 				int offset = street.getLabelOffset();
+				if (rr == 3 && sameGroup(street, prev))
+					repeat = 0;
 				if (repeat != 0)
 					offset |= 0x800000;
 
-				int trailing = 0;
-				String partialName = street.getPartialName();
-				if (!partialName.equals(lastPartial)) {
-					trailing |= 1;
-					offset |= 0x800000;
-				}
-
 				writer.put3(offset);
-				writer.put(street.getOutNameOffset());
+				if (writeNameOffset)
+					writer.put(street.getOutNameOffset());
 
-				writer.put((byte) trailing);
+				if (partialInfoSize > 0) {
+					int trailingFlags = ((rr & 1) == 0) ? 1 : 0;
+					// trailingFlags |= s.getB() << 1;
+					// trailingFlags |= s.getS() << (1 + partialBShift);
+					putN(writer, partialInfoSize, trailingFlags);
+				}
+			} else {
+				if ((rr & 2) != 0 && sameGroup(street, prev))
+					repeat = 0;
 
-				lastPartial = partialName;
-			} else
 				putN(writer, size, (index << 1) | repeat);
+			}
 
-			lastName = name;
 			prev = street;
 		}
 	}
@@ -91,9 +97,13 @@ public abstract class Mdr2x extends MdrMapSection implements HasHeaderFlags {
 	 */
 	public int getItemSize() {
 		int size;
+		int magic = getExtraValue();
+		int partialInfoSize = ((magic >> 3) & 0x7);
+		
 		if (isForDevice()) {
 			// map-index, label, name-offset, 1byte flag
-			size = getSizes().getMapSize() + 3 + 1 + 1;
+			size = getSizes().getMapSize() + 3 + 1 + partialInfoSize;
+
 		} else {
 			size = getSizes().getStreetSizeFlagged();
 		}

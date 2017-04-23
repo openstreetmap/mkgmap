@@ -13,14 +13,11 @@
 
 package uk.me.parabola.imgfmt.app.mdr;
 
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-
-import uk.me.parabola.imgfmt.app.srt.MultiSortKey;
-import uk.me.parabola.imgfmt.app.srt.Sort;
-import uk.me.parabola.imgfmt.app.srt.SortKey;
 
 /**
  * This is a list of streets that belong to each city.
@@ -62,22 +59,22 @@ public class Mdr20 extends Mdr2x {
 			}
 		});
 
+		Collator collator = getConfig().getSort().getCollator();
+		collator.setStrength(Collator.SECONDARY);
+		
 		Mdr5Record lastCity = null;
+		Mdr7Record lastStreet = null;
 		int record = 0;
 		int cityRecord = 1;
-		int lastIndex = -1;
 		
 		for (Mdr7Record street : sorted) {
 			Mdr5Record city = street.getCity();
-
 			boolean citySameByName = lastCity != null && city.getMdr20SortPos() == lastCity.getMdr20SortPos();
-
+			int rr = street.checkRepeat(lastStreet, collator);
 			// Only save a single copy of each street name.
-			if (!citySameByName || lastIndex != street.getIndex())
-			{
+			if (!citySameByName || rr != 3) {
 				record++;
 				streets.add(street);
-				lastIndex = street.getIndex();
 			}
 
 			// The mdr20 value changes for each new city name
@@ -91,6 +88,7 @@ public class Mdr20 extends Mdr2x {
 				city.setMdr20(cityRecord);
 				lastCity = city;
 			}
+			lastStreet = street;
 		}
 	}
 
