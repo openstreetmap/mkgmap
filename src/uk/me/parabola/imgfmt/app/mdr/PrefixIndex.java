@@ -65,16 +65,27 @@ public class PrefixIndex extends MdrSection {
 		String lastPrefix = "";
 		int inRecord = 0;  // record number of the input list
 		int outRecord = 0; // record number of the index
+		int lastMdr22SortPos = -1; 
 		for (NamedRecord r : list) {
 			inRecord++;
 			String prefix ;
-			if (r instanceof Mdr7Record)
-				prefix = getPrefix(((Mdr7Record) r).getPartialName());
+			String name;
+			if (r instanceof Mdr7Record) {
+				name = ((Mdr7Record) r).getPartialName();
+				if (grouped) {
+					int mdr22SortPos = ((Mdr7Record) r).getCity().getMdr22SortPos();
+					if (mdr22SortPos != lastMdr22SortPos)
+						lastPrefix = "";
+					lastMdr22SortPos = mdr22SortPos; 
+				}
+			}
 			else 
-				prefix = getPrefix(r.getName());
-			if (collator.compare(prefix, lastPrefix) != 0) {
+				name = r.getName();
+			prefix = getPrefix(name).toUpperCase();
+			if (prefix.length() > prefixLength)
+				prefix = prefix.substring(0, prefixLength);
+			if (collator.compare(prefix, lastPrefix) > 0) {
 				outRecord++;
-
 				Mdr8Record ind = new Mdr8Record();
 				ind.setPrefix(prefix);
 				ind.setRecordNumber(inRecord);
@@ -87,6 +98,9 @@ public class PrefixIndex extends MdrSection {
 					Mdr5Record city = ((Mdr7Record) r).getCity();
 					if (city != null) {
 						String countryName = city.getCountryName();
+						if (prefix.toUpperCase().getBytes(sort.getCharset()).length > prefixLength) {
+							System.out.println("check mdr17 prefix record '" + prefix + "' for " + r.getClass().getSimpleName() + " " + r + " " + countryName);
+						}
 						if (!countryName.equals(lastCountryName)) {
 							city.getMdrCountry().getMdr29().setMdr17(outRecord);
 							lastCountryName = countryName;
@@ -108,6 +122,9 @@ public class PrefixIndex extends MdrSection {
 		int size = numberToPointerSize(maxIndex);
 		Charset charset = getConfig().getSort().getCharset();
 		for (Mdr8Record s : index) {
+			if (s.getPrefix().getBytes(charset).length > prefixLength) {
+				long dd = 4;
+			}
 			writer.put(s.getPrefix().getBytes(charset), 0, prefixLength);
 			putN(writer, size, s.getRecordNumber());
 		}

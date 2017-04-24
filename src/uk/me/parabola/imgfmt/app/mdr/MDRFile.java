@@ -245,23 +245,12 @@ public class MDRFile extends ImgFile {
 				}
 			}
 			
-			String cleanName = cleanUpName(name);
-			int strOff = createString(cleanName);
+			int strOff = createString(name);
 
 			// We sort on the dirty name (ie with the Garmin shield codes) although those codes do not
 			// affect the sort order. The string for mdr15 does not include the shield codes.
 			mdr7.addStreet(currentMap, name, lab.getOffset(), strOff, mdrCity);
 		}
-	}
-
-	/**
-	 * Remove shields and other kinds of strange characters.  Perform any
-	 * rearrangement of the name to make it searchable.
-	 * @param name The street name as read from the img file.
-	 * @return The name as it will go into the index.
-	 */
-	private String cleanUpName(String name) {
-		return Label.stripGarminCodes(name);
 	}
 
 	public void write() {

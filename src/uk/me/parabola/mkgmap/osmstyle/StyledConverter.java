@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -27,6 +28,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 
@@ -145,17 +147,105 @@ public class StyledConverter implements OsmConverter {
 	private final boolean routable;
 	private final Tags styleOptionTags;
 	private final static String STYLE_OPTION_PREF = "mkgmap:option:";
+	
+	private Map<String, List<String>> prefixMap;
+	private Map<String, List<String>> countryLanguageMap;
+	private Map<String, List<String>> countrPrefixMap = new HashMap<>();
 
 	private LineAdder lineAdder = new LineAdder() {
 		public void add(MapLine element) {
 			if (element instanceof MapRoad){
+				filterNameSuffixAndPrefex((MapRoad) element);
 				collector.addRoad((MapRoad) element);
 			}
 			else
 				collector.addLine(element);
 		}
-	};
 
+	};
+	
+	
+	private void filterNameSuffixAndPrefex(MapRoad road) {
+		String country = road.getCountry();
+		if (country == null)
+			return;
+		
+		List<String> prefixesCountry = countrPrefixMap.get(country);
+		if (prefixesCountry == null) {
+			// compile the list 
+			List<String> languages = countryLanguageMap.get(country);
+			if (languages == null)
+				countrPrefixMap.put(country, Collections.emptyList());
+			else  {
+				List<List<String>> all = new ArrayList<>();
+				for (String lang : languages) {
+					List<String> prefixes = prefixMap.get(lang);
+					if(prefixes != null)
+						all.add(prefixes);
+				}
+				if(all.isEmpty())
+					prefixesCountry = Collections.emptyList();
+				else if (all.size() == 1) {
+					prefixesCountry = all.get(0);
+				}
+				else {
+					Set<String> allPrefixesSet = new HashSet<>();
+					for (List<String> prefOneLang : all)
+						allPrefixesSet.addAll(prefOneLang);
+					prefixesCountry = new ArrayList<>(allPrefixesSet);
+					sortByLength(prefixesCountry);
+					
+				}
+			}
+			countrPrefixMap.put(country, prefixesCountry);
+		}
+		if (countrPrefixMap.isEmpty())
+			return;
+		
+		// perform brute force search
+		String[] labels = road.getLabels();
+		for (int i = 0; i < labels.length; i++) {
+			String label = labels[i];
+			if (label == null || label.length() == 0)
+				continue;
+			for (String prefix : prefixesCountry) {
+				if (label.charAt(0) < 7)
+					break; // label starts with shield code
+				if (label.startsWith(prefix)) {
+					if (prefix.endsWith(" ")) {
+						label = prefix.substring(0, prefix.length() - 1) + (char) 0x1e
+								+ label.substring(prefix.length());
+					} else {
+						label = prefix + (char) 0x1b + label.substring(prefix.length());
+					}
+					labels[i] = label;
+					log.error("check",label,country,road.getRoadDef());
+					break;
+				}
+			}
+			List<String> suffixes = Arrays.asList(" Straße", " Road"," Weg");
+			for (String suffix : suffixes) {
+				int pos = label.lastIndexOf(suffix);
+				if (pos > 0) {
+					label = label.substring(0, pos) + (char) 0x1f + suffix.substring(1);
+					labels[i] = label;
+					log.error("check",label,country,road.getRoadDef());
+					break;
+				}
+			}
+		}
+	}
+	
+	
+	private void sortByLength(List<String> prefixes) {
+		prefixes.sort(new Comparator<String>() {
+			@Override
+			public int compare(String o1, String o2) {
+				return Integer.compare(o2.length(), o1.length());
+			}
+		});
+	}
+	
 	public StyledConverter(Style style, MapCollector collector, EnhancedProperties props) {
 		this.collector = collector;
 
@@ -207,8 +297,63 @@ public class StyledConverter implements OsmConverter {
 		routable = props.containsKey("route");
 		String styleOption= props.getProperty("style-option",null);
 		styleOptionTags = parseStyleOption(styleOption);
+		countryLanguageMap = buildCountryLanguageMap(props);
+		prefixMap = configPrefixMap(props);
 	}
 
+	private Map<String, List<String>> buildCountryLanguageMap(EnhancedProperties props) {
+		Map<String, List<String>> map = new HashMap<>();
+		map.put("ITA", Arrays.asList("it"));
+		map.put("DEU", Arrays.asList("de"));
+		map.put("FRA", Arrays.asList("fr"));
+		map.put("PRT", Arrays.asList("pt"));
+		map.put("ESP", Arrays.asList("es"));
+		map.put("CAN", Arrays.asList("fr,en"));
+		map.put("GBR", Arrays.asList("en"));
+		map.put("USA", Arrays.asList("en"));
+		map.put("CHE", Arrays.asList("de","it","fr"));
+		return map;
+	}
+
+	private Map<String, List<String>> configPrefixMap(EnhancedProperties props) {
+		Map<String, List<String>> map = new HashMap<>();
+		{
+			List<String> prefix1 = Arrays.asList("Calle", "Carrer", "Avenida");
+			List<String> prefix2 = Arrays.asList("de las ", "de los ", "de la ", "del ", "de ", "d'");
+			map.put("es", genPrefix(prefix1, prefix2));
+		}
+		{
+			List<String> prefix1 = Arrays.asList("Chemin", "Avenue", "Rue", "Place");
+			List<String> prefix2 = Arrays.asList("de la ", "du ", "de ", "des ", "d'", "de l'");
+			map.put("fr", genPrefix(prefix1, prefix2));
+		}
+		{
+			List<String> prefix1 = Arrays.asList("Rua", "Avenida", "Travessa");
+			List<String> prefix2 = Arrays.asList("da ", "do ", "de ", "das ", "dos ");
+			map.put("pt", genPrefix(prefix1, prefix2));
+		}
+		{
+			List<String> prefix1 = Arrays.asList("Via", "Piazza", "Viale");
+			List<String> prefix2 = Arrays.asList("del ", "dei ", "della ", "delle ", "di ");
+			map.put("it", genPrefix(prefix1, prefix2));
+		}
+
+		for (Entry<String, List<String>> e : map.entrySet())
+			sortByLength(e.getValue());
+
+		return map;
+	}
+
+	private List<String> genPrefix (List<String> prefix1, List<String> prefix2) {
+		List<String> prefixes = new ArrayList<>();
+		for (String p1 : prefix1) {
+			for (String p2 : prefix2) {
+				prefixes.add(p1 + " " + p2);
+			}
+			prefixes.add(p1 + " ");
+		}
+		return prefixes;
+	}
 	/**
 	 * Handle style option parameter. Create tags which are added to each element
 	 * before style processing starts. Cross-check usage of the options with the style.

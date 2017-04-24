@@ -243,7 +243,24 @@ public class Sort {
 		}
 
 		char[] encText = label.getEncText();
+		int sep = -1;
+		for (int i = 0; i < encText.length; i++) {
+			char c = encText[i];
+			if (c == 0x1e) {
+				sep = i;
+				break;
+			}
+		}
+		if (sep > 0) {
+//			System.out.println("sep = " + sep);
+			char[] newEncText = new char[encText.length * 2];
+			System.arraycopy(encText, sep + 1, newEncText, 0, encText.length - (sep + 1));
+			System.arraycopy(encText, 0, newEncText, encText.length - (sep + 1), encText.length);
 
+			encText = newEncText;
+//			System.out.println(new String(encText));
+		}
+		 
 		// In theory you could have a string where every character expands into maxExpSize separate characters
 		// in the key.  However if we allocate enough space to deal with the worst case, then we waste a
 		// vast amount of memory. So allocate a minimal amount of space, try it and if it fails reallocate the
