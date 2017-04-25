@@ -81,9 +81,8 @@ public class PrefixIndex extends MdrSection {
 			}
 			else 
 				name = r.getName();
-			prefix = getPrefix(name).toUpperCase();
-			if (prefix.length() > prefixLength)
-				prefix = prefix.substring(0, prefixLength);
+			prefix = getPrefix(name);
+			
 			if (collator.compare(prefix, lastPrefix) > 0) {
 				outRecord++;
 				Mdr8Record ind = new Mdr8Record();
@@ -98,9 +97,6 @@ public class PrefixIndex extends MdrSection {
 					Mdr5Record city = ((Mdr7Record) r).getCity();
 					if (city != null) {
 						String countryName = city.getCountryName();
-						if (prefix.toUpperCase().getBytes(sort.getCharset()).length > prefixLength) {
-							System.out.println("check mdr17 prefix record '" + prefix + "' for " + r.getClass().getSimpleName() + " " + r + " " + countryName);
-						}
 						if (!countryName.equals(lastCountryName)) {
 							city.getMdrCountry().getMdr29().setMdr17(outRecord);
 							lastCountryName = countryName;
@@ -122,9 +118,6 @@ public class PrefixIndex extends MdrSection {
 		int size = numberToPointerSize(maxIndex);
 		Charset charset = getConfig().getSort().getCharset();
 		for (Mdr8Record s : index) {
-			if (s.getPrefix().getBytes(charset).length > prefixLength) {
-				long dd = 4;
-			}
 			writer.put(s.getPrefix().getBytes(charset), 0, prefixLength);
 			putN(writer, size, s.getRecordNumber());
 		}

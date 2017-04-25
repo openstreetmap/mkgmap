@@ -264,7 +264,7 @@ public class Mdr7 extends MdrMapSection {
 		LargeListSorter<Mdr7Record> fullNameSorter = new LargeListSorter<Mdr7Record>(sort) {
 			@Override
 			protected SortKey<Mdr7Record> makeKey(Mdr7Record r, Sort sort, Map<String, byte[]> cache) {
-				return sort.createSortKey(r, r.getInitialPart(), r.getMapIndex(), cache);
+				return sort.createSortKey(r, r.getName(), r.getMapIndex(), cache);
 			}
 		};
 		
