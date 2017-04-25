@@ -155,7 +155,7 @@ public class StyledConverter implements OsmConverter {
 	private LineAdder lineAdder = new LineAdder() {
 		public void add(MapLine element) {
 			if (element instanceof MapRoad){
-				filterNameSuffixAndPrefex((MapRoad) element);
+//				filterNameSuffixAndPrefex((MapRoad) element);
 				collector.addRoad((MapRoad) element);
 			}
 			else
@@ -175,7 +175,7 @@ public class StyledConverter implements OsmConverter {
 			// compile the list 
 			List<String> languages = countryLanguageMap.get(country);
 			if (languages == null)
-				countrPrefixMap.put(country, Collections.emptyList());
+				prefixesCountry = Collections.emptyList();
 			else  {
 				List<List<String>> all = new ArrayList<>();
 				for (String lang : languages) {
@@ -199,8 +199,6 @@ public class StyledConverter implements OsmConverter {
 			}
 			countrPrefixMap.put(country, prefixesCountry);
 		}
-		if (countrPrefixMap.isEmpty())
-			return;
 		
 		// perform brute force search
 		String[] labels = road.getLabels();
