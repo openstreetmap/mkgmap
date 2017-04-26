@@ -218,7 +218,7 @@ public class Mdr7 extends MdrMapSection {
 		String lastPartial = null;
 		List<Mdr7Record> samePartial = new ArrayList<>();
 		Collator collator = sort.getCollator();
-//		collator.setStrength(Collator.SECONDARY);
+		collator.setStrength(Collator.SECONDARY);
 		for (int i = 0; i < sorted.size(); i++) {
 			Mdr7Record r = sorted.get(i);
 			String partial = r.getPartialName();
@@ -345,7 +345,7 @@ public class Mdr7 extends MdrMapSection {
 		boolean hasNameOffset = hasFlag(MDR7_HAS_NAME_OFFSET);
 		Collator collator = sort.getCollator();
 		int partialBShift = ((getExtraValue() >> 9) & 0xf);
-//		collator.setStrength(Collator.SECONDARY);
+		collator.setStrength(Collator.SECONDARY); 
 		Mdr7Record last = null;
 		for (Mdr7Record s : streets) {
 			addIndexPointer(s.getMapIndex(), s.getIndex());
