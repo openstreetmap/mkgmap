@@ -32,7 +32,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  */
 public class Mdr10 extends MdrMapSection {
 	// The maximum group number.  Note that this is 1 based, not 0 based.
-	private static final int MAX_GROUP_NUMBER = 9;
+	private static final int MAX_GROUP_NUMBER = MdrUtils.MAX_GROUP;
 
 	@SuppressWarnings({"unchecked"})
 	private List<Mdr10Record>[] poiTypes = new ArrayList[MAX_GROUP_NUMBER+1];
@@ -51,7 +51,7 @@ public class Mdr10 extends MdrMapSection {
 		Mdr10Record t = new Mdr10Record();
 
 		int type = poi.getType();
-		t.setSubtype(MdrUtils.getSubtypeOrTypeFromFullType(type));
+		t.setSubtype(MdrUtils.getSubtypeFromFullType(type));
 		t.setMdr11ref(poi);
 
 		int group = MdrUtils.getGroupForPoi(type);
@@ -100,7 +100,7 @@ public class Mdr10 extends MdrMapSection {
 	public Map<Integer, Integer> getGroupSizes() {
 		Map<Integer, Integer> m = new LinkedHashMap<>();
 
-		for (int i = 1; i < MAX_GROUP_NUMBER; i++) {
+		for (int i = 1; i < MAX_GROUP_NUMBER; i++) { // TODO <= or < ?
 			List<Mdr10Record> poiGroup = poiTypes[i];
 			if (!poiGroup.isEmpty())
 				m.put(i, poiGroup.size());
