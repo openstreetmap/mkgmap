@@ -50,7 +50,7 @@ public class MdrUtils {
 	 */
 	public static int getGroupForPoi(int fullType) {
 		// We group pois based on their type.  This may not be the final thoughts on this.
-		int type = MdrUtils.getTypeFromFullType(fullType);
+		int type = getTypeFromFullType(fullType);
 		int group = 0;
 		if (fullType <= 0xf)
 			group = 1;
@@ -69,20 +69,11 @@ public class MdrUtils {
 		return getGroupForPoi(fullType) != 0;
 	}
 
-	private static int getTypeFromFullType(int fullType) {
+	public static int getTypeFromFullType(int fullType) {
 		if ((fullType & 0xfff00) > 0)
 			return (fullType>>8) & 0xfff;
 		else
 			return fullType & 0xff;
-	}
-
-	/**
-	 * Gets the subtype if there is one, else the type.
-	 * @param fullType The type in the so-called 'full' format.
-	 * @return If there is a subtype, then it is returned. Otherwise the type is returned.
-	 */
-	public static int getSubtypeOrTypeFromFullType(int fullType) {
-		return fullType & 0xff;
 	}
 
 	/**
