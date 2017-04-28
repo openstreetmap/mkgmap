@@ -52,7 +52,7 @@ public class MdrUtils {
 		// We group pois based on their type.  This may not be the final thoughts on this.
 		int type = MdrUtils.getTypeFromFullType(fullType);
 		int group = 0;
-		if (fullType <= 0x11)
+		if (fullType <= 0xf)
 			group = 1;
 		else if (type >= 0x2a && type <= 0x30) { 
 			group = type - 0x28;
