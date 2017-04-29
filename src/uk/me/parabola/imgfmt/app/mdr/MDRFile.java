@@ -72,13 +72,16 @@ public class MDRFile extends ImgFile {
 
 	private final MdrSection[] sections;
 	private PointerSizes sizes;
-	private Set<String> mdr7Del; 
+	private Set<String> mdr7Del;
+
+	private Set<Integer> poiExclTypes; 
 
 	public MDRFile(ImgChannel chan, MdrConfig config) {
 		Sort sort = config.getSort();
 
 		forDevice = config.isForDevice();
 		mdr7Del = config.getMdr7Del();
+		poiExclTypes = config.getPoiExclTypes();
 		mdrHeader = new MDRHeader(config.getHeaderLen());
 		mdrHeader.setSort(sort);
 		setHeader(mdrHeader);
@@ -200,7 +203,11 @@ public class MDRFile extends ImgFile {
 		int fullType = point.getType();
 		if (!MdrUtils.canBeIndexed(fullType))
 			return;
-
+		if (!poiExclTypes.isEmpty()) {
+			int t = (fullType < 0xff)  ? fullType << 8 : fullType;
+			if (poiExclTypes.contains(t))
+				return;
+		}
 		Label label = point.getLabel();
 		String name = label.getText();
 		int strOff = createString(name);
@@ -210,7 +217,7 @@ public class MDRFile extends ImgFile {
 		poi.setIsCity(isCity);
 		poi.setType(fullType);
 
-		mdr4.addType(point.getType());
+		mdr4.addType(fullType);
 	}
 
 	public void addStreet(RoadDef street, Mdr5Record mdrCity) {

@@ -20,6 +20,10 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import uk.me.parabola.imgfmt.app.srt.Sort;
+import uk.me.parabola.mkgmap.CommandArgs;
+import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
+import uk.me.parabola.mkgmap.reader.osm.GType;
+import uk.me.parabola.mkgmap.scan.SyntaxException;
 
 /**
  * Configuration for the MDR file.
@@ -40,7 +44,23 @@ public class MdrConfig {
 	private boolean splitName;
 	private Set<String> mdr7Excl = Collections.emptySet();
 	private Set<String> mdr7Del = Collections.emptySet();
+	private Set<Integer> poiExclTypes = Collections.emptySet();
 	
+	public MdrConfig() {
+		
+	}
+	
+	/**
+	 * Constructor which copies the values which configure the index details. 
+	 * @param base 
+	 */
+	public MdrConfig(MdrConfig base) {
+		splitName = base.isSplitName();
+		mdr7Del = base.getMdr7Del();
+		mdr7Excl = base.getMdr7Excl();
+		poiExclTypes = base.getPoiExclTypes();
+	}
+
 	/**
 	 * True if we are creating the file, rather than reading it.
 	 */
@@ -137,5 +157,66 @@ public class MdrConfig {
 			}
 		}
 		return set;
+	}
+
+	public void setPoiExcl (String opt) {
+		if (opt == null)
+			return;
+		poiExclTypes = new TreeSet<>();
+		
+		String[] opts = opt.split(",");
+		for (String range : opts) {
+			if (range.contains("-")) {
+				String[] ranges = range.split("-");
+				if (ranges.length != 2)
+					throw new IllegalArgumentException("invalid range in option " + range);
+				genTypes(poiExclTypes, ranges[0], ranges[1]);
+			} else {
+				genTypes(poiExclTypes, range,range);
+			}
+		}
+//		if (!poiExclTypes.isEmpty()) {
+//			StringBuilder sb = new StringBuilder();
+//			for (int type : poiExclTypes) {
+//				sb.append(GType.formatType(type));
+//				sb.append(", ");
+//			}
+//			System.out.println("POI types excluded from index: " + sb.toString().substring(0,sb.length()-2));
+//		}
+	}
+
+	private void genTypes(Set<Integer> set, String start, String stop) {
+		GType[] types = new GType[2];
+		String[] ranges = {start, stop};
+		for (int i = 0; i < 2; i++) {
+			types[i] = new  GType(FeatureKind.POINT, ranges[i]);
+			if (GType.checkType(types[i].getFeatureKind(), types[i].getType()) == false){
+				throw new SyntaxException("invalid type " + ranges[i] + " for " + FeatureKind.POINT + " in option " + ranges);
+			} 
+		}
+		
+		if (types[0].getType() > types[1].getType()) {
+			GType gt = types[0];
+			types[0] = types[1];
+			types[1] = gt;
+		}
+		for (int i = types[0].getType(); i <= types[1].getType(); i++) {
+			if ((i & 0xff) > 0x1f)
+				i = ((i >> 8) + 1) << 8;
+			
+			set.add(i);
+		}
+		
+	}
+
+	public Set<Integer> getPoiExclTypes() {
+		return Collections.unmodifiableSet(poiExclTypes);
+	}
+
+	public void setIndexOptions(CommandArgs args) {
+		setSplitName(args.get("split-name-index", false));
+		setMdr7Excl(args.get("mdr7-excl", null));
+		setMdr7Del(args.get("mdr7-del", null));
+		setPoiExcl(args.get("poi-excl-index", null));
 	}
 }

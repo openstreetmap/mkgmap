@@ -59,9 +59,9 @@ public class MdrUtils {
 		} else if (type == 0x28) {
 			group = 9;
 //		} else if (type >= 0x64 && type <= 0x66) {
-//			group = type;
+//			group = type - 0x24;
 		}
-		assert group >= 0 && group <= MAX_GROUP;
+		assert group >= 0 && group <= MAX_GROUP : "invalid group " + Integer.toHexString(group);
 		return group;
 	}
 
