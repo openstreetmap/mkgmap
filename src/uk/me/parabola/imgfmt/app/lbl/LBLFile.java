@@ -175,8 +175,8 @@ public class LBLFile extends ImgFile {
 		return places.createExitPOI(name, exit);
 	}
 
-	public POIIndex createPOIIndex(String name, int poiIndex, Subdivision group, int type) {
-		return places.createPOIIndex(name, poiIndex, group, type);
+	public void createPOIIndex(String name, int poiIndex, Subdivision group, int type) {
+		places.createPOIIndex(name, poiIndex, group, type);
 	}
 	
 	public Country createCountry(String name, String abbr) {
