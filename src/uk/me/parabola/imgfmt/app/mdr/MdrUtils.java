@@ -26,7 +26,7 @@ public class MdrUtils {
 
 	public static final int STREET_INDEX_PREFIX_LEN = 4;
 	public static final int POI_INDEX_PREFIX_LEN = 4;
-	public static final int MAX_GROUP = 9;
+	public static final int MAX_GROUP = 13;
 
 	/**
 	 * Get the group number for the poi.  This is the first byte of the records
@@ -58,8 +58,8 @@ public class MdrUtils {
 			group = type - 0x28;
 		} else if (type == 0x28) {
 			group = 9;
-//		} else if (type >= 0x64 && type <= 0x66) {
-//			group = type - 0x24;
+		} else if (type >= 0x64 && type <= 0x66) {
+			group = type - 0x59;
 		}
 		assert group >= 0 && group <= MAX_GROUP : "invalid group " + Integer.toHexString(group);
 		return group;
