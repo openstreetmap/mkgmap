@@ -104,7 +104,7 @@ public class Mdr10 extends MdrMapSection {
 	public Map<Integer, Integer> getGroupSizes() {
 		Map<Integer, Integer> m = new LinkedHashMap<>();
 
-		for (int i = 1; i < MAX_GROUP_NUMBER; i++) { // TODO <= or < ?
+		for (int i = 1; i <= MAX_GROUP_NUMBER; i++) {
 			List<Mdr10Record> poiGroup = poiTypes[i];
 			if (!poiGroup.isEmpty())
 				m.put(i, poiGroup.size());
