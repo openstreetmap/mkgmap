@@ -495,12 +495,19 @@ public class Subdivision {
 		extTypeAreasOffset = rgnFile.getExtTypeAreasSize();
 		extTypeLinesOffset = rgnFile.getExtTypeLinesSize();
 		extTypePointsOffset = rgnFile.getExtTypePointsSize();
+		assert extTypeAreasOffset >= 0;
+		assert extTypeLinesOffset >= 0;
+		assert extTypePointsOffset >= 0;
+
 	}
 
 	public void endDivision() {
 		extTypeAreasSize = rgnFile.getExtTypeAreasSize() - extTypeAreasOffset;
 		extTypeLinesSize = rgnFile.getExtTypeLinesSize() - extTypeLinesOffset;
 		extTypePointsSize = rgnFile.getExtTypePointsSize() - extTypePointsOffset;
+		assert extTypeAreasSize >= 0;
+		assert extTypeLinesSize >= 0;
+		assert extTypePointsSize >= 0;
 	}
 
 	public void writeExtTypeOffsetsRecord(ImgFileWriter file) {
@@ -531,26 +538,42 @@ public class Subdivision {
 	 * @param sdPrev the pred. sub-div or null
 	 */
 	public void readExtTypeOffsetsRecord(ImgFileReader reader,
-			Subdivision sdPrev) {
+			Subdivision sdPrev, int size) {
 		extTypeAreasOffset = reader.getInt();
 		extTypeLinesOffset = reader.getInt();
 		extTypePointsOffset = reader.getInt();
-		reader.get();
+		if (size > 12) {
+			int kinds = reader.get();
+		}
+		if (size > 13)
+			reader.get(size-13);
+		assert extTypeAreasOffset >= 0;
+		assert extTypeLinesOffset >= 0;
+		assert extTypePointsOffset >= 0;
+
 		if (sdPrev != null){
 			sdPrev.extTypeAreasSize = extTypeAreasOffset - sdPrev.extTypeAreasOffset;
 			sdPrev.extTypeLinesSize = extTypeLinesOffset - sdPrev.extTypeLinesOffset;
 			sdPrev.extTypePointsSize = extTypePointsOffset - sdPrev.extTypePointsOffset;
+			assert extTypeAreasSize >= 0;
+			assert extTypeLinesSize >= 0;
+			assert extTypePointsSize >= 0;
 		}
 	}
 	/**
 	 * Set the sizes for the extended type data. See {@link #writeLastExtTypeOffsetsRecord(ImgFileWriter)} 
 	 */
-	public void readLastExtTypeOffsetsRecord(ImgFileReader reader) {
+	public void readLastExtTypeOffsetsRecord(ImgFileReader reader, int size) {
 		extTypeAreasSize = reader.getInt() - extTypeAreasOffset;
 		extTypeLinesSize = reader.getInt() - extTypeLinesOffset;
 		extTypePointsSize = reader.getInt() - extTypePointsOffset;
-		byte test = reader.get();
-		assert test == 0;
+		assert extTypeAreasSize >= 0;
+		assert extTypeLinesSize >= 0;
+		assert extTypePointsSize >= 0;
+		if (size > 12) {
+			byte test = reader.get();
+			assert test == 0;
+		}
 	}
 	
 	/**

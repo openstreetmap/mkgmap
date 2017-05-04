@@ -337,7 +337,7 @@ public class OverviewBuilder implements Combiner {
 		for (int l = 1; l < levels.length; l++){
 			int min = levels[l].getLevel();
 			int res = levels[l].getResolution();
-			List<Polygon> list = mapReader.shapesForLevel(min);
+			List<Polygon> list = mapReader.shapesForLevel(min, MapReader.WITH_EXT_TYPE_DATA);
 			for (Polygon shape : list) {
 				if (log.isDebugEnabled())
 					log.debug("got polygon", shape);

@@ -218,8 +218,9 @@ public class RGNFileReader extends ImgReader {
 
 	/**
 	 * Get all the polygons for a given subdivision.
+	 * @param witExtTypeData 
 	 */
-	public List<Polygon> shapesForSubdiv(Subdivision div) {
+	public List<Polygon> shapesForSubdiv(Subdivision div, boolean witExtTypeData) {
 		ArrayList<Polygon> list = new ArrayList<Polygon>();
 		if (div.hasPolygons()){
 
@@ -234,16 +235,19 @@ public class RGNFileReader extends ImgReader {
 				Polygon line = new Polygon(div);
 				readLineCommon(getReader(), div, line);
 				list.add(line);
+				line.setNumber(list.size());
 			}
 		}
-		if (div.getExtTypeAreasSize() > 0){
-			int start = rgnHeader.getExtTypeAreasOffset() + div.getExtTypeAreasOffset();
-			int end = start + div.getExtTypeAreasSize();
-			position(start);
-			while (position() < end) {
-				Polygon line = new Polygon(div);
-				readLineCommonExtType(getReader(), div, line);
-				list.add(line);
+		if (witExtTypeData) {
+			if (div.getExtTypeAreasSize() > 0){
+				int start = rgnHeader.getExtTypeAreasOffset() + div.getExtTypeAreasOffset();
+				int end = start + div.getExtTypeAreasSize();
+				position(start);
+				while (position() < end) {
+					Polygon line = new Polygon(div);
+					readLineCommonExtType(getReader(), div, line);
+					list.add(line);
+				}
 			}
 		}
 		return list;
