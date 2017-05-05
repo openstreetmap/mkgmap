@@ -114,7 +114,7 @@ public class Mdr7 extends MdrMapSection {
 		int c;
 		int outOffset = 0;
 
-		int end = Math.min((suffix > 0) ? suffix : name.length() - prefix - 1, MAX_NAME_OFFSET);
+		int end = Math.min(((suffix > 0) ? suffix : name.length()) - prefix - 1, MAX_NAME_OFFSET);
 		for (int nameOffset = 0; nameOffset < end; nameOffset += Character.charCount(c)) {
 			c = name.codePointAt(prefix + nameOffset);
 
