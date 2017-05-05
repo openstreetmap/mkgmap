@@ -189,31 +189,7 @@ public class Sort {
 				for (int i = 0; i < bval.length; i++)
 					chars[i] = (char) (bval[i] & 0xff);
 			}
-
-			// In theory you could have a string where every character expands into maxExpSize separate characters
-			// in the key.  However if we allocate enough space to deal with the worst case, then we waste a
-			// vast amount of memory. So allocate a minimal amount of space, try it and if it fails reallocate the
-			// maximum amount.
-			//
-			// We need +1 for the null bytes, we also +2 for a couple of expanded characters. For a complete
-			// german map this was always enough in tests.
-			key = new byte[(chars.length + 1 + 2) * 4];
-			int needed = 0;
-			try {
-				needed = fillCompleteKey(chars, key);
-			} catch (ArrayIndexOutOfBoundsException e) {
-				// Ok try again with the max possible key size allocated.
-				key = new byte[(chars.length+1) * 4 * maxExpSize];
-				needed = fillCompleteKey(chars, key);
-			}
-			// check if we can save bytes by copying
-			int neededBytes = needed;
-			int padding2 = 8 - (needed & 7);
-			if (padding2 != 8)
-				neededBytes += padding2;
-			if (neededBytes < key.length)
-				key = Arrays.copyOf(key, needed);
-
+			key = makeKey(chars);
 			if (cache != null)
 				cache.put(s, key);
 
@@ -261,24 +237,7 @@ public class Sort {
 //			System.out.println(new String(encText));
 		}
 		 
-		// In theory you could have a string where every character expands into maxExpSize separate characters
-		// in the key.  However if we allocate enough space to deal with the worst case, then we waste a
-		// vast amount of memory. So allocate a minimal amount of space, try it and if it fails reallocate the
-		// maximum amount.
-		//
-		// We need +1 for the null bytes, we also +2 for a couple of expanded characters. For a complete
-		// german map this was always enough in tests.
-		key = new byte[(encText.length + 1 + 2) * 4];
-		int needed = 0;
-		try {
-			needed = fillCompleteKey(encText, key);
-		} catch (ArrayIndexOutOfBoundsException e) {
-			// Ok try again with the max possible key size allocated.
-			key = new byte[encText.length * 4 * maxExpSize + 4];
-			needed = fillCompleteKey(encText, key);
-		}
-		if ((key.length >> 3) > (needed >> 3))
-			key = Arrays.copyOf(key, needed);
+		key = makeKey(encText);
 		if (cache != null)
 			cache.put(label, key);
 
@@ -310,6 +269,38 @@ public class Sort {
 		return createSortKey(object, label, second, null);
 	}
 
+	/**
+	 * Create the key and trim it to the needed length if that saves memory.
+	 * @param chars character array
+	 * @return byte array 
+	 */
+	private byte[] makeKey(char[] chars) {
+		// In theory you could have a string where every character expands into maxExpSize separate characters
+		// in the key.  However if we allocate enough space to deal with the worst case, then we waste a
+		// vast amount of memory. So allocate a minimal amount of space, try it and if it fails reallocate the
+		// maximum amount.
+		//
+		// We need +1 for the null bytes, we also +2 for a couple of expanded characters. For a complete
+		// german map this was always enough in tests.
+		byte[] key = new byte[(chars.length + 1 + 2) * 4];
+		int needed = 0;
+		try {
+			needed = fillCompleteKey(chars, key);
+		} catch (ArrayIndexOutOfBoundsException e) {
+			// Ok try again with the max possible key size allocated.
+			key = new byte[(chars.length+1) * 4 * maxExpSize];
+			needed = fillCompleteKey(chars, key);
+		}
+		// check if we can save bytes by copying
+		int neededBytes = needed;
+		int padding2 = 8 - (needed & 7);
+		if (padding2 != 8)
+			neededBytes += padding2;
+		if (neededBytes < key.length)
+			key = Arrays.copyOf(key, needed);
+		return key;
+	}
+ 	
 	/**
 	 * Fill in the key from the given byte string.
 	 *
