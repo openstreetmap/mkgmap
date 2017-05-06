@@ -211,6 +211,8 @@ public class Sort {
 	 * @return A sort key.
 	 */
 	public <T> SortKey<T> createSortKey(T object, Label label, int second, Map<Label, byte[]> cache) {
+		if (label.getLength() == 0)
+			return new SrtSortKey<>(object, ZERO_KEY, second);
 		byte[] key;
 		if (cache != null) {
 			key = cache.get(label);
@@ -219,20 +221,65 @@ public class Sort {
 		}
 
 		char[] encText = label.getEncText();
-		int sep = -1;
+		key = makeKey(encText);
+		if (cache != null)
+			cache.put(label, key);
+
+		return new SrtSortKey<>(object, key, second);
+	}
+
+	/**
+	 * Create a sort key based on a Label, return key for partial name if prefix / suffix is found, else key for full name.
+	 *
+	 * The label will contain the actual characters (after transliteration for example)
+	 * @param object This is saved in the sort key for later retrieval and plays no part in the sorting.
+	 * @param label The label, the actual written bytes/chars will be used as input to the sort.
+	 * @param second Secondary sort key.
+	 * @param cache A cache for the created keys. This is for saving memory so it is essential that this
+	 * is managed by the caller.
+	 * @return A sort key.
+	 */
+	public <T> SortKey<T> createSortKeyPartial(T object, Label label, int second, Map<Label, byte[]> cache) {
+		if (label.getLength() == 0)
+			return new SrtSortKey<>(object, ZERO_KEY, second);
+		byte[] key;
+		if (cache != null) {
+			key = cache.get(label);
+			if (key != null)
+				return new SrtSortKey<>(object, key, second);
+		}
+
+		char[] encText = label.getEncText();
+		int prefix = -1;
 		for (int i = 0; i < encText.length; i++) {
 			char c = encText[i];
-			if (c == 0x1e) {
-				sep = i;
+			if (c == 0x1e || c == 0x1b) {
+				prefix = i;
 				break;
 			}
 		}
-		if (sep > 0) {
-//			System.out.println("sep = " + sep);
-			char[] newEncText = new char[encText.length * 2];
-			System.arraycopy(encText, sep + 1, newEncText, 0, encText.length - (sep + 1));
-			System.arraycopy(encText, 0, newEncText, encText.length - (sep + 1), encText.length);
-
+		int suffix = -1;
+		for (int i = 0; i < encText.length; i++) {
+			char c = encText[i];
+			if (c == 0x1f || c == 0x1c) {
+				suffix = i;
+				break;
+			}
+		}
+		
+		assert encText[encText.length-1] == 0;
+		if (prefix > 0 || suffix > 0) {
+			int partLen;
+			if (prefix > 0 && suffix > 0)
+				partLen = suffix - prefix-1;
+			else if (prefix > 0)
+				partLen = encText.length - (prefix + 2); // remove also the trailing 0
+			else {
+				partLen = suffix ;
+			}
+			// fill with partial name followed by full name separated by 0.
+			char[] newEncText = new char[partLen + 1];
+			System.arraycopy(encText, prefix+1, newEncText, 0, partLen); 
 			encText = newEncText;
 //			System.out.println(new String(encText));
 		}

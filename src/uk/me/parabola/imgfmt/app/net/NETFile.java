@@ -29,6 +29,7 @@ import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.City;
+import uk.me.parabola.imgfmt.app.srt.DoubleSortKey;
 import uk.me.parabola.imgfmt.app.srt.IntegerSortKey;
 import uk.me.parabola.imgfmt.app.srt.MultiSortKey;
 import uk.me.parabola.imgfmt.app.srt.Sort;
@@ -125,8 +126,7 @@ public class NETFile extends ImgFile {
 
 				// Sort by name, city, region/country and subdivision number.
 				LabeledRoadDef lrd = new LabeledRoadDef(label, rd);
-				SortKey<LabeledRoadDef> nameKey = sort.createSortKey(lrd, label, 0, cache);
-
+				SortKey<LabeledRoadDef> nameKey = new IntegerSortKey<NETFile.LabeledRoadDef>(lrd, label.getOffset(), 0);
 				// If there is a city add it to the sort.
 				City city = (rd.getCities().isEmpty() ? null : rd.getCities().get(0)); // what if we more than one?
 				SortKey<LabeledRoadDef> cityKey;
@@ -176,8 +176,35 @@ public class NETFile extends ImgFile {
 
 		// Finish off the final set of duplicates.
 		addDisconnected(dupes, out);
-
+		sortByName(out);
 		return out;
+	}
+
+	/**
+	 * Sort by partial name first, then by full name.
+	 * @param roads list of labeled roads
+	 */
+	private void sortByName(List<LabeledRoadDef> roads) {
+		List<SortKey<LabeledRoadDef>> sortKeys = new ArrayList<>(roads.size());
+		Map<Label, byte[]> cachePartial = new HashMap<>();
+		Map<Label, byte[]> cacheFull = new HashMap<>();
+		// we have to use two different caches, as both use the label as key
+		for (LabeledRoadDef lrd : roads) {
+			SortKey<LabeledRoadDef> sk1 = sort.createSortKeyPartial(lrd, lrd.label, 0, cachePartial);
+			SortKey<LabeledRoadDef> sk2 = sort.createSortKey(null, lrd.label, 0, cacheFull);
+			sortKeys.add(new DoubleSortKey<>(sk1, sk2));
+		}
+		Collections.sort(sortKeys);
+		roads.clear();
+		LabeledRoadDef last = null;
+		for (SortKey<LabeledRoadDef> key : sortKeys) {
+			LabeledRoadDef lrd = key.getObject();
+			if (last != null && last.roadDef.getStartSubdivNumber() == lrd.roadDef.getStartSubdivNumber() && last.label == lrd.label) {
+				System.out.println("check dup " + lrd.roadDef.getName()  + " " + lrd.label.getOffset() );
+			}  
+			roads.add(lrd);
+			last = lrd;
+		}		
 	}
 
 	/**
