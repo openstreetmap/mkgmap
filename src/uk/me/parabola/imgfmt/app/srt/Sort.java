@@ -267,13 +267,17 @@ public class Sort {
 			}
 		}
 		
-		assert encText[encText.length-1] == 0;
+		// TODO: find out why unicode labels have no trailing zero and others have one. What if there is more than one? 
+		boolean hasTrailingZero = encText[encText.length-1] == 0;
 		if (prefix > 0 || suffix > 0) {
 			int partLen;
 			if (prefix > 0 && suffix > 0)
 				partLen = suffix - prefix-1;
-			else if (prefix > 0)
-				partLen = encText.length - (prefix + 2); // remove also the trailing 0
+			else if (prefix > 0) {
+				partLen = encText.length - (prefix + 1);
+				if (hasTrailingZero)
+					partLen--;
+			}
 			else {
 				partLen = suffix ;
 			}
