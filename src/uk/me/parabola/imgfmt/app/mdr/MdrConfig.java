@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
@@ -188,11 +189,16 @@ public class MdrConfig {
 	private void genTypes(Set<Integer> set, String start, String stop) {
 		GType[] types = new GType[2];
 		String[] ranges = {start, stop};
+		boolean ok = true;
 		for (int i = 0; i < 2; i++) {
-			types[i] = new  GType(FeatureKind.POINT, ranges[i]);
-			if (GType.checkType(types[i].getFeatureKind(), types[i].getType()) == false){
+			try {
+				types[i] = new  GType(FeatureKind.POINT, ranges[i]);
+			} catch (ExitException e) {
+				ok = false;
+			}
+			if (!ok || !GType.checkType(types[i].getFeatureKind(), types[i].getType())){
 				throw new SyntaxException("invalid type " + ranges[i] + " for " + FeatureKind.POINT + " in option " + ranges);
-			} 
+			}
 		}
 		
 		if (types[0].getType() > types[1].getType()) {
@@ -203,7 +209,6 @@ public class MdrConfig {
 		for (int i = types[0].getType(); i <= types[1].getType(); i++) {
 			if ((i & 0xff) > 0x1f)
 				i = ((i >> 8) + 1) << 8;
-			
 			set.add(i);
 		}
 		
