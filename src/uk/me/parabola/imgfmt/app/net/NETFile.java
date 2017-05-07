@@ -196,14 +196,8 @@ public class NETFile extends ImgFile {
 		}
 		Collections.sort(sortKeys);
 		roads.clear();
-		LabeledRoadDef last = null;
 		for (SortKey<LabeledRoadDef> key : sortKeys) {
-			LabeledRoadDef lrd = key.getObject();
-			if (last != null && last.roadDef.getStartSubdivNumber() == lrd.roadDef.getStartSubdivNumber() && last.label == lrd.label) {
-				System.out.println("check dup " + lrd.roadDef.getName()  + " " + lrd.label.getOffset() );
-			}  
-			roads.add(lrd);
-			last = lrd;
+			roads.add(key.getObject());
 		}		
 	}
 
