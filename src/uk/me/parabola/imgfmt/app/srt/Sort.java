@@ -23,7 +23,6 @@ import java.text.CollationKey;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -748,8 +747,6 @@ public class Sort {
 		 * @return Comparison result -1, 0 or 1.
 		 */
 		private int compareOneStrength(char[] char1, char[] char2, int type) {
-			int res = 0;
-
 			PositionIterator it1 = new PositionIterator(char1, type);
 			PositionIterator it2 = new PositionIterator(char2, type);
 
@@ -758,15 +755,13 @@ public class Sort {
 				int p2 = it2.next();
 
 				if (p1 < p2) {
-					res = -1;
-					break;
+					return -1;
 				} else if (p1 > p2) {
-					res = 1;
-					break;
+					return 1;
 				}
 			}
 
-			return res;
+			return 0;
 		}
 
 		public CollationKey getCollationKey(String source) {
@@ -787,7 +782,7 @@ public class Sort {
 			return codepage;
 		}
 
-		class PositionIterator implements Iterator<Integer> {
+		class PositionIterator {
 			private final char[] chars;
 			private final int len;
 			private final int type;
@@ -815,7 +810,7 @@ public class Sort {
 			 * @return The next non-ignored sort position. At the end of the string it returns
 			 * NO_ORDER.
 			 */
-			public Integer next() {
+			public int next() {
 				int next;
 				if (expPos == 0) {
 
@@ -854,10 +849,6 @@ public class Sort {
 				}
 
 				return next;
-			}
-
-			public void remove() {
-				throw new UnsupportedOperationException("remove not supported");
 			}
 		}
 	}
