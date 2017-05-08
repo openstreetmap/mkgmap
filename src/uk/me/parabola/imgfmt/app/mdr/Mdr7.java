@@ -344,7 +344,7 @@ public class Mdr7 extends MdrMapSection {
 		boolean hasStrings = hasFlag(MDR7_HAS_STRING);
 		boolean hasNameOffset = hasFlag(MDR7_HAS_NAME_OFFSET);
 		Collator collator = sort.getCollator();
-		int partialBShift = ((getExtraValue() >> 9) & 0xf);
+//		int partialBShift = ((getExtraValue() >> 9) & 0xf);
 		collator.setStrength(Collator.SECONDARY); 
 		Mdr7Record last = null;
 		for (Mdr7Record s : streets) {

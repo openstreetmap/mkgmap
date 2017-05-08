@@ -44,9 +44,9 @@ public abstract class Mdr2x extends MdrMapSection implements HasHeaderFlags {
 		int magic = getExtraValue();
 		boolean writeLabel = (magic & HAS_LABEL) != 0;  // A guess
 		boolean writeNameOffset = (magic & HAS_NAME_OFFSET) != 0;  // A guess, but less so
-		int partialInfoSize = ((magic >> 3) & 0x7);
-		int partialBShift = ((magic >> 6) & 0xf);
-		int partialBMask = (1 << partialBShift) - 1;
+//		int partialInfoSize = ((magic >> 3) & 0x7);
+//		int partialBShift = ((magic >> 6) & 0xf);
+//		int partialBMask = (1 << partialBShift) - 1;
 		
 		int recordNumber = 0;
 		for (Mdr7Record street : streets) {
