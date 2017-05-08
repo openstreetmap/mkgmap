@@ -147,6 +147,7 @@ public class StyledConverter implements OsmConverter {
 	private final boolean routable;
 	private final Tags styleOptionTags;
 	private final static String STYLE_OPTION_PREF = "mkgmap:option:";
+	private boolean usePrefixSuffixFilter;
 	
 	private Map<String, List<String>> prefixMap;
 	private Map<String, List<String>> countryLanguageMap;
@@ -155,7 +156,8 @@ public class StyledConverter implements OsmConverter {
 	private LineAdder lineAdder = new LineAdder() {
 		public void add(MapLine element) {
 			if (element instanceof MapRoad){
-//				filterNameSuffixAndPrefex((MapRoad) element);
+				if (usePrefixSuffixFilter)
+					filterNameSuffixAndPrefex((MapRoad) element);
 				collector.addRoad((MapRoad) element);
 			}
 			else
@@ -206,6 +208,7 @@ public class StyledConverter implements OsmConverter {
 			String label = labels[i];
 			if (label == null || label.length() == 0)
 				continue;
+			boolean modified = false;
 			for (String prefix : prefixesCountry) {
 				if (label.charAt(0) < 7)
 					break; // label starts with shield code
@@ -216,20 +219,22 @@ public class StyledConverter implements OsmConverter {
 					} else {
 						label = prefix + (char) 0x1b + label.substring(prefix.length());
 					}
-					labels[i] = label;
-					log.error("check",label,country,road.getRoadDef());
+					modified = true;
 					break;
 				}
 			}
-			List<String> suffixes = Arrays.asList(" Straße", " Road"," Weg");
+			List<String> suffixes = Arrays.asList(" Straße", " Road", " Street", " Weg");
 			for (String suffix : suffixes) {
 				int pos = label.lastIndexOf(suffix);
 				if (pos > 0) {
 					label = label.substring(0, pos) + (char) 0x1f + suffix.substring(1);
-					labels[i] = label;
-					log.error("check",label,country,road.getRoadDef());
+					modified = true;
 					break;
 				}
+			}
+			if (modified) {
+				labels[i] = label;
+				log.error("check",label,country,road.getRoadDef());
 			}
 		}
 	}
@@ -297,6 +302,7 @@ public class StyledConverter implements OsmConverter {
 		styleOptionTags = parseStyleOption(styleOption);
 		countryLanguageMap = buildCountryLanguageMap(props);
 		prefixMap = configPrefixMap(props);
+		usePrefixSuffixFilter = props.getProperty("use-prefix-suffix-filter", false); 
 	}
 
 	private Map<String, List<String>> buildCountryLanguageMap(EnhancedProperties props) {
