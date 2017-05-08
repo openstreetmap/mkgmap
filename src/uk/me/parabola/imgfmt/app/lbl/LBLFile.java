@@ -137,7 +137,8 @@ public class LBLFile extends ImgFile {
 			labelCache.put(encodedText, l);
 
 			l.setOffset(getNextLabelOffset());
-			l.write(getWriter(), encodedText);
+			if (encodedText.getLength() > 0)
+				getWriter().put(encodedText.getCtext(), 0, encodedText.getLength());
 
 			alignForNext();
 

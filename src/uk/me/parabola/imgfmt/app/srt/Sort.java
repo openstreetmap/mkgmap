@@ -267,25 +267,20 @@ public class Sort {
 			}
 		}
 		
-		// TODO: find out why unicode labels have no trailing zero and others have one. What if there is more than one? 
-		boolean hasTrailingZero = encText[encText.length-1] == 0;
 		if (prefix > 0 || suffix > 0) {
 			int partLen;
 			if (prefix > 0 && suffix > 0)
 				partLen = suffix - prefix-1;
 			else if (prefix > 0) {
 				partLen = encText.length - (prefix + 1);
-				if (hasTrailingZero)
-					partLen--;
 			}
 			else {
 				partLen = suffix ;
 			}
-			// fill with partial name followed by full name separated by 0.
-			char[] newEncText = new char[partLen + 1];
+			// extract partial name without creating trailing zeros
+			char[] newEncText = new char[partLen];
 			System.arraycopy(encText, prefix+1, newEncText, 0, partLen); 
 			encText = newEncText;
-//			System.out.println(new String(encText));
 		}
 		 
 		key = makeKey(encText);

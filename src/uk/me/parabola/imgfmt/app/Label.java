@@ -18,8 +18,6 @@ package uk.me.parabola.imgfmt.app;
 
 import java.util.regex.Pattern;
 
-import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
-
 /**
  * Labels are used for names of roads, points of interest etc.
  *
@@ -55,6 +53,9 @@ public class Label {
 		this.text = null;
 	}
 
+	/**
+	 * @return a value > 0 if this label is not empty. TODO: replace by isEmpty()
+	 */
 	public int getLength() {
 		if (text != null)
 			return text.length();
@@ -110,19 +111,6 @@ public class Label {
 
 	public void setOffset(int offset) {
 		this.offset = offset;
-	}
-
-	/**
-	 * Write this label to the given img file.
-	 *
-	 * @param writer The LBL file to write to.
-	 * @param encText The encoded version of the text for this label.
-	 */
-	public void write(ImgFileWriter writer, EncodedText encText) {
-		assert encText != null;
-
-		if (encText.getLength() > 0)
-			writer.put(encText.getCtext(), 0, encText.getLength());
 	}
 
 	/**

@@ -105,8 +105,9 @@ public class AnyCharsetEncoder extends BaseEncoder implements CharacterEncoder {
 		// We need it to be null terminated but also to trim any extra memory from the allocated
 		// buffer.
 		byte[] res = Arrays.copyOf(outBuf.array(), outBuf.position() + 1);
-		char[] cres = new char[res.length];
-		for (int i = 0; i < res.length; i++)
+		// no trailing zero in char array
+		char[] cres = new char[outBuf.position()];
+		for (int i = 0; i < outBuf.position(); i++)
 			cres[i] = (char) (res[i] & 0xff);
 		return new EncodedText(res, res.length, cres);
 	}
