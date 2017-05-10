@@ -52,11 +52,9 @@ public abstract class Mdr2x extends MdrMapSection implements HasHeaderFlags {
 			assert street.getMapIndex() == street.getCity().getMapIndex() : street.getMapIndex() + "/" + street.getCity().getMapIndex();
 			addIndexPointer(street.getMapIndex(), ++recordNumber);
 
-			int index = street.getIndex();
-
-			int rr = street.checkRepeat(prev, collator);
 			int repeat = 1;
 			if (writeLabel) {
+				int rr = street.checkRepeat(prev, collator);
 				putMapIndex(writer, street.getMapIndex());
 				int offset = street.getLabelOffset();
 				if (rr == 3 && sameGroup(street, prev))
@@ -75,9 +73,11 @@ public abstract class Mdr2x extends MdrMapSection implements HasHeaderFlags {
 					putN(writer, partialInfoSize, trailingFlags);
 				}
 			} else {
-				if ((rr & 2) != 0 && sameGroup(street, prev))
+				int rr = street.checkFullRepeat(prev, collator);
+				if (rr == 2 && sameGroup(street, prev))
 					repeat = 0;
 
+				int index = street.getIndex();
 				putN(writer, size, (index << 1) | repeat);
 			}
 

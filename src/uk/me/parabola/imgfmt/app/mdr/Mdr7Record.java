@@ -189,9 +189,23 @@ public class Mdr7Record extends RecordBase implements NamedRecord {
 		int cmp = collator.compare(lastPartial, partial);
 		if (cmp == 0)
 			res = 1;
+		res |= checkFullRepeat(last, collator);
+		return res;
+	}
+	
+	/**
+	 * Calculate integer for full repeat.
+	 * @param last record to compare
+	 * @param collator collator for compare  
+	 * @return 2 if full repeat (R), 0 else 
+	 */
+	public int checkFullRepeat (Mdr7Record last, Collator collator) {
+		if (last == null)
+			return 0;
+		int res = 0;
 		String lastName = last.getName();
 		String name = getName();
-		cmp = collator.compare(lastName, name);
+		int cmp = collator.compare(lastName, name);
 		if (cmp == 0) 
 			res |= 2;
 		return res;
