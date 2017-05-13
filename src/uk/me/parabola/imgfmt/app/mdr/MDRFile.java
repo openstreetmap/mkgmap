@@ -44,7 +44,7 @@ public class MDRFile extends ImgFile {
 	private final Mdr5 mdr5;
 	private final Mdr6 mdr6;
 	private final Mdr7 mdr7;
-	private final Mdr8 mdr8;
+	private final Mdr8 mdr8; // unused
 	private final Mdr9 mdr9;
 	private final Mdr10 mdr10;
 	private final Mdr11 mdr11;
@@ -349,7 +349,6 @@ public class MDRFile extends ImgFile {
 		mdr21.release();
 		
 		mdr22.buildFromStreets(mdr7.getStreets());
-		mdr8.setIndex(mdr7.getIndex());
 		if (forDevice) {
 			mdr17.addStreets(mdr7.getSortedStreets());
 		}

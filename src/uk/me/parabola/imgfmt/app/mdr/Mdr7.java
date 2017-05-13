@@ -69,7 +69,7 @@ public class Mdr7 extends MdrMapSection {
 	public void addStreet(int mapId, String name, int lblOffset, int strOff, Mdr5Record mdrCity) {
 		if (name.isEmpty())
 			return;
-		
+			
 		// Find a name prefix, which is either a shield or a word ending 0x1e or 0x1c. We are treating
 		// a shield as a prefix of length one.
 		int prefix = 0;
@@ -423,53 +423,6 @@ public class Mdr7 extends MdrMapSection {
 		streets = null;
 	}
 
-	/**
-	 * Must be called after the section data is written so that the streets
-	 * array is already sorted.
-	 * @return List of index records.
-	 */
-	public List<Mdr8Record> getIndex() {
-		List<Mdr8Record> list = new ArrayList<>();
-		for (int number = 1; number <= streets.size(); number += 10240) {
-			String prefix = getPrefixForRecord(number);
-
-			// need to step back to find the first...
-			int rec = number;
-			while (rec > 1) {
-				String p = getPrefixForRecord(rec);
-				if (!p.equals(prefix)) {
-					rec++;
-					break;
-				}
-				rec--;
-			}
-
-			Mdr8Record indexRecord = new Mdr8Record();
-			indexRecord.setPrefix(prefix);
-			indexRecord.setRecordNumber(rec);
-			list.add(indexRecord);
-		}
-		return list;
-	}
-
-	/**
-	 * Get the prefix of the name at the given record.
-	 * @param number The record number.
-	 * @return The first 4 (or whatever value is set) characters of the street
-	 * name.
-	 */
-	private String getPrefixForRecord(int number) {
-		Mdr7Record record = streets.get(number-1);
-		int endIndex = MdrUtils.STREET_INDEX_PREFIX_LEN;
-		String name = record.getName();
-		if (endIndex > name.length()) {
-			StringBuilder sb = new StringBuilder(name);
-			while (sb.length() < endIndex)
-				sb.append('\0');
-			name = sb.toString();
-		}
-		return name.substring(0, endIndex);
-	}
 
 	public List<Mdr7Record> getStreets() {
 		return Collections.unmodifiableList((ArrayList<Mdr7Record>) allStreets);

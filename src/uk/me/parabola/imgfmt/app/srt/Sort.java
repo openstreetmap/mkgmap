@@ -84,6 +84,39 @@ public class Sort {
 		setFlags(ch, flags);
 	}
 
+	public char[] encode(String s) {
+		char[] chars = null;
+		try {
+			if (isMulti()) {
+				chars = s.toCharArray();
+			} else {
+				ByteBuffer out = encoder.encode(CharBuffer.wrap(s));
+				byte[] bval = out.array();
+				chars = new char[bval.length];
+				for (int i = 0; i < bval.length; i++)
+					chars[i] = (char) (bval[i] & 0xff);
+			}
+		} catch (CharacterCodingException e) {
+		}
+		return chars;
+	}
+	
+	/**
+	 * Get the prefix of the name of the given length. 
+	 * @param name the name 
+	 * @param prefixLen the length
+	 * @return String with wanted length, possibly padded with trailing zeros.
+	 */
+	public String getPrefix(String name, int prefixLen) {
+		char[] chars = encode(name);
+		String prefix;
+		if (chars.length >= prefixLen)
+			prefix = new String(chars, 0, prefixLen);
+		else
+			prefix = new String(Arrays.copyOf(chars, prefixLen));
+		return prefix;
+	}
+	
 	/**
 	 * Run after all sorting order points have been added.
 	 *

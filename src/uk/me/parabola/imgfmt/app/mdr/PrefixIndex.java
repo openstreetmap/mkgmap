@@ -81,9 +81,16 @@ public class PrefixIndex extends MdrSection {
 			}
 			else 
 				name = r.getName();
-			prefix = getPrefix(name);
-			
-			if (collator.compare(prefix, lastPrefix) > 0) {
+			prefix = sort.getPrefix(name, prefixLength);
+			int cmp = collator.compare(prefix, lastPrefix);
+			if (cmp < 0) {
+				// TODO: we get here sometimes, and MapSource writes these entries
+				// Example:  
+				// O'Learys 
+				// O's American Breakfast & Barbeque 
+				// O’Learys
+			}
+			if (cmp > 0) {
 				outRecord++;
 				Mdr8Record ind = new Mdr8Record();
 				ind.setPrefix(prefix);
@@ -129,35 +136,6 @@ public class PrefixIndex extends MdrSection {
 
 	protected int numberOfItems() {
 		return index.size();
-	}
-
-	/**
-	 * Get the prefix of the name at the given record.
-	 * If the name is shorter than the prefix length, then it padded with nul characters.
-	 * So it can be longer than the input string.
-	 * 
-	 * @param in The name to truncate.
-	 * @return A string prefixLength characters long, consisting of the initial
-	 * prefix of name and padded with nulls if necessary to make up the length.
-	 */
-	private String getPrefix(String in) {
-		StringBuilder sb = new StringBuilder();
-		char[] chars = in.toCharArray();
-		int ci = 0;
-		for (int i = 0; i < prefixLength; i++) {
-			char c = 0;
-			while (ci < chars.length) {
-				// TODO: simplify when initial spaces are removed
-				c = chars[ci++];
-				if (ci == 1 && c== 0x20)
-					continue;
-				if (c >= 0x20)
-					break;
-			}
-			sb.append(c);
-		}
-
-		return sb.toString();
 	}
 
 	public int getPrefixLength() {

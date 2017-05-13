@@ -153,20 +153,12 @@ public class Mdr11 extends MdrMapSection {
 	/**
 	 * Get the prefix of the name at the given record.
 	 * @param number The record number.
-	 * @return The first 4 (or whatever value is set) characters of the street
-	 * name.
+	 * @return The first 4 (or whatever value is set) characters of the POI name.
 	 */
 	private String getPrefixForRecord(int number) {
 		Mdr11Record record = pois.get(number-1);
-		int endIndex = MdrUtils.POI_INDEX_PREFIX_LEN;
 		String name = record.getName();
-		if (endIndex > name.length()) {
-			StringBuilder sb = new StringBuilder(name);
-			while (sb.length() < endIndex)
-				sb.append('\0');
-			name = sb.toString();
-		}
-		return name.substring(0, endIndex);
+		return getConfig().getSort().getPrefix(name, MdrUtils.POI_INDEX_PREFIX_LEN);
 	}
 
 	public void setMdr10(Mdr10 mdr10) {
