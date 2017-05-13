@@ -107,14 +107,9 @@ public class Sort {
 	 * @param prefixLen the length
 	 * @return String with wanted length, possibly padded with trailing zeros.
 	 */
-	public String getPrefix(String name, int prefixLen) {
+	public char[] getPrefix(String name, int prefixLen) {
 		char[] chars = encode(name);
-		String prefix;
-		if (chars.length >= prefixLen)
-			prefix = new String(chars, 0, prefixLen);
-		else
-			prefix = new String(Arrays.copyOf(chars, prefixLen));
-		return prefix;
+		return Arrays.copyOf(chars, prefixLen);
 	}
 	
 	/**
@@ -727,7 +722,7 @@ public class Sort {
 	 *
 	 * This implementation has the same effect when used for sorting as the sort keys.
 	 */
-	private class SrtCollator extends Collator {
+	public class SrtCollator extends Collator {
 		private final int codepage;
 
 		private SrtCollator(int codepage) {
@@ -779,7 +774,7 @@ public class Sort {
 		 * @param char2 Bytes for the second string in the codepage encoding.
 		 * @return Comparison result -1, 0 or 1.
 		 */
-		private int compareOneStrength(char[] char1, char[] char2, int type) {
+		public int compareOneStrength(char[] char1, char[] char2, int type) {
 			PositionIterator it1 = new PositionIterator(char1, type);
 			PositionIterator it2 = new PositionIterator(char2, type);
 

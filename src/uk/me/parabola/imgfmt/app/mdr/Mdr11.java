@@ -14,6 +14,7 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -129,13 +130,13 @@ public class Mdr11 extends MdrMapSection {
 	public List<Mdr8Record> getIndex() {
 		List<Mdr8Record> list = new ArrayList<>();
 		for (int number = 1; number <= pois.size(); number += 10240) {
-			String prefix = getPrefixForRecord(number);
+			char[] prefix = getPrefixForRecord(number);
 
 			// need to step back to find the first...
 			int rec = number;
 			while (rec > 1) {
-				String p = getPrefixForRecord(rec);
-				if (!p.equals(prefix)) {
+				char[] p = getPrefixForRecord(rec);
+				if (!Arrays.equals(p, prefix)) {
 					rec++;
 					break;
 				}
@@ -155,7 +156,7 @@ public class Mdr11 extends MdrMapSection {
 	 * @param number The record number.
 	 * @return The first 4 (or whatever value is set) characters of the POI name.
 	 */
-	private String getPrefixForRecord(int number) {
+	private char[] getPrefixForRecord(int number) {
 		Mdr11Record record = pois.get(number-1);
 		String name = record.getName();
 		return getConfig().getSort().getPrefix(name, MdrUtils.POI_INDEX_PREFIX_LEN);
