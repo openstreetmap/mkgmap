@@ -62,6 +62,12 @@ public abstract class Element {
 						log.info(this.toBrowseURL(),"obsolete blanks removed from tag", key, " '" + val + "' -> '" + squashed + "'");
 					val = squashed;
 				}
+				squashed = Label.squashDel(val);
+				if (val.equals(squashed) == false) {
+					if (log.isInfoEnabled())
+						log.info(this.toBrowseURL(),"DEL character (0x7f) removed from tag", key, " '" + val + "' -> '" + squashed + "'");
+					val = squashed;
+				}
 			}
 		}
 		addTag(key, val.intern());

@@ -82,6 +82,9 @@ public class Label {
 	// two or more whitespace characters
 	private final static Pattern SQUASH_SPACES = Pattern.compile("\\s\\s+");
 
+	// DEL character 
+	public final static Pattern SQASH_DEL = Pattern.compile("[\u007f]");
+
 	public static String stripGarminCodes(String s) {
 		if(s == null)
 			return null;
@@ -96,6 +99,12 @@ public class Label {
 		if(s == null || s.isEmpty())
 			return null;
 		return SQUASH_SPACES.matcher(s).replaceAll(" "); // replace with single space
+	}
+
+	public static String squashDel(String s) {
+		if(s == null || s.isEmpty())
+			return null;
+		return SQASH_DEL.matcher(s).replaceAll(""); // remove 0x7f=DEL character
 	}
 
 	/**
