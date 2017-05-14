@@ -324,19 +324,19 @@ public class SrtTextReader {
 	 */
 	private void addCharacter(TokenScanner scanner, String val) {
 		Code code = new Code(scanner, val).read();
-		setSortcode(code.getBval());
+		setSortcode(code);
 	}
 
 	/**
 	 * Set the sort code for the given 8-bit character.
 	 * @param ch The same character in unicode.
 	 */
-	private void setSortcode(int ch) {
-		int flags = charFlags(ch);
+	private void setSortcode(Code c) {
+		int flags = charFlags(c.getCval());
 		if (cflags.contains("0"))
 			flags = 0;
 
-		sort.add(ch, pos1, pos2, pos3, flags);
+		sort.add(c.getBval(), pos1, pos2, pos3, flags);
 		this.cflags = "";
 	}
 
