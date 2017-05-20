@@ -128,7 +128,7 @@ public class Sort {
 				continue;
 
 			for (int i = 0; i < 256; i++) {
-				if (((p.flags[i] >>> 4) & 0x3) == 0) {
+				if (((p.flags[i] >>> 4) & 0xf) == 0) {
 					if (p.getPrimary(i) != 0) {
 						byte second = p.getSecondary(i);
 						maxSecondary = Math.max(maxSecondary, second);
@@ -145,7 +145,7 @@ public class Sort {
 				continue;
 
 			for (int i = 0; i < 256; i++) {
-				if (((p.flags[i] >>> 4) & 0x3) != 0) continue;
+				if (((p.flags[i] >>> 4) & 0xf) != 0) continue;
 
 				if (p.getPrimary(i) == 0) {
 					if (p.getSecondary(i) == 0) {
@@ -402,7 +402,7 @@ public class Sort {
 			if (!hasPage(c >>> 8))
 				continue;
 
-			int exp = (getFlags(c) >> 4) & 0x3;
+			int exp = (getFlags(c) >> 4) & 0xf;
 			if (exp == 0) {
 				index = writePos(type, c, outKey, index);
 			} else {
@@ -855,7 +855,7 @@ public class Sort {
 							continue;
 						}
 
-						int nExpand = (getFlags(c) >> 4) & 0x3;
+						int nExpand = (getFlags(c) >> 4) & 0xf;
 						// Check if this is an expansion.
 						if (nExpand > 0) {
 							expStart = getPrimary(c) - 1;
