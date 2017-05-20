@@ -69,6 +69,7 @@ public class MDRFile extends ImgFile {
 	private int currentMap;
 
 	private final boolean forDevice;
+	private final boolean isMulti;
 
 	private final MdrSection[] sections;
 	private PointerSizes sizes;
@@ -80,6 +81,7 @@ public class MDRFile extends ImgFile {
 		Sort sort = config.getSort();
 
 		forDevice = config.isForDevice();
+		isMulti = config.getSort().isMulti();
 		mdr7Del = config.getMdr7Del();
 		poiExclTypes = config.getPoiExclTypes();
 		mdrHeader = new MDRHeader(config.getHeaderLen());
@@ -308,7 +310,7 @@ public class MDRFile extends ImgFile {
 		mdr10.setNumberOfPois(mdr11.getNumberOfPois());
 		mdr12.setIndex(mdr11.getIndex());
 		mdr19.setPois(mdr11.getPois());
-		if (forDevice) {
+		if (forDevice & !isMulti) {
 			mdr17.addPois(mdr11.getPois());
 		}
 		mdr11.release();
@@ -335,7 +337,7 @@ public class MDRFile extends ImgFile {
 		writeSection(writer, 5, mdr5);
 		mdr25.sortCities(mdr5.getCities());
 		mdr27.sortCities(mdr5.getCities());
-		if (forDevice) {
+		if (forDevice & !isMulti) {
 			mdr17.addCities(mdr5.getSortedCities());
 		}
 		mdr5.release();
@@ -349,13 +351,13 @@ public class MDRFile extends ImgFile {
 		mdr21.release();
 		
 		mdr22.buildFromStreets(mdr7.getStreets());
-		if (forDevice) {
+		if (forDevice & !isMulti) {
 			mdr17.addStreets(mdr7.getSortedStreets());
 		}
 
 		mdr7.release();
 		writeSection(writer, 22, mdr22);
-		if (forDevice) {
+		if (forDevice & !isMulti) {
 			mdr17.addStreetsByCountry(mdr22.getStreets());
 		}
 		mdr22.release();
