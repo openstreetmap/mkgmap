@@ -81,7 +81,7 @@ public class PrefixIndex extends MdrSection {
 			else 
 				name = r.getName();
 			char[] prefix = sort.getPrefix(name, prefixLength);
-			int cmp = collator.compareOneStrength(prefix, lastPrefix, Collator.PRIMARY);
+			int cmp = collator.compareOneStrengthWithLength(prefix, lastPrefix, Collator.PRIMARY, prefixLength);
 			if (cmp > 0) {
 				outRecord++;
 				Mdr8Record ind = new Mdr8Record();

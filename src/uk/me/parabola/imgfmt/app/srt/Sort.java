@@ -792,6 +792,32 @@ public class Sort {
 			return 0;
 		}
 
+		/**
+		 * Compare the bytes against primary, secondary or tertiary arrays.
+		 * @param char1 Bytes for the first string in the codepage encoding.
+		 * @param char2 Bytes for the second string in the codepage encoding.
+		 * @return Comparison result -1, 0 or 1.
+		 */
+		public int compareOneStrengthWithLength(char[] char1, char[] char2, int type, int len) {
+			PositionIterator it1 = new PositionIterator(char1, type);
+			PositionIterator it2 = new PositionIterator(char2, type);
+
+			int todo = len;
+			while (it1.hasNext() || it2.hasNext()) {
+				int p1 = it1.next();
+				int p2 = it2.next();
+				if (--todo < 0)
+					return 0;
+				if (p1 < p2) {
+					return -1;
+				} else if (p1 > p2) {
+					return 1;
+				}
+			}
+
+			return 0;
+		}
+
 		public CollationKey getCollationKey(String source) {
 			throw new UnsupportedOperationException("use Sort.createSortKey() instead");
 		}
