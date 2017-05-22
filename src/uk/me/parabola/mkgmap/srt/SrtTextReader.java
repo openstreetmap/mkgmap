@@ -22,6 +22,8 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetEncoder;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -393,6 +395,10 @@ public class SrtTextReader {
 		String outfile = "out.srt";
 		if (args.length > 1)
 			outfile = args[1];
+		try {
+			Files.delete(Paths.get(outfile, ""));
+		} catch (Exception e) {
+		}
 		ImgChannel chan = new FileImgChannel(outfile, "rw");
 		SRTFile sf = new SRTFile(chan);
 

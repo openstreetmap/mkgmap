@@ -55,7 +55,9 @@ public class SRTHeader extends CommonHeader {
 	}
 
 	protected void readFileHeader(ImgFileReader reader) throws ReadFailedException {
-		throw new UnsupportedOperationException("not implemented yet");
+		reader.getChar(); // expected: 1
+		header.setPosition(reader.getInt());
+		header.setSize(reader.getChar());
 	}
 
 	/**

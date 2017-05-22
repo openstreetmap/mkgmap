@@ -104,13 +104,22 @@ public class SRTFile extends ImgFile {
 	}
 
 	private void writeWeights(ImgFileWriter writer, int i) {
+		int primary = sort.getPrimary(i);
+		int secondary = sort.getSecondary(i);
+		int tertiary = sort.getTertiary(i);
 		if (isMulti) {
-			writer.putChar((char) sort.getPrimary(i));
-			writer.put((byte) sort.getSecondary(i));
-			writer.put((byte) sort.getTertiary(i));
+			assert primary <= 0xffff;
+			assert secondary <= 0xff;
+			assert tertiary <= 0xff;
+			writer.putChar((char) primary);
+			writer.put((byte) secondary);
+			writer.put((byte) tertiary);
 		} else {
-			writer.put((byte) sort.getPrimary(i));
-			writer.put((byte) ((sort.getTertiary(i) << 4) | (sort.getSecondary(i) & 0xf)));
+			assert primary <= 0xff;
+			assert secondary <= 0xf;
+			assert tertiary <= 0xf;
+			writer.put((byte) primary);
+			writer.put((byte) ((tertiary << 4) | (secondary & 0xf)));
 		}
 	}
 
