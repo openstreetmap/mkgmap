@@ -92,7 +92,14 @@ public class Mdr22 extends Mdr2x {
 	 * Unknown flag
 	 */
 	public int getExtraValue() {
-		int magic = isForDevice() ? 0x600e : 0x11000;
+		int magic;
+		if (isForDevice()) {
+			magic = 0x0000e;
+			if (!getConfig().getSort().isMulti())
+				magic |= 0xc0000; // used to be 0x6000, maybe two different flags ? 
+		} else {
+			magic = 0x11000;
+		}
 		return magic;
 	}
 }

@@ -119,8 +119,10 @@ public class Mdr11 extends MdrMapSection {
 		if (citySize > 2)
 			mdr11flags |= (citySize-2) << 2;
 
-		if (isForDevice()) 
-			mdr11flags |= 0x80;
+		if (isForDevice()) {
+			if (!getConfig().getSort().isMulti())
+				mdr11flags |= 0x80; // mdr17 sub section present (not with unicode)
+		}
 		else 
 			mdr11flags |= 0x2;
 		

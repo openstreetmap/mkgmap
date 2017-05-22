@@ -36,7 +36,7 @@ public class Mdr7 extends MdrMapSection {
 	public static final int MDR7_HAS_NAME_OFFSET = 0x20;
 	public static final int MDR7_PARTIAL_SHIFT = 6;
 	public static final int MDR7_U1 = 0x2;
-	public static final int MDR7_U2 = 0x4;
+	public static final int MDR7_HAS_MDR17 = 0x4;
 
 	private static final int MAX_NAME_OFFSET = 127;
 
@@ -400,12 +400,12 @@ public class Mdr7 extends MdrMapSection {
 			int bitsSuffix = (maxSuffixCount == 0) ? 0 : Integer.numberOfTrailingZeros(Integer.highestOneBit(maxSuffixCount)) + 1;
 			int bits = bitsPrefix + bitsSuffix + 1;
 			partialInfoSize = 1 + bits / 8;
-//			partialInfoSize = 0;
 			assert bitsSuffix <= 15;
 			magic = MDR7_U1 | MDR7_HAS_NAME_OFFSET | (partialInfoSize << MDR7_PARTIAL_SHIFT) | (bitsPrefix << 9);
 
 			if (isForDevice()) {
-				magic |= MDR7_U2;
+				if (!getConfig().getSort().isMulti())
+					magic |= MDR7_HAS_MDR17; // mdr17 sub section present (not with unicode)
 			} else {
 				magic |= MDR7_HAS_STRING;
 			}

@@ -263,8 +263,9 @@ public class Mdr5 extends MdrMapSection {
 	public int getExtraValue() {
 		int val = (localCitySize - 1);
 		// String offset is only included for a mapsource index.
-		if (isForDevice()) {
-			val |= 0x40; // not known, probably refers to mdr17.
+		if (isForDevice() ) {
+			if (!getConfig().getSort().isMulti())
+				val |= 0x40; // mdr17 sub section present (not with unicode)
 		} else {
 			val |= 0x04;  // region
 			val |= 0x08; // string

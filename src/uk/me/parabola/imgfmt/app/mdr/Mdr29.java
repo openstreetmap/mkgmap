@@ -110,7 +110,8 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 				+ sizes.getSize(5)  // NB: not 25
 				;
 		if (isForDevice()) {
-			size += numberToPointerSize(max17);
+			if (!getConfig().getSort().isMulti())
+				size += numberToPointerSize(max17);
 		} else {
 			size += sizes.getStrOffSize();
 			size += sizes.getSize(26);
@@ -136,7 +137,8 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 	public int getExtraValue() {
 		if (isForDevice()) {
 			int magic = 0x6; // 22 and 25
-			magic |= numberToPointerSize(max17) << 4;
+			if (!getConfig().getSort().isMulti())
+				magic |= numberToPointerSize(max17) << 4;
 			return magic; // +17, -26, -strings
 		}
 		else
