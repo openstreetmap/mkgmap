@@ -12,12 +12,14 @@
  */ 
 package uk.me.parabola.imgfmt.app.srt;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.AbstractMap;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFile;
@@ -25,8 +27,11 @@ import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.Section;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterDecoder;
 import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
+import uk.me.parabola.imgfmt.fs.DirectoryEntry;
+import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.FileImgChannel;
+import uk.me.parabola.imgfmt.sys.ImgFS;
 
 /**
  * The sort file.
@@ -47,8 +52,8 @@ public class SrtFileReader extends ImgFile {
 	private Section srt6 = new Section();
 	private Section srt7 = new Section();
 	private Section srt8 = new Section();
-	List<CodePosition> expansions = new ArrayList<>();
-	List<Map.Entry<Integer, CodePosition>> chars = new ArrayList<>();
+	private int countExp; 
+	private final Map<Integer, Integer> offsetToBlock = new HashMap<>();
 	
 	public SrtFileReader (ImgChannel chan) {
 		CodeFunctions funcs = CodeFunctions.createEncoderForLBL("latin1");
@@ -57,7 +62,7 @@ public class SrtFileReader extends ImgFile {
 		setHeader(header);
 		setReader(new BufferedImgFileReader(chan));
 		header.readHeader(getReader());
-		
+		sort.setHeaderLen(header.getHeaderLength());
 		readSrt1();
 		readDesc();
 		readTableHeader();
@@ -67,9 +72,12 @@ public class SrtFileReader extends ImgFile {
 		ImgFileReader reader = getReader();
 		reader.position(tableHeader.getPosition());
 		int len = reader.getChar();
+		sort.setHeader3Len(len);
 		sort.setId1(reader.getChar());
 		sort.setId2(reader.getChar());
 		sort.setCodepage(reader.getChar());
+		if (sort.getCodepage() == 65001)
+			sort.setMulti(true);
 		reader.getInt(); //?
 		characterTable.readSectionInfo(reader, true);
 		reader.position(reader.position() + 6); // padding?
@@ -79,8 +87,9 @@ public class SrtFileReader extends ImgFile {
 			srt6.readSectionInfo(reader, false);
 		}
 		if (len > 0x34) {
-			reader.getChar();
-			int maxCode7 = reader.getInt();
+			reader.getInt();
+			int maxCodeBlock = reader.getInt();
+			sort.setMaxPage(maxCodeBlock);
 			srt7.readSectionInfo(reader, true);
 			reader.position(reader.position() + 6); // padding?
 		}
@@ -88,25 +97,49 @@ public class SrtFileReader extends ImgFile {
 			srt8.readSectionInfo(reader, true);
 		}
 		readCharacterTable();
+		if (srt7.getSize() > 0) {
+			readSrt7();
+			readSrt8();
+		}
 		readExpansions();
-		fillSort();
 	}
 
-	private void fillSort() {
-		int posInSrt5 = 0;
-		for (int i = 0; i <chars.size(); i++) {
-			Entry<Integer, CodePosition> e = chars.get(i);
-			int flags = e.getKey();
-			int numExp = (flags >> 4) & 0xf;
-			if (numExp > 0) {
-				List<Integer> toExpand = new ArrayList<>();
-//				for (int j = 0; j <= numExp; j++) {
-//					CodePosition cp2 = expansions.get(posInSrt5++);
-//					toExpand.add(e.)
-//				}
-//				sort.addExpansion(ch, inFlags, expansionList);
+	private void readSrt7() {
+		ImgFileReader reader = getReader();
+		reader.position(tableHeader.getPosition() + srt7.getPosition());
+
+		int block = 1;
+		for (int i = 0; i < srt7.getNumItems(); i++) {
+			int val = reader.getInt();
+			if (val >= 0)
+				offsetToBlock.put(val/srt8.getItemSize(), block);
+			block++;
+		}
+		
+	}
+
+	private void readSrt8() {
+		ImgFileReader reader = getReader();
+		reader.position(tableHeader.getPosition() + srt8.getPosition());
+		int reclen = srt8.getItemSize();
+		int block = 1;
+		for (int i = 0; i < srt8.getNumItems(); i++) {
+			Integer nblock = offsetToBlock.get(i);
+			if (nblock != null) 
+				block = nblock;
+			int flags = reader.get() & 0xff;
+			CodePosition cp = readCharPosition(reclen-1);
+			int ch = block*256 + (i % 256);
+			
+			if ((flags & 0xf0) != 0) { 
+				sort.add(ch, countExp + 1, 0, 0, flags);
+				countExp += ((flags >> 4) & 0xf) + 1;
+			}
+			else { 
+				sort.add(ch, cp.getPrimary(), cp.getSecondary(), cp.getTertiary(), flags);
 			}
 		}
+		
 	}
 
 	private void readCharacterTable() {
@@ -115,11 +148,16 @@ public class SrtFileReader extends ImgFile {
 		int rs = characterTable.getItemSize();
 		long start = tableHeader.getPosition() + characterTable.getPosition();
 		reader.position(start);
-		for (int i = 1; i <= characterTable.getNumItems(); i++) {
+		for (int ch = 1; ch <= characterTable.getNumItems(); ch++) {
 			int flags = reader.get() & 0xff;
-			CodePosition cp = readCharPosition(rs);
-			chars.add(new AbstractMap.SimpleEntry<>(flags, cp));
-			sort.add(i, cp.getPrimary(), cp.getSecondary(), cp.getTertiary(), flags);
+			CodePosition cp = readCharPosition(rs-1);
+			if ((flags & 0xf0) != 0) { 
+				sort.add(ch, countExp + 1, 0, 0, flags);
+				countExp += ((flags >> 4) & 0xf) + 1;
+			}
+			else { 
+				sort.add(ch, cp.getPrimary(), cp.getSecondary(), cp.getTertiary(), flags);
+			}
 		}
 	}
 
@@ -147,10 +185,10 @@ public class SrtFileReader extends ImgFile {
 		} else if (posLength == 4) {
 			rec = reader.getInt();
 			cp.setPrimary((char) (rec & 0xffff));
-			cp.setSecondary((byte) ((rec >> 16) & 0xf));
-			cp.setTertiary((byte) ((rec >> 24) & 0xf));
+			cp.setSecondary((byte) ((rec >> 16) & 0xff));
+			cp.setTertiary((byte) ((rec >> 24) & 0xff));
 		} else {
-			throw new RuntimeException();
+			throw new RuntimeException("unexpected value posLength " + posLength);
 		}
 		return cp;
 	}
@@ -159,11 +197,15 @@ public class SrtFileReader extends ImgFile {
 		ImgFileReader reader = getReader();
 		int reclen = srt5.getItemSize();
 		reader.position(tableHeader.getPosition() + srt5.getPosition());
+		List<CodePosition> expansionList = new ArrayList<>(srt5.getNumItems());
+		if (countExp != srt5.getNumItems()) {
+			throw new RuntimeException("unexpected number of expansions " + srt5.getNumItems() + " expected: " + countExp);
+		}
 		for (int i = 0; i < srt5.getNumItems(); i++) {
 			CodePosition cp = readCharPosition(reclen);
-			expansions.add(cp);
+			expansionList.add(cp);
 		}
-	
+		sort.setExpansions(expansionList);
 	}
 
 	private void readSrt1() {
@@ -186,6 +228,11 @@ public class SrtFileReader extends ImgFile {
 
 		return decoder.getText().getText();
 	}
+	
+	public Sort getSort() {
+		return sort;
+	}
+
 	/**
 	 * Read in a sort description text file and create a SRT from it.
 	 * @param args First arg is the text input file, the second is the name of the output file. The defaults are
@@ -199,18 +246,46 @@ public class SrtFileReader extends ImgFile {
 		String outfile = "out.srt";
 		if (args.length > 1)
 			outfile = args[1];
-		ImgChannel chan = new FileImgChannel(outfile, "rw");
-		ImgChannel inChannel = new FileImgChannel(infile, "r");
-		SrtFileReader tr = new SrtFileReader(inChannel);
-		SRTFile sf = new SRTFile(chan);
-		Sort sort1 = tr.getSort();
-		sf.setSort(sort1);
-		sf.write();
-		sf.close();
-		chan.close();
-	}
+		try {
+			Files.delete(Paths.get(outfile, ""));
+		} catch (Exception e) {
+		}
+		ImgChannel inChannel = null;
+		FileSystem fs = null;
+		try {
+			if (infile.endsWith("srt"))
+				inChannel = new FileImgChannel(infile, "r");
+			else {
+				fs = ImgFS.openFs(infile);
+				List<DirectoryEntry> entries = fs.list();
 
-	private Sort getSort() {
-		return sort;
+				// Find the TRE entry
+				String mapname = null;
+				for (DirectoryEntry ent : entries) {
+					if ("SRT".equals(ent.getExt())) {
+						mapname = ent.getName();
+						break;
+					}
+				}
+				inChannel = fs.open(mapname + ".SRT", "r");
+				
+				ImgChannel chan = new FileImgChannel(outfile, "rw");
+				SrtFileReader tr = new SrtFileReader(inChannel);
+				tr.close();
+				Sort sort1 = tr.getSort();
+				SRTFile sf = new SRTFile(chan);
+				sf.setSort(sort1);
+				sf.write();
+				sf.close();
+				chan.close();
+			}
+		} catch (FileNotFoundException e) {
+			System.err.println("Could not open file: " + infile);
+		} finally {
+			if (fs != null) {
+				fs.close();
+			}
+		}
+
 	}
 }

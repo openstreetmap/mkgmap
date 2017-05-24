@@ -19,7 +19,7 @@ import java.text.Collator;
  *
  * @author Steve Ratcliffe
  */
-class CodePosition {
+public class CodePosition {
 	private char primary;
 	private byte secondary;
 	private byte tertiary;

@@ -28,36 +28,41 @@ import uk.me.parabola.imgfmt.app.SectionWriter;
  */
 public class SRTHeader extends CommonHeader {
 	// The header length we are using for the SRT file
-	private static final int HEADER_LEN = 29;
+	public static final int HEADER_LEN = 29; // newer files use 37
 	protected static final int HEADER2_LEN = 16;
 	protected static final int HEADER3_LEN = 52;
 	protected static final int HEADER3_MULTI_LEN = 92;
 
 	// The section structure of this file is somewhat different to other
 	// files, but I am still going to model it using Section.
-	private final Section header = new Section();
+	private final Section header2 = new Section();
 
-	private final Section desc = new Section(header);
+	private final Section desc = new Section(header2);
 	private final Section subheader = new Section(desc);
 	private final Section chartab = new Section((char) 3);
 	private final Section expansions = new Section(chartab, (char) 2);
 	private final Section srt8 = new Section(expansions, (char) 5);
 	private final Section srt7 = new Section(srt8, (char) 4);
+	
 
 	private Sort sort;
 
 	public SRTHeader() {
-		super(HEADER_LEN, "GARMIN SRT");
-		header.setPosition(HEADER_LEN);
-		header.setSize(16);
+		this(HEADER_LEN);
+	}
+
+	public SRTHeader(int headerLen) {
+		super(headerLen, "GARMIN SRT");
+		header2.setPosition(headerLen); 
+		header2.setSize(16);
 
 		chartab.setPosition(HEADER3_LEN);
 	}
 
 	protected void readFileHeader(ImgFileReader reader) throws ReadFailedException {
 		reader.getChar(); // expected: 1
-		header.setPosition(reader.getInt());
-		header.setSize(reader.getChar());
+		header2.setPosition(reader.getInt());
+		header2.setSize(reader.getChar());
 	}
 
 	/**
@@ -65,10 +70,29 @@ public class SRTHeader extends CommonHeader {
 	 * to an area which is itself just a header.
 	 */
 	protected void writeFileHeader(ImgFileWriter writer) {
-		writer.putChar((char) 1);
+		if (getHeaderLength() <= 29) {
+			writer.putChar((char) 1);
 
-		writer.putInt(header.getPosition());
-		writer.putChar((char) header.getSize());
+			writer.putInt(header2.getPosition());
+			writer.putChar((char) header2.getSize());
+		} else {
+			// this appears in unicode maps dated 2016 and 2017
+			writer.putChar((char) 0);
+			writer.putInt(header2.getPosition());
+			writer.putChar((char) header2.getSize());
+			writer.putChar((char) 1);
+			writer.putInt(header2.getPosition());
+			writer.putChar((char) header2.getSize());
+			
+			// older maps contain this variant (note the different order)
+//			writer.putChar((char) 1);
+//			writer.putInt(header2.getPosition());
+//			writer.putChar((char) header2.getSize());
+//			writer.putChar((char) 0);
+//			writer.putInt(desc.getPosition()); 
+//			writer.putChar((char) 0x10);  
+			
+		}
 	}
 
 	/**

@@ -25,9 +25,12 @@ import java.nio.charset.CharsetEncoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import uk.me.parabola.imgfmt.ExitException;
+import uk.me.parabola.imgfmt.app.srt.CodePosition;
 import uk.me.parabola.imgfmt.app.srt.SRTFile;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
@@ -82,6 +85,7 @@ public class SrtTextReader {
 	private static final int IN_INITIAL = 0;
 	private static final int IN_CHARACTER = 1;
 	private static final int IN_EXPAND = 2;
+	private static final boolean EXPERIMENTAL = false;
 
 	// Data that is read in, the output of the reading operation
 	private final Sort sort = new Sort();
@@ -94,6 +98,9 @@ public class SrtTextReader {
 	private int pos3;
 	private int state;
 	private String cflags = "";
+	private Map<Integer, Integer> maxSec;
+	private Map<Integer, Integer> maxTert;
+	private List<CodePosition> expansions;
 
 	public SrtTextReader(Reader r) throws IOException {
 		this("stream", r);
@@ -104,7 +111,13 @@ public class SrtTextReader {
 	}
 
 	private SrtTextReader(String filename, Reader r) throws IOException {
+		maxSec = new HashMap<>();
+		maxTert = new HashMap<>();
+		expansions = new ArrayList<>();
 		read(filename, r);
+		maxSec = null;
+		maxTert = null;
+		expansions = null;
 	}
 
 	/**
@@ -165,7 +178,7 @@ public class SrtTextReader {
 				break;
 			}
 		}
-
+		sort.setExpansions(expansions);
 		sort.finish();
 	}
 
@@ -301,7 +314,9 @@ public class SrtTextReader {
 		if (!s.equals("to"))
 			throw new SyntaxException(scanner, "Expected the word 'to' in expand command");
 
-		List<Integer> expansionList = new ArrayList<>();
+		int secondary = 0;
+		int tertiary = 0; 
+		int num = 0;
 		while (!scanner.isEndOfFile()) {
 			Token t = scanner.nextRawToken();
 			if (t.isEol())
@@ -310,10 +325,42 @@ public class SrtTextReader {
 				continue;
 
 			Code r = new Code(scanner, t.getValue()).read();
-			expansionList.add(r.getBval());
+
+			CodePosition cp = new CodePosition();
+			int b = r.getBval();
+			int primary = sort.getPrimary(b);
+			cp.setPrimary((char) primary);
+
+			// We do not want the character to sort fully equal to the expanded characters (or any other
+			// character so adjust the ordering at other strengths.  May need further tweaks.
+			if (EXPERIMENTAL) {
+				secondary = sort.getSecondary(b);
+				tertiary = sort.getTertiary(b);
+				if (num++ == 0) {
+					Integer max = maxSec.get(primary);
+					secondary += max == null ? 0 : max;
+					if (charFlags(code.getCval()) == 1) {
+						max = maxTert.get(primary);
+						tertiary += max == null ? 0 : max;
+					}
+				} else {
+					secondary = 1;
+				}
+				cp.setSecondary((byte) (secondary));
+				cp.setTertiary((byte) (tertiary));
+			} else {
+				num++;
+				secondary = sort.getSecondary(b) & 0xff;
+				cp.setSecondary((byte) (secondary + 7));
+
+				tertiary = sort.getTertiary(b) & 0xff;
+				cp.setTertiary((byte) (tertiary + 2));
+			}
+			expansions.add(cp);
 		}
 
-		sort.addExpansion(code.getBval(), charFlags(code.getCval()), expansionList);
+		int flags = charFlags(code.getCval()) | (num-1) << 4;
+		sort.add(code.getBval(), expansions.size() - num + 1, 0, 0, flags);
 		state = IN_INITIAL;
 	}
 
@@ -340,6 +387,21 @@ public class SrtTextReader {
 
 		sort.add(c.getBval(), pos1, pos2, pos3, flags);
 		this.cflags = "";
+
+		if (EXPERIMENTAL) {
+			Integer max = maxSec.get(pos1);
+			if (max == null)
+				max = pos2;
+			else 
+				max = Math.max(pos2, max);
+			maxSec.put(pos1, max);
+			max = maxTert.get(pos1);
+			if (max == null)
+				max = pos3;
+			else 
+				max = Math.max(pos3, max);
+			maxTert.put(pos3, max);
+		}
 	}
 
 	/**

@@ -60,7 +60,7 @@ public class Sort {
 	private String description;
 	private Charset charset;
 
-	private final Page[] pages = new Page[256];
+	private Page[] pages = new Page[256];
 
 	private final List<CodePosition> expansions = new ArrayList<>();
 	private int maxExpSize = 1;
@@ -68,6 +68,8 @@ public class Sort {
 	private CharsetEncoder encoder;
 	private boolean multi;
 	private int maxPage;
+	private int headerLen = SRTHeader.HEADER_LEN; 
+	private int header3Len = -1;
 
 	public Sort() {
 		pages[0] = new Page();
@@ -82,6 +84,9 @@ public class Sort {
 		setTertiary( ch, tertiary);
 
 		setFlags(ch, flags);
+		int numExp = (flags >> 4) & 0xf;
+		if (numExp + 1 > maxExpSize)
+			maxExpSize = numExp + 1;
 	}
 
 	public char[] encode(String s) {
@@ -502,46 +507,6 @@ public class Sort {
 	}
 
 	/**
-	 * Add an expansion to the sort.
-	 * An expansion is a letter that sorts as if it were two separate letters.
-	 *
-	 * The case were two letters sort as if the were just one (and more complex cases) are
-	 * not supported or are unknown to us.
-	 *
-	 * @param ch The code point of this letter in the code page.
-	 * @param inFlags The initial flags, eg if it is a letter or not.
-	 * @param expansionList The letters that this letter sorts as, as code points in the codepage.
-	 */
-	public void addExpansion(int ch, int inFlags, List<Integer> expansionList) {
-		ensurePage(ch >>> 8);
-		setFlags(ch, (byte) ((inFlags & 0xf) | (((expansionList.size()-1) << 4) & 0xf0)));
-
-		// Check for repeated definitions
-		if (getPrimary(ch) != 0)
-			throw new ExitException(String.format("repeated code point %x", ch));
-
-		setPrimary(ch, (expansions.size() + 1));
-		setSecondary(ch,  0);
-		setTertiary(ch, 0);
-		maxExpSize = Math.max(maxExpSize, expansionList.size());
-
-		for (Integer b : expansionList) {
-			CodePosition cp = new CodePosition();
-			cp.setPrimary((char) (getPrimary(b) & 0xffff));
-
-			// We do not want the character to sort fully equal to the expanded characters (or any other
-			// character so adjust the ordering at other strengths.  May need further tweaks.
-			int secondary = getSecondary(b) & 0xff;
-			cp.setSecondary((byte) (secondary + 7));
-
-			int tertiary = getTertiary(b) & 0xff;
-			cp.setTertiary((byte) (tertiary + 2));
-
-			expansions.add(cp);
-		}
-	}
-
-	/**
 	 * Get the expansion with the given index, one based.
 	 * @param val The one-based index number of the extension.
 	 */
@@ -621,6 +586,8 @@ public class Sort {
 	 */
 	private void ensurePage(int n) {
 		assert n == 0 || isMulti();
+		if (n > pages.length)
+			pages = Arrays.copyOf(pages, n + 1);
 		if (this.pages[n] == null) {
 			this.pages[n] = new Page();
 			if (n > maxPage)
@@ -628,6 +595,14 @@ public class Sort {
 		}
 	}
 
+	/**
+	 * Allocate space for up to n pages.
+	 * @param n
+	 */
+	public void setMaxPage(int n) {
+		pages = Arrays.copyOf(pages, n + 1);
+	}
+	
 	/**
 	 * The max page, top 8+ bits of the character that we have information on.
 	 */
@@ -906,4 +881,28 @@ public class Sort {
 			}
 		}
 	}
+
+	public void setExpansions(List<CodePosition> expansionList) {
+		expansions.clear();
+		expansions.addAll(expansionList);
+	}
+
+	public int getHeaderLen() {
+		return headerLen;
+	}
+
+	public void setHeaderLen(int headerLen) {
+		this.headerLen = headerLen;
+	}
+
+	public int getHeader3Len() {
+		if (header3Len < 0)
+			header3Len = isMulti() ? SRTHeader.HEADER3_MULTI_LEN : SRTHeader.HEADER3_LEN;
+		return header3Len;
+	}
+
+	public void setHeader3Len(int header3Len) {
+		this.header3Len = header3Len;
+	}
+
 }
