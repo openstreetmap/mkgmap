@@ -538,15 +538,15 @@ public class GmapsuppBuilder implements Combiner {
 				}
 			}
 
-			for (int i = 0; i < sortMap.size(); i++) {
-				// These files are less than 1k
-				int sz = 1024;
-				int mdrBlocks = (sz + (bs - 1)) / bs;
-				int mdrSlots = (mdrBlocks + ENTRY_SIZE - 1) / ENTRY_SIZE;
+			for (Map.Entry<Integer, Sort> ent : sortMap.entrySet()) {
+				Sort sort = ent.getValue();
+				int sz = sort.isMulti() ? 1024 * 160 : 1024; // unicode SRT file can be much bigger
+				int srtBlocks = (sz + (bs - 1)) / bs;
+				int srtSlots = (srtBlocks + ENTRY_SIZE - 1) / ENTRY_SIZE;
 
-				totBlocks += mdrBlocks;
-				totHeaderEntries += mdrSlots;
-			}
+				totBlocks += srtBlocks;
+				totHeaderEntries += srtSlots;
+			}			
 
 			// Add for header itself, plus the first directory block.
 			totHeaderEntries += DIRECTORY_OFFSET_ENTRY + 1;
