@@ -50,14 +50,6 @@ public class SortExpandTest {
 		checkOrder("asrst", "asßst");
 	}
 
-	/**
-	 * Expanded letters should sort equal to what they expand to.
-	 */
-	@Test
-	public void testAgainstExpansion() {
-		assertEquals(0, compareKey("asssst", "asßst"));
-	}
-
 	@Test
 	public void testExpandSize() {
 		// make sure buffer doesn't overflow when all characters are expanded.
