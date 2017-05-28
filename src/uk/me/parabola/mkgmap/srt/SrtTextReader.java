@@ -339,7 +339,7 @@ public class SrtTextReader {
 				if (num++ == 0) {
 					Integer max = maxSec.get(primary);
 					secondary += max == null ? 0 : max;
-					if (charFlags(code.getCval()) == 1) {
+					if (charFlags(code) == 1) {
 						max = maxTert.get(primary);
 						tertiary += max == null ? 0 : max;
 					}
@@ -359,7 +359,7 @@ public class SrtTextReader {
 			expansions.add(cp);
 		}
 
-		int flags = charFlags(code.getCval()) | (num-1) << 4;
+		int flags = charFlags(code) | (num-1) << 4;
 		sort.add(code.getBval(), expansions.size() - num + 1, 0, 0, flags);
 		state = IN_INITIAL;
 	}
@@ -378,13 +378,12 @@ public class SrtTextReader {
 
 	/**
 	 * Set the sort code for the given 8-bit character.
-	 * @param ch The same character in unicode.
+	 * @param c the code instance
 	 */
 	private void setSortcode(Code c) {
-		int flags = charFlags(c.getCval());
+		int flags = charFlags(c);
 		if (cflags.contains("0"))
 			flags = 0;
-
 		sort.add(c.getBval(), pos1, pos2, pos3, flags);
 		this.cflags = "";
 
@@ -407,15 +406,18 @@ public class SrtTextReader {
 	/**
 	 * The flags that describe the kind of character. Known ones
 	 * are letter and digit. There may be others.
-	 * @param ch The actual character (unicode).
+	 * @param c The actual code instance
 	 * @return The flags that apply to it.
 	 */
-	private int charFlags(int ch) {
+	private int charFlags(Code c) {
 		int flags = 0;
-		if (Character.isLetter(ch) && (Character.getType(ch) & Character.MODIFIER_LETTER) == 0)
-			flags = 1;
-		if (Character.isDigit(ch))
-			flags = 2;
+		if (c.getBval() <= 0xff) {
+			int ch = c.getCval();
+			if (ch == 'ª' || (Character.isLetter(ch) && (Character.getType(ch) & Character.MODIFIER_LETTER) == 0))
+				flags = 1;
+			if (Character.isDigit(ch))
+				flags = 2;
+		}
 		return flags;
 	}
 
