@@ -89,7 +89,7 @@ public class PrefixSuffixFilter {
 	 */
 	private void configSuffixMap(EnhancedProperties props) {
 		langSuffixMap.put("de", Arrays.asList(" Straße", " Strasse", "-Straße", "-Strasse", " Weg", "-Weg"));
-		langSuffixMap.put("en", Arrays.asList(" Road,  Street"));
+		langSuffixMap.put("en", Arrays.asList(" Road", " Street"));
 	}
 
 	/**
