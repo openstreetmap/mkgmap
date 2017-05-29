@@ -122,7 +122,7 @@ public class Mdr19 extends MdrSection implements HasHeaderFlags {
 	 * @return The correct value based on the contents of the section.  Zero if nothing needs to be done.
 	 */
 	public int getExtraValue() {
-		return getSizes().getSize(19) - 1;
+		return getItemSize() - 1;
 	}
 
 	public void setPois(List<Mdr11Record> pois) {
