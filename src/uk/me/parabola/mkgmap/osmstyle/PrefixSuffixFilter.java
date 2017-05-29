@@ -146,7 +146,7 @@ public class PrefixSuffixFilter {
 		if (keysParts.length < 2 || val.isEmpty() || valParts.length < 1) {
 			throw new IllegalArgumentException("don't understand " + key + " = " + val);
 		}
-		switch (keysParts[0]) {
+		switch (keysParts[0].trim()) {
 		case "prefix1":
 		case "prefix2":
 			options.put(key, val); // store for later processing
@@ -154,10 +154,10 @@ public class PrefixSuffixFilter {
 		case "suffix":
 			List<String> suffixes = new ArrayList<>();
 			for (String s : valParts) {
-				suffixes.add(stripQuotes(s));
+				suffixes.add(stripQuotes(s.trim()));
 			}
 			sortByLength(suffixes);
-			langSuffixMap.put(keysParts[1], suffixes);
+			langSuffixMap.put(keysParts[1].trim(), suffixes);
 			break;
 		case "lang":
 			String iso = keysParts[1].trim();
@@ -228,7 +228,9 @@ public class PrefixSuffixFilter {
 			for (String prefix : prefixesCountry) {
 				if (label.charAt(0) < 7)
 					break; // label starts with shield code
-				if (label.startsWith(prefix)) {
+				if (label.length() < prefix.length())
+					continue;
+				if (prefix.equalsIgnoreCase(label.substring(0, prefix.length()))) {
 					if (prefix.endsWith(" ")) {
 						label = prefix.substring(0, prefix.length() - 1) + (char) 0x1e
 								+ label.substring(prefix.length());
@@ -240,8 +242,11 @@ public class PrefixSuffixFilter {
 				}
 			}
 			for (String suffix : suffixesCountry) {
-				int pos = label.lastIndexOf(suffix);
-				if (pos > 0) {
+				int len = label.length();
+				if (len < suffix.length())
+					continue;
+				int pos = len - suffix.length();
+				if (suffix.equalsIgnoreCase(label.substring(pos, len))) {
 					if (suffix.startsWith(" "))
 						label = label.substring(0, pos) + (char) 0x1f + suffix.substring(1);
 					else 
@@ -252,7 +257,7 @@ public class PrefixSuffixFilter {
 			}
 			if (modified) {
 				labels[i] = label;
-				log.debug("modified",label,country,road.getRoadDef());
+				log.error("modified",label,country,road.getRoadDef());
 			}
 		}
 	}
