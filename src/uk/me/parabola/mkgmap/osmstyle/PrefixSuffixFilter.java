@@ -257,7 +257,7 @@ public class PrefixSuffixFilter {
 			}
 			if (modified) {
 				labels[i] = label;
-				log.error("modified",label,country,road.getRoadDef());
+				log.debug("modified",label,country,road.getRoadDef());
 			}
 		}
 	}
