@@ -12,20 +12,27 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 
 import uk.me.parabola.imgfmt.app.mdr.Mdr7;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapRoad;
+import uk.me.parabola.mkgmap.scan.TokType;
+import uk.me.parabola.mkgmap.scan.Token;
+import uk.me.parabola.mkgmap.scan.TokenScanner;
 import uk.me.parabola.util.EnhancedProperties;
 
 /**
@@ -48,85 +55,135 @@ public class PrefixSuffixFilter {
 	private static final int MODE_SUFFIX = 1;
 	
 	private boolean enabled;
+	private final Set<String> languages = new LinkedHashSet<>();
 	private final Map<String, List<String>> langPrefixMap = new HashMap<>();
 	private final Map<String, List<String>> langSuffixMap = new HashMap<>();
 	private final Map<String, List<String>> countryLanguageMap = new HashMap<>();
 	private final Map<String, List<String>> countryPrefixMap = new HashMap<>();
 	private final Map<String, List<String>> countrySuffixMap = new HashMap<>();
 
+	private EnhancedProperties options = new EnhancedProperties();
+
 	public PrefixSuffixFilter(EnhancedProperties props) {
-		enabled = props.getProperty("use-prefix-suffix-filter", false);
-		if (enabled) {
-			buildCountryLanguageMap(props);
-			configPrefixMap(props);
-			configSuffixMap(props);
+		String cfgFile = props.getProperty("road-name-config",null);
+		enabled = readConfig(cfgFile);
+	}
+
+	/**
+	 * Read the configuration file for this filter.
+	 * @param cfgFile path to file
+	 * @return true if filter can be used, else false.
+	 */
+	private boolean readConfig(String cfgFile) {
+		if (cfgFile == null) 
+			return false;
+		try (InputStreamReader reader = new InputStreamReader(new FileInputStream(cfgFile), "utf-8")) {
+			readOptionFile(reader, cfgFile);
+			return true;
+		} catch (Exception e) {
+			log.error(e.getMessage());
+			log.error(this.getClass().getSimpleName() + " disabled, failed to read config file " + cfgFile);
+			return false;
 		}
 	}
 	
 	/**
-	 * @param props the program properties
-	 * @return Map which maps 3 letter ISO code for country name to a list of 2 letter language codes
-	 * used for road names, e.g. Canada (=CAN) uses English (=en) and French (=fr) language.
-	 * The order in the list doesn't matter. 
-	 * TODO: read from a configuration file.
+	 * 
+	 * @param r
+	 * @param filename
 	 */
-	private void buildCountryLanguageMap(EnhancedProperties props) {
-		countryLanguageMap.put("ITA", Arrays.asList("it"));
-		countryLanguageMap.put("DEU", Arrays.asList("de"));
-		countryLanguageMap.put("FRA", Arrays.asList("fr"));
-		countryLanguageMap.put("PRT", Arrays.asList("pt"));
-		countryLanguageMap.put("ESP", Arrays.asList("es"));
-		countryLanguageMap.put("CAN", Arrays.asList("fr,en"));
-		countryLanguageMap.put("GBR", Arrays.asList("en"));
-		countryLanguageMap.put("USA", Arrays.asList("en"));
-		countryLanguageMap.put("CHE", Arrays.asList("de","it","fr"));
+	private void readOptionFile(Reader r, String filename) {
+		BufferedReader br = new BufferedReader(r);
+		TokenScanner ts = new TokenScanner(filename, br);
+		ts.setExtraWordChars(":");
+
+		while (!ts.isEndOfFile()) {
+			Token tok = ts.nextToken();
+			if (tok.isValue("#")) {
+				ts.skipLine();
+				continue;
+			}
+
+			String key = tok.getValue();
+
+			ts.skipSpace();
+			tok = ts.peekToken();
+			
+			if (tok.getType() == TokType.SYMBOL) {
+
+				String punc = ts.nextValue();
+				String val;
+				if (punc.equals(":") || punc.equals("=")) {
+					val = ts.readLine();
+				} else {
+					ts.skipLine();
+					continue;
+				}
+				processOption(key, val);
+			} else if (key != null){
+				throw new IllegalArgumentException("don't understand line with " + key );
+			} else {
+				ts.skipLine();
+			}
+		}
+		/**
+		 * process lines starting with prefix1 or prefix2. 
+		 */
+		for (String lang : languages) {
+			String prefix1 = options.getProperty("prefix1:" + lang, null);
+			if (prefix1 == null)
+				continue;
+			String prefix2 = options.getProperty("prefix2:" + lang, null);
+			List<String> p1 = prefix1 != null ? Arrays.asList(prefix1.split(",")) : Collections.emptyList();
+			List<String> p2 = prefix2 != null ? Arrays.asList(prefix2.split(",")) : Collections.emptyList();
+			langPrefixMap.put(lang, genPrefix(p1, p2));
+		}
+	}
+
+	private void processOption(String key, String val) {
+		String[] keysParts = key.split(":");
+		String[] valParts = val.split(",");
+		if (keysParts.length < 2 || val.isEmpty() || valParts.length < 1) {
+			throw new IllegalArgumentException("don't understand " + key + " = " + val);
+		}
+		switch (keysParts[0]) {
+		case "prefix1":
+		case "prefix2":
+			options.put(key, val); // store for later processing
+			break;
+		case "suffix":
+			List<String> suffixes = new ArrayList<>();
+			for (String s : valParts) {
+				suffixes.add(stripQuotes(s));
+			}
+			sortByLength(suffixes);
+			langSuffixMap.put(keysParts[1], suffixes);
+			break;
+		case "lang":
+			String iso = keysParts[1].trim();
+			List<String> langs = new ArrayList<>();
+			for (String lang : valParts) {
+				langs.add(lang.trim());
+			}
+			countryLanguageMap .put(iso, langs);
+			languages.addAll(langs);
+		default:
+			break;
+		}
 	}
 	
-	/**
-	 * @param props the program properties
-	 * @return Map with well known road name suffixed for a given 2 letter language code.  
-	 * TODO: read from a configuration file.
+
+	/** Create all combinations of items in prefix1 with items in prefix2 and finally prefix1 with an extra blank.  
+	 * @param prefix1 list of prefix words
+	 * @param prefix2 list of prepositions
+	 * @return all combinations
 	 */
-	private void configSuffixMap(EnhancedProperties props) {
-		langSuffixMap.put("de", Arrays.asList(" Straße", " Strasse", "-Straße", "-Strasse", " Weg", "-Weg"));
-		langSuffixMap.put("en", Arrays.asList(" Road", " Street"));
-	}
-
-	/**
-	 * @param props the program properties
-	 * @return Map with well known road name prefixes for a given 2 letter language code.  
-	 * TODO: read from a configuration file.
-	 */
-	private void configPrefixMap(EnhancedProperties props) {
-		{
-			List<String> prefix1 = Arrays.asList("Calle", "Carrer", "Avenida");
-			List<String> prefix2 = Arrays.asList("de las ", "de los ", "de la ", "del ", "de ", "d'");
-			langPrefixMap.put("es", genPrefix(prefix1, prefix2));
-		}
-		{
-			List<String> prefix1 = Arrays.asList("Allée", "Chemin", "Avenue", "Rue", "Place");
-			List<String> prefix2 = Arrays.asList("de la ", "du ", "de ", "des ", "d'", "de l'");
-			langPrefixMap.put("fr", genPrefix(prefix1, prefix2));
-		}
-		{
-			List<String> prefix1 = Arrays.asList("Rua", "Avenida", "Travessa");
-			List<String> prefix2 = Arrays.asList("da ", "do ", "de ", "das ", "dos ");
-			langPrefixMap.put("pt", genPrefix(prefix1, prefix2));
-		}
-		{
-			List<String> prefix1 = Arrays.asList("Via", "Piazza", "Viale");
-			List<String> prefix2 = Arrays.asList("del ", "dei ", "della ", "delle ", "di ");
-			langPrefixMap.put("it", genPrefix(prefix1, prefix2));
-		}
-
-		for (Entry<String, List<String>> e : langPrefixMap.entrySet())
-			sortByLength(e.getValue());
-	}
-
 	private List<String> genPrefix (List<String> prefix1, List<String> prefix2) {
 		List<String> prefixes = new ArrayList<>();
 		for (String p1 : prefix1) {
+			p1 = stripQuotes(p1);
 			for (String p2 : prefix2) {
+				p2 = stripQuotes(p2);
 				prefixes.add(p1 + " " + p2);
 			}
 			prefixes.add(p1 + " ");
@@ -134,6 +191,14 @@ public class PrefixSuffixFilter {
 		return prefixes;
 	}
 
+	private String stripQuotes(String s) {
+		if (s.startsWith("'") && s.endsWith("'") || s.startsWith("\"") && s.endsWith("\"")) {
+			return s.substring(1, s.length()-1);
+		}
+		return s;
+	}
+	
+	
 	/**
 	 * Modify all labels of a road. Each label is checked against country specific lists of 
 	 * well known prefixes (e.g. "Rue de la ", "Avenue des "  ) and suffixes (e.g. " Road").
@@ -144,6 +209,8 @@ public class PrefixSuffixFilter {
 	 * @param road
 	 */
 	public void filter(MapRoad road) {
+		if (!enabled)
+			return;
 		String country = road.getCountry();
 		if (country == null)
 			return;
@@ -185,7 +252,7 @@ public class PrefixSuffixFilter {
 			}
 			if (modified) {
 				labels[i] = label;
-				log.error("check",label,country,road.getRoadDef());
+				log.debug("modified",label,country,road.getRoadDef());
 			}
 		}
 	}
@@ -233,10 +300,10 @@ public class PrefixSuffixFilter {
 
 	/**
 	 * Sort by string length so that longest string comes first.
-	 * @param prefixes
+	 * @param strings
 	 */
-	private void sortByLength(List<String> prefixes) {
-		prefixes.sort(new Comparator<String>() {
+	private void sortByLength(List<String> strings) {
+		strings.sort(new Comparator<String>() {
 			@Override
 			public int compare(String o1, String o2) {
 				return Integer.compare(o2.length(), o1.length());

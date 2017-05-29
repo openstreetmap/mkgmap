@@ -1,0 +1,47 @@
+# Sample configuration file for road name prefixes and suffixes
+
+# Note that the order of the options doesn't matter, as well as the position 
+# in the commo separated lists. Very important is the proper usage of blanks
+# within the quotation marks.
+
+##########################################################################
+# Section 1
+# prefix1:<lang> list of 1st words
+# prefix2:<lang> further words to combine with each prefix1 word, separated with a blank
+# suffix:<lang> gives list of suffix words
+
+# spanish
+prefix1:es = "Calle", "Carrer", "Avenida"
+prefix2:es = "de las ", "de los ", "de la ", "del ", "de ", "d'"
+
+# french
+prefix1:fr = "Allée", "Chemin", "Avenue", "Rue", "Place"
+prefix2:fr = "de la ", "du ", "de ", "des ", "d'", "de l'"
+
+# portugese
+prefix1:pt = "Rua", "Avenida", "Travessa"
+prefix2:pt = "da ", "do ", "de ", "das ", "dos "
+
+# italian
+prefix1:it = "Via", "Piazza", "Viale"
+prefix2:it = "del ", "dei ", "della ", "delle ", "di "
+
+#german
+suffix:de = " Straße", " Strasse", "-Straße", "-Strasse", " Weg", "-Weg"
+
+# english
+prefix1:en = "North ", "East ", "South ", "West " 
+suffix:en = " Road", " Street"
+
+##########################################################################
+# Section 2
+# Map 3 letter ISO country codes to list of used languages for road names.
+
+lang:CAN = en, fr
+lang:CHE = de, fr, it
+lang:DEU = de
+lang:ESP = es
+lang:FRA = fr
+lang:GBR = en
+lang:PRT = pt
+lang:USA = en
