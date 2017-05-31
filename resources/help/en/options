@@ -76,7 +76,8 @@ Label options:
 	This is equivalent to --code-page=1252.
 
 --unicode
-	This is equivalent to --code-page=65001. Note that only newer devices support Unicode.
+	This is equivalent to --code-page=65001. Note that  
+	some devices don't support unicode maps produced by mkgmap.
 
 --code-page=number
 	This option enables the use of international characters. Only 8 bit
@@ -130,16 +131,36 @@ Address search options:
 	same code page and sorting options (e.g. --code-page, --latin1) must
 	be used as were used to compile the individual map tiles.
 
---x-split-name-index
-	A temporary option to enable indexing each part of a street name separately.
+--split-name-index
+	An option to enable indexing each part of a street name separately.
 	So for example if the street is "Aleksandra Gryglewskiego" then you will be able to
 	search for it as both "Aleksandra" and "Gryglewskiego".  It will also increase the
 	size of the index.  Useful in countries where searching for the first word in name
-	is not the right thing to do.
+	is not the right thing to do. See also option road-name-config.  
 
-	Note that this option is still experimental and there may be problems. If you find
-	any let us know!
-
+--road-name-config=file
+	This option handles the problem that some countries have road names which 
+	ofter start or end with very similar words, e.g. in France the first word
+	is very often 'Rue', ofter followed by a preposition like 'de la' or 'des'.
+	This leads to rather long road names like 'Rue de la Concorde' where only
+	the word 'Concorde' is really interesting. In the USA, you ofter have names
+	like 'West Main Street' where only the word 'Main' is important.  
+	Garmin software has some tricks to handle this problem. It allows to use
+	special characters in the road labels which mark the beginning and end of 
+	the important part. 
+	There are two different visiual effects of this option:
+	- On the PC, when zooming out, the name 'Rue de la Concorde' is only
+		rendered as 'Concorde'.
+	- The index for road names only contains the important part of the name.
+		You can search for road name Conc to find road names like 'Rue de la Concorde'.
+		One problem: Search for 'Rue' will not list 'Rue de la Concorde' 
+		or 'Rue du Moulin'. It may list 'Rueben Brookins Road' if that is in the map.
+		
+	Another effect is that the index is smaller. 
+	
+	The option specifies the path to a file which gives the details. See 
+	comments in the sample roadNameConfig.txt for further details.
+ 
 --bounds=directory|zipfile
 	A directory or a zip file containing the preprocessed bounds files. 
 	Bounds files in a zip file must be located in the zip file's root directory.
@@ -611,8 +632,9 @@ Miscellaneous options:
 		the flood blocker
 
 --make-poi-index
-	Generate the POI index (not yet useful).
-
+	Generate a POI index in each map tile. Probably not used by modern devices,
+	but still supported.
+	
 --nsis
 	Write a .nsi file that can be used with the Nullsoft Scriptable Install System
 	(NSIS) to create a Windows Mapsource Installer.
