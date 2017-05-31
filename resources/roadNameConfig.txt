@@ -1,8 +1,10 @@
-# Sample configuration file for road name prefixes and suffixes
+# Sample configuration file for road name prefixes and suffixes.
+# A road name like West Main Street is separated into a prefix 'West',
+# the important part 'Main', and the suffix 'Street'.  
 
 # Note that the order of the options doesn't matter, as well as the position 
 # in the commo separated lists. Very important is the proper usage of blanks
-# within the quotation marks.
+# within the quotation marks as well as the spelling.
 
 ##########################################################################
 # Section 1
