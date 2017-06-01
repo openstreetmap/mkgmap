@@ -105,7 +105,7 @@ Address search options:
 
 	If instead the --tdbfile option is given then the index consists
 	of two files named osmmap.mdx and osmmap_mdr.img which can be used
-	with mapsource. (For compatibility, you do not need the tdbfile
+	with MapSource. (For compatibility, you do not need the tdbfile
 	option if gmapsupp is not given).
 
 	If both the --gmapsupp and --tdbfile options are given alongside
@@ -136,7 +136,8 @@ Address search options:
 	So for example if the street is "Aleksandra Gryglewskiego" then you will be able to
 	search for it as both "Aleksandra" and "Gryglewskiego".  It will also increase the
 	size of the index.  Useful in countries where searching for the first word in name
-	is not the right thing to do. See also option road-name-config.  
+	is not the right thing to do. Words following an opening bracket '(' are ignored. 
+	See also option road-name-config.  
 
 --road-name-config=file
 	This option handles the problem that some countries have road names which 
@@ -147,7 +148,9 @@ Address search options:
 	like 'West Main Street' where only the word 'Main' is important.  
 	Garmin software has some tricks to handle this problem. It allows to use
 	special characters in the road labels which mark the beginning and end of 
-	the important part. 
+	the important part. In combinarion with option split-name-index
+	only the words in the important part are indexed.
+	 
 	There are two different visiual effects of this option:
 	- On the PC, when zooming out, the name 'Rue de la Concorde' is only
 		rendered as 'Concorde'.
@@ -155,12 +158,51 @@ Address search options:
 		You can search for road name Conc to find road names like 'Rue de la Concorde'.
 		One problem: Search for 'Rue' will not list 'Rue de la Concorde' 
 		or 'Rue du Moulin'. It may list 'Rueben Brookins Road' if that is in the map.
+		Only MapSource shows a corresponding hint.
 		
 	Another effect is that the index is smaller. 
-	
 	The option specifies the path to a file which gives the details. See 
 	comments in the sample roadNameConfig.txt for further details.
  
+--mdr7-excl 
+	This option allows to specify words which should not be in the road index.
+	It was added before option road-name-config and is probably no longer needed.
+	Example usage: --x-mdr7-excl="Road, Street, Straße, Weg"
+ 
+--mdr7-del
+	Use this option if your style adds strings to the labels of roads which you
+	want to see in the map but which should not appear in the result list
+	of a road name / address search. The list is used like this:
+	For each road label mkgmap searches the last blank. If one is found, it checks
+	if the word after it appears in the given list. If so, the word is removed
+	and the search is repeated. The remaining string is used to create the index.
+	  
+--poi-excl-index
+	By default, mkgmap indexes the following POI types with a non-empty label:
+	- 0x00 .. 0x0f (cities, sub type 0, type <= 0xf)
+	- 0x2axx..0x30xx (Food & Drink, Lodging, ...)
+	- 0x28xx (no category ?)
+	- 0x64xx .. 0x66xx (attractions)   
+	This option allows to exclude POI types from the index. 
+	The exclueded types are not indexed, but may still be searchable on a device 
+	as some devices seem to ignore most of the index, e.g. an Oregon 600 with 
+	firmware 5.00 only seems to use it for city search.
+	If you device finds a POI name like 'Planet' when you search for 'Net'
+	it doesn't use the index because the index created by mkgmap cannot help for 
+	that search. 
+	So, this option may help when you care about the size of the index or the
+	memory that is needed to calculate it.    
+	The option expects a comma separated list of types or type ranges. A range is 
+	given with from-type-to-type, e.g. 0x6400-0x6405. First and last type are both 
+	excluded.A range can span multiple types, e.g. 0x6400-0x661f.  
+	Examples for usage: 
+	- Assume your style adds a POI with type 0x2800 for each addr:housenumber.
+		It is not useful to index those numbers, so you can use 
+		--poi-excl-index=0x2800
+		to exclude this.
+	- For the mentioned Oregon you may use --poi-excl-index=0x2a00-0x661f
+		to reduce the index size.
+		
 --bounds=directory|zipfile
 	A directory or a zip file containing the preprocessed bounds files. 
 	Bounds files in a zip file must be located in the zip file's root directory.

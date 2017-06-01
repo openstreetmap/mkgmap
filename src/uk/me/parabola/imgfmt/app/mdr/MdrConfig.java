@@ -160,6 +160,11 @@ public class MdrConfig {
 		return set;
 	}
 
+	/**
+	 * Parse option --poi-excl-index .
+	 * @param opt the option string given. Expected is a comma separated list,eg
+	 * "0x2800" or "0x2800, 0x6400-0x661f" 
+	 */
 	public void setPoiExcl (String opt) {
 		if (opt == null)
 			return;
@@ -171,22 +176,20 @@ public class MdrConfig {
 				String[] ranges = range.split("-");
 				if (ranges.length != 2)
 					throw new IllegalArgumentException("invalid range in option " + range);
-				genTypes(poiExclTypes, ranges[0], ranges[1]);
+				genTypesForRange(poiExclTypes, ranges[0], ranges[1]);
 			} else {
-				genTypes(poiExclTypes, range,range);
+				genTypesForRange(poiExclTypes, range,range);
 			}
 		}
-//		if (!poiExclTypes.isEmpty()) {
-//			StringBuilder sb = new StringBuilder();
-//			for (int type : poiExclTypes) {
-//				sb.append(GType.formatType(type));
-//				sb.append(", ");
-//			}
-//			System.out.println("POI types excluded from index: " + sb.toString().substring(0,sb.length()-2));
-//		}
 	}
 
-	private void genTypes(Set<Integer> set, String start, String stop) {
+	/**
+	 * Create all POI types for a given range.
+	 * @param set set of integers. Generated types are added to it.
+	 * @param start first type
+	 * @param stop last type (included)
+	 */
+	private void genTypesForRange(Set<Integer> set, String start, String stop) {
 		GType[] types = new GType[2];
 		String[] ranges = {start, stop};
 		boolean ok = true;
