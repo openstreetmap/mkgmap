@@ -1,4 +1,5 @@
-= List of options = Note that option order is significant: An option only 
+= List of options = 
+Note that option order is significant: An option only 
 applies to subsequent input files. (So if you are using splitter, you probably 
 want to put most of your options before '-c template.args'.)
 
