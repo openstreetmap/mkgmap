@@ -14,7 +14,8 @@ General options:
 filename
 --input-file=filename
 	Read input data from the give file.  This option (or just a
-	filename) may be given more than once.
+	filename) may be given more than once. Make sure to set all 
+	wanted options before using this.
 
 --gmapsupp
 	Create a gmapsupp.img file that can be uploaded to a Garmin or
