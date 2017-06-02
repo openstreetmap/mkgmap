@@ -12,6 +12,8 @@
  */
 package uk.me.parabola.imgfmt.app.mdr;
 
+import java.text.Collator;
+
 /**
  * Holds details of a single street.
  * @author Steve Ratcliffe
@@ -110,11 +112,102 @@ public class Mdr7Record extends RecordBase implements NamedRecord {
 			return name.substring((nameOffset & 0xff) + (prefixOffset & 0xff));
 	}
 
+	public String getSuffix() {
+		if(suffixOffset == 0)
+			return "";
+		return name.substring(suffixOffset & 0xff);
+	}
+	
+	public String getPrefix() {
+		if(prefixOffset== 0)
+			return "";
+		return name.substring(0, prefixOffset & 0xff);
+	}
+	
 	public String toString() {
 		return name + " in " + city.getName();
 	}
 
 	public String getInitialPart() {
-		return name.substring(0, (nameOffset & 0xff));
+		return name.substring(0, (nameOffset & 0xff) + (prefixOffset & 0xff));
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + labelOffset;
+		result = prime * result + nameOffset;
+		result = prime * result + outNameOffset;
+		result = prime * result + prefixOffset;
+		result = prime * result + stringOffset; // XXX probably not needed
+		result = prime * result + suffixOffset;
+		result = prime * result + getMapIndex();
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Mdr7Record other = (Mdr7Record) obj;
+		if (labelOffset != other.labelOffset)
+			return false;
+		if (getMapIndex() != other.getMapIndex())
+			return false;
+		if (nameOffset != other.nameOffset)
+			return false;
+		if (outNameOffset != other.outNameOffset)
+			return false;
+		if (prefixOffset != other.prefixOffset)
+			return false;
+		if (stringOffset != other.stringOffset) // XXX probably not needed
+			return false;
+		if (suffixOffset != other.suffixOffset)
+			return false;
+		if (city != other.getCity()) 
+			return false;
+		return true;
+	}
+
+	/**
+	 * Calculate integer for partial + full repeat.
+	 * @param last record to compare
+	 * @param collator collator for compare  
+	 * @return 3 if full and partial repeat (Rr), 2 if only full repeat (R), 1 if partial repeat (r), 0 if no repeat 
+	 */
+	public int checkRepeat (Mdr7Record last, Collator collator) {
+		if (last == null)
+			return 0;
+		int res = 0;
+		String lastPartial = last.getPartialName();
+		String partial = getPartialName();
+		int cmp = collator.compare(lastPartial, partial);
+		if (cmp == 0)
+			res = 1;
+		res |= checkFullRepeat(last, collator);
+		return res;
+	}
+	
+	/**
+	 * Calculate integer for full repeat.
+	 * @param last record to compare
+	 * @param collator collator for compare  
+	 * @return 2 if full repeat (R), 0 else 
+	 */
+	public int checkFullRepeat (Mdr7Record last, Collator collator) {
+		if (last == null)
+			return 0;
+		int res = 0;
+		String lastName = last.getName();
+		String name = getName();
+		int cmp = collator.compare(lastName, name);
+		if (cmp == 0) 
+			res |= 2;
+		return res;
 	}
 }

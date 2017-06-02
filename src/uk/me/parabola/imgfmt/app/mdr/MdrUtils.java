@@ -26,6 +26,7 @@ public class MdrUtils {
 
 	public static final int STREET_INDEX_PREFIX_LEN = 4;
 	public static final int POI_INDEX_PREFIX_LEN = 4;
+	public static final int MAX_GROUP = 13;
 
 	/**
 	 * Get the group number for the poi.  This is the first byte of the records
@@ -36,18 +37,31 @@ public class MdrUtils {
 	 * @return The group number.  This is a number between 1 and 9 (and later
 	 * perhaps higher numbers such as 0x40, so do not assume there are no
 	 * gaps).
+	 * Group / Filed under
+	 * 1 Cities
+	 * 2 Food & Drink
+	 * 3 Lodging
+	 * 4-5 Recreation / Entertainment / Attractions
+	 * 6 Shopping
+	 * 7 Auto Services
+	 * 8 Community
+	 * 9 ?
+	 * 
 	 */
 	public static int getGroupForPoi(int fullType) {
 		// We group pois based on their type.  This may not be the final thoughts on this.
-		int type = MdrUtils.getTypeFromFullType(fullType);
+		int type = getTypeFromFullType(fullType);
 		int group = 0;
-		if (fullType < 0xf)
+		if (fullType <= 0xf)
 			group = 1;
-		else if (type >= 0x2a && type <= 0x30) {
+		else if (type >= 0x2a && type <= 0x30) { 
 			group = type - 0x28;
 		} else if (type == 0x28) {
 			group = 9;
+		} else if (type >= 0x64 && type <= 0x66) {
+			group = type - 0x59;
 		}
+		assert group >= 0 && group <= MAX_GROUP : "invalid group " + Integer.toHexString(group);
 		return group;
 	}
 
@@ -55,7 +69,7 @@ public class MdrUtils {
 		return getGroupForPoi(fullType) != 0;
 	}
 
-	private static int getTypeFromFullType(int fullType) {
+	public static int getTypeFromFullType(int fullType) {
 		if ((fullType & 0xfff00) > 0)
 			return (fullType>>8) & 0xfff;
 		else
@@ -63,12 +77,12 @@ public class MdrUtils {
 	}
 
 	/**
-	 * Gets the subtype if there is one, else the type.
+	 * Gets the subtype 
 	 * @param fullType The type in the so-called 'full' format.
-	 * @return If there is a subtype, then it is returned. Otherwise the type is returned.
+	 * @return If there is a subtype, then it is returned, else 0.
 	 */
-	public static int getSubtypeOrTypeFromFullType(int fullType) {
-		return fullType & 0xff;
+	public static int getSubtypeFromFullType(int fullType) {
+		return fullType < 0xff ? 0 : fullType & 0xff;
 	}
 
 	/**

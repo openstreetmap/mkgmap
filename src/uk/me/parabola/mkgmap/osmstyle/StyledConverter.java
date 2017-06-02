@@ -145,17 +145,19 @@ public class StyledConverter implements OsmConverter {
 	private final boolean routable;
 	private final Tags styleOptionTags;
 	private final static String STYLE_OPTION_PREF = "mkgmap:option:";
-
+	private final PrefixSuffixFilter prefixSuffixFilter;
+	
 	private LineAdder lineAdder = new LineAdder() {
 		public void add(MapLine element) {
 			if (element instanceof MapRoad){
+				prefixSuffixFilter.filter((MapRoad) element);
 				collector.addRoad((MapRoad) element);
 			}
 			else
 				collector.addLine(element);
 		}
 	};
-
+	
 	public StyledConverter(Style style, MapCollector collector, EnhancedProperties props) {
 		this.collector = collector;
 
@@ -207,6 +209,7 @@ public class StyledConverter implements OsmConverter {
 		routable = props.containsKey("route");
 		String styleOption= props.getProperty("style-option",null);
 		styleOptionTags = parseStyleOption(styleOption);
+		prefixSuffixFilter = new PrefixSuffixFilter(props);
 	}
 
 	/**

@@ -36,6 +36,9 @@ public class Mdr5Record extends RecordBase implements NamedRecord {
 	private Mdr14Record country;
 	private int[] mdr20;
 	private int mdr20Index;
+	private int mdr20SortPos;
+	private int mdr21SortPos;
+	private int mdr22SortPos;
 
 	public int getCityIndex() {
 		return cityIndex;
@@ -173,5 +176,28 @@ public class Mdr5Record extends RecordBase implements NamedRecord {
 
 	public String getCountryName() {
 		return country.getName();
+	}
+
+	public void setMdr20SortPos(int n) {
+		mdr20SortPos = n;
+	}
+
+	public int getMdr20SortPos() {
+		return mdr20SortPos;
+	}
+	public void setMdr21SortPos(int n) {
+		mdr21SortPos = n;
+	}
+
+	public int getMdr21SortPos() {
+		return mdr21SortPos;
+	}
+
+	public void setMdr22SortPos(int n) {
+		mdr22SortPos = n;
+	}
+
+	public int getMdr22SortPos() {
+		return mdr22SortPos;
 	}
 }

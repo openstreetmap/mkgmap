@@ -147,12 +147,12 @@ public class MapReader implements Closeable {
 	}
 
 
-	public List<Polygon> shapesForLevel(int level) {
+	public List<Polygon> shapesForLevel(int level, boolean witExtTypeData) {
 		ArrayList<Polygon> shapes = new ArrayList<Polygon>();
 
 		Subdivision[] subdivisions = treFile.subdivForLevel(level);
 		for (Subdivision div : subdivisions) {
-			List<Polygon> subdivShapes = rgnFile.shapesForSubdiv(div);
+			List<Polygon> subdivShapes = rgnFile.shapesForSubdiv(div, witExtTypeData);
 			shapes.addAll(subdivShapes);
 		}
 

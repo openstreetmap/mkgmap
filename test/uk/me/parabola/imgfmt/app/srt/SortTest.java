@@ -137,10 +137,8 @@ public class SortTest {
 	public void testExpanded() {
 		assertEquals(-1, keyCompare("æ", "Ae"));
 		assertEquals(-1, keyCompare("æ", "AE"));
-		assertEquals(0, keyCompare("æ", "ae"));
 		assertEquals(-1, keyCompare("æ", "aE"));
 		assertEquals(1, keyCompare("AE", "aE"));
-		assertEquals(1, keyCompare("Æ", "aE"));
 
 		assertEquals(-1, keyCompare("–TMO", "–uÊÑÇ"));
 		assertEquals(-1, keyCompare("–™O", "–uÊÑÇ"));
@@ -152,8 +150,7 @@ public class SortTest {
 	}
 
 	@Test
-	public void testExpandedAndIgnorable() {
-		assertEquals(0, keyCompare("æ", "ae"));
+	public void testIgnorable() {
 		assertEquals(-1, keyCompare("\u007fæ", "Ae"));
 	}
 

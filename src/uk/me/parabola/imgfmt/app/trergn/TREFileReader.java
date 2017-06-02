@@ -136,7 +136,6 @@ public class TREFileReader extends ImgReader {
 		ImgFileReader reader = getReader();
 		int start = header.getExtTypeOffsetsPos();
 		int end = start + header.getExtTypeOffsetsSize();
-		int skipBytes = header.getExtTypeSectionSize() - 13;
 			
 		reader.position(start);
 		Subdivision sd = null;
@@ -149,15 +148,11 @@ public class TREFileReader extends ImgReader {
 			for (int i = 0; i < divs.length; i++) {
 				sdPrev = sd;
 				sd = divs[i];
-				sd.readExtTypeOffsetsRecord(reader, sdPrev);
-				if (skipBytes > 0)
-					reader.get(skipBytes);
+				sd.readExtTypeOffsetsRecord(reader, sdPrev, header.getExtTypeSectionSize());
 			}
 		}
-		if(sd != null) {
-			sd.readLastExtTypeOffsetsRecord(reader);
-			if (skipBytes > 0)
-				reader.get(skipBytes);
+		if(sd != null && reader.position() < end) {
+			sd.readLastExtTypeOffsetsRecord(reader, header.getExtTypeSectionSize());
 		}
 		
 	}

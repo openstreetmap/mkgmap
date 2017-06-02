@@ -30,7 +30,7 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
  */
 public class SRTFile extends ImgFile {
 
-	private final SRTHeader header;
+	private SRTHeader header;
 
 	private Sort sort;
 	private boolean isMulti;
@@ -40,15 +40,9 @@ public class SRTFile extends ImgFile {
 	private final List<Integer> srt8Starts = new ArrayList<>();
 
 	public SRTFile(ImgChannel chan) {
-		header = new SRTHeader();
-		setHeader(header);
-
 		BufferedImgFileWriter fileWriter = new BufferedImgFileWriter(chan);
 		fileWriter.setMaxSize(Long.MAX_VALUE);
 		setWriter(fileWriter);
-
-		// Position at the start of the writable area.
-		position(header.getHeaderLength());
 	}
 
 	/**
@@ -59,9 +53,13 @@ public class SRTFile extends ImgFile {
 	public void write() {
 		ImgFileWriter writer = getWriter();
 		writeDescription(writer);
-
+		// Position at the start of the writable area.
+		position(header.getHeaderLength());
 		SectionWriter subWriter = header.makeSectionWriter(writer);
-		subWriter.position(sort.isMulti()? SRTHeader.HEADER3_MULTI_LEN: SRTHeader.HEADER3_LEN);
+		int header3Len = sort.getHeader3Len();
+		if (header3Len == 0)
+			header3Len = sort.isMulti()? SRTHeader.HEADER3_MULTI_LEN: SRTHeader.HEADER3_LEN;
+		subWriter.position(header3Len);
 		writeSrt4Chars(subWriter);
 		writeSrt5Expansions(subWriter);
 		if (sort.isMulti()) {
@@ -104,13 +102,22 @@ public class SRTFile extends ImgFile {
 	}
 
 	private void writeWeights(ImgFileWriter writer, int i) {
+		int primary = sort.getPrimary(i);
+		int secondary = sort.getSecondary(i);
+		int tertiary = sort.getTertiary(i);
 		if (isMulti) {
-			writer.putChar((char) sort.getPrimary(i));
-			writer.put((byte) sort.getSecondary(i));
-			writer.put((byte) sort.getTertiary(i));
+			assert primary <= 0xffff;
+			assert secondary <= 0xff;
+			assert tertiary <= 0xff;
+			writer.putChar((char) primary);
+			writer.put((byte) secondary);
+			writer.put((byte) tertiary);
 		} else {
-			writer.put((byte) sort.getPrimary(i));
-			writer.put((byte) ((sort.getTertiary(i) << 4) | (sort.getSecondary(i) & 0xf)));
+			assert primary <= 0xff;
+			assert secondary <= 0xf;
+			assert tertiary <= 0xf;
+			writer.put((byte) primary);
+			writer.put((byte) ((tertiary << 4) | (secondary & 0xf)));
 		}
 	}
 
@@ -166,6 +173,7 @@ public class SRTFile extends ImgFile {
 
 	public void setSort(Sort sort) {
 		this.sort = sort;
+		header = new SRTHeader(sort.getHeaderLen());
 		header.setSort(sort);
 		description = sort.getDescription();
 		isMulti = sort.isMulti();

@@ -137,7 +137,8 @@ public class LBLFile extends ImgFile {
 			labelCache.put(encodedText, l);
 
 			l.setOffset(getNextLabelOffset());
-			l.write(getWriter(), encodedText);
+			if (encodedText.getLength() > 0)
+				getWriter().put(encodedText.getCtext(), 0, encodedText.getLength());
 
 			alignForNext();
 
@@ -175,8 +176,8 @@ public class LBLFile extends ImgFile {
 		return places.createExitPOI(name, exit);
 	}
 
-	public POIIndex createPOIIndex(String name, int poiIndex, Subdivision group, int type) {
-		return places.createPOIIndex(name, poiIndex, group, type);
+	public void createPOIIndex(String name, int poiIndex, Subdivision group, int type) {
+		places.createPOIIndex(name, poiIndex, group, type);
 	}
 	
 	public Country createCountry(String name, String abbr) {

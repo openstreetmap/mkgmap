@@ -15,12 +15,8 @@ package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-
-import uk.me.parabola.imgfmt.app.srt.Sort;
-import uk.me.parabola.imgfmt.app.srt.SortKey;
 
 /**
  * Index of streets by country.
@@ -29,6 +25,7 @@ import uk.me.parabola.imgfmt.app.srt.SortKey;
  * cities.
  * 
  * @author Steve Ratcliffe
+ * @author Gerd Petermann
  */
 public class Mdr22 extends Mdr2x {
 
@@ -37,44 +34,36 @@ public class Mdr22 extends Mdr2x {
 	}
 
 	/**
-	 * We need to sort the streets by the name of the country. Within a city
-	 * group the streets are ordered by their own index.
+	 * We need to sort the streets by the name of the country. Within a country
+	 * the streets are ordered by their own index.
 	 *
 	 * Also have to set the record number of the first record in this section
-	 * on the city.
+	 * on the country.
 	 *
 	 * @param inStreets The list of streets from mdr7.
 	 */
 	public void buildFromStreets(List<Mdr7Record> inStreets) {
-		Sort sort = getConfig().getSort();
-
-		List<SortKey<Mdr7Record>> keys = new ArrayList<>();
-		Map<String, byte[]> cache = new HashMap<>();
-		for (Mdr7Record s : inStreets) {
-			Mdr5Record city = s.getCity();
-			if (city == null) continue;
-
-			String name = city.getMdrCountry().getName();
-			assert name != null;
-
-			// We are sorting the streets, but we are sorting primarily on the
-			// country name associated with the street.
-			// For memory use, we re-use country name part of the key.
-			keys.add(sort.createSortKey(s, name, s.getIndex(), cache));
+		ArrayList<Mdr7Record> sorted = new ArrayList<>(inStreets.size());
+		for (Mdr7Record street : inStreets) {
+			if (street.getCity() != null) {
+				assert street.getCity().getCountryName() != null;
+				sorted.add(street);
+			}
 		}
-		Collections.sort(keys);
+		Collections.sort(sorted, new Comparator<Mdr7Record>() {
+			public int compare(Mdr7Record o1, Mdr7Record o2) {
+				int d = Integer.compare(o1.getCity().getMdr22SortPos(), o2.getCity().getMdr22SortPos());
+				if (d != 0)
+					return d;
+				return Integer.compare(o1.getIndex(), o2.getIndex());
+			}
+		});
 
+
+		int lastIndex = -1;
 		int record = 0;
-
-		String lastName = null;
-		int lastMapid = 0;
-		
-		for (SortKey<Mdr7Record> key : keys) {
-			Mdr7Record street = key.getObject();
-
-			String name = street.getName();
-			int mapid = street.getMapIndex();
-			if (mapid != lastMapid || !name.equals(lastName)) {
+		for (Mdr7Record street : sorted) {
+			if (street.getIndex() != lastIndex) {
 				record++;
 				streets.add(street);
 
@@ -85,10 +74,10 @@ public class Mdr22 extends Mdr2x {
 					mdr29.setMdr22(record);
 				}
 
-				lastMapid = mapid;
-				lastName = name;
+				lastIndex = street.getIndex();
 			}
 		}
+		return;
 	}
 
 	protected boolean sameGroup(Mdr7Record street1, Mdr7Record street2) {
@@ -103,9 +92,14 @@ public class Mdr22 extends Mdr2x {
 	 * Unknown flag
 	 */
 	public int getExtraValue() {
-		if (isForDevice())
-			return 0x600e;
-		else
-			return 0x11000;
+		int magic;
+		if (isForDevice()) {
+			magic = 0x0000e;
+			if (!getConfig().getSort().isMulti())
+				magic |= 0xc0000; // used to be 0x6000, maybe two different flags ? 
+		} else {
+			magic = 0x11000;
+		}
+		return magic;
 	}
 }

@@ -16,13 +16,8 @@ package uk.me.parabola.imgfmt.app.mdr;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-
-import uk.me.parabola.imgfmt.app.srt.MultiSortKey;
-import uk.me.parabola.imgfmt.app.srt.Sort;
-import uk.me.parabola.imgfmt.app.srt.SortKey;
 
 /**
  * This is a list of streets that belong to each city.
@@ -50,72 +45,36 @@ public class Mdr20 extends Mdr2x {
 	 * Also have to set the record number of the first record in this section
 	 * on the city.
 	 *
-	 * @param inStreets The list of streets from mdr7, must have Mdr7.index set.
+	 * @param inStreets The list of streets from mdr7, must have Mdr7.index set 
+	 * @param list 
 	 */
 	public void buildFromStreets(List<Mdr7Record> inStreets) {
-		Sort sort = getConfig().getSort();
-
-		// Use a key cache because there are a large number of street names but a much smaller number
-		// of city, region and country names. Therefore we can reuse the memory needed for the keys
-		// most of the time, particularly for the country and region names.
-		Map<String, byte[]> cache = new HashMap<>();
-
-		List<SortKey<Mdr7Record>> keys = new ArrayList<>();
-		for (Mdr7Record s : inStreets) {
-			Mdr5Record city = s.getCity();
-			if (city == null)
-				continue;
-
-			String name = city.getName();
-			if (name == null || name.isEmpty())
-				assert false;
-
-			// We are sorting the streets, but we are sorting primarily on the
-			// city name associated with the street, then on the street name.
-			SortKey<Mdr7Record> cityKey = sort.createSortKey(s, city.getName(), 0, cache);
-			SortKey<Mdr7Record> regionKey = sort.createSortKey(null, city.getRegionName(), 0, cache);
-			// The streets are already sorted, with the getIndex() method revealing the sort order
-			SortKey<Mdr7Record> countryStreetKey = sort.createSortKey(null, city.getCountryName(), s.getIndex(),
-					cache);
-
-			// Combine all together so we can sort on it.
-			SortKey<Mdr7Record> key = new MultiSortKey<>(cityKey, regionKey, countryStreetKey);
-
-			keys.add(key);
-		}
-		cache = null;
-		Collections.sort(keys);
+		ArrayList<Mdr7Record> sorted = new ArrayList<>(inStreets);
+		Collections.sort(sorted, new Comparator<Mdr7Record>() {
+			public int compare(Mdr7Record o1, Mdr7Record o2) {
+				int d = Integer.compare(o1.getCity().getMdr20SortPos(), o2.getCity().getMdr20SortPos());
+				if (d != 0)
+					return d;
+				return Integer.compare(o1.getIndex(), o2.getIndex());
+			}
+		});
 
 		Collator collator = getConfig().getSort().getCollator();
-
-		String lastName = null;
-		String lastPartialName = null;
+		collator.setStrength(Collator.SECONDARY);
+		
 		Mdr5Record lastCity = null;
+		Mdr7Record lastStreet = null;
 		int record = 0;
 		int cityRecord = 1;
-		int lastMapNumber = 0;
-
-		for (SortKey<Mdr7Record> key : keys) {
-			Mdr7Record street = key.getObject();
-
-			String name = street.getName();
-			String partialName = street.getPartialName();
+		
+		for (Mdr7Record street : sorted) {
 			Mdr5Record city = street.getCity();
-
-			boolean citySameByName = city.isSameByName(collator, lastCity);
-
-			int mapNumber = city.getMapIndex();
-
+			boolean citySameByName = lastCity != null && city.getMdr20SortPos() == lastCity.getMdr20SortPos();
+			int rr = street.checkRepeat(lastStreet, collator);
 			// Only save a single copy of each street name.
-			if (!citySameByName || mapNumber != lastMapNumber || lastName == null || lastPartialName == null
-					|| !name.equals(lastName)
-					|| !partialName.equals(lastPartialName))
-			{
+			if (!citySameByName || rr != 3) {
 				record++;
-
 				streets.add(street);
-				lastName = name;
-				lastPartialName = partialName;
 			}
 
 			// The mdr20 value changes for each new city name
@@ -129,7 +88,7 @@ public class Mdr20 extends Mdr2x {
 				city.setMdr20(cityRecord);
 				lastCity = city;
 			}
-			lastMapNumber = mapNumber;
+			lastStreet = street;
 		}
 	}
 

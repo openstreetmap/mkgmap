@@ -18,8 +18,6 @@ package uk.me.parabola.imgfmt.app;
 
 import java.util.regex.Pattern;
 
-import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
-
 /**
  * Labels are used for names of roads, points of interest etc.
  *
@@ -55,6 +53,9 @@ public class Label {
 		this.text = null;
 	}
 
+	/**
+	 * @return a value > 0 if this label is not empty. TODO: replace by isEmpty()
+	 */
 	public int getLength() {
 		if (text != null)
 			return text.length();
@@ -81,6 +82,9 @@ public class Label {
 	// two or more whitespace characters
 	private final static Pattern SQUASH_SPACES = Pattern.compile("\\s\\s+");
 
+	// DEL character 
+	public final static Pattern SQASH_DEL = Pattern.compile("[\u007f]");
+
 	public static String stripGarminCodes(String s) {
 		if(s == null)
 			return null;
@@ -97,6 +101,12 @@ public class Label {
 		return SQUASH_SPACES.matcher(s).replaceAll(" "); // replace with single space
 	}
 
+	public static String squashDel(String s) {
+		if(s == null || s.isEmpty())
+			return null;
+		return SQASH_DEL.matcher(s).replaceAll(""); // remove 0x7f=DEL character
+	}
+
 	/**
 	 * The offset of this label in the LBL file.  The first byte of this file
 	 * is zero and an offset of zero means that the label has a zero length/is
@@ -110,19 +120,6 @@ public class Label {
 
 	public void setOffset(int offset) {
 		this.offset = offset;
-	}
-
-	/**
-	 * Write this label to the given img file.
-	 *
-	 * @param writer The LBL file to write to.
-	 * @param encText The encoded version of the text for this label.
-	 */
-	public void write(ImgFileWriter writer, EncodedText encText) {
-		assert encText != null;
-
-		if (encText.getLength() > 0)
-			writer.put(encText.getCtext(), 0, encText.getLength());
 	}
 
 	/**

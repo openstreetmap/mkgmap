@@ -12,16 +12,16 @@
  */
 package uk.me.parabola.imgfmt.app.mdr;
 
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.imgfmt.app.srt.DoubleSortKey;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 
@@ -36,7 +36,7 @@ public class Mdr7 extends MdrMapSection {
 	public static final int MDR7_HAS_NAME_OFFSET = 0x20;
 	public static final int MDR7_PARTIAL_SHIFT = 6;
 	public static final int MDR7_U1 = 0x2;
-	public static final int MDR7_U2 = 0x4;
+	public static final int MDR7_HAS_MDR17 = 0x4;
 
 	private static final int MAX_NAME_OFFSET = 127;
 
@@ -44,42 +44,52 @@ public class Mdr7 extends MdrMapSection {
 	private final boolean isMulti;
 	private final boolean splitName;
 
+	private Set<Mdr7Record> roadsPerMap= new HashSet<>();
 	private ArrayList<Mdr7Record> allStreets = new ArrayList<>();
 	private ArrayList<Mdr7Record> streets = new ArrayList<>();
+	private int lastMaxIndex = -1;
 
-	private final int u2size = 1;
+	private int partialInfoSize;
 	private Set<String> exclNames;
+	private final Sort sort;
+	private int maxPrefixCount;
+	private int maxSuffixCount;
+	private boolean magicIsValid;
+	private int magic;
 
 	public Mdr7(MdrConfig config) {
 		setConfig(config);
-		Sort sort = config.getSort();
+		sort = config.getSort();
 		splitName = config.isSplitName();
 		exclNames = config.getMdr7Excl();
 		codepage = sort.getCodepage();
 		isMulti = sort.isMulti();
-		
 	}
 
 	public void addStreet(int mapId, String name, int lblOffset, int strOff, Mdr5Record mdrCity) {
 		if (name.isEmpty())
 			return;
-		if (exclNames.contains(name))
-			return;
-		
-		// Find a name prefix, which is either a shield or a word ending 0x1e. We are treating
+			
+		// Find a name prefix, which is either a shield or a word ending 0x1e or 0x1c. We are treating
 		// a shield as a prefix of length one.
 		int prefix = 0;
 		if (name.charAt(0) < 7)
 			prefix = 1;
 		int sep = name.indexOf(0x1e);
-		if (sep > 0)
+		if (sep < 0)
+			sep = name.indexOf(0x1b);
+		if (sep > 0) {
 			prefix = sep + 1;
+		}
 
-		// Find a name suffix which begins with 0x1f
+		// Find a name suffix which begins with 0x1 or 0x1c
 		sep = name.indexOf(0x1f);
+		if (sep < 0)
+			sep = name.indexOf(0x1c);
 		int suffix = 0;
-		if (sep > 0)
+		if (sep > 0) {
 			suffix = sep;
+		}
 
 		// Large values can't actually work.
 		if (prefix >= MAX_NAME_OFFSET || suffix >= MAX_NAME_OFFSET)
@@ -93,7 +103,7 @@ public class Mdr7 extends MdrMapSection {
 		st.setCity(mdrCity);
 		st.setPrefixOffset((byte) prefix);
 		st.setSuffixOffset((byte) suffix);
-		allStreets.add(st);
+		storeMdr7(st);
 
 		if (!splitName)
 			return;
@@ -104,7 +114,7 @@ public class Mdr7 extends MdrMapSection {
 		int c;
 		int outOffset = 0;
 
-		int end = Math.min((suffix > 0) ? suffix : name.length() - prefix - 1, MAX_NAME_OFFSET);
+		int end = Math.min(((suffix > 0) ? suffix : name.length()) - prefix - 1, MAX_NAME_OFFSET);
 		for (int nameOffset = 0; nameOffset < end; nameOffset += Character.charCount(c)) {
 			c = name.codePointAt(prefix + nameOffset);
 
@@ -132,13 +142,30 @@ public class Mdr7 extends MdrMapSection {
 				st.setSuffixOffset((byte) suffix);
 				//System.out.println(st.getName() + ": add partial " + st.getPartialName());
 				if (!exclNames.contains(st.getPartialName()))
-					allStreets.add(st);
+					storeMdr7(st);
+
 				start = false;
 			}
 
 			outOffset += outSize(c);
 			if (outOffset > MAX_NAME_OFFSET)
 				break;
+		}
+	}
+
+	/**
+	 * Store in array if not already done
+	 * @param st the mdr7 record
+	 */
+	private void storeMdr7(Mdr7Record st) {
+		if (lastMaxIndex != st.getMapIndex()) {
+			// we process all roads of one map tile sequentially, so we can clear the set with each new map tile
+			lastMaxIndex = st.getMapIndex();
+			roadsPerMap.clear(); 
+		}
+		
+		if (roadsPerMap.add(st)) {
+			allStreets.add(st);
 		}
 	}
 
@@ -176,85 +203,173 @@ public class Mdr7 extends MdrMapSection {
 	 * as it requires a lot of heap to store the sort keys. 	  	 
 	 */
 	protected void preWriteImpl() {
-		allStreets.trimToSize();
-		Sort sort = getConfig().getSort();
-		List<SortKey<Mdr7Record>> sortedStreets = new ArrayList<>(allStreets.size());
-		Map<String, byte[]> cache = new HashMap<>();
 		
-		for (Mdr7Record m : allStreets) {
-			if (splitName) {
-				String key = m.getPartialName();
-				SortKey<Mdr7Record> k1 = sort.createSortKey(m, key, 0, cache);
-				key = m.getInitialPart();
-				SortKey<Mdr7Record> k2 = sort.createSortKey(m, key, m.getMapIndex(), cache);
-				sortedStreets.add(new DoubleSortKey<>(k1, k2));
-			} else {
-				sortedStreets.add(sort.createSortKey(m, m.getName(), m.getMapIndex(), cache));
+		LargeListSorter<Mdr7Record> partialSorter = new LargeListSorter<Mdr7Record>(sort) {
+			@Override
+			protected SortKey<Mdr7Record> makeKey(Mdr7Record r, Sort sort, Map<String, byte[]> cache) {
+				return sort.createSortKey(r, r.getPartialName(), 0, cache); // first sort by partial name only
 			}
-		}
-		cache = null;
-		Collections.sort(sortedStreets);
-
-		// De-duplicate the street names so that there is only one entry
-		// per map for the same name.
-		int recordNumber = 0;
-		Mdr7Record last = new Mdr7Record();
-		for (int i = 0; i < sortedStreets.size(); i++){ 
-			SortKey<Mdr7Record> sk = sortedStreets.get(i);
-			Mdr7Record r = sk.getObject();
-			if (r.getMapIndex() == last.getMapIndex()
-					&& r.getName().equals(last.getName())  // currently think equals is correct, not collator.compare()
-					&& r.getPartialName().equals(last.getPartialName()))
-			{
-				// This has the same name (and map number) as the previous one. Save the pointer to that one
-				// which is going into the file.
-				r.setIndex(recordNumber);
-			} else {
-				recordNumber++;
-				last = r;
-				r.setIndex(recordNumber);
-				streets.add(r);
+		};
+		
+		ArrayList<Mdr7Record> sorted = new ArrayList<>(allStreets);
+		allStreets.clear();
+		partialSorter.sort(sorted);
+		// list is now sorted by partial name only, we have to group by name and map index now
+		String lastPartial = null;
+		List<Mdr7Record> samePartial = new ArrayList<>();
+		Collator collator = sort.getCollator();
+		collator.setStrength(Collator.SECONDARY);
+		for (int i = 0; i < sorted.size(); i++) {
+			Mdr7Record r = sorted.get(i);
+			String partial = r.getPartialName();
+			if (lastPartial == null || collator.compare(partial, lastPartial) != 0) {
+				groupByNameAndMap(samePartial);
+				samePartial.clear();
 			}
-			// release memory 
-			sortedStreets.set(i, null);
+			samePartial.add(r);
+			lastPartial = partial;
 		}
+		groupByNameAndMap(samePartial);
+		
+		allStreets.trimToSize();
 		streets.trimToSize();
 		return;
 	}
 
+	/**
+	 * Group a list of roads with the same partial name.
+	 * @param samePartial
+	 * @param minorSorter
+	 */
+	private void groupByNameAndMap(List<Mdr7Record> samePartial) {
+		if (samePartial.isEmpty())
+			return;
+		
+		// Basecamp needs the records grouped by partial name, full name, and map index.
+		// This sometimes presents search results in the wrong order. The partial sort fields allow to
+		// tell the right order.
+		
+//		LargeListSorter<Mdr7Record> initalPartSorter = new LargeListSorter<Mdr7Record>(sort) {
+//			@Override
+//			protected SortKey<Mdr7Record> makeKey(Mdr7Record r, Sort sort, Map<String, byte[]> cache) {
+//				return sort.createSortKey(r, r.getInitialPart(), r.getMapIndex(), cache);
+//			}
+//		};
+//		LargeListSorter<Mdr7Record> suffixSorter = new LargeListSorter<Mdr7Record>(sort) {
+//			@Override
+//			protected SortKey<Mdr7Record> makeKey(Mdr7Record r, Sort sort, Map<String, byte[]> cache) {
+//				return sort.createSortKey(r, r.getSuffix(), r.getMapIndex(), cache);
+//			}
+//		};
+		LargeListSorter<Mdr7Record> fullNameSorter = new LargeListSorter<Mdr7Record>(sort) {
+			@Override
+			protected SortKey<Mdr7Record> makeKey(Mdr7Record r, Sort sort, Map<String, byte[]> cache) {
+				return sort.createSortKey(r, r.getName(), r.getMapIndex(), cache);
+			}
+		};
+		
+		
+//		List<Mdr7Record> sortedByInitial = new ArrayList<>(samePartial);
+//		List<Mdr7Record> sortedBySuffix = new ArrayList<>(samePartial);
+//		initalPartSorter.sort(sortedByInitial);
+//		suffixSorter.sort(sortedBySuffix);
+		
+//		Mdr7Record last = null;
+//		for (int i = 0; i < samePartial.size(); i++) {
+//			Mdr7Record r = samePartial.get(i);
+//			if (i > 0) {
+//				int repeat = r.checkRepeat(last, collator);
+//				int b = 0;
+//				if (repeat == 0) {
+//				} else if (repeat == 3) 
+//					b = last.getB();
+//				else if (repeat == 1) {
+//					b = last.getB() + 1;
+//				}
+//				if (b != 0) {
+//					if (b > maxPrefixCount)
+//						maxPrefixCount = b;
+//					r.setB(b);
+//				}
+//			}
+//			last = r;
+//		}
+//		suffixSorter.sort(samePartial);
+//		last = null;
+//		int s = 0;
+//		for (int i = 0; i < samePartial.size(); i++) {
+//			Mdr7Record r = samePartial.get(i);
+//			if (i > 0) {
+//				int cmp = collator.compare(last.getSuffix(), r.getSuffix());
+//				if (cmp == 0)
+//					s = last.getS();
+//				else 
+//					s = last.getS() + 1;
+//				if (s != 0) {
+//					if (s > maxSuffixCount)
+//						maxSuffixCount = s;
+//					r.setB(s);
+//				}
+//			}
+//			last = r;
+//		}
+//
+//		
+		fullNameSorter.sort(samePartial);
+		Mdr7Record last = null;
+		int recordNumber = streets.size();
+		
+		// list is now sorted by partial name, name, and map index
+//		// De-duplicate the street names so that there is only one entry
+//		// per map for the same name.
+		for (int i = 0; i < samePartial.size(); i++) {
+			Mdr7Record r = samePartial.get(i);
+			if (last != null && r.getMapIndex() == last.getMapIndex() && r.getName().equals(last.getName())) {
+				// This has the same name (and map number) as the previous one.
+				// Save the pointer to that one
+				// which is going into the file.
+				r.setIndex(recordNumber);
+			} else {
+				recordNumber++;
+				r.setIndex(recordNumber);
+				streets.add(r);
+			}
+			if (r.getCity() != null)
+				allStreets.add(r);
+			last = r;
+		}
+	}
+
 	public void writeSectData(ImgFileWriter writer) {
-		String lastName = null;
-		String lastPartial = null;
 		boolean hasStrings = hasFlag(MDR7_HAS_STRING);
 		boolean hasNameOffset = hasFlag(MDR7_HAS_NAME_OFFSET);
-
+		Collator collator = sort.getCollator();
+//		int partialBShift = ((getExtraValue() >> 9) & 0xf);
+		collator.setStrength(Collator.SECONDARY); 
+		Mdr7Record last = null;
 		for (Mdr7Record s : streets) {
 			addIndexPointer(s.getMapIndex(), s.getIndex());
 
 			putMapIndex(writer, s.getMapIndex());
 			int lab = s.getLabelOffset();
-			String name = s.getName();
-			if (!name.equals(lastName)) {
+			
+			int rr = s.checkRepeat(last, collator);
+			if (rr != 3)
 				lab |= 0x800000;
-				lastName = name;
-			}
-
-			String partialName = s.getPartialName();
-			int trailingFlags = 0;
-			if (!partialName.equals(lastPartial)) {
-				trailingFlags |= 1;
-				lab |= 0x800000;  // If it is not a partial repeat, then it is not a complete repeat either
-			}
-			lastPartial = partialName;
-
+			
 			writer.put3(lab);
 			if (hasStrings)
 				putStringOffset(writer, s.getStringOffset());
 
 			if (hasNameOffset)
 				writer.put(s.getOutNameOffset());
-
-			putN(writer, u2size, trailingFlags);
+			if (partialInfoSize > 0) {
+				int trailingFlags = ((rr & 1) == 0) ? 1 : 0;
+				// trailingFlags |= s.getB() << 1;
+				// trailingFlags |= s.getS() << (1 + partialBShift);
+				putN(writer, partialInfoSize, trailingFlags);
+			}
+			last = s;
 		}
 	}
 
@@ -264,7 +379,7 @@ public class Mdr7 extends MdrMapSection {
 	 */
 	public int getItemSize() {
 		PointerSizes sizes = getSizes();
-		int size = sizes.getMapSize() + 3 + u2size;
+		int size = sizes.getMapSize() + 3 + partialInfoSize;
 		if (!isForDevice())
 			size += sizes.getStrOffSize();
 		if ((getExtraValue() & MDR7_HAS_NAME_OFFSET) != 0)
@@ -280,14 +395,26 @@ public class Mdr7 extends MdrMapSection {
 	 * Value of 3 possibly the existence of the lbl field.
 	 */
 	public int getExtraValue() {
-		int magic = MDR7_U1 | MDR7_HAS_NAME_OFFSET | (u2size << MDR7_PARTIAL_SHIFT);
+		if (!magicIsValid) {
+			int bitsPrefix = (maxPrefixCount == 0) ? 0 : Integer.numberOfTrailingZeros(Integer.highestOneBit(maxPrefixCount)) + 1;
+			int bitsSuffix = (maxSuffixCount == 0) ? 0 : Integer.numberOfTrailingZeros(Integer.highestOneBit(maxSuffixCount)) + 1;
+			int bits = bitsPrefix + bitsSuffix + 1;
+			partialInfoSize = 1 + bits / 8;
+			assert bitsSuffix <= 15;
+			magic = MDR7_U1 | MDR7_HAS_NAME_OFFSET | (partialInfoSize << MDR7_PARTIAL_SHIFT) | (bitsPrefix << 9);
 
-		if (isForDevice()) {
-			magic |= MDR7_U2;
-		} else {
-			magic |= MDR7_HAS_STRING;
+			if (isForDevice()) {
+				if (!getConfig().getSort().isMulti())
+					magic |= MDR7_HAS_MDR17; // mdr17 sub section present (not with unicode)
+			} else {
+				magic |= MDR7_HAS_STRING;
+			}
+			int unk2size = (magic >> 6) & 0x7;
+			int unk2split = ((magic >> 9) & 0xf);
+			assert unk2size == partialInfoSize;
+			assert unk2split == bitsPrefix;
+			magicIsValid = true;
 		}
-
 		return magic;
 	}
 
@@ -296,59 +423,21 @@ public class Mdr7 extends MdrMapSection {
 		streets = null;
 	}
 
-	/**
-	 * Must be called after the section data is written so that the streets
-	 * array is already sorted.
-	 * @return List of index records.
-	 */
-	public List<Mdr8Record> getIndex() {
-		List<Mdr8Record> list = new ArrayList<>();
-		for (int number = 1; number <= streets.size(); number += 10240) {
-			String prefix = getPrefixForRecord(number);
-
-			// need to step back to find the first...
-			int rec = number;
-			while (rec > 1) {
-				String p = getPrefixForRecord(rec);
-				if (!p.equals(prefix)) {
-					rec++;
-					break;
-				}
-				rec--;
-			}
-
-			Mdr8Record indexRecord = new Mdr8Record();
-			indexRecord.setPrefix(prefix);
-			indexRecord.setRecordNumber(rec);
-			list.add(indexRecord);
-		}
-		return list;
-	}
-
-	/**
-	 * Get the prefix of the name at the given record.
-	 * @param number The record number.
-	 * @return The first 4 (or whatever value is set) characters of the street
-	 * name.
-	 */
-	private String getPrefixForRecord(int number) {
-		Mdr7Record record = streets.get(number-1);
-		int endIndex = MdrUtils.STREET_INDEX_PREFIX_LEN;
-		String name = record.getName();
-		if (endIndex > name.length()) {
-			StringBuilder sb = new StringBuilder(name);
-			while (sb.length() < endIndex)
-				sb.append('\0');
-			name = sb.toString();
-		}
-		return name.substring(0, endIndex);
-	}
 
 	public List<Mdr7Record> getStreets() {
-		return Collections.unmodifiableList(allStreets);
+		return Collections.unmodifiableList((ArrayList<Mdr7Record>) allStreets);
 	}
 	
 	public List<Mdr7Record> getSortedStreets() {
 		return Collections.unmodifiableList(streets);
+	}
+
+	
+	/**
+	 * Free as much memory as possible.
+	 */
+	public void trim() {
+		allStreets.trimToSize();
+		roadsPerMap = new HashSet<>();
 	}
 }

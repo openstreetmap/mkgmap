@@ -29,6 +29,7 @@ import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.app.mdr.MdrConfig;
 import uk.me.parabola.imgfmt.app.srt.SRTFile;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
@@ -83,7 +84,7 @@ public class GmapsuppBuilder implements Combiner {
 	// There is a separate MDR and SRT file for each family id in the gmapsupp
 	private final Map<Integer, MdrBuilder> mdrBuilderMap = new LinkedHashMap<>();
 	private final Map<Integer, Sort> sortMap = new LinkedHashMap<>();
-	private boolean splitName;
+	private MdrConfig mdrConfig; // one base config for all 
 	private boolean hideGmapsuppOnPC;
 	private int productVersion;
 
@@ -93,9 +94,11 @@ public class GmapsuppBuilder implements Combiner {
 		mapsetName = args.get("mapset-name", "OSM map set");
 		overallDescription = args.getDescription();
 		outputDir = args.getOutputDir();
-		splitName = args.get("split-name-index", false);
 		hideGmapsuppOnPC = args.get("hide-gmapsupp-on-pc", false);
 		productVersion = args.get("product-version", 100);
+		mdrConfig = new MdrConfig();
+		mdrConfig.setIndexOptions(args);
+		
 	}
 
 	/**
@@ -112,7 +115,8 @@ public class GmapsuppBuilder implements Combiner {
 			return mdrBuilder;
 
 		mdrBuilder = new MdrBuilder();
-		mdrBuilder.initForDevice(sort, outputDir, splitName);
+		mdrBuilder.initForDevice(sort, outputDir, mdrConfig);
+		
 		mdrBuilderMap.put(familyId, mdrBuilder);
 		return mdrBuilder;
 	}
@@ -534,15 +538,15 @@ public class GmapsuppBuilder implements Combiner {
 				}
 			}
 
-			for (int i = 0; i < sortMap.size(); i++) {
-				// These files are less than 1k
-				int sz = 1024;
-				int mdrBlocks = (sz + (bs - 1)) / bs;
-				int mdrSlots = (mdrBlocks + ENTRY_SIZE - 1) / ENTRY_SIZE;
+			for (Map.Entry<Integer, Sort> ent : sortMap.entrySet()) {
+				Sort sort = ent.getValue();
+				int sz = sort.isMulti() ? 1024 * 160 : 1024; // unicode SRT file can be much bigger
+				int srtBlocks = (sz + (bs - 1)) / bs;
+				int srtSlots = (srtBlocks + ENTRY_SIZE - 1) / ENTRY_SIZE;
 
-				totBlocks += mdrBlocks;
-				totHeaderEntries += mdrSlots;
-			}
+				totBlocks += srtBlocks;
+				totHeaderEntries += srtSlots;
+			}			
 
 			// Add for header itself, plus the first directory block.
 			totHeaderEntries += DIRECTORY_OFFSET_ENTRY + 1;

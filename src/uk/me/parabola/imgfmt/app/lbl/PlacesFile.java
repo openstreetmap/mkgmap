@@ -37,6 +37,8 @@ import uk.me.parabola.imgfmt.app.trergn.Subdivision;
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class PlacesFile {
+	public static final int MIN_INDEXED_POI_TYPE = 0x29;
+	public static final int MAX_INDEXED_POI_TYPE = 0x30;
 	private final Map<String, Country> countries = new LinkedHashMap<>();
 	private final List<Country> countryList = new ArrayList<>();
 
@@ -297,14 +299,16 @@ public class PlacesFile {
 		return p;
 	}
 
-	POIIndex createPOIIndex(String name, int index, Subdivision group, int type) {
+	void createPOIIndex(String name, int index, Subdivision group, int type) {
 		assert index < 0x100 : "Too many POIS in division";
-		POIIndex pi = new POIIndex(name, (byte)index, group, (byte)type);
 		int t = type >> 8;
+		if (t < MIN_INDEXED_POI_TYPE || t > MAX_INDEXED_POI_TYPE) 
+			return;
+		
+		POIIndex pi = new POIIndex(name, (byte)index, group, (byte)type);
 		if(poiIndex[t] == null)
 			poiIndex[t] = new ArrayList<POIIndex>();
 		poiIndex[t].add(pi);
-		return pi;
 	}
 
 	void allPOIsDone() {

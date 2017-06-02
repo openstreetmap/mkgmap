@@ -13,6 +13,7 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.Arrays;
+import java.util.Set;
 
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.FileBackedImgFileWriter;
@@ -43,7 +44,7 @@ public class MDRFile extends ImgFile {
 	private final Mdr5 mdr5;
 	private final Mdr6 mdr6;
 	private final Mdr7 mdr7;
-	private final Mdr8 mdr8;
+	private final Mdr8 mdr8; // unused
 	private final Mdr9 mdr9;
 	private final Mdr10 mdr10;
 	private final Mdr11 mdr11;
@@ -68,15 +69,21 @@ public class MDRFile extends ImgFile {
 	private int currentMap;
 
 	private final boolean forDevice;
+	private final boolean isMulti;
 
 	private final MdrSection[] sections;
 	private PointerSizes sizes;
+	private Set<String> mdr7Del;
+
+	private Set<Integer> poiExclTypes; 
 
 	public MDRFile(ImgChannel chan, MdrConfig config) {
 		Sort sort = config.getSort();
 
 		forDevice = config.isForDevice();
-
+		isMulti = config.getSort().isMulti();
+		mdr7Del = config.getMdr7Del();
+		poiExclTypes = config.getPoiExclTypes();
 		mdrHeader = new MDRHeader(config.getHeaderLen());
 		mdrHeader.setSort(sort);
 		setHeader(mdrHeader);
@@ -198,7 +205,11 @@ public class MDRFile extends ImgFile {
 		int fullType = point.getType();
 		if (!MdrUtils.canBeIndexed(fullType))
 			return;
-
+		if (!poiExclTypes.isEmpty()) {
+			int t = (fullType < 0xff)  ? fullType << 8 : fullType;
+			if (poiExclTypes.contains(t))
+				return;
+		}
 		Label label = point.getLabel();
 		String name = label.getText();
 		int strOff = createString(name);
@@ -208,7 +219,7 @@ public class MDRFile extends ImgFile {
 		poi.setIsCity(isCity);
 		poi.setType(fullType);
 
-		mdr4.addType(point.getType());
+		mdr4.addType(fullType);
 	}
 
 	public void addStreet(RoadDef street, Mdr5Record mdrCity) {
@@ -221,23 +232,34 @@ public class MDRFile extends ImgFile {
 				continue;
 			
 			String name = lab.getText();
-			String cleanName = cleanUpName(name);
-			int strOff = createString(cleanName);
+			if (!mdr7Del.isEmpty()) {
+				String[] parts = name.split(" ");
+				int pos = parts.length;
+				for (int i = parts.length - 1; i >= 0; i--) {
+					if (!mdr7Del.contains(parts[i])) {
+						break;
+					}
+					pos = i;
+				}
+				if (pos == 0)
+					continue;
+				if (pos < parts.length) {
+					StringBuilder sb = new StringBuilder();
+					for (int i = 0; i + 1 < pos; i++) {
+						sb.append(parts[i]);
+						sb.append(" ");
+					}
+					sb.append(parts[pos - 1]);
+					name = sb.toString(); // XXX maybe add -intern()
+				}
+			}
+			
+			int strOff = createString(name);
 
 			// We sort on the dirty name (ie with the Garmin shield codes) although those codes do not
 			// affect the sort order. The string for mdr15 does not include the shield codes.
 			mdr7.addStreet(currentMap, name, lab.getOffset(), strOff, mdrCity);
 		}
-	}
-
-	/**
-	 * Remove shields and other kinds of strange characters.  Perform any
-	 * rearrangement of the name to make it searchable.
-	 * @param name The street name as read from the img file.
-	 * @return The name as it will go into the index.
-	 */
-	private String cleanUpName(String name) {
-		return Label.stripGarminCodes(name);
 	}
 
 	public void write() {
@@ -266,6 +288,7 @@ public class MDRFile extends ImgFile {
 	private void writeSections(ImgFileWriter writer) {
 		sizes = new MdrMapSection.PointerSizes(sections);
 
+		mdr7.trim();
 		// Deal with the dependencies between the sections. The order of the following
 		// statements is sometimes important.
 		mdr28.buildFromRegions(mdr13.getRegions());
@@ -287,7 +310,9 @@ public class MDRFile extends ImgFile {
 		mdr10.setNumberOfPois(mdr11.getNumberOfPois());
 		mdr12.setIndex(mdr11.getIndex());
 		mdr19.setPois(mdr11.getPois());
-		mdr17.addPois(mdr11.getPois());
+		if (forDevice & !isMulti) {
+			mdr17.addPois(mdr11.getPois());
+		}
 		mdr11.release();
 
 		if (forDevice) {
@@ -312,7 +337,9 @@ public class MDRFile extends ImgFile {
 		writeSection(writer, 5, mdr5);
 		mdr25.sortCities(mdr5.getCities());
 		mdr27.sortCities(mdr5.getCities());
-		mdr17.addCities(mdr5.getSortedCities());
+		if (forDevice & !isMulti) {
+			mdr17.addCities(mdr5.getSortedCities());
+		}
 		mdr5.release();
 		writeSection(writer, 6, mdr6);
 
@@ -324,12 +351,15 @@ public class MDRFile extends ImgFile {
 		mdr21.release();
 		
 		mdr22.buildFromStreets(mdr7.getStreets());
-		mdr8.setIndex(mdr7.getIndex());
-		mdr17.addStreets(mdr7.getSortedStreets());
+		if (forDevice & !isMulti) {
+			mdr17.addStreets(mdr7.getSortedStreets());
+		}
 
 		mdr7.release();
 		writeSection(writer, 22, mdr22);
-		mdr17.addStreetsByCountry(mdr22.getStreets());
+		if (forDevice & !isMulti) {
+			mdr17.addStreetsByCountry(mdr22.getStreets());
+		}
 		mdr22.release();
 
 		if (forDevice) {

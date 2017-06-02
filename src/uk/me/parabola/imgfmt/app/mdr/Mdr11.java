@@ -14,8 +14,7 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +30,7 @@ import uk.me.parabola.imgfmt.app.trergn.Point;
  * @author Steve Ratcliffe
  */
 public class Mdr11 extends MdrMapSection {
-	private List<Mdr11Record> pois = new ArrayList<>();
+	private ArrayList<Mdr11Record> pois = new ArrayList<>();
 	private Mdr10 mdr10;
 
 	public Mdr11(MdrConfig config) {
@@ -58,21 +57,20 @@ public class Mdr11 extends MdrMapSection {
 	 * de-duplicated in the index in the same way that streets and cities are.
 	 */
 	protected void preWriteImpl() {
+		pois.trimToSize();
 		Sort sort = getConfig().getSort();
-		List<SortKey<Mdr11Record>> keys = new ArrayList<>(pois.size());
-		Map<String, byte[]> cache = new HashMap<>();
-		for (Mdr11Record poi : pois) {
-			keys.add(sort.createSortKey(poi, poi.getName(), poi.getMapIndex(), cache));
-		}
-		cache = null;
-		pois.clear();
-		Collections.sort(keys);
-		
-		for (SortKey<Mdr11Record> sk : keys) {
-			Mdr11Record poi = sk.getObject();
 
+		LargeListSorter<Mdr11Record> sorter = new LargeListSorter<Mdr11Record>(sort) {
+			
+			@Override
+			protected SortKey<Mdr11Record> makeKey(Mdr11Record r, Sort sort, Map<String, byte[]> cache) {
+				return sort.createSortKey(r, r.getName(), r.getMapIndex(), cache);
+			}
+		};
+//		System.out.println("sorting " + pois.size() + " pois by name"); 
+		sorter.sort(pois);
+		for (Mdr11Record poi : pois) {
 			mdr10.addPoiType(poi);
-			pois.add(poi);
 		}
 	}
 
@@ -121,8 +119,10 @@ public class Mdr11 extends MdrMapSection {
 		if (citySize > 2)
 			mdr11flags |= (citySize-2) << 2;
 
-		if (isForDevice()) 
-			mdr11flags |= 0x80;
+		if (isForDevice()) {
+			if (!getConfig().getSort().isMulti())
+				mdr11flags |= 0x80; // mdr17 sub section present (not with unicode)
+		}
 		else 
 			mdr11flags |= 0x2;
 		
@@ -132,13 +132,13 @@ public class Mdr11 extends MdrMapSection {
 	public List<Mdr8Record> getIndex() {
 		List<Mdr8Record> list = new ArrayList<>();
 		for (int number = 1; number <= pois.size(); number += 10240) {
-			String prefix = getPrefixForRecord(number);
+			char[] prefix = getPrefixForRecord(number);
 
 			// need to step back to find the first...
 			int rec = number;
 			while (rec > 1) {
-				String p = getPrefixForRecord(rec);
-				if (!p.equals(prefix)) {
+				char[] p = getPrefixForRecord(rec);
+				if (!Arrays.equals(p, prefix)) {
 					rec++;
 					break;
 				}
@@ -156,20 +156,12 @@ public class Mdr11 extends MdrMapSection {
 	/**
 	 * Get the prefix of the name at the given record.
 	 * @param number The record number.
-	 * @return The first 4 (or whatever value is set) characters of the street
-	 * name.
+	 * @return The first 4 (or whatever value is set) characters of the POI name.
 	 */
-	private String getPrefixForRecord(int number) {
+	private char[] getPrefixForRecord(int number) {
 		Mdr11Record record = pois.get(number-1);
-		int endIndex = MdrUtils.POI_INDEX_PREFIX_LEN;
 		String name = record.getName();
-		if (endIndex > name.length()) {
-			StringBuilder sb = new StringBuilder(name);
-			while (sb.length() < endIndex)
-				sb.append('\0');
-			name = sb.toString();
-		}
-		return name.substring(0, endIndex);
+		return getConfig().getSort().getPrefix(name, MdrUtils.POI_INDEX_PREFIX_LEN);
 	}
 
 	public void setMdr10(Mdr10 mdr10) {

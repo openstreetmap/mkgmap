@@ -12,13 +12,13 @@
  */
 package uk.me.parabola.imgfmt.app.mdr;
 
-import java.nio.charset.Charset;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.srt.Sort;
+import uk.me.parabola.imgfmt.app.srt.Sort.SrtCollator;
 
 /**
  * Holds an index of name prefixes to record numbers.
@@ -58,20 +58,32 @@ public class PrefixIndex extends MdrSection {
 		// Prefixes are equal based on the primary unaccented character, so
 		// we need to use the collator to test for equality and not equals().
 		Sort sort = getConfig().getSort();
-		Collator collator = sort.getCollator();
+		Sort.SrtCollator collator = (SrtCollator) sort.getCollator();
 		collator.setStrength(Collator.PRIMARY);
 
 		String lastCountryName = null;
-		String lastPrefix = "";
+		char[] lastPrefix = "".toCharArray();
 		int inRecord = 0;  // record number of the input list
 		int outRecord = 0; // record number of the index
+		int lastMdr22SortPos = -1; 
 		for (NamedRecord r : list) {
 			inRecord++;
-
-			String prefix = getPrefix(r.getName());
-			if (collator.compare(prefix, lastPrefix) != 0) {
+			String name;
+			if (r instanceof Mdr7Record) {
+				name = ((Mdr7Record) r).getPartialName();
+				if (grouped) {
+					int mdr22SortPos = ((Mdr7Record) r).getCity().getMdr22SortPos();
+					if (mdr22SortPos != lastMdr22SortPos)
+						lastPrefix = "".toCharArray();
+					lastMdr22SortPos = mdr22SortPos; 
+				}
+			}
+			else 
+				name = r.getName();
+			char[] prefix = sort.getPrefix(name, prefixLength);
+			int cmp = collator.compareOneStrengthWithLength(prefix, lastPrefix, Collator.PRIMARY, prefixLength);
+			if (cmp > 0) {
 				outRecord++;
-
 				Mdr8Record ind = new Mdr8Record();
 				ind.setPrefix(prefix);
 				ind.setRecordNumber(inRecord);
@@ -103,9 +115,10 @@ public class PrefixIndex extends MdrSection {
 	 */
 	public void writeSectData(ImgFileWriter writer) {
 		int size = numberToPointerSize(maxIndex);
-		Charset charset = getConfig().getSort().getCharset();
 		for (Mdr8Record s : index) {
-			writer.put(s.getPrefix().getBytes(charset), 0, prefixLength);
+			for (int i = 0; i< prefixLength; i++) {
+				writer.put((byte) s.getPrefix()[i]);
+			}
 			putN(writer, size, s.getRecordNumber());
 		}
 	}
@@ -116,35 +129,6 @@ public class PrefixIndex extends MdrSection {
 
 	protected int numberOfItems() {
 		return index.size();
-	}
-
-	/**
-	 * Get the prefix of the name at the given record.
-	 * If the name is shorter than the prefix length, then it padded with nul characters.
-	 * So it can be longer than the input string.
-	 * 
-	 * @param in The name to truncate.
-	 * @return A string prefixLength characters long, consisting of the initial
-	 * prefix of name and padded with nulls if necessary to make up the length.
-	 */
-	private String getPrefix(String in) {
-		StringBuilder sb = new StringBuilder();
-		char[] chars = in.toCharArray();
-		int ci = 0;
-		for (int i = 0; i < prefixLength; i++) {
-			char c = 0;
-			while (ci < chars.length) {
-				// TODO: simplify when initial spaces are removed
-				c = chars[ci++];
-				if (ci == 1 && c== 0x20)
-					continue;
-				if (c >= 0x20)
-					break;
-			}
-			sb.append(c);
-		}
-
-		return sb.toString();
 	}
 
 	public int getPrefixLength() {

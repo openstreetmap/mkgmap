@@ -23,7 +23,6 @@ import java.text.CollationKey;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -61,7 +60,7 @@ public class Sort {
 	private String description;
 	private Charset charset;
 
-	private final Page[] pages = new Page[256];
+	private Page[] pages = new Page[256];
 
 	private final List<CodePosition> expansions = new ArrayList<>();
 	private int maxExpSize = 1;
@@ -69,6 +68,8 @@ public class Sort {
 	private CharsetEncoder encoder;
 	private boolean multi;
 	private int maxPage;
+	private int headerLen = SRTHeader.HEADER_LEN; 
+	private int header3Len = -1;
 
 	public Sort() {
 		pages[0] = new Page();
@@ -83,8 +84,39 @@ public class Sort {
 		setTertiary( ch, tertiary);
 
 		setFlags(ch, flags);
+		int numExp = (flags >> 4) & 0xf;
+		if (numExp + 1 > maxExpSize)
+			maxExpSize = numExp + 1;
 	}
 
+	public char[] encode(String s) {
+		char[] chars = null;
+		try {
+			if (isMulti()) {
+				chars = s.toCharArray();
+			} else {
+				ByteBuffer out = encoder.encode(CharBuffer.wrap(s));
+				byte[] bval = out.array();
+				chars = new char[bval.length];
+				for (int i = 0; i < bval.length; i++)
+					chars[i] = (char) (bval[i] & 0xff);
+			}
+		} catch (CharacterCodingException e) {
+		}
+		return chars;
+	}
+	
+	/**
+	 * Get the prefix of the name of the given length. 
+	 * @param name the name 
+	 * @param prefixLen the length
+	 * @return String with wanted length, possibly padded with trailing zeros.
+	 */
+	public char[] getPrefix(String name, int prefixLen) {
+		char[] chars = encode(name);
+		return Arrays.copyOf(chars, prefixLen);
+	}
+	
 	/**
 	 * Run after all sorting order points have been added.
 	 *
@@ -101,7 +133,7 @@ public class Sort {
 				continue;
 
 			for (int i = 0; i < 256; i++) {
-				if (((p.flags[i] >>> 4) & 0x3) == 0) {
+				if (((p.flags[i] >>> 4) & 0xf) == 0) {
 					if (p.getPrimary(i) != 0) {
 						byte second = p.getSecondary(i);
 						maxSecondary = Math.max(maxSecondary, second);
@@ -118,7 +150,7 @@ public class Sort {
 				continue;
 
 			for (int i = 0; i < 256; i++) {
-				if (((p.flags[i] >>> 4) & 0x3) != 0) continue;
+				if (((p.flags[i] >>> 4) & 0xf) != 0) continue;
 
 				if (p.getPrimary(i) == 0) {
 					if (p.getSecondary(i) == 0) {
@@ -189,31 +221,7 @@ public class Sort {
 				for (int i = 0; i < bval.length; i++)
 					chars[i] = (char) (bval[i] & 0xff);
 			}
-
-			// In theory you could have a string where every character expands into maxExpSize separate characters
-			// in the key.  However if we allocate enough space to deal with the worst case, then we waste a
-			// vast amount of memory. So allocate a minimal amount of space, try it and if it fails reallocate the
-			// maximum amount.
-			//
-			// We need +1 for the null bytes, we also +2 for a couple of expanded characters. For a complete
-			// german map this was always enough in tests.
-			key = new byte[(chars.length + 1 + 2) * 4];
-			int needed = 0;
-			try {
-				needed = fillCompleteKey(chars, key);
-			} catch (ArrayIndexOutOfBoundsException e) {
-				// Ok try again with the max possible key size allocated.
-				key = new byte[(chars.length+1) * 4 * maxExpSize];
-				needed = fillCompleteKey(chars, key);
-			}
-			// check if we can save bytes by copying
-			int neededBytes = needed;
-			int padding2 = 8 - (needed & 7);
-			if (padding2 != 8)
-				neededBytes += padding2;
-			if (neededBytes < key.length)
-				key = Arrays.copyOf(key, needed);
-
+			key = makeKey(chars);
 			if (cache != null)
 				cache.put(s, key);
 
@@ -235,6 +243,8 @@ public class Sort {
 	 * @return A sort key.
 	 */
 	public <T> SortKey<T> createSortKey(T object, Label label, int second, Map<Label, byte[]> cache) {
+		if (label.getLength() == 0)
+			return new SrtSortKey<>(object, ZERO_KEY, second);
 		byte[] key;
 		if (cache != null) {
 			key = cache.get(label);
@@ -243,25 +253,69 @@ public class Sort {
 		}
 
 		char[] encText = label.getEncText();
+		key = makeKey(encText);
+		if (cache != null)
+			cache.put(label, key);
 
-		// In theory you could have a string where every character expands into maxExpSize separate characters
-		// in the key.  However if we allocate enough space to deal with the worst case, then we waste a
-		// vast amount of memory. So allocate a minimal amount of space, try it and if it fails reallocate the
-		// maximum amount.
-		//
-		// We need +1 for the null bytes, we also +2 for a couple of expanded characters. For a complete
-		// german map this was always enough in tests.
-		key = new byte[(encText.length + 1 + 2) * 4];
-		int needed = 0;
-		try {
-			needed = fillCompleteKey(encText, key);
-		} catch (ArrayIndexOutOfBoundsException e) {
-			// Ok try again with the max possible key size allocated.
-			key = new byte[encText.length * 4 * maxExpSize + 4];
-			needed = fillCompleteKey(encText, key);
+		return new SrtSortKey<>(object, key, second);
+	}
+
+	/**
+	 * Create a sort key based on a Label, return key for partial name if prefix / suffix is found, else key for full name.
+	 *
+	 * The label will contain the actual characters (after transliteration for example)
+	 * @param object This is saved in the sort key for later retrieval and plays no part in the sorting.
+	 * @param label The label, the actual written bytes/chars will be used as input to the sort.
+	 * @param second Secondary sort key.
+	 * @param cache A cache for the created keys. This is for saving memory so it is essential that this
+	 * is managed by the caller.
+	 * @return A sort key.
+	 */
+	public <T> SortKey<T> createSortKeyPartial(T object, Label label, int second, Map<Label, byte[]> cache) {
+		if (label.getLength() == 0)
+			return new SrtSortKey<>(object, ZERO_KEY, second);
+		byte[] key;
+		if (cache != null) {
+			key = cache.get(label);
+			if (key != null)
+				return new SrtSortKey<>(object, key, second);
 		}
-		if ((key.length >> 3) > (needed >> 3))
-			key = Arrays.copyOf(key, needed);
+
+		char[] encText = label.getEncText();
+		int prefix = -1;
+		for (int i = 0; i < encText.length; i++) {
+			char c = encText[i];
+			if (c == 0x1e || c == 0x1b) {
+				prefix = i;
+				break;
+			}
+		}
+		int suffix = -1;
+		for (int i = 0; i < encText.length; i++) {
+			char c = encText[i];
+			if (c == 0x1f || c == 0x1c) {
+				suffix = i;
+				break;
+			}
+		}
+		
+		if (prefix > 0 || suffix > 0) {
+			int partLen;
+			if (prefix > 0 && suffix > 0)
+				partLen = suffix - prefix-1;
+			else if (prefix > 0) {
+				partLen = encText.length - (prefix + 1);
+			}
+			else {
+				partLen = suffix ;
+			}
+			// extract partial name without creating trailing zeros
+			char[] newEncText = new char[partLen];
+			System.arraycopy(encText, prefix+1, newEncText, 0, partLen); 
+			encText = newEncText;
+		}
+		 
+		key = makeKey(encText);
 		if (cache != null)
 			cache.put(label, key);
 
@@ -294,6 +348,38 @@ public class Sort {
 	}
 
 	/**
+	 * Create the key and trim it to the needed length if that saves memory.
+	 * @param chars character array
+	 * @return byte array 
+	 */
+	private byte[] makeKey(char[] chars) {
+		// In theory you could have a string where every character expands into maxExpSize separate characters
+		// in the key.  However if we allocate enough space to deal with the worst case, then we waste a
+		// vast amount of memory. So allocate a minimal amount of space, try it and if it fails reallocate the
+		// maximum amount.
+		//
+		// We need +1 for the null bytes, we also +2 for a couple of expanded characters. For a complete
+		// german map this was always enough in tests.
+		byte[] key = new byte[(chars.length + 1 + 2) * 4];
+		int needed = 0;
+		try {
+			needed = fillCompleteKey(chars, key);
+		} catch (ArrayIndexOutOfBoundsException e) {
+			// Ok try again with the max possible key size allocated.
+			key = new byte[(chars.length+1) * 4 * maxExpSize];
+			needed = fillCompleteKey(chars, key);
+		}
+		// check if we can save bytes by copying
+		int neededBytes = needed;
+		int padding2 = 8 - (needed & 7);
+		if (padding2 != 8)
+			neededBytes += padding2;
+		if (neededBytes < key.length)
+			key = Arrays.copyOf(key, needed);
+		return key;
+	}
+ 	
+	/**
 	 * Fill in the key from the given byte string.
 	 *
 	 * @param bVal The string for which we are creating the sort key.
@@ -321,7 +407,7 @@ public class Sort {
 			if (!hasPage(c >>> 8))
 				continue;
 
-			int exp = (getFlags(c) >> 4) & 0x3;
+			int exp = (getFlags(c) >> 4) & 0xf;
 			if (exp == 0) {
 				index = writePos(type, c, outKey, index);
 			} else {
@@ -421,41 +507,6 @@ public class Sort {
 	}
 
 	/**
-	 * Add an expansion to the sort.
-	 * An expansion is a letter that sorts as if it were two separate letters.
-	 *
-	 * The case were two letters sort as if the were just one (and more complex cases) are
-	 * not supported or are unknown to us.
-	 *
-	 * @param ch The code point of this letter in the code page.
-	 * @param inFlags The initial flags, eg if it is a letter or not.
-	 * @param expansionList The letters that this letter sorts as, as code points in the codepage.
-	 */
-	public void addExpansion(int ch, int inFlags, List<Integer> expansionList) {
-		ensurePage(ch >>> 8);
-		setFlags(ch, (byte) ((inFlags & 0xf) | (((expansionList.size()-1) << 4) & 0xf0)));
-
-		// Check for repeated definitions
-		if (getPrimary(ch) != 0)
-			throw new ExitException(String.format("repeated code point %x", ch));
-
-		setPrimary(ch, (expansions.size() + 1));
-		setSecondary(ch,  0);
-		setTertiary(ch, 0);
-		maxExpSize = Math.max(maxExpSize, expansionList.size());
-
-		for (Integer b : expansionList) {
-			CodePosition cp = new CodePosition();
-			cp.setPrimary((char) getPrimary(b & 0xff));
-
-			// Currently sort without secondary or tertiary differences to the base letters.
-			cp.setSecondary((byte) getSecondary(b & 0xff));
-			cp.setTertiary((byte) getTertiary(b & 0xff));
-			expansions.add(cp);
-		}
-	}
-
-	/**
 	 * Get the expansion with the given index, one based.
 	 * @param val The one-based index number of the extension.
 	 */
@@ -535,6 +586,8 @@ public class Sort {
 	 */
 	private void ensurePage(int n) {
 		assert n == 0 || isMulti();
+		if (n > pages.length)
+			pages = Arrays.copyOf(pages, n + 1);
 		if (this.pages[n] == null) {
 			this.pages[n] = new Page();
 			if (n > maxPage)
@@ -542,6 +595,14 @@ public class Sort {
 		}
 	}
 
+	/**
+	 * Allocate space for up to n pages.
+	 * @param n
+	 */
+	public void setMaxPage(int n) {
+		pages = Arrays.copyOf(pages, n + 1);
+	}
+	
 	/**
 	 * The max page, top 8+ bits of the character that we have information on.
 	 */
@@ -636,7 +697,7 @@ public class Sort {
 	 *
 	 * This implementation has the same effect when used for sorting as the sort keys.
 	 */
-	private class SrtCollator extends Collator {
+	public class SrtCollator extends Collator {
 		private final int codepage;
 
 		private SrtCollator(int codepage) {
@@ -688,9 +749,7 @@ public class Sort {
 		 * @param char2 Bytes for the second string in the codepage encoding.
 		 * @return Comparison result -1, 0 or 1.
 		 */
-		private int compareOneStrength(char[] char1, char[] char2, int type) {
-			int res = 0;
-
+		public int compareOneStrength(char[] char1, char[] char2, int type) {
 			PositionIterator it1 = new PositionIterator(char1, type);
 			PositionIterator it2 = new PositionIterator(char2, type);
 
@@ -699,15 +758,39 @@ public class Sort {
 				int p2 = it2.next();
 
 				if (p1 < p2) {
-					res = -1;
-					break;
+					return -1;
 				} else if (p1 > p2) {
-					res = 1;
-					break;
+					return 1;
 				}
 			}
 
-			return res;
+			return 0;
+		}
+
+		/**
+		 * Compare the bytes against primary, secondary or tertiary arrays.
+		 * @param char1 Bytes for the first string in the codepage encoding.
+		 * @param char2 Bytes for the second string in the codepage encoding.
+		 * @return Comparison result -1, 0 or 1.
+		 */
+		public int compareOneStrengthWithLength(char[] char1, char[] char2, int type, int len) {
+			PositionIterator it1 = new PositionIterator(char1, type);
+			PositionIterator it2 = new PositionIterator(char2, type);
+
+			int todo = len;
+			while (it1.hasNext() || it2.hasNext()) {
+				int p1 = it1.next();
+				int p2 = it2.next();
+				if (--todo < 0)
+					return 0;
+				if (p1 < p2) {
+					return -1;
+				} else if (p1 > p2) {
+					return 1;
+				}
+			}
+
+			return 0;
 		}
 
 		public CollationKey getCollationKey(String source) {
@@ -728,7 +811,7 @@ public class Sort {
 			return codepage;
 		}
 
-		class PositionIterator implements Iterator<Integer> {
+		class PositionIterator {
 			private final char[] chars;
 			private final int len;
 			private final int type;
@@ -756,7 +839,7 @@ public class Sort {
 			 * @return The next non-ignored sort position. At the end of the string it returns
 			 * NO_ORDER.
 			 */
-			public Integer next() {
+			public int next() {
 				int next;
 				if (expPos == 0) {
 
@@ -773,7 +856,7 @@ public class Sort {
 							continue;
 						}
 
-						int nExpand = (getFlags(c) >> 4) & 0x3;
+						int nExpand = (getFlags(c) >> 4) & 0xf;
 						// Check if this is an expansion.
 						if (nExpand > 0) {
 							expStart = getPrimary(c) - 1;
@@ -796,10 +879,30 @@ public class Sort {
 
 				return next;
 			}
-
-			public void remove() {
-				throw new UnsupportedOperationException("remove not supported");
-			}
 		}
 	}
+
+	public void setExpansions(List<CodePosition> expansionList) {
+		expansions.clear();
+		expansions.addAll(expansionList);
+	}
+
+	public int getHeaderLen() {
+		return headerLen;
+	}
+
+	public void setHeaderLen(int headerLen) {
+		this.headerLen = headerLen;
+	}
+
+	public int getHeader3Len() {
+		if (header3Len < 0)
+			header3Len = isMulti() ? SRTHeader.HEADER3_MULTI_LEN : SRTHeader.HEADER3_LEN;
+		return header3Len;
+	}
+
+	public void setHeader3Len(int header3Len) {
+		this.header3Len = header3Len;
+	}
+
 }
