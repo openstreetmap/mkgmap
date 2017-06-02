@@ -1,7 +1,8 @@
 = List of options = 
 Note that option order is significant: An option only 
-applies to subsequent input files. (So if you are using splitter, you probably 
-want to put most of your options before '-c template.args'.)
+applies to subsequent input files. So if you are using splitter, you probably 
+want to put most of your options before '-c template.args'.
+
 
 === General options ===
 
@@ -139,7 +140,7 @@ search for it as both "Aleksandra" and "Gryglewskiego".  It will also increase t
 size of the index.  Useful in countries where searching for the first word in name
 is not the right thing to do. Words following an opening bracket '(' are ignored. 
 See also option road-name-config.  
-
+<p>
 ;--road-name-config=file
 :	This option handles the problem that some countries have road names which 
 often start or end with very similar words, e.g. in France the first word
@@ -164,12 +165,12 @@ Only MapSource shows a corresponding hint.
 ::	Another effect is that the index is smaller. 
 :	The option specifies the path to a file which gives the details. See 
 comments in the sample roadNameConfig.txt for further details.
- 
+<p>
 ;--mdr7-excl 
 :	This option allows to specify words which should not be in the road index.
 It was added before option road-name-config and is probably no longer needed.
 :	Example usage: --x-mdr7-excl="Road, Street, Straße, Weg"
- 
+<p>
 ;--mdr7-del
 :	Use this option if your style adds strings to the labels of roads which you
 want to see in the map but which should not appear in the result list
@@ -179,7 +180,7 @@ if the word after it appears in the given list. If so, the word is removed
 and the search is repeated. The remaining string is used to create the index.
 :	Example: Assume your style adds surface attributes like 'pav.' or 'unp.' to a road
 label. You can use --mdr7-del="pav.,unp." to remove these apendixes from the index.
-	  
+<p>
 ;--poi-excl-index
 :	By default, mkgmap indexes the following POI types with a non-empty label:
 ::	- 0x00 .. 0x0f (cities, sub type 0, type <= 0xf)
@@ -205,7 +206,7 @@ It is not useful to index those numbers, so you can use --poi-excl-index=0x2800
 to exclude this.
 ::	- For the mentioned Oregon you may use --poi-excl-index=0x2a00-0x661f
 to reduce the index size.
-
+<p>
 ;--bounds=directory|zipfile
 :     A directory or a zip file containing the preprocessed bounds files. 
 Bounds files in a zip file must be located in the zip file's root directory.
