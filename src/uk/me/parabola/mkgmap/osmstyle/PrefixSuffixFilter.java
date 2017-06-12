@@ -154,7 +154,7 @@ public class PrefixSuffixFilter {
 		case "suffix":
 			List<String> suffixes = new ArrayList<>();
 			for (String s : valParts) {
-				suffixes.add(stripQuotes(s.trim()));
+				suffixes.add(stripBlanksAndQuotes(s));
 			}
 			sortByLength(suffixes);
 			langSuffixMap.put(keysParts[1].trim(), suffixes);
@@ -181,9 +181,9 @@ public class PrefixSuffixFilter {
 	private List<String> genPrefix (List<String> prefix1, List<String> prefix2) {
 		List<String> prefixes = new ArrayList<>();
 		for (String p1 : prefix1) {
-			p1 = stripQuotes(p1);
+			p1 = stripBlanksAndQuotes(p1);
 			for (String p2 : prefix2) {
-				p2 = stripQuotes(p2);
+				p2 = stripBlanksAndQuotes(p2);
 				prefixes.add(p1 + " " + p2);
 			}
 			prefixes.add(p1 + " ");
@@ -191,7 +191,13 @@ public class PrefixSuffixFilter {
 		return prefixes;
 	}
 
-	private String stripQuotes(String s) {
+	/**
+	 * First remove leading and trailing blanks, next check for paired quotes
+	 * @param s the string 
+	 * @return the modified string
+	 */
+	private String stripBlanksAndQuotes(String s) {
+		s = s.trim();
 		if (s.startsWith("'") && s.endsWith("'") || s.startsWith("\"") && s.endsWith("\"")) {
 			return s.substring(1, s.length()-1);
 		}
