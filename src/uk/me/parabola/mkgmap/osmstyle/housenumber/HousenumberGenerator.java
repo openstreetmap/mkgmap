@@ -1534,10 +1534,7 @@ public class HousenumberGenerator {
 			if (dDist != 0d) {
 				return (int)Math.signum(dDist);
 			}
-			if (d != 0)
-				return d;
-			d  = Long.compare(o1.getElement().getId(), o2.getElement().getId());
-			return d;
+			return Long.compare(o1.getElement().getId(), o2.getElement().getId());
 		}
 	}
 	/**
