@@ -279,31 +279,7 @@ public class ShapeSplitter {
 
 /* Dec16/Jan17. Ticker Berkin. New implementation for splitting shapes.
 
-Eventually maybe can be used instead of some of the above and in following code:
-
-done	mkgmap/build/MapArea.java
-	mkgmap/filters/PolygonSplitterBase.java
-	mkgmap/filters/ShapeMergeFilter.java
-	mkgmap/general/AreaClipper.java
-	mkgmap/general/PolygonClipper.java
-	mkgmap/reader/osm/MultiPolygonRelation.java
-Maybe not this lot:
-	mkgmap/reader/osm/boundary/BoundaryConverter.java
-	mkgmap/reader/osm/boundary/BoundaryCoverageUtil.java
-	mkgmap/reader/osm/boundary/BoundaryDiff.java
-	mkgmap/reader/osm/boundary/BoundaryElement.java
-	mkgmap/reader/osm/boundary/BoundaryFile2Gpx.java
-	mkgmap/reader/osm/boundary/BoundaryQuadTree.java
-	mkgmap/reader/osm/boundary/BoundaryRelation.java
-	mkgmap/reader/osm/boundary/BoundarySaver.java
-	mkgmap/reader/osm/boundary/BoundaryUtil.java
-? not sure about these
-	mkgmap/reader/osm/SeaGenerator.java
-	mkgmap/sea/optional/PrecompSeaGenerator.java
-	mkgmap/sea/optional/PrecompSeaMerger.java
-	util/ElementQuadTreeNode.java
-	util/Java2DConverter.java
-	util/QuadTreeNode.java
+Eventually maybe can be used instead of some of the above and elsewhere
 */
 
 	/**
@@ -327,7 +303,7 @@ Maybe not this lot:
 			MergeCloseHelper thisLine = lineInfo.get(inx);
 			if (thisLine.highPoint > endEnclosed) // only do enclosed items
 				break; // simple - fully enclosed
-			if (thisLine.highPoint == endEnclosed && thisLine.highPoint == endEnclosed) // consider carefully
+			if (thisLine.lowPoint == endEnclosed && thisLine.highPoint == endEnclosed) // consider carefully
 				if (calledFromHole == (thisLine.areaOrHole == -1))
 					break; // stop if same type
 			inx = doLines(inx+1, thisLine.highPoint, calledFromHole ? thisLine : null, lineInfo, origList);
