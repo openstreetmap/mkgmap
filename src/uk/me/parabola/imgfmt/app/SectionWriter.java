@@ -66,8 +66,20 @@ public class SectionWriter implements ImgFileWriter {
 		writer.putChar(c);
 	}
 
+	public void put1(int val) {
+		writer.put1(val);
+	};
+
+	public void put2(int val) {
+		writer.put2(val);
+	};
+
 	public void put3(int val) {
 		writer.put3(val);
+	}
+
+	public void putN(int nBytes, int val) {
+		writer.putN(nBytes, val);
 	}
 
 	public void putInt(int val) {

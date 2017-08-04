@@ -35,7 +35,7 @@ public class Mdr18 extends MdrSection implements HasHeaderFlags {
 		int poiSize = getSizes().getSize(19);
 		for (Mdr18Record pt : poiTypes) {
 			writer.putChar((char) (pt.getType() | 0x4000));
-			putN(writer, poiSize, pt.getRecord());
+			writer.putN(poiSize, pt.getRecord());
 		}
 	}
 

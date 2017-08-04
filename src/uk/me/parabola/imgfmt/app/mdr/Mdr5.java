@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.srt.MultiSortKey;
 import uk.me.parabola.imgfmt.app.srt.Sort;
@@ -51,7 +52,7 @@ public class Mdr5 extends MdrMapSection {
 	 * Called after all cities to sort and number them.
 	 */
 	public void preWriteImpl() {
-		localCitySize = numberToPointerSize(maxCityIndex + 1);
+		localCitySize = Utils.numberToPointerSize(maxCityIndex + 1);
 
 		List<SortKey<Mdr5Record>> sortKeys = new ArrayList<>(allCities.size());
 		Sort sort = getConfig().getSort();
@@ -216,7 +217,7 @@ public class Mdr5 extends MdrMapSection {
 				writer.putChar((char) region);
 			if (hasString)
 				putStringOffset(writer, city.getStringOffset());
-			putN(writer, size20, city.getMdr20());
+			writer.putN(size20, city.getMdr20());
 		}
 	}
 
@@ -225,10 +226,7 @@ public class Mdr5 extends MdrMapSection {
 	 * and not the global city index used in mdr11.
 	 */
 	private void putLocalCityIndex(ImgFileWriter writer, int cityIndex) {
-		if (localCitySize == 2) // 3 probably not possible in actual maps.
-			writer.putChar((char) cityIndex);
-		else
-			writer.put((byte) cityIndex);
+		writer.putN(localCitySize, cityIndex);
 	}
 
 	/**

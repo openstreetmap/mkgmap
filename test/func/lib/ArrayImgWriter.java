@@ -46,10 +46,32 @@ public class ArrayImgWriter implements ImgFileWriter {
 		out.write((c >> 8) & 0xff);
 	}
 
+	public void put1(int val) {
+		out.write(val & 0xff);
+	}
+
+	public void put2(int val) {
+		out.write(val & 0xff);
+		out.write((val >> 8) & 0xff);
+	}
+
 	public void put3(int val) {
 		out.write(val & 0xff);
 		out.write((val >> 8) & 0xff);
 		out.write((val >> 16) & 0xff);
+	}
+
+	public void putN(int nBytes, int val) {
+		out.write(val & 0xff);
+		if (nBytes <= 1)
+			return;
+		out.write((val >> 8) & 0xff);
+		if (nBytes <= 2)
+			return;
+		out.write((val >> 16) & 0xff);
+		if (nBytes <= 3)
+			return;
+		out.write((val >> 24) & 0xff);
 	}
 
 	public void putInt(int val) {

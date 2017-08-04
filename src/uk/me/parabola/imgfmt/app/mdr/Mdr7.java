@@ -367,7 +367,7 @@ public class Mdr7 extends MdrMapSection {
 				int trailingFlags = ((rr & 1) == 0) ? 1 : 0;
 				// trailingFlags |= s.getB() << 1;
 				// trailingFlags |= s.getS() << (1 + partialBShift);
-				putN(writer, partialInfoSize, trailingFlags);
+				writer.putN(partialInfoSize, trailingFlags);
 			}
 			last = s;
 		}

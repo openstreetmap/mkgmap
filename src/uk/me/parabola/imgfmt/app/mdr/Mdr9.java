@@ -36,7 +36,7 @@ public class Mdr9 extends MdrSection implements HasHeaderFlags {
 		for (Map.Entry<Integer, Integer> ent : index.entrySet()) {
 			int group = ent.getKey();
 			writer.put((byte) group);
-			putN(writer, poiSize, ent.getValue());
+			writer.putN(poiSize, ent.getValue());
 		}
 	}
 

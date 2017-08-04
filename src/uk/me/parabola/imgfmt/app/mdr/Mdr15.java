@@ -132,7 +132,7 @@ public class Mdr15 extends MdrSection {
 	 * for this.
 	 */
 	public int getSizeForRecord() {
-		return numberToPointerSize(nextOffset);
+		return Utils.numberToPointerSize(nextOffset);
 	}
 
 	/**

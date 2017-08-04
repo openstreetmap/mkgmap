@@ -425,5 +425,17 @@ public class Utils {
 
 		return true;
 	}
-}
 
+	public static int numberToPointerSize(int n) {
+	// moved from imgfmt/app/mdr/MdrSection.java and app/typ/TYPFile.java
+		if (n <= 0xff)
+			return 1;
+		else if (n <= 0xffff)
+			return 2;
+		else if (n <= 0xffffff)
+			return 3;
+		else
+			return 4;
+	}
+
+}

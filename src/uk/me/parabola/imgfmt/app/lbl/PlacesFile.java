@@ -419,6 +419,14 @@ public class PlacesFile {
 		return postalCodes.size();
 	}
 
+	public int numHighways() {
+		return highways.size();
+	}
+
+	public int numExitFacilities() {
+		return exitFacilities.size();
+	}
+
 	public void setSort(Sort sort) {
 		this.sort = sort;
 	}

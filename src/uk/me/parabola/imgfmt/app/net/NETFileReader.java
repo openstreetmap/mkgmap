@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
@@ -152,7 +153,7 @@ public class NETFileReader extends ImgFile {
 		indexes.clear();
 		if (flag == 2) {
 			// fetch city/zip index
-			int ind = (size == 2)? reader.getChar(): (reader.get() & 0xff);
+			int ind = reader.getUint(size);
 			if (ind != 0)
 				indexes.add(ind-1);
 		} else if (flag == 3) {
@@ -209,15 +210,7 @@ public class NETFileReader extends ImgFile {
 			assert false : "ERRROR overflow";
 			return 0;
 		}
-		int cnum;
-		if (size == 1)
-			cnum = reader.get() & 0xff;
-		else if (size == 2)
-			cnum = reader.getChar();
-		else {
-			assert false : "unexpected size value" + size;
-			return 0;
-		}
+		int cnum = reader.getUint(size);
 		return cnum;
 	}
 
@@ -300,12 +293,12 @@ public class NETFileReader extends ImgFile {
 
 	public void setCities(List<City> cities) {
 		this.cities = cities;
-		this.citySize = cities.size() > 255? 2: 1;
+		this.citySize = Utils.numberToPointerSize(cities.size());
 	}
 
 	public void setZips(List<Zip> zips) {
 		this.zips = zips;
-		this.zipSize = zips.size() > 255? 2: 1;
+		this.zipSize = Utils.numberToPointerSize(zips.size());
 	}
 
 	public void setLabels(LBLFileReader labels) {

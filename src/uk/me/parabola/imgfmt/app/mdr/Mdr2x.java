@@ -70,7 +70,7 @@ public abstract class Mdr2x extends MdrMapSection implements HasHeaderFlags {
 					int trailingFlags = ((rr & 1) == 0) ? 1 : 0;
 					// trailingFlags |= s.getB() << 1;
 					// trailingFlags |= s.getS() << (1 + partialBShift);
-					putN(writer, partialInfoSize, trailingFlags);
+					writer.putN(partialInfoSize, trailingFlags);
 				}
 			} else {
 				int rr = street.checkFullRepeat(prev, collator);
@@ -78,7 +78,7 @@ public abstract class Mdr2x extends MdrMapSection implements HasHeaderFlags {
 					repeat = 0;
 
 				int index = street.getIndex();
-				putN(writer, size, (index << 1) | repeat);
+				writer.putN(size, (index << 1) | repeat);
 			}
 
 			prev = street;

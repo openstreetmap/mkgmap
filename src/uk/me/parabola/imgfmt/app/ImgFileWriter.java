@@ -64,6 +64,20 @@ public interface ImgFileWriter extends Closeable {
 	public void putChar(char c);
 
 	/**
+	 * Write out int in range 0..255 as single byte.
+	 * Use instead of put() for unsigned for clarity.
+	 * @param val The value to write.
+	 */
+	public void put1(int val);
+
+	/**
+	 * Write out int in range 0..65535 as two bytes in correct byte order.
+	 * Use instead of putChar() for unsigned for clarity.
+	 * @param val The value to write.
+	 */
+	public void put2(int val);
+
+	/**
 	 * Write out three bytes.  Done in the correct byte order.
 	 *
 	 * @param val The value to write, only the bottom three bytes will be
@@ -71,6 +85,14 @@ public interface ImgFileWriter extends Closeable {
 	 */
 	public void put3(int val);
 	
+	/**
+	 * Write out 1-4 bytes.  Done in the correct byte order.
+	 *
+	 * @param nBytes The number of bytes to write.
+	 * @param val The value to write.
+	 */
+	public void putN(int nBytes, int val);
+
 	/**
 	 * Write out 4 byte value.
 	 * @param val The value to write.

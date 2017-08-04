@@ -44,22 +44,7 @@ public class Mdr1MapIndex {
 	}
 
 	public void addPointer(int recordNumber) {
-		switch (pointerSize) {
-		case 4:
-			subWriter.putInt(recordNumber);
-			break;
-		case 3:
-			subWriter.put3(recordNumber);
-			break;
-		case 2:
-			subWriter.putChar((char) recordNumber);
-			break;
-		case 1:
-			subWriter.put((byte) recordNumber);
-			break;
-		default:
-			assert false;
-		}
+		subWriter.putN(pointerSize, recordNumber);
 	}
 	
 	private int sectionToSubsection(int n) {

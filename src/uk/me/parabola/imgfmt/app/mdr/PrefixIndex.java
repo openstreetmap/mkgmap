@@ -16,6 +16,7 @@ import java.text.Collator;
 import java.util.ArrayList;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.Sort.SrtCollator;
@@ -114,17 +115,17 @@ public class PrefixIndex extends MdrSection {
 	 * Write the section or subsection.
 	 */
 	public void writeSectData(ImgFileWriter writer) {
-		int size = numberToPointerSize(maxIndex);
+		int size = Utils.numberToPointerSize(maxIndex);
 		for (Mdr8Record s : index) {
 			for (int i = 0; i< prefixLength; i++) {
 				writer.put((byte) s.getPrefix()[i]);
 			}
-			putN(writer, size, s.getRecordNumber());
+			writer.putN(size, s.getRecordNumber());
 		}
 	}
 
 	public int getItemSize() {
-		return prefixLength + numberToPointerSize(maxIndex);
+		return prefixLength + Utils.numberToPointerSize(maxIndex);
 	}
 
 	protected int numberOfItems() {

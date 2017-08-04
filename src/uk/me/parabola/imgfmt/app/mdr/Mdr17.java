@@ -64,7 +64,7 @@ public class Mdr17 extends MdrSection {
 			len <<= 1;
 			count++;
 		}
-		putN(writer, count, len);
+		writer.putN(count, len);
 
 		// Calculate the header. This code is unlikely to survive the finding of another example!
 		// Have no idea what the real thinking behind this is.

@@ -15,6 +15,7 @@ package uk.me.parabola.imgfmt.app.mdr;
 import java.util.ArrayList;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
@@ -82,17 +83,17 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 		int size22 = sizes.getSize(22);
 		int size25 = sizes.getSize(5);  // NB appears to be size of 5 (cities), not 25 (cities with country).
 		int size26 = has26? sizes.getSize(26): 0;
-		int size17 = numberToPointerSize(max17);
+		int size17 = Utils.numberToPointerSize(max17);
 		for (Mdr29Record record : index) {
-			putN(writer, size24, record.getMdr24());
+			writer.putN(size24, record.getMdr24());
 			if (hasString)
 				putStringOffset(writer, record.getStrOffset());
-			putN(writer, size22, record.getMdr22());
-			putN(writer, size25, record.getMdr25());
+			writer.putN(size22, record.getMdr22());
+			writer.putN(size25, record.getMdr25());
 			if (has26)
-				putN(writer, size26, record.getMdr26());
+				writer.putN(size26, record.getMdr26());
 			if (has17)
-				putN(writer, size17, record.getMdr17());
+				writer.putN(size17, record.getMdr17());
 		}
 	}
 
@@ -111,7 +112,7 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 				;
 		if (isForDevice()) {
 			if (!getConfig().getSort().isMulti())
-				size += numberToPointerSize(max17);
+				size += Utils.numberToPointerSize(max17);
 		} else {
 			size += sizes.getStrOffSize();
 			size += sizes.getSize(26);
@@ -138,7 +139,7 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 		if (isForDevice()) {
 			int magic = 0x6; // 22 and 25
 			if (!getConfig().getSort().isMulti())
-				magic |= numberToPointerSize(max17) << 4;
+				magic |= Utils.numberToPointerSize(max17) << 4;
 			return magic; // +17, -26, -strings
 		}
 		else

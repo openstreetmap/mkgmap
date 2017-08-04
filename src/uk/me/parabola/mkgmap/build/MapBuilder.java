@@ -267,8 +267,26 @@ public class MapBuilder implements Configurable {
 			}
 			netFile.writePost(rgnFile.getWriter());
 		}
+		warnAbout3ByteImgRefs();
 	}
-	
+
+	private void warnAbout3ByteImgRefs() {
+		String infoMsg = "- more than 65535 might cause indexing problems and excess size. Suggest splitter with lower --max-nodes";
+		int itemCount;
+		itemCount = lblFile.numCities();
+		if (itemCount > 0xffff)
+			log.error("Map contains", itemCount, "Cities", infoMsg);
+		itemCount = lblFile.numZips();
+		if (itemCount > 0xffff)
+			log.error("Map contains", itemCount, "Zips", infoMsg);
+		itemCount = lblFile.numHighways();
+		if (itemCount > 0xffff)
+			log.error("Map contains", itemCount, "Highways", infoMsg);
+		itemCount = lblFile.numExitFacilities();
+		if (itemCount > 0xffff)
+			log.error("Map contains", itemCount, "Exit facilities", infoMsg);
+	} // warnAbout3ByteImgRefs
+
 	private Country getDefaultCountry() {
 		if (defaultCountry == null && lblFile != null) {
 			defaultCountry = lblFile.createCountry(countryName, countryAbbr);

@@ -12,6 +12,7 @@
  */
 package uk.me.parabola.imgfmt.app.mdr;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
@@ -48,42 +49,11 @@ public abstract class MdrSection extends ConfigBase {
 	}
 
 	protected void putMapIndex(ImgFileWriter writer, int mapIndex) {
-		putN(writer, sizes.getMapSize(), mapIndex);
+		writer.putN(sizes.getMapSize(), mapIndex);
 	}
 
 	protected void putStringOffset(ImgFileWriter writer, int strOff) {
-		putN(writer, sizes.getStrOffSize(), strOff);
-	}
-
-	protected void putN(ImgFileWriter writer, int n, int value) {
-		switch (n) {
-		case 1:
-			writer.put((byte) value);
-			break;
-		case 2:
-			writer.putChar((char) value);
-			break;
-		case 3:
-			writer.put3(value);
-			break;
-		case 4:
-			writer.putInt(value);
-			break;
-		default: // Don't write anything.
-			assert false;
-			break;
-		}
-	}
-
-	protected static int numberToPointerSize(int n) {
-		if (n > 0xffffff)
-			return 4;
-		else if (n > 0xffff)
-			return 3;
-		else if (n > 0xff)
-			return 2;
-		else
-			return 1;
+		writer.putN(sizes.getStrOffSize(), strOff);
 	}
 
 	/**
@@ -113,7 +83,7 @@ public abstract class MdrSection extends ConfigBase {
 	 * to store the largest record number in this section.
 	 */
 	public int getSizeForRecord() {
-		return numberToPointerSize(getNumberOfItems());
+		return Utils.numberToPointerSize(getNumberOfItems());
 	}
 
 	/**
@@ -178,7 +148,7 @@ public abstract class MdrSection extends ConfigBase {
 		 * one bit flag.
 		 */
 		public int getCitySizeFlagged() {
-			return Math.max(2, numberToPointerSize(sections[5].getNumberOfItems() << 1));
+			return Math.max(2, Utils.numberToPointerSize(sections[5].getNumberOfItems() << 1));
 		}
 
 		public int getCityFlag() {
@@ -190,7 +160,7 @@ public abstract class MdrSection extends ConfigBase {
 		}
 
 		public int getStreetSizeFlagged() {
-			return numberToPointerSize(sections[7].getNumberOfItems() << 1);
+			return Utils.numberToPointerSize(sections[7].getNumberOfItems() << 1);
 		}
 
 		public int getPoiSize() {
@@ -207,7 +177,7 @@ public abstract class MdrSection extends ConfigBase {
 		 * and a flag bit.
 		 */
 		public int getPoiSizeFlagged() {
-			return numberToPointerSize(sections[11].getNumberOfItems() << 1);
+			return Utils.numberToPointerSize(sections[11].getNumberOfItems() << 1);
 		}
 
 		public int getPoiFlag() {

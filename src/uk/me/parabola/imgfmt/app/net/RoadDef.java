@@ -27,6 +27,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import uk.me.parabola.imgfmt.MapFailedException;
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.BitWriter;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
@@ -243,7 +244,7 @@ public class RoadDef {
 			len = (numbers == null)  ? 0: numbers.zipWriter.getBuffer().size();
 			if (len > 0){
 				zipBuf = numbers.zipWriter.getBuffer();
-				flag = (len > 255) ? 1 : 0;
+				flag = Utils.numberToPointerSize(len) - 1;
 			} else 
 				flag = (zip == null) ? 3 : 2;
 			code |= flag << 2;
@@ -251,14 +252,14 @@ public class RoadDef {
 			len = (numbers == null)  ? 0: numbers.cityWriter.getBuffer().size();
 			if (len > 0){
 				cityBuf = numbers.cityWriter.getBuffer();
-				flag = (len > 255) ? 1 : 0;
+				flag = Utils.numberToPointerSize(len) - 1;
 			} else 
 				flag = (city == null) ? 3 : 2;
 			code |= flag << 4;
 			
 			len = (numbers == null) ? 0 : numbers.fetchBitStream().getLength();
 			if (len > 0){
-				flag = (len > 255) ? 1 : 0;
+				flag = Utils.numberToPointerSize(len) - 1;
 			} else 
 				flag = 3;
 			code |= flag << 6;
@@ -268,42 +269,27 @@ public class RoadDef {
 			
 			if (zipBuf != null){
 				len = zipBuf.size();
-				if (len > 255)
-					writer.putChar((char) len);
-				else
-					writer.put((byte) len);
+				writer.putN(Utils.numberToPointerSize(len), len);
 				writer.put(zipBuf.toByteArray());
 			} else {
 				if(zip != null) {
 					char zipIndex = (char)zip.getIndex();
-					if(numZips > 255)
-						writer.putChar(zipIndex);
-					else
-						writer.put((byte)zipIndex);
+					writer.putN(Utils.numberToPointerSize(numZips), zipIndex);
 				}
 			}
 			if (cityBuf != null){
 				len = cityBuf.size();
-				if (len > 255)
-					writer.putChar((char) len);
-				else
-					writer.put((byte) len);
+				writer.putN(Utils.numberToPointerSize(len), len);
 				writer.put(cityBuf.toByteArray());
 			} else {
 				if(city != null) {
 					char cityIndex = (char)city.getIndex();
-					if(numCities > 255)
-						writer.putChar(cityIndex);
-					else
-						writer.put((byte)cityIndex);
+					writer.putN(Utils.numberToPointerSize(numCities), cityIndex);
 				}
 			}
 			if (numbers != null) {
 				BitWriter bw = numbers.fetchBitStream();
-				if (bw.getLength() > 255)
-					writer.putChar((char) bw.getLength());
-				else
-					writer.put((byte) bw.getLength());
+				writer.putN(Utils.numberToPointerSize(bw.getLength()), bw.getLength());
 				writer.put(bw.getBytes(), 0, bw.getLength());
 			}
 		}

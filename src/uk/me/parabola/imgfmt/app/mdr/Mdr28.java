@@ -73,10 +73,10 @@ public class Mdr28 extends MdrSection implements HasHeaderFlags {
 		int size27 = sizes.getSize(27);
 
 		for (Mdr28Record mdr28 : index) {
-			putN(writer, size23, mdr28.getMdr23());
+			writer.putN(size23, mdr28.getMdr23());
 			putStringOffset(writer, mdr28.getStrOffset());
-			putN(writer, size21, mdr28.getMdr21());
-			putN(writer, size27, mdr28.getMdr27());
+			writer.putN(size21, mdr28.getMdr21());
+			writer.putN(size27, mdr28.getMdr27());
 		}
 	}
 

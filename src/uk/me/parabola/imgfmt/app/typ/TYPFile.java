@@ -135,24 +135,24 @@ public class TYPFile extends ImgFile {
 
 	private void writeStrIndex(ImgFileWriter in) {
 		SectionWriter writer = header.getStringIndex().makeSectionWriter(in);
-		int psize = ptrSize(header.getLabels().getSize());
+		int psize = Utils.numberToPointerSize(header.getLabels().getSize());
 		header.getStringIndex().setItemSize((char) (3 + psize));
 
 		for (Map.Entry<Integer, Integer> ent : strToType.entrySet()) {
-			putN(writer, psize, ent.getKey());
-			putN(writer, 3, ent.getValue());
+			writer.putN(psize, ent.getKey());
+			writer.put3(ent.getValue());
 		}
 		Utils.closeFile(writer);
 	}
 
 	private void writerTypeIndex(ImgFileWriter in) {
 		SectionWriter writer = header.getTypeIndex().makeSectionWriter(in);
-		int psize = ptrSize(header.getLabels().getSize());
+		int psize = Utils.numberToPointerSize(header.getLabels().getSize());
 		header.getTypeIndex().setItemSize((char) (3 + psize));
 
 		for (Map.Entry<Integer, Integer> ent : typeToStr.entrySet()) {
-			putN(writer, 3, ent.getKey());
-			putN(writer, psize, ent.getValue());
+			writer.put3(ent.getKey());
+			writer.putN(psize, ent.getValue());
 		}
 		Utils.closeFile(writer);
 	}
@@ -170,7 +170,7 @@ public class TYPFile extends ImgFile {
 
 		int size = dataSection.getSize();
 		int typeSize = indexSection.getItemSize();
-		int psize = ptrSize(size);
+		int psize = Utils.numberToPointerSize(size);
 
 		indexSection.setItemSize((char) (typeSize + psize));
 
@@ -178,8 +178,8 @@ public class TYPFile extends ImgFile {
 		for (TypElement elem : elementData) {
 			int offset = elem.getOffset();
 			int type = elem.getTypeForFile();
-			putN(subWriter, typeSize, type);
-			putN(subWriter, psize, offset);
+			subWriter.putN(typeSize, type);
+			subWriter.putN(psize, offset);
 		}
 		Utils.closeFile(subWriter);
 
@@ -195,37 +195,6 @@ public class TYPFile extends ImgFile {
 		}
 	}
 
-	private int ptrSize(int size) {
-		int psize = 1;
-		if (size > 0xffffff)
-			psize = 4;
-		else if (size > 0xffff)
-			psize = 3;
-		else if (size > 0xff)
-			psize = 2;
-		return psize;
-	}
-
-	protected void putN(ImgFileWriter writer, int n, int value) {
-		switch (n) {
-		case 1:
-			writer.put((byte) value);
-			break;
-		case 2:
-			writer.putChar((char) value);
-			break;
-		case 3:
-			writer.put3(value);
-			break;
-		case 4:
-			writer.putInt(value);
-			break;
-		default: // Don't write anything.
-			assert false;
-			break;
-		}
-	}
-	
 	public void setData(TypData data) {
 		this.data = data;
 		TypParam param = data.getParam();

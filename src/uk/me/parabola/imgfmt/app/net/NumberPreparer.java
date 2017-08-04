@@ -13,10 +13,10 @@
 package uk.me.parabola.imgfmt.app.net;
 
 import java.io.ByteArrayOutputStream;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.BitWriter;
 import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Zip;
@@ -998,12 +998,14 @@ class CityZipWriter {
 	void writeIndex(int val){
 		if (val <= 0)
 			return;
-		if (numItems > 255){
-			buf.write((byte) val & 0xff);
-			buf.write((byte) (val >> 8));
-		}
-		else 
-			buf.write((byte) val);
+		int ptrSize = Utils.numberToPointerSize(numItems);
+		buf.write(val);
+		if (ptrSize <= 1)
+			return;
+		buf.write(val >> 8);
+		if (ptrSize <= 2)
+			return;
+		buf.write(val >> 16);
 	}
 
 }

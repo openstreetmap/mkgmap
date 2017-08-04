@@ -12,6 +12,7 @@
  */
 package uk.me.parabola.imgfmt.app.mdr;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
@@ -37,7 +38,7 @@ public abstract class MdrMapSection extends MdrSection implements HasHeaderFlags
 		// There are no flags or minimums required here, unlike in setPointerSize()
 		// which does a similar thing.
 		int n = getNumberOfItems();
-		index.setPointerSize(sectionNumber, numberToPointerSize(n));
+		index.setPointerSize(sectionNumber, Utils.numberToPointerSize(n));
 	}
 
 	/**
@@ -52,18 +53,18 @@ public abstract class MdrMapSection extends MdrSection implements HasHeaderFlags
 
 	protected void putCityIndex(ImgFileWriter writer, int cityIndex, boolean isNew) {
 		int flag = (isNew && cityIndex > 0)? getSizes().getCityFlag(): 0;
-		putN(writer, getSizes().getCitySizeFlagged(), cityIndex | flag);
+		writer.putN(getSizes().getCitySizeFlagged(), cityIndex | flag);
 	}
 
 	protected void putRegionIndex(ImgFileWriter writer, int region) {
 		// This is only called when putCityIndex might also be called and so has to be
 		// the same size (probably ;)
-		putN(writer, getSizes().getCitySizeFlagged(), region);
+		writer.putN(getSizes().getCitySizeFlagged(), region);
 	}
 
 	protected void putPoiIndex(ImgFileWriter writer, int poiIndex, boolean isNew) {
 		int flag = isNew? getSizes().getPoiFlag(): 0;
-		putN(writer, getSizes().getPoiSizeFlagged(), poiIndex | flag);
+		writer.putN(getSizes().getPoiSizeFlagged(), poiIndex | flag);
 	}
 
 	protected boolean hasFlag(int val) {

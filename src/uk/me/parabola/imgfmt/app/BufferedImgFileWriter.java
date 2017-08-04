@@ -119,6 +119,28 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 	}
 
 	/**
+	 * Write out int in range 0..255 as single byte.
+	 * Use instead of put() for unsigned for clarity.
+	 * @param val The value to write.
+	 */
+	public void put1(int val) {
+		assert val >= 0 && val <= 255 : val;
+		ensureSize(1);
+		buf.put((byte)val);
+	}
+
+	/**
+	 * Write out int in range 0..65535 as two bytes in correct byte order.
+	 * Use instead of putChar() for unsigned for clarity.
+	 * @param val The value to write.
+	 */
+	public void put2(int val) {
+		assert val >= 0 && val <= 65535 : val;
+		ensureSize(2);
+		buf.putShort((short)val);
+	}
+
+	/**
 	 * Write out a 3 byte value in the correct byte order etc.
 	 *
 	 * @param val The value to write.
@@ -137,6 +159,33 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 	public void putInt(int val) {
 		ensureSize(4);
 		buf.putInt(val);
+	}
+
+	/**
+	 * Write out 1-4 bytes.  Done in the correct byte order.
+	 *
+	 * @param nBytes The number of bytes to write.
+	 * @param val The value to write.
+	 */
+	public void putN(int nBytes, int val) {
+		ensureSize(nBytes);
+		switch (nBytes) {
+		case 1:
+			buf.put((byte)val);
+			break;
+		case 2:
+			buf.putShort((short)val);
+			break;
+		case 3:
+			buf.put((byte)val);
+			buf.putShort((short)(val >> 8));
+			break;
+		case 4:
+			buf.putInt(val);
+			break;
+		default:
+			assert false : nBytes;
+		}
 	}
 
 	/**

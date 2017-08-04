@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
@@ -404,22 +405,12 @@ public class LBLFileReader extends ImgFile {
 			}
 
 			if (hasCity) {
-				int cityIndex;
-
-				if (placeHeader.getNumCities() > 0xFF)
-					cityIndex = reader.getChar();
-				else
-					cityIndex = reader.get() & 0xff;
-
+				int cityIndex = reader.getUint(Utils.numberToPointerSize(placeHeader.getNumCities()));
 				poi.setCity(cities.get(cityIndex-1));
 			}
 
 			if (hasZip) {
-				int zipIndex;
-				if (placeHeader.getNumZips() > 0xff)
-					zipIndex = reader.getChar();
-				else
-					zipIndex = reader.get() & 0xff;
+				int zipIndex = reader.getUint(Utils.numberToPointerSize(placeHeader.getNumZips()));
 				poi.setZip(zips.get(zipIndex-1));
 			}
 			
@@ -442,12 +433,9 @@ public class LBLFileReader extends ImgFile {
 				boolean indexed = (lblinfo & 0x800000) != 0;
 				boolean overnightParking = (lblinfo & 0x400000) != 0;
 
-				int highwayIndex = (placeHeader.getNumHighways() > 255)
-					? reader.getChar() : reader.get();
+				int highwayIndex = reader.getUint(Utils.numberToPointerSize(placeHeader.getNumHighways()));
 				if (indexed) {
-					int eidx = (placeHeader.getNumExits() > 255) ?
-									reader.getChar() :
-									reader.get();
+					int eidx = reader.getUint(Utils.numberToPointerSize(placeHeader.getNumExits()));
 				}
 			}
 

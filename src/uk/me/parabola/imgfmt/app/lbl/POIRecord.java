@@ -18,6 +18,7 @@ package uk.me.parabola.imgfmt.app.lbl;
 
 import java.util.List;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
@@ -130,18 +131,12 @@ public class POIRecord {
 		if (city != null)
 		{
 			char cityIndex = (char) city.getIndex();
-			if(numCities > 255)
-				writer.putChar(cityIndex);
-			else
-				writer.put((byte)cityIndex);
+			writer.putN(Utils.numberToPointerSize((int)numCities), cityIndex);
 		}
 
 		if (zip != null) {
 			char zipIndex = (char) zip.getIndex();
-			if(numZips > 255)
-				writer.putChar(zipIndex);
-			else
-				writer.put((byte) zipIndex);
+			writer.putN(Utils.numberToPointerSize((int)numZips), zipIndex);
 		}
 
 		if (complexPhoneNumber != null)
@@ -171,17 +166,11 @@ public class POIRecord {
 			writer.put3(val);
 
 			char highwayIndex = (char)exit.getHighway().getIndex();
-			if(numHighways > 255)
-				writer.putChar(highwayIndex);
-			else
-				writer.put((byte)highwayIndex);
-			
+			writer.putN(Utils.numberToPointerSize((int)numHighways), highwayIndex);
+
 			if(ef != null) {
 				char exitFacilityIndex = (char)ef.getIndex();
-				if(numExitFacilities > 255)
-					writer.putChar(exitFacilityIndex);
-				else
-					writer.put((byte)exitFacilityIndex);
+				writer.putN(Utils.numberToPointerSize((int)numExitFacilities), exitFacilityIndex);
 			}
 		}
 	}
@@ -242,9 +231,9 @@ public class POIRecord {
 		int size = 3;
 		if (exit != null) {
 			size += 3;
-			size += (numHighways > 255)? 2 : 1;
+			size += Utils.numberToPointerSize((int)numHighways);
 			if(!exit.getFacilities().isEmpty())
-				size += (numExitFacilities > 255)? 2 : 1;
+				size += Utils.numberToPointerSize((int)numExitFacilities);
 		}
 		if (POIGlobalFlags != getPOIFlags())
 			size += 1;
@@ -262,20 +251,13 @@ public class POIRecord {
 		{
 			/*
 			  depending on how many cities are in the LBL block we have
-			  to write one or two bytes 
+			  to write one to three bytes 
 			*/
-		
-			if(numCities > 255)
-				size += 2;
-			else
-				size += 1;
+			size += Utils.numberToPointerSize((int)numCities);
 		}
 		if (zip != null) {
-			// depending on how many zips are in the LBL block we have to write one or two bytes
-			if(numZips > 255)
-			   size += 2;						
-			else
-			   size += 1;
+			// depending on how many zips are in the LBL block we have to write one to three bytes
+			size += Utils.numberToPointerSize((int)numZips);
 		}
 		return size;
 	}

@@ -130,6 +130,36 @@ public class FileBackedImgFileWriter implements ImgFileWriter{
 	}
 
 	/**
+	 * Write out int in range 0..255 as single byte.
+	 * Use instead of put() for unsigned for clarity.
+	 * @param val The value to write.
+	 */
+	public void put1(int val) {
+		assert val >= 0 && val <= 255 : val;
+ 		try {
+			file.write(val);
+		} catch (IOException e) {
+			throw new MapFailedException("could not write byte to mdr tmp file");
+		}
+	}
+
+	/**
+	 * Write out int in range 0..65535 as two bytes in correct byte order.
+	 * Use instead of putChar() for unsigned for clarity.
+	 * @param val The value to write.
+	 */
+	public void put2(int val) {
+		assert val >= 0 && val <= 65535 : val;
+ 		try {
+			file.write(val);
+			file.write(val >> 8);
+		} catch (IOException e) {
+			throw new MapFailedException("could not write 2 bytes to mdr tmp file");
+		}
+
+	}
+
+	/**
 	 * Write out three bytes.  Done in the little endian byte order.
 	 *
 	 * @param val The value to write, only the bottom three bytes will be written.
@@ -141,6 +171,29 @@ public class FileBackedImgFileWriter implements ImgFileWriter{
 			file.write(val >> 16);
 		} catch (IOException e) {
 			throw new MapFailedException("could not write3 to mdr tmp file");
+		}
+	}
+
+	/**
+	 * Write out 1-4 bytes.  Done in the correct byte order.
+	 *
+	 * @param nBytes The number of bytes to write.
+	 * @param val The value to write.
+	 */
+	public void putN(int nBytes, int val) {
+		try {
+			file.write(val);
+			if (nBytes <= 1)
+				return;
+			file.write(val >> 8);
+			if (nBytes <= 2)
+				return;
+			file.write(val >> 16);
+			if (nBytes <= 3)
+				return;
+			file.write(val >> 24);
+		} catch (IOException e) {
+			throw new MapFailedException("could not write put3 to mdr tmp file");
 		}
 	}
 

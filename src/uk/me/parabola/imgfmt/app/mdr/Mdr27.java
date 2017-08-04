@@ -76,7 +76,7 @@ public class Mdr27 extends MdrSection {
 	public void writeSectData(ImgFileWriter writer) {
 		int size = getItemSize();
 		for (Mdr5Record city : cities) {
-			putN(writer, size,  city.getGlobalCityIndex());
+			writer.putN(size,  city.getGlobalCityIndex());
 		}
 	}
 

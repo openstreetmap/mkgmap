@@ -226,6 +226,14 @@ public class LBLFile extends ImgFile {
 		return places.numZips();
 	}
 
+	public int numHighways() {
+		return places.numHighways();
+	}
+
+	public int numExitFacilities() {
+		return places.numExitFacilities();
+	}
+
 	public int getCodePage() {
 		return lblHeader.getCodePage();
 	}

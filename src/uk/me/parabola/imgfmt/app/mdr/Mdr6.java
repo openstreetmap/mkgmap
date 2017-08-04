@@ -56,7 +56,7 @@ public class Mdr6 extends MdrMapSection {
 			addIndexPointer(z.getMapIndex(), record++);
 
 			putMapIndex(writer, z.getMapIndex());
-			putN(writer, zipSize, z.getZipIndex());
+			writer.putN(zipSize, z.getZipIndex());
 			if (hasString)
 				putStringOffset(writer, z.getStringOffset());
 		}
