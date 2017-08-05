@@ -648,7 +648,7 @@ public class StyledConverter implements OsmConverter {
 		lines = null;
 		if (roadLog.isInfoEnabled()) {
 			roadLog.info("Flags: oneway,no-emergency, no-delivery, no-throughroute, no-truck, no-bike, no-foot, carpool, no-taxi, no-bus, no-car");
-			roadLog.info(String.format("%19s %4s %11s %6s %s", "Road-OSM-Id","Type","Flags", "Points", "Labels"));
+			roadLog.info(String.format("%19s %4s %11s %6s %6s %6s %s", "Road-OSM-Id","Type","Flags", "Class", "Speed", "Points", "Labels"));
 		}
 		// add the roads after the other lines
 		for (ConvertedWay cw : roads){
@@ -1768,7 +1768,7 @@ public class StyledConverter implements OsmConverter {
 				cmpAccess |= 1<<10;
 			}
 			String access = String.format("%11s",Integer.toBinaryString(cmpAccess)).replace(' ', '0');
-			roadLog.info(String.format("%19d 0x%-2x %11s %6d %s", way.getId(), road.getType(), access, road.getPoints().size(),Arrays.toString(road.getLabels())));
+			roadLog.info(String.format("%19d 0x%-2x %11s %6d %6d %6d %s", way.getId(), road.getType(), access, road.getRoadDef().getRoadClass(), road.getRoadDef().getRoadSpeed(), road.getPoints().size(),Arrays.toString(road.getLabels())));
 		}
 		
 		// add the road to the housenumber generator
