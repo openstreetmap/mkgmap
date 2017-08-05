@@ -19,6 +19,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -34,14 +35,17 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BiFunction;
 
 import javax.xml.bind.DatatypeConverter;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.main.StyleTester;
+import uk.me.parabola.mkgmap.osmstyle.ExpressionArranger;
 import uk.me.parabola.mkgmap.osmstyle.eval.AndOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.BinaryOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.EqualsOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.ExpressionReader;
 import uk.me.parabola.mkgmap.osmstyle.eval.GTEOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.LTOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.NodeType;
@@ -54,11 +58,13 @@ import uk.me.parabola.mkgmap.osmstyle.eval.ValueOp;
 import uk.me.parabola.mkgmap.osmstyle.function.FunctionFactory;
 import uk.me.parabola.mkgmap.osmstyle.function.GetTagFunction;
 import uk.me.parabola.mkgmap.osmstyle.function.LengthFunction;
-import uk.me.parabola.mkgmap.osmstyle.function.StyleFunction;
+import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
+import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import static uk.me.parabola.mkgmap.osmstyle.ExpressionArranger.isSolved;
 import static uk.me.parabola.mkgmap.osmstyle.eval.NodeType.*;
 
 public class RulesTest {
@@ -66,6 +72,9 @@ public class RulesTest {
 
 	private static final EnumSet<NodeType> INVALID_TOP = EnumSet.of(NOT, NOT_EXISTS, NOT_EQUALS);
 	private static final EnumSet<NodeType> USEFUL_NODES;
+
+	private static final String TEST_FILE_NAME = "tmp.test";
+	private static final int TEST_TIMEOUT = 500;  // In Milli seconds
 
 	static {
 		USEFUL_NODES = EnumSet.allOf(NodeType.class);
@@ -92,6 +101,8 @@ public class RulesTest {
 
 	private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
+	private static ExpressionArranger arranger;
+
 	private static void processOptions(String... args) {
 		for (int i = 0, argsLength = args.length; i < argsLength; i++) {
 			String s = args[i];
@@ -103,6 +114,8 @@ public class RulesTest {
 				minErrors = Integer.parseInt(args[++i]);
 			} else if (s.startsWith("--min-r")) {
 				minRules = Integer.parseInt(args[++i]);
+			} else if (s.startsWith("--arr")) {
+				arranger = new ExpressionArranger();
 			} else if (s.startsWith("--stop")) {
 				stopOnFail = true;
 			} else if (s.startsWith("--seed")) {
@@ -113,6 +126,7 @@ public class RulesTest {
 				debug = true;
 			} else {
 				System.out.println("Unrecognised option: Usage:\n" +
+						"--arrange      use the ExpressionArranger instead of style tester\n" +
 						"--min-errors   run until at least this many errors\n" +
 						"--min-rules    run at least this many rules\n" +
 						"--stop-on-fail stop on test errors (not syntax errors)\n" +
@@ -143,18 +157,6 @@ public class RulesTest {
 			Op expr = generateExpr(true);
 
 			boolean invalid = checkEmpty(expr);
-
-			//if (checkInvalidOr(expr))
-			//	invalid = true;
-			//
-			//if (checkInvalidOr(expr.getFirst()))
-			//	invalid = true;
-			//if (checkInvalidOr(expr.getSecond()))
-			//	invalid = true;
-			//
-			//if (checkUseful(expr))
-			//	invalid = true;
-
 			if (!invalid) {
 				count++;
 				String rule = expr + String.format(" {name 'n%d'} [0x2]", count);
@@ -164,18 +166,27 @@ public class RulesTest {
 			}
 		}
 
+		executor.shutdownNow();
 		System.out.printf("Tests: %s, failures=%d (%d non-syntax), passed=%d", count, errors, errors-syntaxErrors,
 				count-errors);
-		executor.shutdownNow();
 	}
 
 	/**
 	 * Test the rule by writing a style-tester file and letting it run it.
 	 */
 	private boolean testRule(String rule, int id) {
-		String fileName = "tmp.test";
+		if (arranger != null) {
+			return testCradle(rule, id, this::runArrangeTest);
+		} else {
+			return testCradle(rule, id, this::runStyleTester);
+		}
+	}
 
-		try (BufferedWriter fw = new BufferedWriter( new FileWriter(fileName))) {
+	private boolean runStyleTester(String rule, int id) {
+		OutputStream buf = new ByteArrayOutputStream();
+		StyleTester.setOut(new PrintStream(buf));
+
+		try (BufferedWriter fw = new BufferedWriter(new FileWriter(TEST_FILE_NAME))) {
 
 			fw.write(String.format("#\n# Rule: %s\n# Id: %d\n# Seed: %d\n# Date: %s\n#\n",
 					rule, id, seed, SimpleDateFormat.getDateInstance().format(new Date())));
@@ -190,15 +201,60 @@ public class RulesTest {
 			System.exit(2);
 		}
 
-		OutputStream buf = new ByteArrayOutputStream();
-		StyleTester.setOut(new PrintStream(buf));
+		StyleTester.runSimpleTest(TEST_FILE_NAME);
 
-		Future<Void> future = executor.submit(() -> {
-			StyleTester.runSimpleTest(fileName);
-			return null;
-		});
+		String output = buf.toString();
+		if (output.contains("ERROR")) {
+			System.out.println("ERROR: FAILED test: " + rule);
+			System.out.println(output);
+
+			// On error save the test file.
+			saveFile(TEST_FILE_NAME, rule, id);
+			checkStopOnFail();
+			return false;
+		} else {
+			if (!onlyErrors)
+				System.out.println("OK: " + rule);
+
+			// remove since ok
+			new File(TEST_FILE_NAME).delete();
+			return true;
+		}
+	}
+
+	private boolean runArrangeTest(String rule, int id) {
+		TokenScanner scanner = new TokenScanner("test.file", new StringReader(rule));
+		ExpressionReader er = new ExpressionReader(scanner, FeatureKind.POLYLINE);
+		Op op = er.readConditions();
+
+		Op result = arranger.arrange(op);
+
+		boolean ok = isSolved(result);
+
+		if (ok) {
+			if (!onlyErrors)
+				System.out.println("OK: " + rule);
+		} else {
+			System.out.println("ERROR: FAILED test: " + rule);
+			checkStopOnFail();
+		}
+		return ok;
+	}
+
+	/**
+	 * Call a test method in a timeout protected wrapper.
+	 *
+	 * @param rule The rule to be tested.
+	 * @param id The id of the rule in this run.
+	 * @param call The test method to call.
+	 * @return True if the test passed, false if it failed, or there was an exception.
+	 */
+	private boolean testCradle(String rule, int id, BiFunction<String, Integer, Boolean> call) {
+		Future<Boolean> future = executor.submit(() -> call.apply(rule, id));
 		try {
-			future.get(500, TimeUnit.MILLISECONDS);
+			Boolean result = future.get(TEST_TIMEOUT, TimeUnit.MILLISECONDS);
+			if (result != null)
+				return result;
 		} catch (InterruptedException | TimeoutException e) {
 			future.cancel(true);
 
@@ -206,8 +262,8 @@ public class RulesTest {
 			System.out.println("  Message: " + e);
 
 			// On error save the test file.
-			saveFile(fileName, rule, id);
-			return false;
+			saveFile(TEST_FILE_NAME, rule, id);
+			checkStopOnFail();
 		} catch (ExecutionException e) {
 			future.cancel(true);
 
@@ -223,27 +279,10 @@ public class RulesTest {
 			System.out.println("  Message: " + ne.getMessage());
 
 			// On error save the test file.
-			saveFile(fileName, rule, id);
-			return false;
+			saveFile(TEST_FILE_NAME, rule, id);
 		}
 
-		String output = buf.toString();
-		if (output.contains("ERROR")) {
-			System.out.println("ERROR: FAILED test: " +rule);
-			System.out.println(output);
-
-			// On error save the test file.
-			saveFile(fileName, rule, id);
-			checkStopOnFail();
-			return false;
-		} else {
-			if (!onlyErrors)
-				System.out.println("OK: " + rule);
-
-			// remove if ok
-			new File(fileName).delete();
-			return true;
-		}
+		return false;
 	}
 
 	private void checkStopOnFail() {
@@ -255,9 +294,8 @@ public class RulesTest {
 
 	}
 
-
 	private void saveFile(String fromName, String rule, int id) {
-		if (!saveErrors)
+		if (!saveErrors || fromName == null)
 			return;
 
 		String fileName;
@@ -302,91 +340,6 @@ public class RulesTest {
 	}
 
 	/**
-	 * Check if there are a useful number of indexable terms.
-	 *
-	 * A bit lax, require at least 2.  1 is probably a small expression
-	 * or too difficult...!
-	 */
-	private boolean checkUseful(Op expr) {
-		return countUseful(expr) <= 1;
-	}
-
-	private boolean checkInvalidOr(Op expr) {
-		if (!expr.isType(OR))
-			return false;
-
-		OrOp or = (OrOp) expr;
-
-		// Each branch of the OR must have a useful count
-		Op f = or.getFirst();
-		if (checkInvalidOr(f))
-			return true;
-
-		if (countUseful(f) == 0) {
-			return true;
-		}
-
-		Op second = or.getSecond();
-		if (second.isType(OR))
-			return checkInvalidOr(second);
-
-		if (countUseful(second) == 0) {
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 * A count of "useful" nodes, that is operations that could be used as the first
-	 * term, perhaps in conjunction with an EXISTS.  In particular not != and !=*
-	 */
-	private int countUseful(Op expr) {
-		int u = countUseful(expr, false);
-		if (debug)
-			System.out.println("Use: " + expr + "//" + u);
-		return u;
-	}
-
-	private int countUseful(Op expr, boolean inv) {
-		if (expr == null)
-			return 0;
-
-		int count = 0;
-
-		if (expr.isType(NOT))
-			return countUseful(expr.getFirst(), true);
-
-		count += countUseful(expr.getFirst(), inv);
-		count += countUseful(expr.getSecond(), inv);
-
-		if (inv) {
-			// Beneath a NOT everything is upside down.  Only count things that
-			// would not normally be valid at the top level.
-			//if (INVALID_TOP.contains(expr.getType())) {
-			//	count += 1;
-			//}
-			// Actually this is too difficult at the moment just don't count anything
-		} else {
-
-			// To be "useful" must not be an element that is not permitted by itself
-			if (USEFUL_NODES.contains(expr.getType())) {
-				Op f = expr.getFirst();
-				if (f != null) {
-					if (!f.isType(FUNCTION) || isIndexableFunction(f))
-						count += 1;
-				}
-			}
-		}
-
-		return count;
-	}
-
-	private boolean isIndexableFunction(Op expr) {
-		return expr.isType(FUNCTION)
-				&& ((StyleFunction) expr).isIndexable();
-	}
-
-	/**
 	 * Check if this rule would match an empty way.
 	 *
 	 * Such rules are not allowed.
@@ -399,9 +352,7 @@ public class RulesTest {
 	 * Therefore we create a new tree with all length() operations reversed and test that too.
 	 */
 	private static boolean checkEmpty(Op expr) {
-		Way way = new Way(1);
-		way.addPoint(new Coord(1, 1));
-		way.addPoint(new Coord(2, 2));
+		Way way = makeWay();
 
 		boolean invalid = expr.eval(way);
 
@@ -410,6 +361,13 @@ public class RulesTest {
 			invalid = true;
 
 		return invalid;
+	}
+
+	private static Way makeWay() {
+		Way way = new Way(1);
+		way.addPoint(new Coord(1, 1));
+		way.addPoint(new Coord(2, 2));
+		return way;
 	}
 
 	private static Op copyAndReverseLengthTest(Op expr) {
