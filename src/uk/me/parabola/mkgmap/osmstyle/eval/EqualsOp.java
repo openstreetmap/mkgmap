@@ -39,4 +39,8 @@ public class EqualsOp extends AbstractBinaryOp {
 	public int priority() {
 		return 10;
 	}
+
+	public String toString() {
+		return getFirst().toString() + "=" + getSecond();
+	}
 }

@@ -66,6 +66,13 @@ public interface Op {
 	 */
 	public Op getSecond();
 
+	/**
+	 * Set both first and second in one call.
+	 *
+	 * Only supported on BinaryOp types.
+	 */
+	public <T extends Op> T set(Op first, Op second);
+
 	/** Get the operation type */
 	public NodeType getType();
 

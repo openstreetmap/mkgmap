@@ -65,6 +65,23 @@ public class ValueOp extends AbstractOp {
 	}
 
 	public String toString() {
-		return value;
+		StringBuilder sb = new StringBuilder();
+		boolean needQuote = false;
+		boolean needDouble = false;
+		for (char c : value.toCharArray()) {
+			if ( !(Character.isLetterOrDigit(c) || c == '_'))
+				needQuote = true;
+			if (c == '\'') {
+				needQuote = true;
+				needDouble = true;
+			}
+			sb.append(c);
+		}
+		if (needQuote) {
+			char q = needDouble ? '"' : '\'';
+			sb.insert(0, q);
+			sb.append(q);
+		}
+		return sb.toString();
 	}
 }

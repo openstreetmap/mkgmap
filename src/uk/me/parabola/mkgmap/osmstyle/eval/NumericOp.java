@@ -61,6 +61,6 @@ public abstract class NumericOp extends AbstractBinaryOp {
 	}
 
 	public String toString() {
-		return "(" + first + getType().toSymbol() + getSecond() + ')';
+		return first + getType().toSymbol() + getSecond();
 	}
 }

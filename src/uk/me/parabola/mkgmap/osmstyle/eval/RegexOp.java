@@ -50,4 +50,9 @@ public class RegexOp extends AbstractBinaryOp {
 		super.setSecond(second);
 		pattern = Pattern.compile(second.getKeyValue());
 	}
+
+	public String toString() {
+		return getFirst().toString() + "~" + getSecond();
+	}
+
 }

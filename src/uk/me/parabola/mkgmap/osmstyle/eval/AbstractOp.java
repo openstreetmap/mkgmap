@@ -89,8 +89,7 @@ public abstract class AbstractOp implements Op {
 		return lastRes;
 			
 	}
-	
-	
+
 	/**
 	 * Does this operation have a higher priority that the other one?
 	 * @param other The other operation.
@@ -114,6 +113,15 @@ public abstract class AbstractOp implements Op {
 	 */
 	public Op getSecond() {
 		return null;
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T extends Op> T set(Op a, Op b) {
+		assert this instanceof BinaryOp;
+
+		this.setFirst(a);
+		((BinaryOp) this).setSecond(b);
+		return (T) this;
 	}
 
 	public NodeType getType() {
@@ -141,7 +149,7 @@ public abstract class AbstractOp implements Op {
 	public boolean isType(NodeType value) {
 		return type == value;
 	}
-	
+
 	public void resetCache(){
 		lastCachedId = -1;
 	}
