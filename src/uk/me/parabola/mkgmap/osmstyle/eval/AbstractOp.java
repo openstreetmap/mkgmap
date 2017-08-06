@@ -78,6 +78,41 @@ public abstract class AbstractOp implements Op {
 		return op;
 	}
 
+	public static Op createOp(NodeType kind) {
+		switch (kind) {
+		case EQUALS:
+			return new EqualsOp();
+		case GT:
+			return new GTOp();
+		case GTE:
+			return new GTEOp();
+		case LT:
+			return new LTOp();
+		case LTE:
+			return new LTEOp();
+		case NOT_EQUALS:
+			return new NotEqualOp();
+		case EXISTS:
+			return new ExistsOp();
+		case NOT_EXISTS:
+			return new NotExistsOp();
+		case AND:
+			return new AndOp();
+		case OR:
+			return new OrOp();
+		//case VALUE:
+		//	return new ValueOp();
+		//case FUNCTION:
+		//	break;
+		case NOT:
+			return new NotOp();
+		case REGEX:
+			return new RegexOp();
+		default:
+			throw new UnsupportedOperationException("Please implement if you want it");
+		}
+	}
+
 	public boolean eval(int cacheId, Element el){
 		if (lastCachedId != cacheId){
 			if (lastCachedId > cacheId){

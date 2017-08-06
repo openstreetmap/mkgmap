@@ -67,6 +67,7 @@ import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import static uk.me.parabola.mkgmap.osmstyle.ExpressionArranger.fmtExpr;
 import static uk.me.parabola.mkgmap.osmstyle.ExpressionArranger.isSolved;
 import static uk.me.parabola.mkgmap.osmstyle.eval.NodeType.*;
 
@@ -252,7 +253,7 @@ public class RulesTest {
 		Op result = arranger.arrange(op);
 
 		if (!isSolved(result))
-			throw new SyntaxException("Could not solve rule expression");
+			throw new SyntaxException("Could not solve rule expression: best attempt was " + fmtExpr(result));
 
 		boolean[] after = evalWays(result);
 		boolean ok = Arrays.equals(after, orig);
@@ -261,7 +262,13 @@ public class RulesTest {
 				System.out.println("OK: " + rule);
 		} else {
 			System.out.println("ERROR: FAILED test: " + rule);
+			System.out.println("  new expr: " + op);
 
+			for (int i = 0; i < orig.length; i++) {
+				if (orig[i] != after[i]) {
+					System.out.println("  way " + testWays.get(i) + ", orig=" + orig[i] + ", arranged=" + after[i]);
+				}
+			}
 			checkStopOnFail();
 		}
 		return ok;
