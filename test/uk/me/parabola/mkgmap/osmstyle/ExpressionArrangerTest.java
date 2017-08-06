@@ -116,6 +116,13 @@ public class ExpressionArrangerTest {
 	}
 
 	@Test
+	public void testComplex1() {
+		Op op = createOp("($a=2 | $b~2 | $a=2 | $a<1) & ($a!=1 | $b<2 | !($a=1) | $b=1) & $b!=1 {name 'n866'} [0x2]");
+		op = arranger.arrange(op);
+		assertTrue(isSolved(op));
+	}
+
+	@Test
 	public void testName() {
 		Op op = createOp("$b!=1 & $a~2 [0x2]");
 		op = arranger.arrange(op);

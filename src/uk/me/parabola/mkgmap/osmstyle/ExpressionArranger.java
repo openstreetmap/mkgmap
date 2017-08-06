@@ -102,10 +102,16 @@ public class ExpressionArranger {
 		for (Op current = op; current != null && current.isType(OR); current = current.getSecond()) {
 			Op newop = arrangeTop(current.getFirst());
 			current.setFirst(newop);
+			while (current.getFirst().isType(OR)) {
+				reAssociate(current, OR);
+			}
+
 			last = current;
 		}
 		Op newop = arrangeTop(last.getSecond());
 		last.setSecond(newop);
+		orderBest(last);
+		reAssociate(op, OR);
 	}
 
 	/**
@@ -150,13 +156,6 @@ public class ExpressionArranger {
 
 	private void orderBest(Op op) {
 		assert OPERATORS.contains(op.getType());
-
-		// NOT is never good, so remove here
-		if (op.getFirst().isType(NOT))
-			op.setFirst(removeNot(op.getFirst(), false));
-
-		if (op.getSecond() != null && op.getSecond().isType(NOT))
-			op.setSecond(removeNot(op.getSecond(), false));
 
 		if (leftNodeWeight(op.getFirst()) > leftNodeWeight(op.getSecond())) {
 			op.set(op.getSecond(), op.getFirst());
@@ -211,7 +210,7 @@ public class ExpressionArranger {
 			n.setFirst(first.getSecond());
 			and.setSecond(n);
 
-			reAssociate(and, AND);
+			orderBest(and);
 			return and;
 
 		case AND:
@@ -225,7 +224,7 @@ public class ExpressionArranger {
 			n.setFirst(first.getSecond());
 			or.setSecond(n);
 
-			reAssociate(or, OR);
+			orderBest(or);
 			return or;
 		default:
 			if (must)
@@ -244,7 +243,7 @@ public class ExpressionArranger {
 		assert op.isType(kind);
 		assert kind == OR || kind == AND;
 
-		orderBest(op);
+		removeNotFromFirst(op);
 
 		// Rearrange ((A&B)&C) to (A&(B&C)).
 		while (op.getFirst().isType(kind)) {
@@ -258,8 +257,18 @@ public class ExpressionArranger {
 			assert b != c;
 
 			BinaryOp and = AbstractOp.createOp(kind).set(b, c);
+			//removeNotFromFirst(and);
 			op.set(a, and);
+
+			removeNotFromFirst(op);
 		}
+	}
+
+	private void removeNotFromFirst(Op op) {
+		if (op.getFirst().isType(NOT))
+			op.setFirst(removeNot(op.getFirst(), false));
+		if (op.getSecond() != null && op.getSecond().isType(NOT))
+			op.setSecond(removeNot(op.getSecond(), false));
 	}
 
 	private void pulldownBest(Op op) {
@@ -268,6 +277,7 @@ public class ExpressionArranger {
 		terms.add(op.getFirst());
 
 		for (Op second = op.getSecond(); second != null && second.isType(AND); second = second.getSecond()) {
+			orderBest(second);
 			reAssociate(second, AND);
 			terms.add(second.getFirst());
 			last = second;
