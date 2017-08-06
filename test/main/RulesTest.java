@@ -26,8 +26,11 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -103,6 +106,8 @@ public class RulesTest {
 
 	private static ExpressionArranger arranger;
 
+	private final List<Way> testWays = new ArrayList<>();
+
 	private static void processOptions(String... args) {
 		for (int i = 0, argsLength = args.length; i < argsLength; i++) {
 			String s = args[i];
@@ -149,6 +154,8 @@ public class RulesTest {
 	}
 
 	private void run() {
+		initTestWays();
+
 		int errors = 0;
 
 		int count;
@@ -169,6 +176,20 @@ public class RulesTest {
 		executor.shutdownNow();
 		System.out.printf("Tests: %s, failures=%d (%d non-syntax), passed=%d", count, errors, errors-syntaxErrors,
 				count-errors);
+	}
+
+	private void initTestWays() {
+		for (int a = 0; a < 3; a++) {
+			for (int b = 0; b < 3; b++) {
+
+				Way w = makeWay();
+				if (a > 0)
+					w.addTag("a", String.valueOf(a));
+				if (b > 0)
+					w.addTag("b", String.valueOf(b));
+				testWays.add(w);
+			}
+		}
 	}
 
 	/**
@@ -227,18 +248,32 @@ public class RulesTest {
 		ExpressionReader er = new ExpressionReader(scanner, FeatureKind.POLYLINE);
 		Op op = er.readConditions();
 
+		boolean[] orig = evalWays(op);
 		Op result = arranger.arrange(op);
 
-		boolean ok = isSolved(result);
+		if (!isSolved(result))
+			throw new SyntaxException("Could not solve rule expression");
 
+		boolean[] after = evalWays(result);
+		boolean ok = Arrays.equals(after, orig);
 		if (ok) {
 			if (!onlyErrors)
 				System.out.println("OK: " + rule);
 		} else {
 			System.out.println("ERROR: FAILED test: " + rule);
+
 			checkStopOnFail();
 		}
 		return ok;
+	}
+
+	private boolean[] evalWays(Op op) {
+		boolean[] result = new boolean[testWays.size()];
+		int count = 0;
+		for (Way w : testWays) {
+			result[count++] = op.eval(w);
+		}
+		return result;
 	}
 
 	/**
