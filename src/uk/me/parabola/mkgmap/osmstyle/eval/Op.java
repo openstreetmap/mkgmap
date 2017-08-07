@@ -60,7 +60,7 @@ public interface Op {
 	/**
 	 * Set the first operand.
 	 */
-	public void setFirst(Op first);
+	public <T extends Op> T setFirst(Op first);
 
 	/**
 	 * Set the second operand.

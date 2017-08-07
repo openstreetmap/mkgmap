@@ -17,20 +17,25 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.osmstyle.eval.AbstractOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.AndOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.BinaryOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.EqualsOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ExistsOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.GTEOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.GTOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.LTEOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.LTOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.NodeType;
 import uk.me.parabola.mkgmap.osmstyle.eval.NotEqualOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.NotExistsOp;
-import uk.me.parabola.mkgmap.osmstyle.eval.NotOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.NotRegexOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.osmstyle.eval.OrOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.RegexOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ValueOp;
-import uk.me.parabola.mkgmap.scan.SyntaxException;
 
 import static uk.me.parabola.mkgmap.osmstyle.eval.NodeType.*;
 
@@ -41,9 +46,18 @@ import static uk.me.parabola.mkgmap.osmstyle.eval.NodeType.*;
 public class ExpressionArranger {
 	// Combining operation types.
 	private static final EnumSet<NodeType> OPERATORS = EnumSet.of(AND, OR, NOT);
+	// Combining operations that are binary
+	private static final EnumSet<NodeType> BIN_OPERATORS = EnumSet.of(AND, OR);
 
 	// These types need to be combined with EXISTS if they are first.
-    private static final EnumSet<NodeType> NEED_EXISTS = EnumSet.of(GT, GTE, LT, LTE, REGEX);
+    private static final EnumSet<NodeType> NEED_EXISTS = EnumSet.of(GT, GTE, LT, LTE, REGEX, NOT_REGEX);
+
+    // The invertible op types, basically everything apart from the value types
+	private static final EnumSet<NodeType> INVERTIBLE;
+	static {
+		INVERTIBLE = EnumSet.allOf(NodeType.class);
+		INVERTIBLE.removeAll(EnumSet.of(VALUE, FUNCTION));
+	}
 
     Logger log = Logger.getLogger(getClass());
 
@@ -58,13 +72,10 @@ public class ExpressionArranger {
 		if (!OPERATORS.contains(expr.getType()))
 			return expr;
 
-		Op op = expr;
+		// Remove all NOT operations from the whole tree
+		Op op = removeAllNot(expr);
 
-		// If we have a not at the top level then it must be removed.
-		while (op.isType(NOT))
-			op = removeNot(op, true);
-
-		if (OPERATORS.contains(op.getType()))
+		if (BIN_OPERATORS.contains(op.getType()))
 			orderBest(op);
 
 		switch (op.getType()) {
@@ -72,18 +83,19 @@ public class ExpressionArranger {
 			reAssociate(op, AND);
 
 			// A, B, ... in the best order
-			pulldownBest(op);
+			arrangeAndChain(op);
 
 			// If we have an OR to the left after all this, we have to get rid of it.
 			// This will turn this node into an OR.
 			if (op.getFirst().isType(OR)) {
 				op = distribute(op);
+
+				// Now arrange this new OR
 				arrangeTop(op);
 			}
 			break;
 
 		case OR:
-			reAssociate(op, OR);
 			arrangeOr(op);
 			break;
 		}
@@ -96,6 +108,9 @@ public class ExpressionArranger {
 	 *
 	 * The input should be a chain or ORs, we test each part as if it were
 	 * a complete expression.
+	 *
+	 * If there are any ORs on the left (first) then they are merged into the chain,
+	 * so at the end all ORs are to the right (second).
 	 */
 	private void arrangeOr(Op op) {
 		Op last = op;
@@ -110,16 +125,14 @@ public class ExpressionArranger {
 		}
 		Op newop = arrangeTop(last.getSecond());
 		last.setSecond(newop);
-		orderBest(last);
-		reAssociate(op, OR);
 	}
 
 	/**
-	 * Create a new OR expression from OR and other expression.
+	 * Create a new OR expression from OR and an other expression.
 	 *
-	 * Starting point is a node of the form (a|b) & c
+	 * Starting point is a node of the form (a|b|...) & c
 	 *
-	 * The output is (a & c) | (b & c)
+	 * The output is (a & c) | (b & c) | ...
 	 */
 	private Op distribute(Op op) {
 		Op ab = op.getFirst();
@@ -130,14 +143,12 @@ public class ExpressionArranger {
 		assert a != b : "ab";
 		assert b != c : "bc";
 
+		// Collect the OR terms into a list
 		List<Op> orterms = new ArrayList<>();
 		while (b.isType(OR)) {
-			Op nb = b.getFirst();
-			assert nb != c;
-			orterms.add(nb);
+			orterms.add(b.getFirst());
+
 			b = b.getSecond();
-			assert a != b;
-			assert b != c;
 		}
 		OrOp topOR = new OrOp();
 
@@ -154,6 +165,9 @@ public class ExpressionArranger {
 		return topOR;
 	}
 
+	/**
+	 * Order the child nodes so that the 'best' one is on the left (first).
+	 */
 	private void orderBest(Op op) {
 		assert OPERATORS.contains(op.getType());
 
@@ -162,6 +176,11 @@ public class ExpressionArranger {
 		}
 	}
 
+	/**
+	 * Which node should be on the left?
+	 *
+	 * We prefer AND to OR and prefer everything else to AND.
+	 */
 	private int leftNodeWeight(Op op) {
 		switch (op.getType()) {
 		case AND: return 10;
@@ -171,67 +190,101 @@ public class ExpressionArranger {
 	}
 
 	/**
+	 * Scan the whole tree and remove all the not operations.
+	 *
+	 * Each node that is preceded by NOT is inverted.
+	 */
+	private Op removeAllNot(Op expr) {
+		if (expr == null)
+			return null;
+
+		Op op = expr;
+		while (op.isType(NOT) && INVERTIBLE.contains(op.getFirst().getType()))
+			op = removeNot(op);
+
+		if (OPERATORS.contains(op.getType())) {
+			op.set(
+					removeAllNot(op.getFirst()),
+					removeAllNot(op.getSecond())
+			);
+		}
+		return op;
+	}
+
+	/**
 	 * Remove a NOT operation.
 	 *
 	 * This is complicated by the fact that !(a<2) is not the same as a>=2 but
 	 * in fact is (a>=2 | a!=*)
 	 *
 	 * @param op This will be a NOT node.
-	 * @param must If true then throw an exception when the NOT is not removed.
 	 * @return A new expression, could be the same as given.
 	 */
-	private Op removeNot(Op op, boolean must) {
-		Op first = op.getFirst();
-		switch (first.getType()) {
+	private Op removeNot(Op op) {
+		return invert(op.getFirst());
+	}
+
+	private Op invert(Op op) {
+		switch (op.getType()) {
 		case NOT:
-			return first.getFirst();
+			Op f = op.getFirst();
+			while (f != null && f.isType(NOT) && f.getFirst().isType(NOT))
+				f = f.getFirst().getFirst();
+			return f;
 		case EQUALS:
-			BinaryOp ne = new NotEqualOp();
-			return ne.set(first.getFirst(), first.getSecond());
+			return new NotEqualOp().set(op.getFirst(), op.getSecond());
+		case GT:
+			return neWith(new LTEOp().set(op.getFirst(), op.getSecond()));
+		case GTE:
+			return neWith(new LTOp().set(op.getFirst(), op.getSecond()));
+		case LT:
+			return neWith(new GTEOp().set(op.getFirst(), op.getSecond()));
+		case LTE:
+			return neWith(new GTOp().set(op.getFirst(), op.getSecond()));
 		case NOT_EQUALS:
-			BinaryOp eq = new EqualsOp();
-			return eq.set(first.getFirst(), first.getSecond());
+			return new EqualsOp().set(op.getFirst(), op.getSecond());
 		case EXISTS:
-			NotExistsOp nex = new NotExistsOp();
-			nex.setFirst(first.getFirst());
-			return nex;
+			new NotExistsOp().setFirst(op.getFirst());
+			return new NotExistsOp();
 		case NOT_EXISTS:
-			ExistsOp ex = new ExistsOp();
-			ex.setFirst(first.getFirst());
-			return ex;
+			return new ExistsOp().setFirst(op.getFirst());
 		case OR:
 			// !(A | B) -> !A & !B
-			AndOp and = new AndOp();
-			NotOp n = new NotOp();
-			n.setFirst(first.getFirst());
-			and.setFirst(n);
-
-			n = new NotOp();
-			n.setFirst(first.getSecond());
-			and.setSecond(n);
-
-			orderBest(and);
-			return and;
+			return new AndOp().<AndOp>set(
+					invert(op.getFirst()),
+					invert(op.getSecond())
+			);
 
 		case AND:
 			// !(A & B) -> !A | !B
-			OrOp or = new OrOp();
-			n = new NotOp();
-			n.setFirst(first.getFirst());
-			or.setFirst(n);
-
-			n = new NotOp();
-			n.setFirst(first.getSecond());
-			or.setSecond(n);
-
-			orderBest(or);
-			return or;
-		default:
-			if (must)
-				throw new SyntaxException("Use of ! with " + first.getType() + " not supported");
+			return new OrOp().<OrOp>set(
+					invert(op.getFirst()),
+					invert(op.getSecond())
+			);
+		case REGEX:
+			return new NotRegexOp().set(op.getFirst(), op.getSecond());
+		case NOT_REGEX:
+			return new RegexOp().set(op.getFirst(), op.getSecond());
+		case VALUE:
+		case FUNCTION:
+		case OPEN_PAREN:
+		case CLOSE_PAREN:
+			throw new ExitException("Programming error, tried to invert invalid node " + op);
 		}
+		return null;
+	}
 
-		return op;
+	/**
+	 * Combine the given operation with NOT_EXISTS.
+	 *
+	 * This is used when inverting nodes because !(a>0) is (a<=0 | a!=*) because
+	 * the statement is true when the tag does not exist.
+	 */
+	private Op neWith(Op op) {
+		return new OrOp().set(
+				new NotExistsOp().setFirst(op.getFirst()),
+				op
+		);
 	}
 
 	/**
@@ -242,8 +295,6 @@ public class ExpressionArranger {
 	private void reAssociate(Op op, NodeType kind) {
 		assert op.isType(kind);
 		assert kind == OR || kind == AND;
-
-		removeNotFromFirst(op);
 
 		// Rearrange ((A&B)&C) to (A&(B&C)).
 		while (op.getFirst().isType(kind)) {
@@ -257,27 +308,22 @@ public class ExpressionArranger {
 			assert b != c;
 
 			BinaryOp and = AbstractOp.createOp(kind).set(b, c);
-			//removeNotFromFirst(and);
 			op.set(a, and);
-
-			removeNotFromFirst(op);
 		}
 	}
 
-	private void removeNotFromFirst(Op op) {
-		if (op.getFirst().isType(NOT))
-			op.setFirst(removeNot(op.getFirst(), false));
-		if (op.getSecond() != null && op.getSecond().isType(NOT))
-			op.setSecond(removeNot(op.getSecond(), false));
-	}
-
-	private void pulldownBest(Op op) {
+	/**
+	 * Starting with A&(B&(C&(...))) order A,B,C into the best order.
+	 *
+	 * If any of A,B.. happen to be AND terms, then these are merged into the
+	 * chain first.  If there is an OR on the left it will float to the back.
+	 */
+	private void arrangeAndChain(Op op) {
 		Op last = op;
 		List<Op> terms = new ArrayList<>();
 		terms.add(op.getFirst());
 
 		for (Op second = op.getSecond(); second != null && second.isType(AND); second = second.getSecond()) {
-			orderBest(second);
 			reAssociate(second, AND);
 			terms.add(second.getFirst());
 			last = second;
@@ -303,14 +349,28 @@ public class ExpressionArranger {
 	}
 
 
+	/**
+	 * Format the expression emphasising the top operator.
+	 */
 	public static String fmtExpr(Op op) {
-		return String.format("%s[%s]%s", op.getFirst(), op.getType(), op.getSecond());
+		return String.format("%s [%s] %s", op.getFirst(), op.getType(), op.getSecond());
 	}
 
+	/**
+	 * Return a score for how much this op should be at the front.
+	 *
+	 * Lower is better and should be nearer the front.
+	 *
+	 * This is the core of the whole process, ideally we would like the term that is
+	 * most likely to return false to be at the beginning of a chain of ands because
+	 * as soon as one term returns false then we are done.
+	 *
+	 * Currently we have a very simple system, where equals and exists are first.
+	 *
+	 * Ideally you might want to consider tag frequencies, since highway is a very
+	 * common tag, it would be better to push it behind other tags.
+	 */
 	private int selectivity(Op op) {
-		//if (op.getFirst().isType(FUNCTION) && !isIndexableFunction(op.getFirst()))
-		//	return 200;
-
 		switch (op.getType()) {
 		case EQUALS:
 			return 0;
@@ -324,11 +384,17 @@ public class ExpressionArranger {
 			// when there is more than one term
 			return 1000;
 
-		case OR:
 		case AND:
 			return 500;
+		case OR:
+			return 501;
 
+		// Everything else is 200+, put regex behind as they are probably a bit slower.
+		case REGEX:
+		case NOT_REGEX:
+			return 201;
 		default:
+			// Non-indexable functions must go to the back.
 			if (!isIndexable(op))
 				return 1000;
 			return 200;

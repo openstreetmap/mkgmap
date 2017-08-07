@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -60,7 +61,6 @@ import uk.me.parabola.mkgmap.osmstyle.eval.RegexOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ValueOp;
 import uk.me.parabola.mkgmap.osmstyle.function.FunctionFactory;
 import uk.me.parabola.mkgmap.osmstyle.function.GetTagFunction;
-import uk.me.parabola.mkgmap.osmstyle.function.LengthFunction;
 import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
@@ -87,12 +87,14 @@ public class RulesTest {
 	}
 
 	private static boolean onlyErrors;
-	private static int minErrors = 1;
-	private static int minRules = 0;
+	private static int maxErrors = Integer.MAX_VALUE;
+	private static int maxRules = 1000;
 	private static long seed = 8799543;
 	private static boolean debug;
 	private static boolean saveErrors;
 	private static boolean stopOnFail;
+	private static boolean doLengths = false;
+
 
 	private final String[] values = {
 			"1", "2"
@@ -112,18 +114,20 @@ public class RulesTest {
 	private static void processOptions(String... args) {
 		for (int i = 0, argsLength = args.length; i < argsLength; i++) {
 			String s = args[i];
-			if (s.startsWith("--errors")) {
+			if (s.startsWith("--err")) {
 				onlyErrors = true;
 			} else if (s.startsWith("--save")) {
 				saveErrors = true;
-			} else if (s.startsWith("--min-e")) {
-				minErrors = Integer.parseInt(args[++i]);
-			} else if (s.startsWith("--min-r")) {
-				minRules = Integer.parseInt(args[++i]);
+			} else if (s.startsWith("--max-e")) {
+				maxErrors = Integer.parseInt(args[++i]);
+			} else if (s.startsWith("--max-r")) {
+				maxRules = Integer.parseInt(args[++i]);
 			} else if (s.startsWith("--arr")) {
 				arranger = new ExpressionArranger();
 			} else if (s.startsWith("--stop")) {
 				stopOnFail = true;
+			} else if (s.startsWith("--use-len")) {
+				doLengths = true;
 			} else if (s.startsWith("--seed")) {
 				seed = Long.parseLong(args[++i]);
 			} else if (s.startsWith("--rand")) {
@@ -131,14 +135,21 @@ public class RulesTest {
 			} else if (s.startsWith("--debug")) {
 				debug = true;
 			} else {
-				System.out.println("Unrecognised option: Usage:\n" +
-						"--arrange      use the ExpressionArranger instead of style tester\n" +
-						"--min-errors   run until at least this many errors\n" +
-						"--min-rules    run at least this many rules\n" +
-						"--stop-on-fail stop on test errors (not syntax errors)\n" +
-						"--seed N       change the starting place for the random numbers\n" +
+				System.out.println("Usage:\n" +
+						"--arrange-test use the ExpressionArranger instead of style tester\n" +
+						"--max-errors   stop after this many errors\n" +
+						"--max-rules    run this number of random rules\n" +
+						"--use-lengths  add some length() terms, you will see errors\n" +
+						"--errors       only show errors\n" +
+						"--stop-on-fail stop on test failures (not syntax errors)\n" +
+						"--seed N       set the random number seed\n" +
 						"--rand         set the random seed to the current time\n" +
-						"--save-errors  save errors as style tester files\n")
+						"--save-errors  save errors as style tester files\n" +
+						"\n" +
+						"You see errors when including length() terms, because this program cannot\n" +
+						"tell if they should work.  It makes a best attempt.  You should make sure that\n" +
+						"all failues are really correct\n\n" +
+						"If there are any non-syntax failures, then that is always a bug.\n")
 				;
 				System.exit(2);
 			}
@@ -160,7 +171,7 @@ public class RulesTest {
 		int errors = 0;
 
 		int count;
-		for (count = 0; count < minRules || errors < minErrors; ) {
+		for (count = 0; count < maxRules && errors < maxErrors; ) {
 
 			Op expr = generateExpr(true);
 
@@ -175,8 +186,9 @@ public class RulesTest {
 		}
 
 		executor.shutdownNow();
-		System.out.printf("Tests: %s, failures=%d (%d non-syntax), passed=%d", count, errors, errors-syntaxErrors,
-				count-errors);
+		System.out.printf("Tests: %s, errors=%d (%d non-syntax failures), passed=%d. ",
+				count, errors, errors-syntaxErrors, count-errors);
+		System.out.printf("Seed was %d\n", seed);
 	}
 
 	private void initTestWays() {
@@ -391,17 +403,50 @@ public class RulesTest {
 	 * are always true.  However if there is a NOT in front if it it will then be false and
 	 * so the simple test of of an empty way returning true could miss this case.
 	 *
-	 * Therefore we create a new tree with all length() operations reversed and test that too.
+	 * So we also check with a way of length zero.
+	 *
+	 * Then there is still the problem that we do not detect an expression such as (length()>=2 & !(length()>=2))
+	 *
+	 * So reject any rule that has length() beneath a not.
 	 */
 	private static boolean checkEmpty(Op expr) {
 		Way way = makeWay();
 
 		boolean invalid = expr.eval(way);
 
-		Op op = copyAndReverseLengthTest(expr);
-		if (op.eval(way))
+		Way way1 = new Way(2);
+		way1.addPoint(new Coord(1, 1));
+		if (expr.eval(way1))
 			invalid = true;
 
+		// So if there is a length() anywhere beneath a NOT then throw this rule out.
+		if (checkNotLength(expr, expr.isType(NOT)))
+			invalid = true;
+
+		return invalid;
+	}
+
+	public static boolean checkNotLength(Op expr, boolean hasNot) {
+		if (expr == null)
+			return false;
+
+		Op f = expr.getFirst();
+		if (hasNot &&  f != null && f.isType(FUNCTION) && Objects.equals(f.toString(), "length()"))
+			return true;
+
+		boolean invalid = false;
+		NodeType t = expr.getType();
+		if (expr instanceof BinaryOp) {
+			if (checkNotLength(expr.getFirst(), hasNot))
+				invalid = true;
+
+			if (checkNotLength(expr.getSecond(), hasNot))
+				invalid = true;
+
+		} else if (t == NOT) {
+			if (checkNotLength(expr.getFirst(), true))
+				invalid = true;
+		}
 		return invalid;
 	}
 
@@ -410,32 +455,6 @@ public class RulesTest {
 		way.addPoint(new Coord(1, 1));
 		way.addPoint(new Coord(2, 2));
 		return way;
-	}
-
-	private static Op copyAndReverseLengthTest(Op expr) {
-		if (expr == null)
-			return null;
-
-		Op op;
-
-		if (expr.isType(GTE) && expr.getFirst().isType(FUNCTION) && expr.getFirst() instanceof LengthFunction) {
-			op = new LTOp().set(expr.getFirst(), expr.getSecond());
-			return op;
-		}
-
-		if (expr.isType(AND) || expr.isType(OR) || expr.isType(NOT)) {
-			op = expr.isType(AND)? new AndOp(): expr.isType(NOT)? new NotOp(): new OrOp();
-			op.setFirst(expr.getFirst());
-			if (op instanceof BinaryOp)
-				 ((BinaryOp) op).setSecond(expr.getSecond());
-		} else {
-			return expr;
-		}
-
-		op.setFirst(copyAndReverseLengthTest(op.getFirst()));
-		if (op instanceof BinaryOp)
-				((BinaryOp) op).setSecond(copyAndReverseLengthTest(op.getSecond()));
-		return op;
 	}
 
 	/**
@@ -455,7 +474,7 @@ public class RulesTest {
 	 *   you get a lot of uninteresting a=2 type expressions.
 	 */
 	private Op generateExpr(boolean interesting) {
-		int t = rand.nextInt(interesting ? 2: 8);
+		int t = rand.nextInt(interesting ? 3: 8);
 		switch (t) {
 		case 0:
 			return fillOp(new AndOp());
@@ -482,7 +501,7 @@ public class RulesTest {
 	private Op fillOp(Op op) {
 		op.setFirst(generateExpr());
 		if (op instanceof BinaryOp)
-			((BinaryOp) op).setSecond(generateExpr());
+			op.setSecond(generateExpr());
 		return op;
 	}
 
@@ -498,7 +517,7 @@ public class RulesTest {
 	}
 
 	private Op genNameOp(NodeType type) {
-		if (type == GTE && rand.nextInt(4) == 0) {
+		if (doLengths && type == GTE && rand.nextInt(4) == 0) {
 			return FunctionFactory.createFunction("length");
 		}
 

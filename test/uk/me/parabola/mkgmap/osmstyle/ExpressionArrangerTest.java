@@ -16,10 +16,12 @@ package uk.me.parabola.mkgmap.osmstyle;
 import java.io.StringReader;
 
 import uk.me.parabola.mkgmap.osmstyle.eval.ExpressionReader;
+import uk.me.parabola.mkgmap.osmstyle.eval.NodeType;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
+import main.RulesTest;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -102,6 +104,7 @@ public class ExpressionArrangerTest {
 		Op op = createOp("($b<2 | $b<1) & ($a=1 | $b~2 | !($a=1)) & $a!=2");
 		System.out.println(fmtExpr(op));
 		op = arranger.arrange(op);
+		assertTrue(isSolved(op));
 
 		System.out.println(fmtExpr(op));
 	}
@@ -123,18 +126,29 @@ public class ExpressionArrangerTest {
 	}
 
 	@Test
+	public void testQuadNot() {
+		Op op = createOp("!!!!($a<2) & length()>=1 {name 'n989225'} [0x2]");
+		op = arranger.arrange(op);
+		assertTrue(isSolved(op));
+	}
+
+	@Test
 	public void testName() {
-		Op op = createOp("$b!=1 & $a~2 [0x2]");
+
+		Op op = createOp("$b!=1 & !(length()>=1) & (length()>=2 | $b=2 | $a~1 | $a~1 | $a~1) [0x1]");
+		boolean b = RulesTest.checkNotLength(op, op.isType(NodeType.NOT));
+		System.out.println(b);
+		System.out.println(fmtExpr(op));
 		op = arranger.arrange(op);
 		boolean solved = isSolved(op);
-		System.out.println(op);
+		System.out.println(fmtExpr(op));
 		System.out.println(solved);
+		assertTrue(solved);
 	}
 
 	private Op createOp(String s) {
 		TokenScanner scanner = new TokenScanner("test.file", new StringReader(s));
 		ExpressionReader er = new ExpressionReader(scanner, FeatureKind.POLYLINE);
-		Op op = er.readConditions();
-		return op;
+		return er.readConditions();
 	}
 }

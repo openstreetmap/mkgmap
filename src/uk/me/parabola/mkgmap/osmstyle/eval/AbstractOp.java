@@ -108,6 +108,8 @@ public abstract class AbstractOp implements Op {
 			return new NotOp();
 		case REGEX:
 			return new RegexOp();
+		case NOT_REGEX:
+			return new NotRegexOp();
 		default:
 			throw new UnsupportedOperationException("Please implement if you want it");
 		}
@@ -137,9 +139,11 @@ public abstract class AbstractOp implements Op {
 		return first;
 	}
 
-	public void setFirst(Op first) {
+	@SuppressWarnings("unchecked")
+	public <T extends Op> T setFirst(Op first) {
 		this.first = first;
 		lastCachedId = -1;
+		return (T) this;
 	}
 
 	/**
@@ -152,10 +156,9 @@ public abstract class AbstractOp implements Op {
 
 	@SuppressWarnings("unchecked")
 	public <T extends Op> T set(Op a, Op b) {
-		assert this instanceof BinaryOp;
-
 		this.setFirst(a);
-		((BinaryOp) this).setSecond(b);
+		if (b != null)
+			this.setSecond(b);
 		return (T) this;
 	}
 

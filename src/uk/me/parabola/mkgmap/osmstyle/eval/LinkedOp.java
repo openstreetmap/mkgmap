@@ -98,8 +98,8 @@ public class LinkedOp implements Op {
 		return wrapped.getFirst();
 	}
 
-	public void setFirst(Op first) {
-		wrapped.setFirst(first);
+	public <T extends Op> T setFirst(Op first) {
+		return wrapped.setFirst(first);
 	}
 
 	public Op getSecond() {

@@ -30,8 +30,8 @@ public class ExistsOp extends AbstractOp {
 		setType(NodeType.EXISTS);
 	}
 
-	public void setFirst(Op first) {
-		super.setFirst(first);
+	public <T extends Op> T setFirst(Op first) {
+		return super.setFirst(first);
 	}
 
 	public boolean eval(Element el) {
