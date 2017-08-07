@@ -14,19 +14,20 @@
 package uk.me.parabola.mkgmap.osmstyle;
 
 import java.io.StringReader;
+import java.util.Iterator;
 
 import uk.me.parabola.mkgmap.osmstyle.eval.ExpressionReader;
-import uk.me.parabola.mkgmap.osmstyle.eval.NodeType;
+import uk.me.parabola.mkgmap.osmstyle.eval.LinkedOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
-import main.RulesTest;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 import static uk.me.parabola.mkgmap.osmstyle.ExpressionArranger.fmtExpr;
 import static uk.me.parabola.mkgmap.osmstyle.ExpressionArranger.isSolved;
+import static uk.me.parabola.mkgmap.osmstyle.eval.NodeType.EQUALS;
 
 
 public class ExpressionArrangerTest {
@@ -38,7 +39,7 @@ public class ExpressionArrangerTest {
 		Op op = createOp("(a>2 & b~h) & c=* & d=hello & fred<3 [0x2]");
 		op = arranger.arrange(op);
 
-		assertEquals("$d=hello[AND]$c=* & $a>2 & $b~h & $fred<3", fmtExpr(op));
+		assertEquals("$d=hello [AND] $c=* & $a>2 & $fred<3 & $b~h", fmtExpr(op));
 	}
 
 	@Test
@@ -46,7 +47,7 @@ public class ExpressionArrangerTest {
 		Op op = createOp("(a>2 & b~h) & (c=* & d=hello) & fred<3 [0x2]");
 		op = arranger.arrange(op);
 
-		assertTrue(fmtExpr(op).startsWith("$d=hello[AND]$c=* & "));
+		assertTrue(fmtExpr(op).startsWith("$d=hello [AND] $c=* & "));
 	}
 
 	@Test
@@ -54,7 +55,8 @@ public class ExpressionArrangerTest {
 		Op op = createOp("!($b=1) & $b!=1 & $b!=2 & $b=1 {name 'n770'} [0x2]");
 		op = arranger.arrange(op);
 
-		assertTrue(fmtExpr(op).startsWith("$b=1[AND]"));
+		System.out.println(fmtExpr(op));
+		assertTrue(fmtExpr(op).startsWith("$b=1 [AND] "));
 	}
 
 	@Test
@@ -133,17 +135,54 @@ public class ExpressionArrangerTest {
 	}
 
 	@Test
-	public void testName() {
-
-		Op op = createOp("$b!=1 & !(length()>=1) & (length()>=2 | $b=2 | $a~1 | $a~1 | $a~1) [0x1]");
-		boolean b = RulesTest.checkNotLength(op, op.isType(NodeType.NOT));
-		System.out.println(b);
-		System.out.println(fmtExpr(op));
+	public void testPrepareOrSimple() {
+		Op op = createOp("a=3 | b < 2");  // Just one or
 		op = arranger.arrange(op);
-		boolean solved = isSolved(op);
-		System.out.println(fmtExpr(op));
-		System.out.println(solved);
-		assertTrue(solved);
+		Iterator<Op> it = arranger.prepareForSave(op);
+
+		boolean first = true;
+		while (it.hasNext()) {
+			Op o = it.next();
+			assertTrue("Prepared OR should all be LinkedOp's", o instanceof LinkedOp);
+			assertEquals("Only first should have first flag set", first, ((LinkedOp) o).isFirstPart());
+			first = false;
+			assertTrue(isSolved(o));
+			System.out.println(o);
+		}
+	}
+
+	@Test
+	public void testPrepareOr() {
+		Op op = createOp("a=3 | b < 2 | c=*");
+		op = arranger.arrange(op);
+		Iterator<Op> it = arranger.prepareForSave(op);
+
+		boolean first = true;
+		while (it.hasNext()) {
+			Op o = it.next();
+			assertTrue("Prepared OR should all be LinkedOp's", o instanceof LinkedOp);
+			assertEquals("Only first should have first flag set", first, ((LinkedOp) o).isFirstPart());
+			first = false;
+			assertTrue(isSolved(o));
+			System.out.println(o);
+		}
+	}
+
+	@Test
+	public void testShouldNotCombineEquals() {
+		Op op = createOp("a=3");
+		Iterator<Op> it = arranger.prepareForSave(op);
+		op = it.next();
+		assertEquals(EQUALS, op.getType());
+	}
+
+	@Test
+	public void testName() {
+		Op op = createOp("!($a~1) & $b~1 {name 'n4924'} [0x2]");
+		op = arranger.arrange(op);
+		Iterator<Op> it = arranger.prepareForSave(op);
+		System.out.println(it);
+		System.out.println(it.next());
 	}
 
 	private Op createOp(String s) {

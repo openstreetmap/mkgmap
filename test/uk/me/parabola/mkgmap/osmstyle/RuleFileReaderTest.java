@@ -357,7 +357,7 @@ public class RuleFileReaderTest {
 		assertEquals(2, type.getType());
 	}
 
-	@Test
+	@Test(expected = SyntaxException.class)
 	public void testNEAtTop() {
 		RuleSet rs = makeRuleSet("QUOTA != 'fred' [0x2]");
 		Element el = new Way(1);
@@ -1019,8 +1019,7 @@ public class RuleFileReaderTest {
 	/** You can't use length as the only term */
 	@Test(expected=SyntaxException.class)
 	public void testStandAloneLength() {
-		// a parameter in a function is not allowed for the length() function
-		// this should throw a SyntaxException
+		// The length function is not allowed by itself, should be a syntax exception
 		makeRuleSet("length() > 91 [0x5]");
 	}
 
@@ -1105,6 +1104,17 @@ public class RuleFileReaderTest {
 		RuleSet rs = makeRuleSet("a<$b [0x5] a=b [0x6]");
 		Way w = new Way(1);
 		w.addTag("a", "1");
+		w.addTag("b", "2");
+		GType type = getFirstType(rs, w);
+		assertNotNull(type);
+		assertEquals(5, type.getType());
+	}
+
+	@Test
+	public void testValueTagValue() {
+		RuleSet rs = makeRuleSet("a=$b [0x5]");
+		Way w = new Way(1);
+		w.addTag("a", "2");
 		w.addTag("b", "2");
 		GType type = getFirstType(rs, w);
 		assertNotNull(type);

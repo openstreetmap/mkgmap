@@ -15,6 +15,7 @@ package uk.me.parabola.mkgmap.osmstyle;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.ExitException;
@@ -28,6 +29,7 @@ import uk.me.parabola.mkgmap.osmstyle.eval.GTEOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.GTOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.LTEOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.LTOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.LinkedOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.NodeType;
 import uk.me.parabola.mkgmap.osmstyle.eval.NotEqualOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.NotExistsOp;
@@ -36,6 +38,8 @@ import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.osmstyle.eval.OrOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.RegexOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ValueOp;
+import uk.me.parabola.mkgmap.scan.SyntaxException;
+import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 import static uk.me.parabola.mkgmap.osmstyle.eval.NodeType.*;
 
@@ -46,11 +50,13 @@ import static uk.me.parabola.mkgmap.osmstyle.eval.NodeType.*;
 public class ExpressionArranger {
 	// Combining operation types.
 	private static final EnumSet<NodeType> OPERATORS = EnumSet.of(AND, OR, NOT);
+
 	// Combining operations that are binary
 	private static final EnumSet<NodeType> BIN_OPERATORS = EnumSet.of(AND, OR);
 
-	// These types need to be combined with EXISTS if they are first.
-    private static final EnumSet<NodeType> NEED_EXISTS = EnumSet.of(GT, GTE, LT, LTE, REGEX, NOT_REGEX);
+	// These types need to be combined with EXISTS if they are first.  Note: NOT_REGEX, NOT_EQUAL must not be
+	// in this list.
+    private static final EnumSet<NodeType> NEED_EXISTS = EnumSet.of(GT, GTE, LT, LTE, REGEX);
 
     // The invertible op types, basically everything apart from the value types
 	private static final EnumSet<NodeType> INVERTIBLE;
@@ -224,6 +230,9 @@ public class ExpressionArranger {
 		return invert(op.getFirst());
 	}
 
+	/**
+	 * Invert an expression, ie apply NOT to it.
+	 */
 	private Op invert(Op op) {
 		switch (op.getType()) {
 		case NOT:
@@ -348,14 +357,6 @@ public class ExpressionArranger {
 		}
 	}
 
-
-	/**
-	 * Format the expression emphasising the top operator.
-	 */
-	public static String fmtExpr(Op op) {
-		return String.format("%s [%s] %s", op.getFirst(), op.getType(), op.getSecond());
-	}
-
 	/**
 	 * Return a score for how much this op should be at the front.
 	 *
@@ -380,6 +381,7 @@ public class ExpressionArranger {
 		case NOT_EQUALS:
 		case NOT_EXISTS:
 		case NOT:
+		case NOT_REGEX:
 			// None of these can be first, this will ensure that they never are
 			// when there is more than one term
 			return 1000;
@@ -391,7 +393,6 @@ public class ExpressionArranger {
 
 		// Everything else is 200+, put regex behind as they are probably a bit slower.
 		case REGEX:
-		case NOT_REGEX:
 			return 201;
 		default:
 			// Non-indexable functions must go to the back.
@@ -399,6 +400,110 @@ public class ExpressionArranger {
 				return 1000;
 			return 200;
 		}
+	}
+
+	/**
+	 * Get the key string for this expression.
+	 *
+	 * We use a literal string such as highway=primary to index the rules. If it is not possible to find a key string,
+	 * then the expression is not allowed.  This should only happen with expression that could match an element with no
+	 * tags.
+	 */
+	public String getKeystring(TokenScanner scanner, Op op) {
+		Op first = op.getFirst();
+		Op second = op.getSecond();
+
+		String keystring = null;
+		if (op.isType(EQUALS) && first.isType(FUNCTION) && second.isType(VALUE)) {
+			keystring = first.getKeyValue() + "=" + second.getKeyValue();
+		} else if (op.isType(EXISTS)) {
+			keystring = first.getKeyValue() + "=*";
+		} else if (op.isType(AND)) {
+			if (first.isType(EQUALS)) {
+				keystring = first.getFirst().getKeyValue() + "=" + first.getSecond().getKeyValue();
+			} else if (first.isType(EXISTS)) {
+				keystring = first.getFirst().getKeyValue() + "=*";
+			} else if (first.isType(NOT_EXISTS)) {
+				throw new SyntaxException(scanner, "Cannot start rule with tag!=*");
+			}
+		}
+
+		if (keystring == null)
+			throw new SyntaxException(scanner, "Invalid rule expression: " + op);
+
+		return keystring;
+	}
+
+	/**
+	 * Prepare this expression for saving.
+	 *
+	 * If necessary we combine with an exists clause.
+	 *
+	 * The main work is if this is an OR, we have to split it up and
+	 * prepare each term separately.
+	 */
+	public Iterator<Op> prepareForSave(Op op) {
+		List<Op> saveList = new ArrayList<>();
+
+		switch (op.getType()) {
+		case AND:
+		default:
+			saveList.add(prepareWithExists(op));
+			break;
+		case OR:
+			Op last = op;
+			LinkedOp prev = null;
+			for (Op second = op; second != null && second.isType(OR); second = second.getSecond()) {
+				Op term = second.getFirst();
+				LinkedOp lop = LinkedOp.create(prepareWithExists(term), second == op);
+				if (prev != null)
+					prev.setLink(lop);
+				prev = lop;
+
+				saveList.add(lop);
+				last = second;
+			}
+			LinkedOp lop = LinkedOp.create(prepareWithExists(last.getSecond()), false);
+			if (prev != null)
+				prev.setLink(lop);
+			saveList.add(lop);
+			break;
+		}
+
+		return saveList.iterator();
+	}
+
+	/**
+	 * Combine the given expression with EXISTS.
+	 *
+	 * This is done if the first term is not by itself indexable, but could be made so by pre-pending an EXISTS clause.
+	 */
+	private Op prepareWithExists(Op op) {
+		Op first = op;
+		if (first.isType(AND))
+			first = first.getFirst();
+
+		if (NEED_EXISTS.contains(first.getType()) && isIndexable(first)
+				|| first.isType(EQUALS) && first.getSecond().isType(FUNCTION))
+			return combineWithExists((BinaryOp) op);
+		else
+			return op;
+	}
+
+	/**
+	 * Combine the given expression with EXISTS.
+	 *
+	 * This is done if the first term is not by itself indexable, but could be made so by pre-pending an EXISTS clause.
+	 */
+	private AndOp combineWithExists(BinaryOp op) {
+		Op first = op;
+		if (first.isType(AND))
+			first = first.getFirst();
+
+		return new AndOp().set(
+				new ExistsOp().setFirst(first.getFirst()),
+				op
+		);
 	}
 
 	/**
@@ -436,14 +541,23 @@ public class ExpressionArranger {
 			return isIndexable(op);
 		}
 	}
+
 	/**
 	 * True if this operation can be indexed.  It is a plain equality or Exists operation.
 	 */
 	private static boolean isIndexable(Op op) {
 		return op.isType(EQUALS)
 				&& ((ValueOp) op.getFirst()).isIndexable() && op.getSecond().isType(VALUE)
-				|| NEED_EXISTS.contains(op.getType()) && ((ValueOp) op.getFirst()).isIndexable() && op.getSecond().isType(VALUE)
+				|| NEED_EXISTS.contains(op.getType()) && ((ValueOp) op.getFirst()).isIndexable()
+					&& (op.getSecond().isType(VALUE) || op.getSecond().isType(FUNCTION))
 				|| op.isType(EXISTS) && ((ValueOp) op.getFirst()).isIndexable();
+	}
+
+	/**
+	 * Format the expression emphasising the top operator.
+	 */
+	public static String fmtExpr(Op op) {
+		return String.format("%s [%s] %s", op.getFirst(), op.getType(), op.getSecond());
 	}
 
 }
