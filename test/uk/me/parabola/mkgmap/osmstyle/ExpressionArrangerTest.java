@@ -135,6 +135,13 @@ public class ExpressionArrangerTest {
 	}
 
 	@Test
+	public void testExistsWithNot() {
+		Op op = createOp("!($a=*) & $a=1 [0x1]");
+		op = arranger.arrange(op);
+		assertTrue(isSolved(op));
+	}
+
+	@Test
 	public void testPrepareOrSimple() {
 		Op op = createOp("a=3 | b < 2");  // Just one or
 		op = arranger.arrange(op);
@@ -174,15 +181,6 @@ public class ExpressionArrangerTest {
 		Iterator<Op> it = arranger.prepareForSave(op);
 		op = it.next();
 		assertEquals(EQUALS, op.getType());
-	}
-
-	@Test
-	public void testName() {
-		Op op = createOp("!($a~1) & $b~1 {name 'n4924'} [0x2]");
-		op = arranger.arrange(op);
-		Iterator<Op> it = arranger.prepareForSave(op);
-		System.out.println(it);
-		System.out.println(it.next());
 	}
 
 	private Op createOp(String s) {

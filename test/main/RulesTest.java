@@ -49,11 +49,13 @@ import uk.me.parabola.mkgmap.osmstyle.ExpressionArranger;
 import uk.me.parabola.mkgmap.osmstyle.eval.AndOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.BinaryOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.EqualsOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.ExistsOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ExpressionReader;
 import uk.me.parabola.mkgmap.osmstyle.eval.GTEOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.LTOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.NodeType;
 import uk.me.parabola.mkgmap.osmstyle.eval.NotEqualOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.NotExistsOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.NotOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.osmstyle.eval.OrOp;
@@ -474,7 +476,7 @@ public class RulesTest {
 	 *   you get a lot of uninteresting a=2 type expressions.
 	 */
 	private Op generateExpr(boolean interesting) {
-		int t = rand.nextInt(interesting ? 3: 8);
+		int t = rand.nextInt(interesting ? 3: 10);
 		switch (t) {
 		case 0:
 			return fillOp(new AndOp());
@@ -490,6 +492,10 @@ public class RulesTest {
 			return fillNameValue(new RegexOp());
 		case 6:
 			return fillNameValue(new NotEqualOp());
+		case 7:
+			return new ExistsOp().setFirst(genNameOp(EXISTS));
+		case 8:
+			return new NotExistsOp().setFirst(genNameOp(NOT_EXISTS));
 		default:
 			return fillNameValue(new EqualsOp());
 		}

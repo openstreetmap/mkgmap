@@ -10,7 +10,6 @@
 
 addr:housenumber=* {set mkgmap:execute_finalize_rules=true}
 
-!!(aeroway=runway & highway!=*) & foo=bar [0x1]
 aeroway=runway & highway!=* & is_closed()=false {name '${ref}'} [0x27 resolution 20]
 (aeroway=taxiway | aeroway=taxilane) & highway!=* & is_closed()=false {name '${ref}'} [0x27 resolution 24]
 

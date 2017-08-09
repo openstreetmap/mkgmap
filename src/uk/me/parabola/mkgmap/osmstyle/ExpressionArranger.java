@@ -253,8 +253,7 @@ public class ExpressionArranger {
 		case NOT_EQUALS:
 			return new EqualsOp().set(op.getFirst(), op.getSecond());
 		case EXISTS:
-			new NotExistsOp().setFirst(op.getFirst());
-			return new NotExistsOp();
+			return new NotExistsOp().setFirst(op.getFirst());
 		case NOT_EXISTS:
 			return new ExistsOp().setFirst(op.getFirst());
 		case OR:
