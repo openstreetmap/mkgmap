@@ -148,6 +148,10 @@ public class HousenumberGroup {
 			pointToUse = (len1 <= len2) ? c1 : c2;
 		} else {
 			Coord optPoint = ExtNumbers.rasterLineNearPoint(c1, c2, pointToUse, true);
+			if (optPoint == null) {
+				log.error("Internal error: ExtNumbers.rasterLineNearPoint() found no point, cannot improve address search for road",getRoad());
+				return false;
+			}
 			double opt1Dist = c1.distance(optPoint);
 			double opt2Dist = c2.distance(optPoint);
 			pointToUse = optPoint;
