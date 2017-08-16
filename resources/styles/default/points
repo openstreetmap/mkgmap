@@ -258,7 +258,7 @@ shop=shoes [0x2e07 resolution 24]
 shop=supermarket [0x2e02 resolution 24]
 shop=tires [0x2f07 resolution 24]
 shop=tyres [0x2f07 resolution 24]
-shop=* [0x2e0c resolution 24]
+shop=* & shop!=no & shop!=none [0x2e0c resolution 24]
 
 sport=9pin [0x2d07 resolution 24]
 sport=10pin | leisure=bowling_alley [0x2d07 resolution 24]
