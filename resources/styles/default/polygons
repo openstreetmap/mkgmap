@@ -52,8 +52,6 @@ leisure=track & area=yes [0x19 resolution 21]
 leisure=water_park [0x09 resolution 21]
 
 place=village [0x03 resolution 19]
-place=island & name=* [0x53 resolution 19]
-place=islet & name=* [0x53 resolution 20]
 
 shop=* [0x08 resolution 22]
 
@@ -81,6 +79,10 @@ man_made=* & area=yes
 
 include 'inc/water_polygons';
 include 'inc/landuse_polygons';
+
+# render small named islands 
+place=island & name=* & area_size() < 1000000 [0x53 resolution 19]
+place=islet & name=* [0x53 resolution 20]
 
 <finalize>
 # The finalizer section is executed for each element when a rule with an element type matches
