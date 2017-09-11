@@ -809,6 +809,12 @@ public class HousenumberGenerator {
 				continue;
 			if (house.getPlace() == null)
 				continue;
+			if (house instanceof HousenumberMatch){
+				HousenumberMatch hm = (HousenumberMatch) house;
+				if (hm.getHousenumberRoad() == null)
+					continue;
+			} else 
+				continue;
 			MultiHashMap<String, HousenumberMatch> subMap = cityPlaceHouseMap.get(house.getCityInfo());
 			if (subMap == null){
 				subMap = new MultiHashMap<>();
