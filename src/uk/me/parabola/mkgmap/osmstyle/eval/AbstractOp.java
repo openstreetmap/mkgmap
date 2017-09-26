@@ -78,6 +78,43 @@ public abstract class AbstractOp implements Op {
 		return op;
 	}
 
+	public static Op createOp(NodeType kind) {
+		switch (kind) {
+		case EQUALS:
+			return new EqualsOp();
+		case GT:
+			return new GTOp();
+		case GTE:
+			return new GTEOp();
+		case LT:
+			return new LTOp();
+		case LTE:
+			return new LTEOp();
+		case NOT_EQUALS:
+			return new NotEqualOp();
+		case EXISTS:
+			return new ExistsOp();
+		case NOT_EXISTS:
+			return new NotExistsOp();
+		case AND:
+			return new AndOp();
+		case OR:
+			return new OrOp();
+		//case VALUE:
+		//	return new ValueOp();
+		//case FUNCTION:
+		//	break;
+		case NOT:
+			return new NotOp();
+		case REGEX:
+			return new RegexOp();
+		case NOT_REGEX:
+			return new NotRegexOp();
+		default:
+			throw new UnsupportedOperationException("Please implement if you want it");
+		}
+	}
+
 	public boolean eval(int cacheId, Element el){
 		if (lastCachedId != cacheId){
 			if (lastCachedId > cacheId){
@@ -89,8 +126,7 @@ public abstract class AbstractOp implements Op {
 		return lastRes;
 			
 	}
-	
-	
+
 	/**
 	 * Does this operation have a higher priority that the other one?
 	 * @param other The other operation.
@@ -103,9 +139,11 @@ public abstract class AbstractOp implements Op {
 		return first;
 	}
 
-	public void setFirst(Op first) {
+	@SuppressWarnings("unchecked")
+	public <T extends Op> T setFirst(Op first) {
 		this.first = first;
 		lastCachedId = -1;
+		return (T) this;
 	}
 
 	/**
@@ -114,6 +152,14 @@ public abstract class AbstractOp implements Op {
 	 */
 	public Op getSecond() {
 		return null;
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T extends Op> T set(Op a, Op b) {
+		this.setFirst(a);
+		if (b != null)
+			this.setSecond(b);
+		return (T) this;
 	}
 
 	public NodeType getType() {
@@ -141,7 +187,7 @@ public abstract class AbstractOp implements Op {
 	public boolean isType(NodeType value) {
 		return type == value;
 	}
-	
+
 	public void resetCache(){
 		lastCachedId = -1;
 	}

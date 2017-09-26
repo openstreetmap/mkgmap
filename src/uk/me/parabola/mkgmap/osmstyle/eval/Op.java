@@ -16,6 +16,9 @@ import java.util.Set;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
+import static uk.me.parabola.mkgmap.osmstyle.eval.NodeType.AND;
+import static uk.me.parabola.mkgmap.osmstyle.eval.NodeType.OR;
+
 /**
  * Interface for an node in the style expression language.
  * Operations need have only one operand, use {@link BinaryOp} for
@@ -57,7 +60,15 @@ public interface Op {
 	/**
 	 * Set the first operand.
 	 */
-	public void setFirst(Op first);
+	public <T extends Op> T setFirst(Op first);
+
+	/**
+	 * Set the second operand.
+	 * Only supported on binary nodes, but declared here to avoid casts all over the place.
+	 */
+	public default void  setSecond(Op second) {
+		throw new UnsupportedOperationException("setSecond only supported on binary nodes");
+	}
 
 	/**
 	 * Return the second operand for a binary operation. If this is not a binary operation,
@@ -65,6 +76,13 @@ public interface Op {
 	 * @return The right hand side, or null if there is not one.
 	 */
 	public Op getSecond();
+
+	/**
+	 * Set both first and second in one call.
+	 *
+	 * Only supported on BinaryOp types.
+	 */
+	public <T extends Op> T set(Op first, Op second);
 
 	/** Get the operation type */
 	public NodeType getType();
@@ -101,4 +119,20 @@ public interface Op {
 	 */
 	public Set<String> getEvaluatedTagKeys();
 
+
+	/**
+	 * A semi-deep copy of the Node.
+	 *
+	 * Copy all AND/OR nodes, the EQUALS, LT nodes remain shared.  They can be shared because
+	 * they are never modified by the arranger code.  If you are using this for something else
+	 * you may need a different method.
+	 */
+	public default Op copy() {
+		NodeType t = getType();
+		if (t == AND || t == OR) {
+			return AbstractOp.createOp(getType())
+					.set(getFirst().copy(), getSecond().copy());
+		} else
+			return this;
+	}
 }

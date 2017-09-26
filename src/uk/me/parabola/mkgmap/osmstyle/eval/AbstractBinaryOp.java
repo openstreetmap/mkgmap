@@ -16,7 +16,7 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
-import static uk.me.parabola.mkgmap.osmstyle.eval.NodeType.VALUE;
+import static uk.me.parabola.mkgmap.osmstyle.eval.NodeType.*;
 
 /**
  * A base class that can be used for binary operations.
@@ -37,7 +37,35 @@ public abstract class AbstractBinaryOp extends AbstractOp implements BinaryOp {
 	}
 
 	public String toString() {
-		String t2 = second.isType(VALUE) ? "'" + second + "'" : second.toString();
-		return "(" + getFirst() + getType().toSymbol() + t2 + ')';
+		StringBuilder sb = new StringBuilder();
+
+		if (getSecond() instanceof LinkedOp) {
+			// NOTE: care needed the toString method is used in compile() and we have
+			// to therefore produce something unique to the expression.
+			// It looks ugly at the moment because of that.
+			sb.append("# Part of previous OR: ");
+		}
+
+		boolean needParen;
+
+		needParen = this.hasHigherPriority(getFirst());
+		if (needParen)
+			sb.append('(');
+		sb.append(getFirst().toString());
+		if (needParen)
+			sb.append(')');
+
+		sb.append(' ');
+		sb.append(getType().toSymbol());
+		sb.append(' ');
+
+		needParen = this.hasHigherPriority(getSecond());
+		if (needParen)
+			sb.append('(');
+		sb.append(getSecond().toString());
+		if (needParen)
+			sb.append(')');
+
+		return sb.toString();
 	}
 }

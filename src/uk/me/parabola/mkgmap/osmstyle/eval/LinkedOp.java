@@ -74,7 +74,7 @@ public class LinkedOp implements Op {
 		StringBuilder sb = new StringBuilder();
 		if (!first)
 			sb.append("# Part of the previous OR expression: ");
-		sb.append('(');
+
 		sb.append(wrapped);
 		LinkedOp l = link;
 		while (l != null) {
@@ -82,7 +82,7 @@ public class LinkedOp implements Op {
 			sb.append(l.wrapped);
 			l = l.link;
 		}
-		sb.append(')');
+
 		return sb.toString();
 	}
 
@@ -98,12 +98,19 @@ public class LinkedOp implements Op {
 		return wrapped.getFirst();
 	}
 
-	public void setFirst(Op first) {
-		wrapped.setFirst(first);
+	public <T extends Op> T setFirst(Op first) {
+		return wrapped.setFirst(first);
 	}
 
 	public Op getSecond() {
 		return null;
+	}
+
+	/**
+	 * Not supported, as setSecond is not.
+	 */
+	public <T extends Op> T set(Op first, Op second) {
+		throw new UnsupportedOperationException();
 	}
 
 	public NodeType getType() {

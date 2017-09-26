@@ -34,7 +34,8 @@ public enum NodeType {
 	OPEN_PAREN("("),
 	CLOSE_PAREN(")"),
 	NOT("!"),
-	REGEX("~");
+	REGEX("~"),
+	NOT_REGEX("!~");
 
 	private final String symbol;
 

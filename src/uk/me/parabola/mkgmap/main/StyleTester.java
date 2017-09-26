@@ -233,40 +233,37 @@ public class StyleTester implements OsmConverter {
 				noStrict = true;
 			}
 
-			List<String> all = new ArrayList<>();
 			List<MapElement> strictResults = new ArrayList<>();
 			List<MapElement> results = new ArrayList<>();
+			List<String> actual = new ArrayList<>();
+			List<String> expected = new ArrayList<>();
 			for (Way w : ways) {
 				OsmConverter normal = new StyleTester("styletester.style", new LocalMapCollector(results), false);
 
 				String prefix = "WAY " + w.getId() + ": ";
 				normal.convertWay(w.copy());
 				normal.end();
-				String[] actual = formatResults(prefix, results);
-				all.addAll(Arrays.asList(actual));
+				actual.addAll(formatResults(prefix, results));
 				results.clear();
-
-				printResult(actual);
 
 				if (!noStrict) {
 					OsmConverter strict = new StyleTester("styletester.style", new LocalMapCollector(strictResults), true);
 					strict.convertWay(w.copy());
 					strict.end();
-					String[] expected = formatResults(prefix, strictResults);
+					expected.addAll(formatResults(prefix, strictResults));
 					strictResults.clear();
-
-					if (!Arrays.deepEquals(actual, expected)) {
-						out.println("ERROR expected result is:");
-						printResult(expected);
-					}
 				}
-
 			}
 
-			String[] given = givenList.toArray(new String[givenList.size()]);
-			if ((given.length > 0 || forceUseOfGiven) && !Arrays.deepEquals(all.toArray(), givenList.toArray())) {
+			printResult("", actual);
+			if (!noStrict && !Objects.equals(actual, expected)) {
+				out.println("ERROR expected result is:");
+				printResult("|", expected);
+			}
+
+			if ((!givenList.isEmpty() || forceUseOfGiven) && !Objects.equals(actual, givenList)) {
 				out.println("ERROR given results were:");
-				printResult(given);
+				printResult("", givenList);
 			}
 		} catch (FileNotFoundException e) {
 			System.err.println("Cannot open test file " + filename);
@@ -322,9 +319,9 @@ public class StyleTester implements OsmConverter {
 		return null; // unknown
 	}
 
-	private static void printResult(String[] results) {
+	private static void printResult(String prefix, List<String> results) {
 		for (String s : results) {
-			out.println(s);
+			out.println(prefix + s);
 		}
 	}
 
@@ -393,8 +390,8 @@ public class StyleTester implements OsmConverter {
 	 * @param prefix This string will be prepended to the formatted result.
 	 * @param lines The resulting map elements.
 	 */
-	private static String[] formatResults(String prefix, List<MapElement> lines) {
-		String[] result = new String[lines.size()];
+	private static List<String> formatResults(String prefix, List<MapElement> lines) {
+		List<String> result = new ArrayList<>();
 		int i = 0;
 		for (MapElement el : lines) {
 			String s;
@@ -403,7 +400,7 @@ public class StyleTester implements OsmConverter {
 				s = roadToString((MapRoad) el);
 			else
 				s = lineToString((MapLine) el);
-			result[i++] = prefix + s;
+			result.add(prefix + s);
 		}
 		return result;
 	}
@@ -868,8 +865,8 @@ public class StyleTester implements OsmConverter {
 				start = System.currentTimeMillis();
 			}
 			if (print) {
-				String[] strings = formatResults("", Collections.singletonList(line));
-				printResult(strings);
+				List<String> strings = formatResults("", Collections.singletonList(line));
+				printResult("", strings);
 			}
 		}
 
@@ -877,8 +874,8 @@ public class StyleTester implements OsmConverter {
 
 		public void addRoad(MapRoad road) {
 			if (print) {
-				String[] strings = formatResults("", Collections.singletonList(road));
-				printResult(strings);
+				List<String> strings = formatResults("", Collections.singletonList(road));
+				printResult("", strings);
 			}
 		}
 
