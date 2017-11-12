@@ -129,6 +129,9 @@ public class TdbBuilder implements Combiner {
 		detail.setRgnDataSize(finfo.getRgnsize());
 		detail.setNetDataSize(finfo.getNetsize());
 		detail.setNodDataSize(finfo.getNodsize());
+		detail.setDemDataSize(finfo.getDemsize());
+		if (finfo.getDemsize() > 0)
+			tdb.setHasDem();
 
 		log.info("overview-mapname", overviewMapname);
 		log.info("overview-mapnumber", parent);

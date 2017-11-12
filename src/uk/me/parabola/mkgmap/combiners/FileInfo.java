@@ -76,12 +76,13 @@ public class FileInfo {
 	private int netsize;
 	private int nodsize;
 
-	private final List<Integer> fileSizes = new ArrayList<Integer>();
+	private final List<Integer> fileSizes = new ArrayList<>();
 	private String[] licenceInfo;
 	private CommandArgs args;
 	private String mpsName;
 	private int codePage;
 	private int sortOrderId;
+	private int demsize;
 
 	private FileInfo(String filename, FileKind kind) {
 		this.filename = filename;
@@ -148,7 +149,7 @@ public class FileInfo {
 		String ext = inputName.substring(end - 3).toUpperCase(Locale.ENGLISH);
 		FileInfo info;
 
-		if (ext.equals("IMG")) {
+		if ("IMG".equals(ext)) {
 			info = imgInfo(inputName);
 		} else if ("TYP".equals(ext)) {
 			info = fileInfo(inputName, TYP_KIND);
@@ -202,8 +203,8 @@ public class FileInfo {
 	}
 
 	/**
-	 * An IMG file, this involves real work. We have to read in the file and
-	 * extract several pieces of information from it.
+	 * An IMG file, this involves real work. We have to read in the file and extract several pieces of information from
+	 * it.
 	 *
 	 * @param inputName The name of the file.
 	 * @return The information obtained.
@@ -262,6 +263,8 @@ public class FileInfo {
 					info.setNetsize(ent.getSize());
 				} else if ("NOD".equals(ext)) {
 					info.setNodsize(ent.getSize());
+				} else if ("DEM".equals(ext)) {
+					info.setDemsize(ent.getSize());
 				} else if ("MDR".equals(ext)) {
 					// It is not actually a regular img file, so change the kind.
 					info.setKind(MDR_KIND);
@@ -367,8 +370,8 @@ public class FileInfo {
 		for (int size : fileSizes) {
 			// You use up one header slot for every 240 blocks with a minimum
 			// of one slot
-			int nblocks = (size + (blockSize-1)) / blockSize;
-			totHeaderSlots += (nblocks + (ENTRY_SIZE - 1)) / ENTRY_SIZE;
+			int nblocks = (size + blockSize-1) / blockSize;
+			totHeaderSlots += (nblocks + ENTRY_SIZE - 1) / ENTRY_SIZE;
 		}
 		return totHeaderSlots;
 	}
@@ -386,7 +389,7 @@ public class FileInfo {
 	public int getNumBlocks(int bs) {
 		int totBlocks = 0;
 		for (int size : fileSizes) {
-			int nblocks = (size + (bs - 1)) / bs;
+			int nblocks = (size + bs - 1) / bs;
 			totBlocks += nblocks;
 		}
 		return totBlocks;
@@ -495,5 +498,13 @@ public class FileInfo {
 
 	public String getOverviewName() {
 		return args.get("overview-mapname", "osmmap");
+	}
+
+	public int getDemsize() {
+		return demsize;
+	}
+
+	public void setDemsize(int demsize) {
+		this.demsize = demsize;
 	}
 }
