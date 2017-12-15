@@ -19,7 +19,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 public class DEMSection {
 	private byte unknown1;
-	private int zoomLevel;
+	private final int zoomLevel;
 	private int pointsPerLat;
 	private int pointsPerLon;
 	private int nonStdHeight;
@@ -42,6 +42,12 @@ public class DEMSection {
 	private char maxHeight;
 	List<DEMTile> tiles = new ArrayList<>();
 	
+	
+	public DEMSection(int zoomLevel) {
+		this.zoomLevel = zoomLevel;
+		calcData();
+	}
+
 	public void writeHeader(ImgFileWriter writer) {
 		writeSectorHeader(writer);
 		
@@ -77,7 +83,6 @@ public class DEMSection {
 		for (DEMTile tile : tiles) {
 			tile.writeBitStreamData(writer);
 		}
-		
 	}
 
 	public byte getOffsetSize() {
@@ -111,5 +116,18 @@ public class DEMSection {
 	public void setHasExtra(boolean hasExtra) {
 		this.hasExtra = hasExtra;
 	}
+	
+	public void calcData() {
+		int[] realHeights = new int[64*64];
+		realHeights[63*64] = 3; // sample from pdf
+		DEMTile tile = new DEMTile(this, 0, 0, 64, 64, realHeights);
+		return;
+	}
+	
+	public static void main(String[] args) {
+		DEMSection section = new DEMSection(0);
+	}
+	
+	
 }
 

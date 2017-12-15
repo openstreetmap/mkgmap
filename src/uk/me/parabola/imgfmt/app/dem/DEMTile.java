@@ -13,7 +13,7 @@
 package uk.me.parabola.imgfmt.app.dem;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
+
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
@@ -45,6 +45,7 @@ public class DEMTile {
 	private int bitPos;
 	private byte currByte;
 	private int currPlateauTablePos; // current position in plateau tables
+	private StringBuilder bs; 
 
 	// fields used for debugging
 	private final int tileNumberLat;
@@ -101,7 +102,7 @@ public class DEMTile {
 			createBitStream(realHeights);
 	}
 	
-	public void createBitStream(int[] realHeights) {
+	private void createBitStream(int[] realHeights) {
 		bits = new ByteArrayOutputStream(128); 
 		heights = new int[realHeights.length];
 		// normalise the height matrix
@@ -112,12 +113,15 @@ public class DEMTile {
 				heights[i] = (realHeights[i] - baseHeight);
 		}
 		// all values in heights are now expected to be between 0 .. maxDeltaHeight
+		bs = new StringBuilder();
 		encodeDeltas();
 		// cleanup 
+		bs = null;
 		heights = null;
 	}
 	
 	private void addBit(boolean bit) {
+		bs.append(bit ? '1':'0');
 		if (bit) {
 			currByte |= 1 << (7-bitPos);
 		}
@@ -125,6 +129,7 @@ public class DEMTile {
 		if (bitPos > 7) {
 			bitPos = 0;
 			bits.write(currByte);
+			currByte = 0;
 		}
 	}
 	
@@ -138,21 +143,23 @@ public class DEMTile {
 		ValPredicter encPlateauF0 = new ValPredicter(CalcType.CALC_PLATEAU_ZERO, maxDeltaHeight);
 		ValPredicter encPlateauF1 = new ValPredicter(CalcType.CALC_PLATEAU_NON_ZERO, maxDeltaHeight);
 		ValPredicter encoder = null;
-		ValPredicter lastEncoder = null;
+		boolean writeFollower = false;
 		while (pos < heights.length) {
+			bs.setLength(0);
 			int n = pos % width;
 			int m = pos / height;
 			int hUpper = getHeight(n, m - 1);
 			int hLeft = getHeight(n - 1, m);
 			int dDiff = hUpper - hLeft;
-			if (lastEncoder != null && lastEncoder.type == CalcType.CALC_P_LEN) {
-				encoder = (dDiff == 0) ? encPlateauF0 : encPlateauF1; 
+			if (writeFollower) {
+				encoder = (dDiff == 0) ? encPlateauF0 : encPlateauF1;
+				writeFollower = false;
 			} else if (dDiff == 0) {
 				ct = CalcType.CALC_P_LEN;
 				int pLen = calcPlateauLen(n, m);
 				writePlateauLen(pLen, n);
 				pos += pLen;
-				lastEncoder = encoder;
+				writeFollower = (pos % width != 0 || pLen == 0);
 				continue;
 			} else {
 				encoder = encStandard;
@@ -176,14 +183,21 @@ public class DEMTile {
 				} else {
 					predict = hLeft + hdiffUp;
 				}
-				v = predict - h / sgnDDiff;
+				if (dDiff > 0)
+					v = -h - predict;
+				else 
+					v = h -predict;
+				
 			} else {
 				// platea follower: predicted value is upper height 
 				v = h - hUpper;
 			}
+			bs.setLength(0);
 			encoder.write(v);
-			lastEncoder = encoder;
+			pos++;
 		}
+		if (bitPos > 0)
+			bits.write(currByte);
 	}
 
 	/**
@@ -206,9 +220,7 @@ public class DEMTile {
 		if (currPlateauTablePos > 0)
 			currPlateauTablePos--;
 		addBit(false); // separator bit
-		if (len > 0) {
-			writeValAsBin(len, plateauBinBits[currPlateauTablePos]);
-		}
+		writeValAsBin(len, plateauBinBits[currPlateauTablePos]);
 	}
 
 	/**
@@ -233,7 +245,7 @@ public class DEMTile {
 	 * Write a length encoded value as a sequence of 0-bits followed by a 1-bit. 
 	 * @param val
 	 */
-	private void writeValAsNumberOfZeroBits(int val) {
+	private void writeNumberOfZeroBits(int val) {
 		for (int i = 0; i < val; i++)
 			addBit(false);
 		addBit(true); // terminating 1-bit
@@ -259,7 +271,7 @@ public class DEMTile {
 			lenPart = (-val - binPart) / hunit;
 		}
 		if (lenPart <= maxZeroBits) {
-			writeValAsNumberOfZeroBits(lenPart); // write length encoded part
+			writeNumberOfZeroBits(lenPart); // write length encoded part
 			writeValAsBin(binPart, numBits); // write binary encoded part
 			addBit(val > 0); // sign bit, 1 means positive
 		} else {
@@ -274,7 +286,7 @@ public class DEMTile {
 	 */
 	private void writeValBigBin (int val, int numZeroBits) {
 		// signal big bin by writing an invalid number of zero bits
-		writeValAsNumberOfZeroBits(numZeroBits);
+		writeNumberOfZeroBits(numZeroBits);
 		int bits = getMaxLengthZeroBits(maxDeltaHeight);
 		if (val < 0)
 			writeValAsBin(-val - 1, bits - 1);
@@ -291,7 +303,7 @@ public class DEMTile {
 	 */
 	private int calcPlateauLen(int col, int row) {
 		int len = 0;
-		int v = getHeight(col, row);
+		int v = getHeight(col-1, row);
 		while (col + len < width) {
 			if (v == getHeight(col + len, row)) {
 				++len;
@@ -383,6 +395,7 @@ public class DEMTile {
 		private final int unitDelta;
 		private int dDiff;
 		private final int maxZeroBits;
+		final int l0WrapUp, l0WrapDown, l1WrapUp, l1WrapDown, l2WrapUp, l2WrapDown,hWrapUp, hWrapDown;
 		
 		public ValPredicter(CalcType type, int maxHeight) {
 			super();
@@ -396,29 +409,81 @@ public class DEMTile {
 			encType = EncType.HYBRID;
 			wrapType = WrapType.WRAP_0;
 			hunit = getStartHUnit(maxHeight);
+
+			// calculate threshold values for wrapping
+			if (maxHeight % 2 == 0) {
+				l0WrapDown = maxHeight / 2;
+				l0WrapUp = -maxHeight / 2;
+				l1WrapDown = (maxHeight + 2) / 2;
+				l1WrapUp = -maxHeight / 2;
+				l2WrapDown = maxHeight / 2;
+				l2WrapUp = -maxHeight / 2;
+			} else {
+				l0WrapDown = (maxHeight + 1) / 2;
+				l0WrapUp = -(maxHeight - 1) / 2;
+				l1WrapDown = (maxHeight + 1) / 2;
+				l1WrapUp = -(maxHeight - 1) / 2;
+				l2WrapDown = (maxHeight - 1) / 2;
+				l2WrapUp = -(maxHeight + 1) / 2;
+			}
+
+			hWrapDown = (maxHeight + 1) / 2;
+			hWrapUp = -(maxHeight - 1) / 2;
 		}
 
 		private int wrap(int v) {
-			return v; // TODO
+			int down,up;
+			if (encType == EncType.HYBRID) {
+				down = hWrapDown;
+				up = hWrapUp;
+			} else {
+				if (wrapType == WrapType.WRAP_0) {
+					down = l0WrapDown;
+					up = l0WrapUp;
+				} else if (wrapType == WrapType.WRAP_1) {
+					down = l1WrapDown;
+					up = l1WrapUp;
+				} else {
+					down = l2WrapDown;
+					up = l2WrapUp;
+				}
+			}
+			if (v > down)
+				return v - (maxDeltaHeight + 1);
+			if (v < up)
+				return v + maxDeltaHeight + 1;
+			return v; 
 		}
 		
 		public void write(int val) {
 			int wrapped = wrap(val);
 			int delta1 = processVal(wrapped);
+			
 			int delta2;
 			if (wrapType == WrapType.WRAP_0)
 				delta2 = delta1;
 			else if (wrapType == WrapType.WRAP_1)
 				delta2 = 1 - delta1;
 			else delta2 = -delta1;
+			
 			if (encType == EncType.HYBRID) {
 				writeValHybrid(delta2, hunit, maxZeroBits);
 			} else {
+				// EncType.LEN 
 				assert delta2 >= 0;
 				if (delta2 > maxZeroBits) { 
 					writeValBigBin(delta2, maxZeroBits);
 				} else { 
-					writeValAsNumberOfZeroBits(delta2);
+					// 2 * Math.Abs(data) - (Math.Sign(data) + 1) / 2
+					int n0;
+					if (delta2 < 0) {
+						n0 = -delta2 * 2;
+					} else if (delta2 > 0){
+						n0 = (delta2 -1) * 2 + 1;
+					} else { 
+						n0 = 0;
+					}
+					writeNumberOfZeroBits(n0);
 				}
 			}
 		}
@@ -507,7 +572,7 @@ public class DEMTile {
 						wrapType = WrapType.WRAP_1;
 				}
 				if (delta1 <= 0)
-					--delta1;
+					delta1++;
 
 			} else {
 				assert type == CalcType.CALC_PLATEAU_NON_ZERO;
@@ -625,6 +690,5 @@ public class DEMTile {
 		}
 		return 0;
 	}
-	
-	
+
 }
