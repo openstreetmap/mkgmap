@@ -23,6 +23,7 @@ import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.dem.DEMFile;
 import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
 import uk.me.parabola.imgfmt.app.net.NETFile;
@@ -69,6 +70,7 @@ public class Map implements InternalFiles, Configurable {
 	private LBLFile lblFile;
 	private NETFile netFile;
 	private NODFile nodFile;
+	private DEMFile demFile;
 
 	// Use createMap() or loadMap() instead of creating a map directly.
 	private Map() {
@@ -124,9 +126,16 @@ public class Map implements InternalFiles, Configurable {
 					addNod();
 				} else if (props.containsKey("net")) {
 					addNet();
-				}
+				} 
 			} catch (FileExistsException e) {
 				log.warn("Could not add NET and/or NOD sections");
+			}
+			if (props.containsKey("dem")) {
+				try {
+				addDem();
+				} catch (FileExistsException e) {
+					log.warn("Could not add DEM section");
+				}
 			}
 		}
 		treFile.config(props);
@@ -140,6 +149,11 @@ public class Map implements InternalFiles, Configurable {
 		nodFile = new NODFile(fileSystem.create(mapName + ".NOD"), true);
 	}
 
+	private void addDem() throws FileExistsException {
+		demFile = new DEMFile(fileSystem.create(mapName + ".DEM"), true);
+	}
+
+	
 	/**
 	 * Set the area that the map covers.
 	 * @param area The outer bounds of the map.
@@ -269,7 +283,7 @@ public class Map implements InternalFiles, Configurable {
 	public void close() {
 		ImgFile[] files = {
 				rgnFile, treFile, lblFile,
-				netFile, nodFile
+				netFile, nodFile, demFile
 		};
 
 		int headerSlotsRequired = 0;
@@ -330,5 +344,9 @@ public class Map implements InternalFiles, Configurable {
 
 	public NODFile getNodFile() {
 		return nodFile;
+	}
+
+	public DEMFile getDemFile() {
+		return demFile;
 	}
 }

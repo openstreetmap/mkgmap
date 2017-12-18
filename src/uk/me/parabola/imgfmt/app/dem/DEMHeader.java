@@ -44,22 +44,33 @@ public class DEMHeader extends CommonHeader {
 	 * @param writer The header is written here.
 	 */
 	protected void writeFileHeader(ImgFileWriter writer) {
-		writer.putInt(1); // flags 1: elevation in metres
-		writer.put2(zoomLevels.size());
-		writer.putInt(0); // unknown
-		writer.put2(60); // size of zoom level record
-		writer.putInt(offset); // elevation in metres
-		writer.putInt(1); // elevation in metres
-		for (int i = 0; i < zoomLevels.size(); i++) {
-			zoomLevels.get(i).writeHeader(writer);
-		}
+		int pos = writer.position();
+		writer.position(HEADER_LEN);
 		for (int i = 0; i < zoomLevels.size(); i++) {
 			zoomLevels.get(i).writeRest(writer);
 		}
+		offset = writer.position();
+		for (int i = 0; i < zoomLevels.size(); i++) {
+			zoomLevels.get(i).writeHeader(writer);
+		}
+		writer.position(pos);
+		
+		writer.putInt(0); // 0: elevation in metres, 1: foot
+		writer.put2(zoomLevels.size());
+		writer.putInt(0); // unknown
+		writer.put2(60); // size of zoom level record
+		writer.putInt(offset); // offset to first DemSection header (they appear at the end of the file!)
+		writer.putInt(1); // unknown, also 0 spotted
+		
 	}
 
 	@Override
 	protected void readFileHeader(ImgFileReader reader) throws ReadFailedException {
+	}
+
+
+	public void addSection(DEMSection section) {
+		zoomLevels.add(section);
 	}
 
 }

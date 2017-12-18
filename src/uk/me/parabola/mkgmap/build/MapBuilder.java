@@ -34,6 +34,7 @@ import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.dem.DEMFile;
 import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Country;
 import uk.me.parabola.imgfmt.app.lbl.ExitFacility;
@@ -213,6 +214,7 @@ public class MapBuilder implements Configurable {
 		TREFile treFile = map.getTreFile();
 		lblFile = map.getLblFile();
 		NETFile netFile = map.getNetFile();
+		DEMFile demFile = map.getDemFile();
 
 		if(routeCenterBoundaryType != 0 &&
 		   netFile != null &&
@@ -266,6 +268,22 @@ public class MapBuilder implements Configurable {
 				nodFile.writePost();
 			}
 			netFile.writePost(rgnFile.getWriter());
+		}
+		if (demFile != null) {
+			LevelInfo[] levels;
+			if (OverviewBuilder.isOverviewImg(map.getFilename())) {
+				levels = src.overviewMapLevels();
+			} else {
+				levels = src.mapLevels();
+			}
+//			try{
+				long t = System.currentTimeMillis();
+				demFile.calc(levels, src.getBounds());
+				long t2 = System.currentTimeMillis() - t;
+				demFile.write();
+//			} catch (Exception e) {
+//				log.error("exception while creating DEM file");
+//			}
 		}
 		warnAbout3ByteImgRefs();
 	}
@@ -728,7 +746,6 @@ public class MapBuilder implements Configurable {
 					lastdiv.setLast(true);
 				}
 			}
-
 			srcList = nextList;
 		}
 	}

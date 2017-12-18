@@ -102,6 +102,14 @@ public class DEMTile {
 			createBitStream(realHeights);
 	}
 	
+	public int getBaseHeight() {
+		return baseHeight;
+	}
+
+	public int getMaxHeight() {
+		return baseHeight + maxDeltaHeight; // TODO: does it depend on value in encodingType?
+	}
+	
 	private void createBitStream(int[] realHeights) {
 		bits = new ByteArrayOutputStream(128); 
 		heights = new int[realHeights.length];
@@ -145,9 +153,12 @@ public class DEMTile {
 		ValPredicter encoder = null;
 		boolean writeFollower = false;
 		while (pos < heights.length) {
+			if (pos >= 255 && tileNumberLon == 00) {
+				long dd = 4;
+			}
 			bs.setLength(0);
 			int n = pos % width;
-			int m = pos / height;
+			int m = pos / width;
 			int hUpper = getHeight(n, m - 1);
 			int hLeft = getHeight(n - 1, m);
 			int dDiff = hUpper - hLeft;
@@ -172,10 +183,6 @@ public class DEMTile {
 				int predict;
 				int hUpLeft = getHeight(n-1, m-1);
 				int hdiffUp = hUpper- hUpLeft;
-				int sgnDDiff = Integer.signum(dDiff);
-				if (sgnDDiff == 0) {
-					throw new RuntimeException("error: unexpected 0 value in sgnDiff"); 
-				}
 				if (hdiffUp >= maxDeltaHeight - hLeft) {
 					predict = -1;
 				} else if (hdiffUp <= -hLeft) {
@@ -184,7 +191,7 @@ public class DEMTile {
 					predict = hLeft + hdiffUp;
 				}
 				if (dDiff > 0)
-					v = -h - predict;
+					v = -h + predict;
 				else 
 					v = h -predict;
 				
@@ -207,8 +214,11 @@ public class DEMTile {
 	private void writePlateauLen(int pLen, int col) {
 		int len = pLen;
 		int x = col;
-		while (len > 0) {
-			int unit = plateauUnit[currPlateauTablePos++];
+		while (true) {
+			int unit = plateauUnit[currPlateauTablePos];
+			if (len < unit)
+				break;
+			currPlateauTablePos++;
 			len -= unit;
 			addBit(true);
 			x += unit;
@@ -220,7 +230,11 @@ public class DEMTile {
 		if (currPlateauTablePos > 0)
 			currPlateauTablePos--;
 		addBit(false); // separator bit
-		writeValAsBin(len, plateauBinBits[currPlateauTablePos]);
+		int binBits = plateauBinBits[currPlateauTablePos];
+		if (binBits > 0) {
+			writeValAsBin(Math.abs(len), binBits);
+		}
+		
 	}
 
 	/**
@@ -282,12 +296,12 @@ public class DEMTile {
 	/**
 	 * Write a signed binary value with the given number of bits, MSB first, sign bit last 
 	 * @param val
-	 * @param numBits number of bits including sign bit
+	 * @param numZeroBits number of zero bits that is considered valid 
 	 */
 	private void writeValBigBin (int val, int numZeroBits) {
 		// signal big bin by writing an invalid number of zero bits
-		writeNumberOfZeroBits(numZeroBits);
-		int bits = getMaxLengthZeroBits(maxDeltaHeight);
+		writeNumberOfZeroBits(numZeroBits + 1);
+		int bits = getBigBinBits(maxDeltaHeight);
 		if (val < 0)
 			writeValAsBin(-val - 1, bits - 1);
 		else
@@ -324,11 +338,26 @@ public class DEMTile {
 		if (col < 0) {
 			return row == 0 ? 0 : heights[(row - 1) * width]; 
 		}
+		if (col + row * width >= heights.length) {
+			long dd = 4;
+		}
 		return heights[col + row * width];
 	}
 
 	public void writeHeader(ImgFileWriter writer) {
-		writer.putN(section.getOffsetSize(), offset);
+		switch (section.getOffsetSize()) {
+		case 1:
+			writer.put1(offset);
+			break;
+		case 2:
+			writer.put2(offset);
+			break;
+		case 3:
+			writer.put3(offset);
+			break;
+		default:
+			writer.putInt(offset);
+		}
 		if (section.getBaseSize() == 1)
 			writer.put((byte) baseHeight);
 		else 
@@ -341,6 +370,9 @@ public class DEMTile {
 
 	public void writeBitStreamData(ImgFileWriter writer) {
 		if (bits != null) {
+			if (offset != writer.position()) {
+				long dd = 4;
+			}
 			writer.put(bits.toByteArray());
 		}
 	}
@@ -457,8 +489,15 @@ public class DEMTile {
 		
 		public void write(int val) {
 			int wrapped = wrap(val);
-			int delta1 = processVal(wrapped);
-			
+			int delta1 = wrapped;
+			if (type == CalcType.CALC_PLATEAU_ZERO) {
+				if (delta1 <= 0)
+					delta1++;
+			} else if (type == CalcType.CALC_PLATEAU_NON_ZERO) {
+				if (dDiff > 0) {
+					delta1 = -delta1; 
+				}
+			}
 			int delta2;
 			if (wrapType == WrapType.WRAP_0)
 				delta2 = delta1;
@@ -470,25 +509,25 @@ public class DEMTile {
 				writeValHybrid(delta2, hunit, maxZeroBits);
 			} else {
 				// EncType.LEN 
-				assert delta2 >= 0;
-				if (delta2 > maxZeroBits) { 
+				int n0;
+				if (delta2 < 0) {
+					n0 = -delta2 * 2;
+				} else if (delta2 > 0){
+					n0 = (delta2 -1) * 2 + 1;
+				} else { 
+					n0 = 0;
+				}
+				if (n0 > maxZeroBits) { 
 					writeValBigBin(delta2, maxZeroBits);
 				} else { 
 					// 2 * Math.Abs(data) - (Math.Sign(data) + 1) / 2
-					int n0;
-					if (delta2 < 0) {
-						n0 = -delta2 * 2;
-					} else if (delta2 > 0){
-						n0 = (delta2 -1) * 2 + 1;
-					} else { 
-						n0 = 0;
-					}
 					writeNumberOfZeroBits(n0);
 				}
 			}
+			processVal(delta1);
 		}
 
-		private int processVal(int delta1) {
+		private void processVal(int delta1) {
 			if (type == CalcType.CALC_STD) {
 					
 				// calculate threshold sum hybrid 
@@ -571,9 +610,6 @@ public class DEMTile {
 					if (SumL >= 0)
 						wrapType = WrapType.WRAP_1;
 				}
-				if (delta1 <= 0)
-					delta1++;
-
 			} else {
 				assert type == CalcType.CALC_PLATEAU_NON_ZERO;
 				// calculate threshold sum hybrid 
@@ -602,12 +638,7 @@ public class DEMTile {
 					if (SumL <= 0)
 						wrapType = WrapType.WRAP_2;
 				}
-				if (dDiff > 0) {
-					delta1 = -delta1; 
-				}
-					
 			}
-			return delta1;
 		}
 
 		public void setDDiff(int dDiff) {
@@ -679,6 +710,46 @@ public class DEMTile {
 		return 256;
 	}
 
+	static int getBigBinBits(int maxHeight) {
+		int bits;
+		if (maxHeight <16384) {
+			int n = Integer.highestOneBit(maxHeight);
+			bits = Integer.numberOfTrailingZeros(n) + 1;
+		} else 
+			bits = 15;
+		return bits;
+//		if (maxHeight < 2)
+//			return 1;
+//		else if (maxHeight < 4)
+//			return 2;
+//		else if (maxHeight < 8)
+//			return 3;
+//		else if (maxHeight < 16)
+//			return 4;
+//		else if (maxHeight < 32)
+//			return 5;
+//		else if (maxHeight < 64)
+//			return 6;
+//		else if (maxHeight < 128)
+//			return 7;
+//		else if (maxHeight < 256)
+//			return 8;
+//		else if (maxHeight < 512)
+//			return 9;
+//		else if (maxHeight < 1024)
+//			return 10;
+//		else if (maxHeight < 2048)
+//			return 11;
+//		else if (maxHeight < 4096)
+//			return 12;
+//		else if (maxHeight < 8192)
+//			return 13;
+//		else if (maxHeight < 16384)
+//			return 14;
+//		else
+//			return 15;
+	}
+
 	/**
 	 * The hunit value must be a positive multiple of 2 (including 0).  
 	 * @param hu the result of a division to calculate the new hunit
@@ -690,5 +761,17 @@ public class DEMTile {
 		}
 		return 0;
 	}
+
+	public int getBitStreamLen() {
+		if (bits == null)
+			return 0;
+		else 
+			return bits.size();
+	}
+
+	public void setOffset(int off) {
+		this.offset = off;
+	}
+
 
 }
