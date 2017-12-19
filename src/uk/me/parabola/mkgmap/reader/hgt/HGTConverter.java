@@ -26,8 +26,8 @@ public class HGTConverter {
 	private HGTReader[][] readers;
 	final int minLat32;
 	final int minLon32;
+	final int res;
 	public HGTConverter(String path, Area bbox) {
-		
 		int minLat = (int) Math.floor(Utils.toDegrees(bbox.getMinLat()));
 		int minLon = (int) Math.floor(Utils.toDegrees(bbox.getMinLong()));
 		int maxLat = (int) Math.ceil(Utils.toDegrees(bbox.getMaxLat()));
@@ -38,11 +38,15 @@ public class HGTConverter {
 		int dimLat = maxLat - minLat;
 		int dimLon = maxLon - minLon;
 		readers = new HGTReader[dimLat][dimLon];
+		int maxRes = -1;
 		for (int row = 0; row < dimLat; row++) {
 			for (int col = 0; col < dimLon; col++) {
-				readers[row][col] = new HGTReader(row + minLat, col + minLon, path);
+				HGTReader rdr = new HGTReader(row + minLat, col + minLon, path);
+				readers[row][col] = rdr;
+				maxRes = Math.max(maxRes, rdr.getRes()); 
 			}
 		}
+		res = maxRes; // we use the highest available res
 		return;
 	}
 	
@@ -54,20 +58,21 @@ public class HGTConverter {
 	 * @return height in m or Short.MIN_VALUE if value is invalid 
 	 */
 	public short getElevation(int lat32, int lon32) {
+		// TODO: maybe calculate the borders in 32 bit res ?
+//		double lon = lon32 * factor;
+//		double lat = lat32 * factor;
 		int row = (int) ((lat32 - minLat32) * factor);
 		int col = (int) ((lon32 - minLon32) * factor);
-		
 		HGTReader rdr = readers[row][col];
 		int res = rdr.getRes();
 		double f = res * factor;
 		
 		int y = ((int) Math.round((lat32 - minLat32) * f));
 		int x = ((int) Math.round((lon32 - minLon32) * f));
-		while (x > res)
-			x -= res;
-		while (y > res)
-			y -= res;
-		return rdr.ele(x,y);
+		x -= col * res;
+		y -= row * res;
+		short rc = rdr.ele(x,y);
+		return rc;
 	}
 
 	public void stats() {
@@ -78,4 +83,10 @@ public class HGTConverter {
 			
 		}
 	}
+
+	public int getRes() {
+		return res;
+	}
+
+	
 }
