@@ -132,7 +132,7 @@ public class Map implements InternalFiles, Configurable {
 			}
 			if (props.containsKey("dem")) {
 				try {
-				addDem();
+					addDem();
 				} catch (FileExistsException e) {
 					log.warn("Could not add DEM section");
 				}

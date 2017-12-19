@@ -15,6 +15,7 @@ package uk.me.parabola.imgfmt.app.dem;
 import java.io.ByteArrayOutputStream;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.mkgmap.reader.hgt.HGTReader;
 
 /**
  * This keeps the bit stream data and header info for a single DEM tile.
@@ -45,7 +46,10 @@ public class DEMTile {
 	private int bitPos;
 	private byte currByte;
 	private int currPlateauTablePos; // current position in plateau tables
-	private StringBuilder bs; 
+	
+	private final static boolean DEBUG = false;
+	private StringBuilder bs;
+	
 
 	// fields used for debugging
 	private final int tileNumberLat;
@@ -66,7 +70,7 @@ public class DEMTile {
 	static final int[] plateauUnit = { 1, 1, 1, 1, 2, 2, 2, 2, 4, 4, 4, 4, 8, 8, 8, 8, 16, 16, 32, 32, 64, 64, 128 };
 	static final int[] plateauBinBits = { 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 5, 5, 6, 6, 7, 8 };
 
-	public DEMTile (DEMSection parent, int col, int row, int width, int height, int[] realHeights) {
+	public DEMTile (DEMSection parent, int col, int row, int width, int height, short[] realHeights) {
 		this.section = parent;
 		this.width = width;
 		this.height = height;
@@ -76,19 +80,25 @@ public class DEMTile {
 		// check values in matrix
 		int min = Integer.MAX_VALUE;
 		int max = Integer.MIN_VALUE;
+		boolean hasInvalid = false;
 		for (int h : realHeights) {
-			if (h > max)
-				max = h;
-			if (h < min)
-				min = h;
+			if (h == HGTReader.UNDEF)
+				hasInvalid = true;
+			else {
+				if (h > max)
+					max = h;
+				if (h < min)
+					min = h;
+			}
 		}
 		if (min == Integer.MAX_VALUE) {
 			// all values are invalid -> don't encode anything
 			encodingType = 0; // not used
-		} else if (max == Integer.MAX_VALUE) {
+		} else if (hasInvalid) {
 			// some values are invalid
 			encodingType = 2; // don't display highest value 
 			max++;
+			section.setHasExtra(true);
 		} else {
 			// all height values are valid
 			encodingType = 0;
@@ -110,12 +120,12 @@ public class DEMTile {
 		return baseHeight + maxDeltaHeight; // TODO: does it depend on value in encodingType?
 	}
 	
-	private void createBitStream(int[] realHeights) {
+	private void createBitStream(short[] realHeights) {
 		bits = new ByteArrayOutputStream(128); 
 		heights = new int[realHeights.length];
 		// normalise the height matrix
 		for (int i = 0; i < realHeights.length; i++) {
-			if (realHeights[i] == Integer.MAX_VALUE)
+			if (realHeights[i] == HGTReader.UNDEF)
 				heights[i] = maxDeltaHeight;
 			else 
 				heights[i] = (realHeights[i] - baseHeight);
@@ -129,7 +139,9 @@ public class DEMTile {
 	}
 	
 	private void addBit(boolean bit) {
-		bs.append(bit ? '1':'0');
+		if (DEBUG) {
+			bs.append(bit ? '1':'0');
+		}
 		if (bit) {
 			currByte |= 1 << (7-bitPos);
 		}
@@ -153,9 +165,6 @@ public class DEMTile {
 		ValPredicter encoder = null;
 		boolean writeFollower = false;
 		while (pos < heights.length) {
-			if (pos >= 255 && tileNumberLon == 00) {
-				long dd = 4;
-			}
 			bs.setLength(0);
 			int n = pos % width;
 			int m = pos / width;
@@ -338,9 +347,6 @@ public class DEMTile {
 		if (col < 0) {
 			return row == 0 ? 0 : heights[(row - 1) * width]; 
 		}
-		if (col + row * width >= heights.length) {
-			long dd = 4;
-		}
 		return heights[col + row * width];
 	}
 
@@ -370,9 +376,6 @@ public class DEMTile {
 
 	public void writeBitStreamData(ImgFileWriter writer) {
 		if (bits != null) {
-			if (offset != writer.position()) {
-				long dd = 4;
-			}
 			writer.put(bits.toByteArray());
 		}
 	}

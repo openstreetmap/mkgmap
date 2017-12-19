@@ -13,12 +13,12 @@
 package uk.me.parabola.imgfmt.app.dem;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.reader.hgt.HGTConverter;
 
 public class DEMSection {
 	private static final Logger log = Logger.getLogger(DEMSection.class);
@@ -46,28 +46,29 @@ public class DEMSection {
 	private int maxHeight = Integer.MIN_VALUE;
 	List<DEMTile> tiles = new ArrayList<>();
 	
-	
-	public DEMSection(int zoomLevel, Area bbox, int distLat, int distLon) {
+	public DEMSection(int zoomLevel, Area bbox, String pathToHGT) {
 		this.zoomLevel = zoomLevel;
-		this.pointsDistanceLat = distLat;
-		this.pointsDistanceLon = distLon;
+		HGTConverter hgtConverter = new HGTConverter(pathToHGT, bbox);
+		int res = 1200; // TODO 
+		this.pointsDistanceLat = (int) ((1 << 29) / (res * 45));
+		this.pointsDistanceLon = (int) ((1 << 29) / (res * 45));
 		this.top = bbox.getMaxLat() * 256;
 		this.left = bbox.getMinLong() * 256;
 		int bottom = bbox.getMinLat() * 256;
 		int right= bbox.getMaxLong() * 256;
 		int resLon = pointsPerLon * pointsDistanceLon;
 		int resLat = pointsPerLat * pointsDistanceLat;
-		this.tilesLat = (top-bottom) / (resLat);
-		this.tilesLon = (right-left) / (resLon);
+		this.tilesLat = Math.max((top - bottom) / resLat, 1);
+		this.tilesLon = Math.max((right - left) / resLon, 1);
 		this.nonStdWidth = (right - (left + (tilesLon - 1) * resLon)) / pointsDistanceLon;
 		this.nonStdHeight = ((top - (tilesLat - 1) * resLat) - bottom) / pointsDistanceLat;
-		int lat;
-		int lon;
+		int latOff;
+		int lonOff;
 		int dataLen = 0;
 		int minBaseHeight = Integer.MAX_VALUE;
 		int maxBaseHeight = Integer.MIN_VALUE;
 		for (int m = 0; m < tilesLat; m++) {
-			lat = top - m * resLat;
+			latOff = top - m * resLat;
 			
 			int height = pointsPerLat;
 			if (m + 1 == tilesLat) {
@@ -75,18 +76,18 @@ public class DEMSection {
 				assert height > 0;
 			}
 			for (int n = 0; n < tilesLon; n++) {
-				lon = left + n * resLon;
+				lonOff = left + n * resLon;
 				int width = pointsPerLon;
 				if (n + 1 == tilesLon) {
 					width = nonStdWidth;
 				}
-				int[] realHeights = new int[width * height];
-				// fake SRTM data
-				for (int i = 0; i < realHeights.length; i++) {
-					realHeights[i] = (int) Math.abs(8 * Math.sin(Math.toRadians(i))); 
+				short[] realHeights = new short[width * height];
+				int count = 0;
+				for (int y = 0; y < height; y++) {
+					for (int x = 0; x < width; x++) {
+						realHeights[count++] = hgtConverter.getElevation(latOff-(y*pointsDistanceLat), lonOff+(x*pointsDistanceLon));  
+					}
 				}
-				if (tiles.size() == 0)
-					log.error("using fake data", Arrays.toString(realHeights));
 				DEMTile tile = new DEMTile(this, n, m, width, height, realHeights);
 				tiles.add(tile);
 				int bsLen = tile.getBitStreamLen();
@@ -101,6 +102,7 @@ public class DEMSection {
 				}
 			}
 		}
+		hgtConverter = null;
 		minHeight = minBaseHeight;
 		differenceSize = (maxHeight > 255) ? 2 : 1;
         if (-128 < minBaseHeight  && maxBaseHeight < 128)
@@ -116,7 +118,7 @@ public class DEMSection {
 			offsetSize = 3;
 		else 
 			offsetSize = 4;
-		tileDescSize = offsetSize + baseSize + differenceSize;
+		tileDescSize = offsetSize + baseSize + differenceSize + (hasExtra ? 1:0);
 	}
 
 	public void writeHeader(ImgFileWriter writer) {
@@ -135,6 +137,8 @@ public class DEMSection {
 			recordDesc |= (1 << 2);
 		if (differenceSize > 1)
 			recordDesc |= (1 << 3);
+		if (hasExtra)
+			recordDesc |=  (1 << 4); 
 		writer.put2(recordDesc);	//0x1c
 		writer.put2(tileDescSize);	//0x1e
 		writer.putInt(dataOffset);	//0x20 // TODO unsigned ?  
@@ -194,19 +198,5 @@ public class DEMSection {
 	public void setHasExtra(boolean hasExtra) {
 		this.hasExtra = hasExtra;
 	}
-	
-//	private void calcData(int n, int m ) {
-//		int[] realHeights = new int[64*64];
-//		realHeights[1] = 3;
-//		realHeights[63*64] = 3; 
-//		DEMTile tile = new DEMTile(this, n, m, , 64, realHeights);
-//		return;
-//	}
-	
-//	public static void main(String[] args) {
-//		DEMSection section = new DEMSection(0, new Area(46.8,11.0, 47.0, 11.2), 3312, 3312);
-//	}
-	
-	
 }
 

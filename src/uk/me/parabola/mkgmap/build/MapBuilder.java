@@ -156,6 +156,7 @@ public class MapBuilder implements Configurable {
 	private String licenseFileName;
 
 	private boolean orderByDecreasingArea;
+	private String pathToHGT;
 
 	public MapBuilder() {
 		regionName = null;
@@ -199,6 +200,8 @@ public class MapBuilder implements Configurable {
 		if ("right".equals(driveOn))
 			driveOnLeft = false;
 		orderByDecreasingArea = props.getProperty("order-by-decreasing-area", false);
+		pathToHGT = props.getProperty("dem",null);
+
 	}
 
 	/**
@@ -277,9 +280,10 @@ public class MapBuilder implements Configurable {
 				levels = src.mapLevels();
 			}
 //			try{
-				long t = System.currentTimeMillis();
-				demFile.calc(levels, src.getBounds());
-				long t2 = System.currentTimeMillis() - t;
+				long t1 = System.currentTimeMillis();
+				demFile.calc(levels, src.getBounds(), pathToHGT);
+				long t2 = System.currentTimeMillis();
+				System.out.println("DEM file calculation for " + map.getFilename() + " took " + (t2 - t1) + " ms");
 				demFile.write();
 //			} catch (Exception e) {
 //				log.error("exception while creating DEM file");

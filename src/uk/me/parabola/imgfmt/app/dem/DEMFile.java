@@ -40,10 +40,13 @@ public class DEMFile extends ImgFile {
 		}
 	}
 
-	public void calc(LevelInfo[] levelInfos, Area area) {
-		DEMSection section = new DEMSection(0, area, 3312, 3312); // TODO 
+	public void calc(LevelInfo[] levelInfos, Area area, String pathToHGT) {
+		DEMSection section = new DEMSection(0, area, pathToHGT);  
 		demHeader.addSection(section);
 	}
+
+	
+	
 	public void write() {
 		getHeader().writeHeader(getWriter());
 	}
