@@ -26,7 +26,7 @@ import static java.nio.channels.FileChannel.MapMode.READ_ONLY;
 public class HGTReader {
 	
 	private MappedByteBuffer buffer;
-	private int res = 1200;
+	private int res;
 	public final static short UNDEF = Short.MIN_VALUE;
 	public final String fileName;
 	private long count;
@@ -34,23 +34,29 @@ public class HGTReader {
 		fileName = String.format("%s/%s%02d%s%03d.hgt", pathToHGT, 
 				lat < 0 ? "S" : "N", lat < 0 ? -lat : lat, 
 						lon > 0 ? "E" : "W", lon < 0 ? -lon : lon);
-		
-		try (FileInputStream is = new FileInputStream(fileName)){
-		    res = 1200;
-		    if (is.getChannel().size() != 2*(res+1)*(res+1)) 
-		    	res = 3600;
-	    	buffer = is.getChannel().map(READ_ONLY, 0, 2*(res+1)*(res+1));
+		try (FileInputStream is = new FileInputStream(fileName)) {
+			res = 1200;
+			if (is.getChannel().size() != expectedFileSize())
+				res = 3600;
+			if (is.getChannel().size() != expectedFileSize()) {
+				buffer = null;
+				res = 0;
+				System.err.println("file " +  fileName +  " has unexpected size " + is.getChannel().size() + " and is ignored");
+			} else
+				buffer = is.getChannel().map(READ_ONLY, 0, expectedFileSize());
+		} catch (Exception e) {
+			System.err.println("check: " + fileName  + " should be sea only or is missing");
+			
 		}
-		catch (Exception e) {
-		    throw new RuntimeException("failed to open " + fileName, e);
-		} 
 	}
 	
 	public short ele(int x, int y) {
-//		if (x < 0 || x > res || y < 0 || y > res) {
-//			throw new RuntimeException("wrong x/y value for res" + res + " x=" + x + " y=" + y);
-//		}
+		if (x < 0 || x > res || y < 0 || y > res) {
+			throw new RuntimeException("wrong x/y value for res" + res + " x=" + x + " y=" + y);
+		}
 		count++;
+		if (buffer == null)
+			return 0;
 		return buffer.getShort(2 * ((res - y) * (res + 1) + x));
 		
 	}
@@ -58,7 +64,10 @@ public class HGTReader {
 	public int getRes() {
 		return res;
 	}
-	
+
+	private int expectedFileSize () {
+		return 2*(res+1)*(res+1);
+	}
 	@Override
 	public String toString() {
 		return fileName + " (" + count + " reads)" ;

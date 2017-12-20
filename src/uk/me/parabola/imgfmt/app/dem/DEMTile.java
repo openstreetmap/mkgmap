@@ -351,6 +351,8 @@ public class DEMTile {
 	}
 
 	public void writeHeader(ImgFileWriter writer) {
+		if (maxDeltaHeight == 0)
+			offset = 0;
 		switch (section.getOffsetSize()) {
 		case 1:
 			writer.put1(offset);
@@ -466,7 +468,8 @@ public class DEMTile {
 			hWrapUp = -(maxHeight - 1) / 2;
 		}
 
-		private int wrap(int v) {
+		private int wrap(int data) {
+			int v = data;
 			int down,up;
 			if (encType == EncType.HYBRID) {
 				down = hWrapDown;
@@ -491,6 +494,7 @@ public class DEMTile {
 		}
 		
 		public void write(int val) {
+			
 			int wrapped = wrap(val);
 			int delta1 = wrapped;
 			if (type == CalcType.CALC_PLATEAU_ZERO) {
@@ -520,7 +524,7 @@ public class DEMTile {
 				} else { 
 					n0 = 0;
 				}
-				if (n0 > maxZeroBits) { 
+				if (n0 > maxZeroBits) {
 					writeValBigBin(delta2, maxZeroBits);
 				} else { 
 					// 2 * Math.Abs(data) - (Math.Sign(data) + 1) / 2
