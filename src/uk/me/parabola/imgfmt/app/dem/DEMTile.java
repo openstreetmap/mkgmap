@@ -223,25 +223,40 @@ public class DEMTile {
 	private void writePlateauLen(int pLen, int col) {
 		int len = pLen;
 		int x = col;
-		while (true) {
-			int unit = plateauUnit[currPlateauTablePos];
-			if (len < unit)
-				break;
-			currPlateauTablePos++;
-			len -= unit;
-			addBit(true);
-			x += unit;
-			if (x > width) 
+
+		if (col + len >= width) {
+			// this is not really needed but sometimes produces fewer bits
+			// compared to the loop in the else branch
+			while (x < width) {
+				int unit = plateauUnit[currPlateauTablePos++];
+				len -= unit;
+				x += unit;
+				addBit(true);
+			}
+			if (x != width) {
 				currPlateauTablePos--;
-			if (x >= width)
-				return;
-		}
-		if (currPlateauTablePos > 0)
-			currPlateauTablePos--;
-		addBit(false); // separator bit
-		int binBits = plateauBinBits[currPlateauTablePos];
-		if (binBits > 0) {
-			writeValAsBin(Math.abs(len), binBits);
+			}
+		} else {
+			while (true) {
+				int unit = plateauUnit[currPlateauTablePos];
+				if (len < unit)
+					break;
+				currPlateauTablePos++;
+				len -= unit;
+				addBit(true);
+				x += unit;
+				if (x > width)
+					currPlateauTablePos--;
+				if (x >= width)
+					return;
+			}
+			if (currPlateauTablePos > 0)
+				currPlateauTablePos--;
+			addBit(false); // separator bit
+			int binBits = plateauBinBits[currPlateauTablePos];
+			if (binBits > 0) {
+				writeValAsBin(Math.abs(len), binBits);
+			}
 		}
 		
 	}
@@ -279,8 +294,9 @@ public class DEMTile {
 	 * @param val
 	 * @param hunit
 	 * @param type 
+	 * @return 
 	 */
-	private void writeValHybrid(int val, int hunit, int maxZeroBits) {
+	private boolean writeValHybrid(int val, int hunit, int maxZeroBits) {
 		assert hunit > 0;
 		assert Integer.bitCount(hunit) == 1;
 		int numBits = Integer.numberOfTrailingZeros(hunit);
@@ -293,13 +309,13 @@ public class DEMTile {
 			binPart = -val % hunit;
 			lenPart = (-val - binPart) / hunit;
 		}
-		if (lenPart <= maxZeroBits) {
+		if (lenPart <= maxZeroBits - plateauBinBits[currPlateauTablePos]) {
 			writeNumberOfZeroBits(lenPart); // write length encoded part
 			writeValAsBin(binPart, numBits); // write binary encoded part
 			addBit(val > 0); // sign bit, 1 means positive
-		} else {
-			writeValBigBin(val, maxZeroBits);
+			return true;
 		}
+		return false;
 	}
 
 	/**
@@ -486,11 +502,13 @@ public class DEMTile {
 					up = l2WrapUp;
 				}
 			}
+			int w1 = data;
 			if (v > down)
-				return v - (maxDeltaHeight + 1);
+				w1 = v - (maxDeltaHeight + 1);
 			if (v < up)
-				return v + maxDeltaHeight + 1;
-			return v; 
+				w1 = v + maxDeltaHeight + 1;
+			
+			return w1; 
 		}
 		
 		public void write(int val) {
@@ -511,9 +529,9 @@ public class DEMTile {
 			else if (wrapType == WrapType.WRAP_1)
 				delta2 = 1 - delta1;
 			else delta2 = -delta1;
-			
+			boolean written = false;
 			if (encType == EncType.HYBRID) {
-				writeValHybrid(delta2, hunit, maxZeroBits);
+				written = writeValHybrid(delta2, hunit, maxZeroBits);
 			} else {
 				// EncType.LEN 
 				int n0;
@@ -524,13 +542,14 @@ public class DEMTile {
 				} else { 
 					n0 = 0;
 				}
-				if (n0 > maxZeroBits) {
-					writeValBigBin(delta2, maxZeroBits);
-				} else { 
+				if (n0 <= maxZeroBits - plateauBinBits[currPlateauTablePos]) {
 					// 2 * Math.Abs(data) - (Math.Sign(data) + 1) / 2
 					writeNumberOfZeroBits(n0);
+					written = true;
 				}
 			}
+			if (!written)
+				writeValBigBin(delta2, maxZeroBits);
 			processVal(delta1);
 		}
 
