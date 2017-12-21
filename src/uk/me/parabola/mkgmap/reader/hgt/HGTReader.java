@@ -12,8 +12,11 @@
  */ 
 package uk.me.parabola.mkgmap.reader.hgt;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.nio.MappedByteBuffer;
+
+import uk.me.parabola.imgfmt.Utils;
 
 import static java.nio.channels.FileChannel.MapMode.READ_ONLY;
 
@@ -31,9 +34,11 @@ public class HGTReader {
 	public final String fileName;
 	private long count;
 	public HGTReader(int lat, int lon, String pathToHGT) {
-		fileName = String.format("%s/%s%02d%s%03d.hgt", pathToHGT, 
+		
+		String name = String.format("%s%02d%s%03d",
 				lat < 0 ? "S" : "N", lat < 0 ? -lat : lat, 
 						lon > 0 ? "E" : "W", lon < 0 ? -lon : lon);
+		fileName = Utils.joinPath(pathToHGT, name, "hgt");
 		try (FileInputStream is = new FileInputStream(fileName)) {
 			res = 1200;
 			if (is.getChannel().size() != expectedFileSize())

@@ -46,6 +46,7 @@ public class DEMTile {
 	private int bitPos;
 	private byte currByte;
 	private int currPlateauTablePos; // current position in plateau tables
+	private CalcType currCalcType;
 	
 	private final static boolean DEBUG = false;
 	private StringBuilder bs;
@@ -157,8 +158,8 @@ public class DEMTile {
 	 * The main loop to calculate the bit stream data.
 	 */
 	private void encodeDeltas() {
-		CalcType ct = null;
 		int pos = 0;
+		currCalcType = null;
 		ValPredicter encStandard = new ValPredicter(CalcType.CALC_STD, maxDeltaHeight);
 		ValPredicter encPlateauF0 = new ValPredicter(CalcType.CALC_PLATEAU_ZERO, maxDeltaHeight);
 		ValPredicter encPlateauF1 = new ValPredicter(CalcType.CALC_PLATEAU_NON_ZERO, maxDeltaHeight);
@@ -175,7 +176,7 @@ public class DEMTile {
 				encoder = (dDiff == 0) ? encPlateauF0 : encPlateauF1;
 				writeFollower = false;
 			} else if (dDiff == 0) {
-				ct = CalcType.CALC_P_LEN;
+				currCalcType = CalcType.CALC_P_LEN;
 				int pLen = calcPlateauLen(n, m);
 				writePlateauLen(pLen, n);
 				pos += pLen;
@@ -184,11 +185,11 @@ public class DEMTile {
 			} else {
 				encoder = encStandard;
 			}
-			ct = encoder.type;
+			currCalcType = encoder.type;
 			encoder.setDDiff(dDiff);
 			int v;
 			int h = getHeight(n, m);
-			if (ct == CalcType.CALC_STD) {
+			if (currCalcType == CalcType.CALC_STD) {
 				int predict;
 				int hUpLeft = getHeight(n-1, m-1);
 				int hdiffUp = hUpper- hUpLeft;
@@ -205,7 +206,7 @@ public class DEMTile {
 					v = h -predict;
 				
 			} else {
-				// platea follower: predicted value is upper height 
+				// plateau follower: predicted value is upper height 
 				v = h - hUpper;
 			}
 			bs.setLength(0);
@@ -309,7 +310,7 @@ public class DEMTile {
 			binPart = -val % hunit;
 			lenPart = (-val - binPart) / hunit;
 		}
-		if (lenPart <= maxZeroBits - plateauBinBits[currPlateauTablePos]) {
+		if (lenPart <= maxZeroBits) {
 			writeNumberOfZeroBits(lenPart); // write length encoded part
 			writeValAsBin(binPart, numBits); // write binary encoded part
 			addBit(val > 0); // sign bit, 1 means positive
@@ -484,6 +485,11 @@ public class DEMTile {
 			hWrapUp = -(maxHeight - 1) / 2;
 		}
 
+		/**
+		 * This 
+		 * @param data
+		 * @return
+		 */
 		private int wrap(int data) {
 			int v = data;
 			int down,up;
@@ -502,13 +508,12 @@ public class DEMTile {
 					up = l2WrapUp;
 				}
 			}
-			int w1 = data;
-			if (v > down)
-				w1 = v - (maxDeltaHeight + 1);
-			if (v < up)
-				w1 = v + maxDeltaHeight + 1;
 			
-			return w1; 
+			if (v > down)
+				v = v - (maxDeltaHeight + 1);
+			if (v < up)
+				v = v + maxDeltaHeight + 1;
+			return v; 
 		}
 		
 		public void write(int val) {
@@ -531,7 +536,7 @@ public class DEMTile {
 			else delta2 = -delta1;
 			boolean written = false;
 			if (encType == EncType.HYBRID) {
-				written = writeValHybrid(delta2, hunit, maxZeroBits);
+				written = writeValHybrid(delta2, hunit, getCurrentMaxZeroBits());
 			} else {
 				// EncType.LEN 
 				int n0;
@@ -542,10 +547,12 @@ public class DEMTile {
 				} else { 
 					n0 = 0;
 				}
-				if (n0 <= maxZeroBits - plateauBinBits[currPlateauTablePos]) {
+				if (n0 <= getCurrentMaxZeroBits()) {
 					// 2 * Math.Abs(data) - (Math.Sign(data) + 1) / 2
 					writeNumberOfZeroBits(n0);
 					written = true;
+				} else {
+					long dd = 4;
 				}
 			}
 			if (!written)
@@ -553,6 +560,18 @@ public class DEMTile {
 			processVal(delta1);
 		}
 
+		/**
+		 * This looks wrong but seems to be needed. For a plateau follower we reduce the max value.
+		 * The effect seems to be that a Big Bin is written although it would fit in the normal number.
+		 * Maybe a BigBin signals that a flag should be reset or currPlateauTablePos is too high?
+		 * @return number of 0 bits that are considered okay.
+		 */
+		int getCurrentMaxZeroBits() {
+			if (currCalcType == CalcType.CALC_PLATEAU_NON_ZERO || currCalcType == CalcType.CALC_PLATEAU_ZERO)
+				return maxZeroBits - plateauBinBits[currPlateauTablePos];
+			return maxZeroBits;
+		}
+		
 		private void processVal(int delta1) {
 			if (type == CalcType.CALC_STD) {
 					
