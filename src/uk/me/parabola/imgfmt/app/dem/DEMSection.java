@@ -101,16 +101,6 @@ public class DEMSection {
 					}
 				}
 				
-//				realHeights = new short[width * height];
-//				realHeights[100] = 20;
-//				realHeights[101] = 40;
-//				realHeights[102] = 20;
-//				for (int i = 0; i < realHeights.length; i++) {
-//					realHeights[i] = (short) Math.abs(120 * Math.sin(Math.toRadians(i))); 
-//				}
-//				if (tiles.size() == 0)
-//					log.error("using fake data", Arrays.toString(realHeights));
-				
 				DEMTile tile = new DEMTile(this, n, m, width, height, realHeights);
 				tiles.add(tile);
 				int bsLen = tile.getBitStreamLen();
@@ -183,6 +173,7 @@ public class DEMSection {
 
 	public void writeRest(ImgFileWriter writer) {
 		dataOffset = writer.position();
+
 		int off = 0;
 		for (DEMTile tile : tiles) {
 			tile.setOffset(off);

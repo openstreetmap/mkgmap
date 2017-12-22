@@ -76,9 +76,13 @@ public class OverviewBuilder implements Combiner {
 		areaName = args.get("area-name", "Overview Map");
 		overviewMapname = args.get("overview-mapname", "osmmap");
 		overviewMapnumber = args.get("overview-mapnumber", "63240000");
+		
 		outputDir = args.getOutputDir();
 		demProps.setProperty("dem", args.getProperties().getProperty("dem"));
-		demProps.setProperty("dem-dists", "88368"); // TODO
+		demProps.setProperty("dem-dists", args.getProperties().getProperty("overview-dem-dist"));
+		if ("0".equals(args.getProperties().getProperty("overview-dem-dist")))
+			demProps.clear();
+				
 	}
 
 	public void onMapEnd(FileInfo finfo) {
