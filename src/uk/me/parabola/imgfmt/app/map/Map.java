@@ -63,6 +63,7 @@ public class Map implements InternalFiles, Configurable {
 	private static final Logger log = Logger.getLogger(Map.class);
 	private String filename;
 	private String mapName;
+	private int mapId;
 	private FileSystem fileSystem;
 
 	private TREFile treFile;
@@ -111,6 +112,7 @@ public class Map implements InternalFiles, Configurable {
 		} catch (NumberFormatException e) {
 			mapid = 0;
 		}
+		m.mapId = mapid;
 		m.treFile.setMapId(mapid);
 		m.fileSystem = fs;
 
@@ -150,7 +152,7 @@ public class Map implements InternalFiles, Configurable {
 	}
 
 	private void addDem() throws FileExistsException {
-		demFile = new DEMFile(fileSystem.create(mapName + ".DEM"), true);
+		demFile = new DEMFile(fileSystem.create(mapId + ".DEM"), true);
 	}
 
 	

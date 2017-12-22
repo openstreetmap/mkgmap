@@ -41,6 +41,7 @@ import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.mkgmap.srt.SrtTextReader;
+import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * Build the overview map.  This is a low resolution map that covers the whole
@@ -63,6 +64,8 @@ public class OverviewBuilder implements Combiner {
 	private List<String[]> licenseInfos = new ArrayList<String[]>();
 	private LevelInfo[] wantedLevels;
 	private Area bounds;
+	private EnhancedProperties demProps = new EnhancedProperties();
+	
 
 
 	public OverviewBuilder() {
@@ -74,6 +77,8 @@ public class OverviewBuilder implements Combiner {
 		overviewMapname = args.get("overview-mapname", "osmmap");
 		overviewMapnumber = args.get("overview-mapnumber", "63240000");
 		outputDir = args.getOutputDir();
+		demProps.setProperty("dem", args.getProperties().getProperty("dem"));
+		demProps.setProperty("dem-dists", "88368"); // TODO
 	}
 
 	public void onMapEnd(FileInfo finfo) {
@@ -153,6 +158,7 @@ public class OverviewBuilder implements Combiner {
 	private void writeOverviewMap() {
 		if (overviewSource.mapLevels() == null)
 			return;
+		
 		MapBuilder mb = new MapBuilder();
 		mb.setEnableLineCleanFilters(false);
 
@@ -169,6 +175,10 @@ public class OverviewBuilder implements Combiner {
 			}
 			Sort sort = SrtTextReader.sortForCodepage(codepage);
 			Map map = Map.createMap(overviewMapname, outputDir, params, overviewMapnumber, sort);
+			if (!demProps.isEmpty()) {
+				map.config(demProps);
+				mb.config(demProps);
+			}
 			
 			if (encodingType != null){
 				map.getLblFile().setEncoder(encodingType, codepage);
