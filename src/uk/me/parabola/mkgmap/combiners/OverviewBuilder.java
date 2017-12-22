@@ -78,11 +78,11 @@ public class OverviewBuilder implements Combiner {
 		overviewMapnumber = args.get("overview-mapnumber", "63240000");
 		
 		outputDir = args.getOutputDir();
-		demProps.setProperty("dem", args.getProperties().getProperty("dem"));
-		demProps.setProperty("dem-dists", args.getProperties().getProperty("overview-dem-dist"));
-		if ("0".equals(args.getProperties().getProperty("overview-dem-dist")))
-			demProps.clear();
-				
+		String demDist = args.getProperties().getProperty("overview-dem-dist");
+		if (demDist != null && "0".equals(demDist.trim()) == false) {
+			demProps.setProperty("dem", args.getProperties().getProperty("dem"));
+			demProps.setProperty("dem-dists", demDist);
+		}				
 	}
 
 	public void onMapEnd(FileInfo finfo) {
