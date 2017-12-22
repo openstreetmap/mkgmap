@@ -293,9 +293,12 @@ public class OverviewBuilder implements Combiner {
 						log.debug(point, "dropped, is outside of tile boundary");
 					continue;
 				}
+					
 				MapPoint mp = new MapPoint();
 				mp.setType(point.getType());
-				mp.setName(point.getLabel().getText());
+				if (point.getLabel() != null) {
+					mp.setName(point.getLabel().getText());
+				}
 				mp.setMaxResolution(res); 
 				mp.setMinResolution(res);  
 				mp.setLocation(point.getLocation());
