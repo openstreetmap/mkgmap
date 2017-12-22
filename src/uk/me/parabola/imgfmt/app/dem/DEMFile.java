@@ -13,6 +13,9 @@
 
 package uk.me.parabola.imgfmt.app.dem;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
@@ -40,9 +43,12 @@ public class DEMFile extends ImgFile {
 		}
 	}
 
-	public void calc(LevelInfo[] levelInfos, Area area, String pathToHGT) {
-		DEMSection section = new DEMSection(0, area, pathToHGT);  
-		demHeader.addSection(section);
+	public void calc(LevelInfo[] levelInfos, Area area, String pathToHGT, List<Integer> pointDistances) {
+		int zoom = 0;
+		for (int pointDist : pointDistances) {
+			DEMSection section = new DEMSection(zoom++, area, pathToHGT, pointDist);
+			demHeader.addSection(section);
+		}
 	}
 
 	

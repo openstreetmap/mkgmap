@@ -46,14 +46,19 @@ public class DEMSection {
 	private int maxHeight = Integer.MIN_VALUE;
 	List<DEMTile> tiles = new ArrayList<>();
 	
-	public DEMSection(int zoomLevel, Area bbox, String pathToHGT) {
+	public DEMSection(int zoomLevel, Area bbox, String pathToHGT, int pointDist) {
 		this.zoomLevel = zoomLevel;
 		HGTConverter hgtConverter = new HGTConverter(pathToHGT, bbox);
 		int res = 1200;
 		if (hgtConverter.getHighestRes() == 3600)
 			res = 3600;
-		this.pointsDistanceLat = (int) ((1 << 29) / (res * 45));
-		this.pointsDistanceLon = (int) ((1 << 29) / (res * 45));
+		if (pointDist == -1) {
+			this.pointsDistanceLat = (int) ((1 << 29) / (res * 45));
+			this.pointsDistanceLon = (int) ((1 << 29) / (res * 45));
+		} else {
+			this.pointsDistanceLat = pointDist;
+			this.pointsDistanceLon = pointDist;
+		}
 		
 		this.top = bbox.getMaxLat() * 256;
 		this.left = bbox.getMinLong() * 256;

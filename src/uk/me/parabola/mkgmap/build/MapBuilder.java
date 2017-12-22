@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.function.UnaryOperator;
 
 import uk.me.parabola.imgfmt.ExitException;
+import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Exit;
@@ -157,6 +158,8 @@ public class MapBuilder implements Configurable {
 
 	private boolean orderByDecreasingArea;
 	private String pathToHGT;
+	private List<Integer> demDists;
+	
 
 	public MapBuilder() {
 		regionName = null;
@@ -200,8 +203,23 @@ public class MapBuilder implements Configurable {
 		if ("right".equals(driveOn))
 			driveOnLeft = false;
 		orderByDecreasingArea = props.getProperty("order-by-decreasing-area", false);
-		pathToHGT = props.getProperty("dem",null);
+		pathToHGT = props.getProperty("dem", null);
+		demDists = parseDemDists(props.getProperty("dem-dists", "-1"));
 
+	}
+
+	private List<Integer> parseDemDists(String demDists) {
+		List<Integer> dists = new ArrayList<>();
+		if (demDists == null)
+			dists.add(-1);
+		else {
+			String[] vals = demDists.split(",");
+			for( String val : vals) {
+				int dist = Integer.parseInt(val.trim());
+				dists.add(dist);
+			}
+		}
+		return dists;
 	}
 
 	/**
@@ -279,15 +297,16 @@ public class MapBuilder implements Configurable {
 			} else {
 				levels = src.mapLevels();
 			}
-//			try{
+			try{
 				long t1 = System.currentTimeMillis();
-				demFile.calc(levels, src.getBounds(), pathToHGT);
+				demFile.calc(levels, src.getBounds(), pathToHGT, demDists);
 				long t2 = System.currentTimeMillis();
 				System.out.println("DEM file calculation for " + map.getFilename() + " took " + (t2 - t1) + " ms");
 				demFile.write();
-//			} catch (Exception e) {
-//				log.error("exception while creating DEM file");
-//			}
+			} catch (Exception e) {
+				log.error("exception while creating DEM file");
+				throw new MapFailedException(e.getMessage());
+			}
 		}
 		warnAbout3ByteImgRefs();
 	}

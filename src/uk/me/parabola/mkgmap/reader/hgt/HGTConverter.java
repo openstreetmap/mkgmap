@@ -12,6 +12,8 @@
  */ 
 package uk.me.parabola.mkgmap.reader.hgt;
 
+import java.util.Arrays;
+
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 
@@ -80,6 +82,18 @@ public class HGTConverter {
 		int hRB = rdr.ele(xRight, yBelow);
 		
 		double rc = interpolatedHeightInNormatedRectangle(x1-xLeft, y1-yBelow, hLT, hRT, hRB, hLB);
+		if (rc == HGTReader.UNDEF) {
+			int sum = 0;
+			int valid = 0;
+			for (int h : Arrays.asList(hLT,hRT,hLB,hRB)) {
+				if (h == HGTReader.UNDEF)
+					continue;
+				valid++;
+				sum += h;	
+			}
+			if(valid >= 2)
+				rc = Math.round((double)sum/valid);
+		}
 		short rc2 = (short) Math.round(rc); 
 //		double lon = lon32 * factor;
 //		double lat = lat32 * factor;
