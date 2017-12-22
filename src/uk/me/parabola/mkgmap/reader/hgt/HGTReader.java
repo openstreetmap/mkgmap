@@ -12,7 +12,6 @@
  */ 
 package uk.me.parabola.mkgmap.reader.hgt;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.nio.MappedByteBuffer;
 
@@ -33,46 +32,67 @@ public class HGTReader {
 	public final static short UNDEF = Short.MIN_VALUE;
 	public final String fileName;
 	private long count;
-	public HGTReader(int lat, int lon, String pathToHGT) {
-		
+	
+	/**
+	 * Class to read a single HGT file. 
+	 * @param lat in degrees, -90 .. 90
+	 * @param lon - -180..180
+	 * @param dirsWithHGT comma separated list of directories to search for *.hgt files
+	 */
+	public HGTReader(int lat, int lon, String dirsWithHGT) {
 		String name = String.format("%s%02d%s%03d",
 				lat < 0 ? "S" : "N", lat < 0 ? -lat : lat, 
 						lon > 0 ? "E" : "W", lon < 0 ? -lon : lon);
-		fileName = Utils.joinPath(pathToHGT, name, "hgt");
-		try (FileInputStream is = new FileInputStream(fileName)) {
-			res = 1200;
-			if (is.getChannel().size() != expectedFileSize())
-				res = 3600;
-			if (is.getChannel().size() != expectedFileSize()) {
-				buffer = null;
-				res = 0;
-				System.err.println("file " +  fileName +  " has unexpected size " + is.getChannel().size() + " and is ignored");
-			} else
-				buffer = is.getChannel().map(READ_ONLY, 0, expectedFileSize());
-		} catch (Exception e) {
-			System.err.println("check: " + fileName  + " should be sea only or is missing");
-			
+		String[] dirs = dirsWithHGT.split("[,]");
+		String fName = "."; 
+		for (String dir : dirs) {
+			fName = Utils.joinPath(dir, name, "hgt");
+			try (FileInputStream is = new FileInputStream(fName)) {
+				res = 1200;
+				if (is.getChannel().size() != expectedFileSize(res))
+					res = 3600;
+				if (is.getChannel().size() != expectedFileSize(res)) {
+					buffer = null;
+					res = 1200;
+					System.err.println("file " +  fName +  " has unexpected size " + is.getChannel().size() + " and is ignored");
+				} else
+					buffer = is.getChannel().map(READ_ONLY, 0, expectedFileSize(res));
+				break;
+			} catch (Exception e) {
+			}
 		}
+		fileName = (buffer != null) ? fName : name;
 	}
 	
+	/**
+	 * HGT files are organised as a matrix of n*n (short) values giving the elevation in metres.
+	 * Invalid values are coded as 0x8000 = -327678 = Short.MIN_VALUE.
+	 * @param x index for column west to east 
+	 * @param y index for row north to south
+	 * @return the elevation value stored in the file or 0 if 
+	 */
 	public short ele(int x, int y) {
+		if (buffer == null)
+			return 0;
 		if (x < 0 || x > res || y < 0 || y > res) {
 			throw new RuntimeException("wrong x/y value for res" + res + " x=" + x + " y=" + y);
 		}
 		count++;
-		if (buffer == null)
-			return 0;
 		return buffer.getShort(2 * ((res - y) * (res + 1) + x));
 		
 	}
 
+	/**
+	 * @return the resolution to use with this file
+	 */
 	public int getRes() {
 		return res;
 	}
 
-	private int expectedFileSize () {
+	private int expectedFileSize (int res) {
 		return 2*(res+1)*(res+1);
 	}
+	
 	@Override
 	public String toString() {
 		return fileName + " (" + count + " reads)" ;
