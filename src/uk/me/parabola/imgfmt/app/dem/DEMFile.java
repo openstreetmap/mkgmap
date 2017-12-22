@@ -13,13 +13,13 @@
 
 package uk.me.parabola.imgfmt.app.dem;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 
@@ -54,6 +54,10 @@ public class DEMFile extends ImgFile {
 	
 	
 	public void write() {
+		ImgFileWriter w = getWriter();
+		if (w instanceof BufferedImgFileWriter) {
+			((BufferedImgFileWriter) w).setMaxSize(0xfffffff); // increase file size limit to 256MB, no idea what the limit is
+		}
 		getHeader().writeHeader(getWriter());
 	}
 }
