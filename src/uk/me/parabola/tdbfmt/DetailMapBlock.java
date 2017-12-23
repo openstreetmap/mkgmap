@@ -85,11 +85,11 @@ public class DetailMapBlock extends OverviewMapBlock {
 		int n = 3;
 		if (tdbVersion >= TdbFile.TDB_V407) {
 			if (netDataSize > 0)
-				n++;
+				n = 4;
 			if (nodDataSize > 0)
-				n++;
+				n = 5;
 			if (demDataSize > 0)
-				n++;
+				n = 6;
 		}
 		
 		os.write2(n+1);
