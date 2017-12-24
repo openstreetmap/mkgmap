@@ -23,7 +23,7 @@ import uk.me.parabola.imgfmt.app.Area;
  *
  */
 public class HGTConverter {
-	final static double factor = 45.0d / (1<<29);
+	final static double FACTOR = 45.0d / (1<<29);
 	
 	private HGTReader[][] readers;
 	final int minLat32;
@@ -61,13 +61,13 @@ public class HGTConverter {
 	 */
 	public short getElevation(int lat32, int lon32) {
 		// TODO: maybe calculate the borders in 32 bit res ?
-		int row = (int) ((lat32 - minLat32) * factor);
-		int col = (int) ((lon32 - minLon32) * factor);
+		int row = (int) ((lat32 - minLat32) * FACTOR);
+		int col = (int) ((lon32 - minLon32) * FACTOR);
 		HGTReader rdr = readers[row][col];
 		int res = rdr.getRes();
-		if (res == 0)
+		if (res <= 0)
 			return 0;
-		double scale  = res * factor;
+		double scale  = res * FACTOR;
 		
 		
 		double y1 = (lat32 - minLat32) * scale - row * res;
@@ -76,6 +76,7 @@ public class HGTConverter {
 		int yBelow = (int) y1;
 		int xRight = xLeft + 1;
 		int yTop = yBelow + 1;
+		
 		int hLT = rdr.ele(xLeft, yTop);
 		int hRT = rdr.ele(xRight, yTop);
 		int hLB = rdr.ele(xLeft, yBelow);

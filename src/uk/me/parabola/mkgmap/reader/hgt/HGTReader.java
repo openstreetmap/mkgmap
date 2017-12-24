@@ -47,7 +47,7 @@ public class HGTReader {
 	public HGTReader(int lat, int lon, String dirsWithHGT) {
 		String name = String.format("%s%02d%s%03d",
 				lat < 0 ? "S" : "N", lat < 0 ? -lat : lat, 
-						lon > 0 ? "E" : "W", lon < 0 ? -lon : lon);
+						lon < 0 ? "W" : "E", lon < 0 ? -lon : lon);
 		
 		String[] dirs = dirsWithHGT.split("[,]");
 		String fName = ".";
@@ -73,6 +73,7 @@ public class HGTReader {
 				}
 			}
 			if (buffer == null) {
+				res = -1;
 				synchronized (missing){
 					missing.add(name);	
 				}
@@ -103,7 +104,7 @@ public class HGTReader {
 	}
 
 	/**
-	 * @return the resolution to use with this file
+	 * @return the resolution to use with this file, -1 is return if file is invalid
 	 */
 	public int getRes() {
 		return res;
