@@ -14,6 +14,7 @@ package uk.me.parabola.imgfmt.app.dem;
 
 import java.io.ByteArrayOutputStream;
 
+import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.mkgmap.reader.hgt.HGTReader;
 
@@ -248,11 +249,13 @@ public class DEMTile {
 				x += unit;
 				if (x > width)
 					currPlateauTablePos--;
-				if (x >= width)
+				if (x >= width) {
 					return;
+				}
 			}
 			if (currPlateauTablePos > 0)
 				currPlateauTablePos--;
+			
 			addBit(false); // separator bit
 			int binBits = plateauBinBits[currPlateauTablePos];
 			if (binBits > 0) {
@@ -273,7 +276,7 @@ public class DEMTile {
 		
 		int t = 1 << (numBits - 1);
 		if (val >= t << 1)
-			throw new RuntimeException("Number too big for binary encoding with " + numBits + " bits:" + val);
+			throw new MapFailedException("Number too big for binary encoding with " + numBits + " bits:" + val);
 		while (t > 0) {
 			addBit((val & t) != 0);
 			t >>= 1;

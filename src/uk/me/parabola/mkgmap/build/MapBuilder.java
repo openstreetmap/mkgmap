@@ -297,9 +297,9 @@ public class MapBuilder implements Configurable {
 				long t2 = System.currentTimeMillis();
 				System.out.println("DEM file calculation for " + map.getFilename() + " took " + (t2 - t1) + " ms");
 				demFile.write();
-			} catch (Exception e) {
-				log.error("exception while creating DEM file");
-				throw new MapFailedException(e.getMessage());
+			} catch (MapFailedException e) {
+				log.error("exception while creating DEM file", e.getMessage());
+				throw new MapFailedException("DEM"); //TODO: better remove DEM file?
 			}
 		}
 		warnAbout3ByteImgRefs();

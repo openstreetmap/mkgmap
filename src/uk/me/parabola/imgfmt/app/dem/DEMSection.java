@@ -74,6 +74,10 @@ public class DEMSection {
 		this.tilesLon = Math.max((right - left) / resLon, 1);
 		this.nonStdWidth = (right - (left + (tilesLon - 1) * resLon)) / pointsDistanceLon + 1;
 		this.nonStdHeight = ((top - (tilesLat - 1) * resLat) - bottom) / pointsDistanceLat + 1;
+		if (nonStdWidth >= 128) {
+			tilesLon++;
+			nonStdWidth -= pointsPerLon;
+		}
 		int latOff;
 		int lonOff;
 		int dataLen = 0;
