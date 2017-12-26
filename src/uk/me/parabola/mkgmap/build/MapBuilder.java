@@ -291,15 +291,9 @@ public class MapBuilder implements Configurable {
 			netFile.writePost(rgnFile.getWriter());
 		}
 		if (demFile != null) {
-			LevelInfo[] levels;
-			if (OverviewBuilder.isOverviewImg(map.getFilename())) {
-				levels = src.overviewMapLevels();
-			} else {
-				levels = src.mapLevels();
-			}
 			try{
 				long t1 = System.currentTimeMillis();
-				demFile.calc(levels, src.getBounds(), pathToHGT, demDists);
+				demFile.calc(src.getBounds(), pathToHGT, demDists);
 				long t2 = System.currentTimeMillis();
 				System.out.println("DEM file calculation for " + map.getFilename() + " took " + (t2 - t1) + " ms");
 				demFile.write();

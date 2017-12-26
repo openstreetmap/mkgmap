@@ -551,8 +551,6 @@ public class DEMTile {
 					// 2 * Math.Abs(data) - (Math.Sign(data) + 1) / 2
 					writeNumberOfZeroBits(n0);
 					written = true;
-				} else {
-					long dd = 4;
 				}
 			}
 			if (!written)
@@ -818,5 +816,10 @@ public class DEMTile {
 		this.offset = off;
 	}
 
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return tileNumberLat + " " + tileNumberLon + " w=" + width + " h=" + height;
+	}
 
 }

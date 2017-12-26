@@ -21,7 +21,6 @@ import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
-import uk.me.parabola.mkgmap.general.LevelInfo;
 
 /**
  * The DEM file. This consists of information about elevation. It is used for hill shading
@@ -43,7 +42,7 @@ public class DEMFile extends ImgFile {
 		}
 	}
 
-	public void calc(LevelInfo[] levelInfos, Area area, String pathToHGT, List<Integer> pointDistances) {
+	public void calc(Area area, String pathToHGT, List<Integer> pointDistances) {
 		int zoom = 0;
 		for (int pointDist : pointDistances) {
 			DEMSection section = new DEMSection(zoom++, area, pathToHGT, pointDist);

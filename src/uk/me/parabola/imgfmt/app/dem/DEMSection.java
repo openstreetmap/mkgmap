@@ -49,10 +49,10 @@ public class DEMSection {
 	public DEMSection(int zoomLevel, Area bbox, String pathToHGT, int pointDist) {
 		this.zoomLevel = zoomLevel;
 		HGTConverter hgtConverter = new HGTConverter(pathToHGT, bbox);
-		int res = 1200;
-		if (hgtConverter.getHighestRes() == 3600)
-			res = 3600;
 		if (pointDist == -1) {
+			int res = 1200;
+			if (hgtConverter.getHighestRes() == 3600)
+				res = 3600;
 			this.pointsDistanceLat = (int) ((1 << 29) / (res * 45));
 			this.pointsDistanceLon = (int) ((1 << 29) / (res * 45));
 		} else {
@@ -167,7 +167,7 @@ public class DEMSection {
 		writer.putInt(pointsDistanceLon);	//0x34
 		assert minHeight >= Short.MIN_VALUE && minHeight <= Short.MAX_VALUE; 
 		writer.putChar((char) minHeight);	//0x38
-		assert maxHeight >= Character.MIN_VALUE && maxHeight <= Character.MAX_VALUE; 
+		assert maxHeight >= Short.MIN_VALUE && maxHeight <= Short.MAX_VALUE; 
 		writer.putChar((char) maxHeight);	//0x3a
 	}
 
