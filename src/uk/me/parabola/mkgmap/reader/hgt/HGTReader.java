@@ -13,13 +13,16 @@
 package uk.me.parabola.mkgmap.reader.hgt;
 
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import uk.me.parabola.imgfmt.Utils;
-import uk.me.parabola.mkgmap.reader.osm.SeaGenerator;
-
 import static java.nio.channels.FileChannel.MapMode.READ_ONLY;
 
 /**
@@ -30,7 +33,7 @@ import static java.nio.channels.FileChannel.MapMode.READ_ONLY;
  */
 public class HGTReader {
 	
-	private MappedByteBuffer buffer;
+	private ByteBuffer buffer;
 	private int res;
 	public final static short UNDEF = Short.MIN_VALUE;
 	public final String fileName;
@@ -43,6 +46,7 @@ public class HGTReader {
 	 * @param lat in degrees, -90 .. 90
 	 * @param lon - -180..180
 	 * @param dirsWithHGT comma separated list of directories to search for *.hgt files
+	 * Supported are also zip files containing *.hgt files and directories containing *.hgt.zip.
 	 */
 	public HGTReader(int lat, int lon, String dirsWithHGT) {
 		String name = String.format("%s%02d%s%03d.hgt",
@@ -57,17 +61,36 @@ public class HGTReader {
 		}
 		if (!knwonAsMissing) { 
 			for (String dir : dirs) {
+				if (dir.endsWith(".zip")) {
+					try(ZipFile zipFile = new ZipFile(dir)){
+						ZipEntry entry = zipFile.getEntry(name);
+						if (entry != null){ 
+							extractFromZip(zipFile, entry);
+							if (buffer != null)
+								break;
+						}
+					} catch (IOException exp) {
+						System.err.println("Cannot load hgt file " + name);
+					} 
+				}
 				fName = Utils.joinPath(dir, name);
 				try (FileInputStream is = new FileInputStream(fName)) {
-					res = 1200;
-					if (is.getChannel().size() != expectedFileSize(res))
-						res = 3600;
-					if (is.getChannel().size() != expectedFileSize(res)) {
+					res = calcRes(is.getChannel().size());
+					if (res < 0) {
 						System.err.println("file " +  fName +  " has unexpected size " + is.getChannel().size() + " and is ignored");
 					} else
-						buffer = is.getChannel().map(READ_ONLY, 0, expectedFileSize(res));
+						buffer = is.getChannel().map(READ_ONLY, 0, is.getChannel().size());
 					break;
-				} catch (Exception e) {
+				} catch (IOException e) {
+				}
+				try(ZipFile zipFile = new ZipFile(fName + ".zip")){
+					ZipEntry entry = zipFile.getEntry(name);
+					if (entry != null){
+						extractFromZip(zipFile, entry);
+						if (buffer != null)
+							break;
+					}
+				} catch (IOException exp) {
 				}
 			}
 			if (buffer == null) {
@@ -80,9 +103,44 @@ public class HGTReader {
 			}
 		}
 		fileName = (buffer != null) ? fName : name;
-		
 	}
 	
+	/**
+	 * Try to unzip the file contained in a zip file.
+	 * @param zipFile
+	 * @param entry
+	 * @throws IOException
+	 */
+	private void extractFromZip(ZipFile zipFile, ZipEntry entry) throws IOException {
+		try(InputStream is = zipFile.getInputStream(entry)){
+			res = calcRes(entry.getSize());
+			if (res < 0) {
+				System.err.println("file " +  entry.getName() +  " has unexpected size " + entry.getSize() + " and is ignored");
+				return;
+			}
+			System.out.println("extracting data for " + entry.getName() + " from " + zipFile.getName());
+			buffer = ByteBuffer.allocate((int) entry.getSize());
+			byte[] ioBuffer = new byte[1024];
+			int len = is.read(ioBuffer);
+			while (len != -1) {
+				buffer.put(ioBuffer, 0, len);
+				len = is.read(ioBuffer);
+			}
+		}
+	}
+
+	/**
+	 * calculate the resolution of the hgt file. size should be exactly 2 * (res+1) * (res+1) 
+	 * @param size number of bytes
+	 * @return resolution (typically 1200 for 3'' or 3600 for 1'')
+	 */
+	private int calcRes(long size) {
+		long numVals = (long) Math.sqrt(size/2);
+		if (2 * numVals*numVals  == size)
+			return (int) (numVals - 1);
+		return -1;
+	}
+
 	/**
 	 * HGT files are organised as a matrix of n*n (short) values giving the elevation in metres.
 	 * Invalid values are coded as 0x8000 = -327678 = Short.MIN_VALUE.
@@ -106,10 +164,6 @@ public class HGTReader {
 	 */
 	public int getRes() {
 		return res;
-	}
-
-	private int expectedFileSize (int res) {
-		return 2*(res+1)*(res+1);
 	}
 	
 	@Override
