@@ -82,10 +82,10 @@ public class DEMTile {
 		// check values in matrix
 		int min = Integer.MAX_VALUE;
 		int max = Integer.MIN_VALUE;
-		boolean hasInvalid = false;
+		int countInvalid = 0;
 		for (int h : realHeights) {
 			if (h == HGTReader.UNDEF)
-				hasInvalid = true;
+				++countInvalid;
 			else {
 				if (h > max)
 					max = h;
@@ -95,8 +95,10 @@ public class DEMTile {
 		}
 		if (min == Integer.MAX_VALUE) {
 			// all values are invalid -> don't encode anything
-			encodingType = 0; // not used
-		} else if (hasInvalid) {
+			encodingType = 2;
+			min = 0;
+			max = 0;
+		} else if (countInvalid > 0) {
 			// some values are invalid
 			encodingType = 2; // don't display highest value 
 			max++;
@@ -542,6 +544,7 @@ public class DEMTile {
 				written = writeValHybrid(delta2, hunit, getCurrentMaxZeroBits());
 			} else {
 				// EncType.LEN 
+				// 2 * Math.Abs(data) - (Math.Sign(data) + 1) / 2
 				int n0;
 				if (delta2 < 0) {
 					n0 = -delta2 * 2;
@@ -551,13 +554,12 @@ public class DEMTile {
 					n0 = 0;
 				}
 				if (n0 <= getCurrentMaxZeroBits()) {
-					// 2 * Math.Abs(data) - (Math.Sign(data) + 1) / 2
 					writeNumberOfZeroBits(n0);
 					written = true;
 				}
 			}
 			if (!written)
-				writeValBigBin(delta2, maxZeroBits);
+				writeValBigBin(delta2, getCurrentMaxZeroBits());
 			processVal(delta1);
 		}
 

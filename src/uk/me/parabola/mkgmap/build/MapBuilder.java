@@ -13,6 +13,7 @@
 
 package uk.me.parabola.mkgmap.build;
 
+import java.awt.geom.Path2D;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -93,10 +94,10 @@ import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.ZipCodeInfo;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
+import uk.me.parabola.mkgmap.reader.hgt.HGTReader;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.util.Configurable;
 import uk.me.parabola.util.EnhancedProperties;
-
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
 /**
@@ -159,6 +160,7 @@ public class MapBuilder implements Configurable {
 	private boolean orderByDecreasingArea;
 	private String pathToHGT;
 	private List<Integer> demDists;
+	private short demOutsidePolygonHeight;
 	
 
 	public MapBuilder() {
@@ -205,7 +207,7 @@ public class MapBuilder implements Configurable {
 		orderByDecreasingArea = props.getProperty("order-by-decreasing-area", false);
 		pathToHGT = props.getProperty("dem", null);
 		demDists = parseDemDists(props.getProperty("dem-dists", "-1"));
-
+		demOutsidePolygonHeight = (short) props.getProperty("dem-outside-polygon", HGTReader.UNDEF);
 	}
 
 	private List<Integer> parseDemDists(String demDists) {
@@ -293,7 +295,14 @@ public class MapBuilder implements Configurable {
 		if (demFile != null) {
 			try{
 				long t1 = System.currentTimeMillis();
-				demFile.calc(src.getBounds(), pathToHGT, demDists);
+				java.awt.geom.Area  demArea = null;
+				if (src instanceof OverviewMapDataSource) {
+					Path2D demPoly = ((OverviewMapDataSource) src).getTileAreaPath();
+					if (demPoly != null) {
+						demArea = new java.awt.geom.Area(demPoly);
+					}
+				}
+				demFile.calc(src.getBounds(), demArea, pathToHGT, demDists, demOutsidePolygonHeight);
 				long t2 = System.currentTimeMillis();
 				System.out.println("DEM file calculation for " + map.getFilename() + " took " + (t2 - t1) + " ms");
 				demFile.write();

@@ -44,11 +44,13 @@ public class DEMSection {
 	private final int left;
 	private int minHeight = Integer.MAX_VALUE;
 	private int maxHeight = Integer.MIN_VALUE;
-	List<DEMTile> tiles = new ArrayList<>();
+	private List<DEMTile> tiles = new ArrayList<>();
 	
-	public DEMSection(int zoomLevel, Area bbox, String pathToHGT, int pointDist) {
+	public DEMSection(int zoomLevel, Area bbox, java.awt.geom.Area demPolygonMapUnits, String pathToHGT, int pointDist, short outsidePolygonHeight) {
 		this.zoomLevel = zoomLevel;
-		HGTConverter hgtConverter = new HGTConverter(pathToHGT, bbox);
+		
+		HGTConverter hgtConverter = new HGTConverter(pathToHGT, bbox, demPolygonMapUnits);
+		hgtConverter.setOutsidePolygonHeight(outsidePolygonHeight);
 		if (pointDist == -1) {
 			int res = 1200;
 			if (hgtConverter.getHighestRes() == 3600)
@@ -78,11 +80,19 @@ public class DEMSection {
 			tilesLon++;
 			nonStdWidth -= pointsPerLon;
 		}
+		calcTiles(hgtConverter);
+		hgtConverter = null;
+	}
+
+	private void calcTiles(HGTConverter hgtConverter) {
+		int resLon = pointsPerLon * pointsDistanceLon;
+		int resLat = pointsPerLat * pointsDistanceLat;
 		int latOff;
 		int lonOff;
 		int dataLen = 0;
 		int minBaseHeight = Integer.MAX_VALUE;
 		int maxBaseHeight = Integer.MIN_VALUE;
+		
 		for (int m = 0; m < tilesLat; m++) {
 			latOff = top - m * resLat;
 			
@@ -99,14 +109,19 @@ public class DEMSection {
 				short[] realHeights = new short[width * height];
 				int count = 0;
 				for (int y = 0; y < height; y++) {
+					// top to botton
+					int py = latOff - (y * pointsDistanceLat);
 					for (int x = 0; x < width; x++) {
-						realHeights[count++] = hgtConverter.getElevation(latOff - (y * pointsDistanceLat),
-								lonOff + (x * pointsDistanceLon));
+						// left to right
+						int px = lonOff + (x * pointsDistanceLon);
+						realHeights[count++] = hgtConverter.getElevation(py, px);
 					}
 				}
-				
 				DEMTile tile = new DEMTile(this, n, m, width, height, realHeights);
 				tiles.add(tile);
+				if (n == 0 && m == 3) {
+					long dd = 4;
+				}
 				int bsLen = tile.getBitStreamLen();
 				if (bsLen > 0) {
 					if (tile.getBaseHeight() < minBaseHeight)
@@ -141,6 +156,7 @@ public class DEMSection {
 		else 
 			offsetSize = 4;
 		tileDescSize = offsetSize + baseSize + differenceSize + (hasExtra ? 1:0);
+		
 	}
 
 	public void writeHeader(ImgFileWriter writer) {

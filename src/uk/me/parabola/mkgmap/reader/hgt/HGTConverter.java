@@ -12,8 +12,8 @@
  */ 
 package uk.me.parabola.mkgmap.reader.hgt;
 
+import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
-
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 
@@ -26,10 +26,21 @@ public class HGTConverter {
 	final static double FACTOR = 45.0d / (1<<29);
 	
 	private HGTReader[][] readers;
-	final int minLat32;
-	final int minLon32;
-	final int res;
-	public HGTConverter(String path, Area bbox) {
+	private int[][] testModes;
+	private final int minLat32;
+	private final int minLon32;
+	private final int res;
+	private final java.awt.geom.Area demArea;
+	private short outsidePolygonHeight = HGTReader.UNDEF;
+	
+	/**
+	 * Class to extract elevation information from SRTM files in hgt format.
+	 * @param path a comma separated list of directories which may contain *.hgt files.
+	 * @param bbox the bounding box of the tile for which the DEM information is needed.
+	 * @param demPolygonMapUnits optional bounding polygon which describes the area for 
+	 * which elevation should be read from hgt files.
+	 */
+	public HGTConverter(String path, Area bbox, java.awt.geom.Area demPolygonMapUnits) {
 		int minLat = (int) Math.floor(Utils.toDegrees(bbox.getMinLat()));
 		int minLon = (int) Math.floor(Utils.toDegrees(bbox.getMinLong()));
 		int maxLat = (int) Math.ceil(Utils.toDegrees(bbox.getMaxLat()));
@@ -40,12 +51,22 @@ public class HGTConverter {
 		int dimLat = maxLat - minLat;
 		int dimLon = maxLon - minLon;
 		readers = new HGTReader[dimLat][dimLon];
+		testModes = new int[dimLat][dimLon];
+		demArea = demPolygonMapUnits;
+
 		int maxRes = -1;
 		for (int row = 0; row < dimLat; row++) {
+			int lat = row + minLat;
 			for (int col = 0; col < dimLon; col++) {
-				HGTReader rdr = new HGTReader(row + minLat, col + minLon, path);
-				readers[row][col] = rdr;
-				maxRes = Math.max(maxRes, rdr.getRes()); 
+				int lon =  col + minLon;
+				Area rdrBbox = new Area(lat, lon, lat+1.0, lon+1.0); 
+				int testMode = intersectsPoly(rdrBbox);
+				testModes[row][col] = testMode;
+				if (testMode != 0) {
+					HGTReader rdr = new HGTReader(lat, lon, path);
+					readers[row][col] = rdr;
+					maxRes = Math.max(maxRes, rdr.getRes()); 
+				} 
 			}
 		}
 		res = maxRes; // we use the highest available res
@@ -63,10 +84,20 @@ public class HGTConverter {
 		// TODO: maybe calculate the borders in 32 bit res ?
 		int row = (int) ((lat32 - minLat32) * FACTOR);
 		int col = (int) ((lon32 - minLon32) * FACTOR);
+		int testMode = testModes[row][col];
+		if (testMode == 0)
+			return outsidePolygonHeight;
+		if (testMode == 1) {
+			double yTest = lat32 /256;
+			double xTest = lon32 /256;
+			if (!demArea.contains(xTest, yTest)) {
+				return outsidePolygonHeight;
+			}
+		}
 		HGTReader rdr = readers[row][col];
 		int res = rdr.getRes();
 		if (res <= 0)
-			return 0;
+			return 0; // assumed to be an area in the ocean
 		double scale  = res * FACTOR;
 		
 		
@@ -96,8 +127,8 @@ public class HGTConverter {
 				rc = Math.round((double)sum/valid);
 		}
 		short rc2 = (short) Math.round(rc); 
-//		double lon = lon32 * factor;
-//		double lat = lat32 * factor;
+//		double lon = lon32 * FACTOR;
+//		double lat = lat32 * FACTOR;
 //		System.out.println(String.format("%.7f %.7f: (%.2f) %d", lat,lon,rc,rc2));
 //		if (Math.round(rc2) != (short) rc2) {
 //			long dd = 4;
@@ -165,6 +196,31 @@ public class HGTConverter {
 
 	public int getHighestRes() {
 		return res;
+	}
+
+	/**
+	 * Check if a bounding box intersects the bounding polygon. 
+	 * @param bbox the bounding box
+	 * @return 2 if the bounding polygon is null or if the bbox is completely inside the polygon, 1 if the
+	 * bbox intersects the bounding box otherwise, 0 else.
+	 */
+	private int intersectsPoly(Area bbox) {
+		if (demArea == null)
+			return 2;
+		
+		Rectangle2D.Double r = new Rectangle2D.Double(bbox.getMinLong(), bbox.getMinLat(), 
+				bbox.getWidth(), bbox.getHeight());
+
+		if (demArea.contains(r))
+			return 2;
+		if (demArea.intersects(r))
+			return 1;
+		return 0;
+	}
+
+
+	public void setOutsidePolygonHeight(short outsidePolygonHeight) {
+		this.outsidePolygonHeight = outsidePolygonHeight;
 	}
 
 	

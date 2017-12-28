@@ -45,7 +45,7 @@ public class HGTReader {
 	 * @param dirsWithHGT comma separated list of directories to search for *.hgt files
 	 */
 	public HGTReader(int lat, int lon, String dirsWithHGT) {
-		String name = String.format("%s%02d%s%03d",
+		String name = String.format("%s%02d%s%03d.hgt",
 				lat < 0 ? "S" : "N", lat < 0 ? -lat : lat, 
 						lon < 0 ? "W" : "E", lon < 0 ? -lon : lon);
 		
@@ -57,14 +57,12 @@ public class HGTReader {
 		}
 		if (!knwonAsMissing) { 
 			for (String dir : dirs) {
-				fName = Utils.joinPath(dir, name, "hgt");
+				fName = Utils.joinPath(dir, name);
 				try (FileInputStream is = new FileInputStream(fName)) {
 					res = 1200;
 					if (is.getChannel().size() != expectedFileSize(res))
 						res = 3600;
 					if (is.getChannel().size() != expectedFileSize(res)) {
-						buffer = null;
-						res = 1200;
 						System.err.println("file " +  fName +  " has unexpected size " + is.getChannel().size() + " and is ignored");
 					} else
 						buffer = is.getChannel().map(READ_ONLY, 0, expectedFileSize(res));
@@ -78,7 +76,7 @@ public class HGTReader {
 					missing.add(name);	
 				}
 				
-				System.err.println("hgt file " + name + " not found. Is expected to cover sea.");
+				System.err.println("file " + name + " not found. Is expected to cover sea.");
 			}
 		}
 		fileName = (buffer != null) ? fName : name;

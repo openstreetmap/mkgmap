@@ -42,10 +42,10 @@ public class DEMFile extends ImgFile {
 		}
 	}
 
-	public void calc(Area area, String pathToHGT, List<Integer> pointDistances) {
+	public void calc(Area area, java.awt.geom.Area demPolygonMapUnits, String pathToHGT, List<Integer> pointDistances, short outsidePolygonHeight) {
 		int zoom = 0;
 		for (int pointDist : pointDistances) {
-			DEMSection section = new DEMSection(zoom++, area, pathToHGT, pointDist);
+			DEMSection section = new DEMSection(zoom++, area, demPolygonMapUnits, pathToHGT, pointDist, outsidePolygonHeight);
 			demHeader.addSection(section);
 		}
 	}

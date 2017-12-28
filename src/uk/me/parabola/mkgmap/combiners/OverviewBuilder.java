@@ -79,8 +79,9 @@ public class OverviewBuilder implements Combiner {
 		
 		outputDir = args.getOutputDir();
 		String demDist = args.getProperties().getProperty("overview-dem-dist");
-		if (demDist != null && "0".equals(demDist.trim()) == false) {
-			demProps.setProperty("dem", args.getProperties().getProperty("dem"));
+		String hgtPath = args.getProperties().getProperty("dem");
+		if (hgtPath != null && demDist != null && "0".equals(demDist.trim()) == false) {
+			demProps = new EnhancedProperties(args.getProperties());
 			demProps.setProperty("dem-dists", demDist);
 		}				
 	}
@@ -114,7 +115,7 @@ public class OverviewBuilder implements Combiner {
 		int maxRes = 16; // we can write a 0x4a polygon for planet in res 16
 		if (wantedLevels != null)
 			maxRes = wantedLevels[wantedLevels.length-1].getBits();
-		int maxSize = 0xffff << (24 - maxRes); 
+		int maxSize = 0xffff << (24 - maxRes);
 		for (MapShape s : shapes){
 			if (s.getType() != 0x4a)
 				continue;
@@ -393,7 +394,6 @@ public class OverviewBuilder implements Combiner {
 	private void addMapCoverageArea(FileInfo finfo) {
 		Area bounds = finfo.getBounds();
 		List<Coord> points = bounds.toCoords();
-		
 		for (Coord co: points){
 			overviewSource.addToBounds(co);
 		}
@@ -403,7 +403,7 @@ public class OverviewBuilder implements Combiner {
 		bg.setPoints(points);
 		bg.setMinResolution(0);
 		bg.setName(finfo.getDescription() + '\u001d' + finfo.getMapname());
-
+		
 		overviewSource.addShape(bg); 
 	}
 
