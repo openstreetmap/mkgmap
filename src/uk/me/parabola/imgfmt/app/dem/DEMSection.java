@@ -17,11 +17,9 @@ import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.reader.hgt.HGTConverter;
 
 public class DEMSection {
-	private static final Logger log = Logger.getLogger(DEMSection.class);
 	private byte unknown1 = 0;
 	private final int zoomLevel;
 	private final int pointsPerLat = 64;
@@ -46,11 +44,9 @@ public class DEMSection {
 	private int maxHeight = Integer.MIN_VALUE;
 	private List<DEMTile> tiles = new ArrayList<>();
 	
-	public DEMSection(int zoomLevel, Area bbox, java.awt.geom.Area demPolygonMapUnits, String pathToHGT, int pointDist, short outsidePolygonHeight) {
+	public DEMSection(int zoomLevel, Area bbox, HGTConverter hgtConverter, int pointDist) {
 		this.zoomLevel = zoomLevel;
 		
-		HGTConverter hgtConverter = new HGTConverter(pathToHGT, bbox, demPolygonMapUnits);
-		hgtConverter.setOutsidePolygonHeight(outsidePolygonHeight);
 		if (pointDist == -1) {
 			int res = 1200;
 			if (hgtConverter.getHighestRes() == 3600)
@@ -119,9 +115,6 @@ public class DEMSection {
 				}
 				DEMTile tile = new DEMTile(this, n, m, width, height, realHeights);
 				tiles.add(tile);
-				if (n == 0 && m == 3) {
-					long dd = 4;
-				}
 				int bsLen = tile.getBitStreamLen();
 				if (bsLen > 0) {
 					if (tile.getBaseHeight() < minBaseHeight)
@@ -142,10 +135,10 @@ public class DEMSection {
 			maxHeight = 0;
 		}
 		differenceSize = (maxHeight > 255) ? 2 : 1;
-        if (-128 < minBaseHeight  && maxBaseHeight < 128)
-            baseSize = 1;
-         else
-            baseSize = 2;
+		if (-128 < minBaseHeight && maxBaseHeight < 128)
+			baseSize = 1;
+		else
+			baseSize = 2;
 		
 		if (dataLen < 256)
 			offsetSize = 1;
@@ -179,8 +172,8 @@ public class DEMSection {
 			recordDesc |=  (1 << 4); 
 		writer.put2(recordDesc);	//0x1c
 		writer.put2(tileDescSize);	//0x1e
-		writer.putInt(dataOffset);	//0x20 // TODO unsigned ?  
-		writer.putInt(dataOffset2);	//0x24 // TODO unsigned ?  
+		writer.putInt(dataOffset);	//0x20
+		writer.putInt(dataOffset2);	//0x24
 		writer.putInt(left);	//0x28 
 		writer.putInt(top);	//0x2c 
 		writer.putInt(pointsDistanceLat);	//0x30

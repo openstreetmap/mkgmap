@@ -16,13 +16,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.log.Logger;
+
 import static java.nio.channels.FileChannel.MapMode.READ_ONLY;
 
 /**
@@ -32,7 +33,8 @@ import static java.nio.channels.FileChannel.MapMode.READ_ONLY;
  *
  */
 public class HGTReader {
-	
+	private static final Logger log = Logger.getLogger(HGTReader.class);
+
 	private ByteBuffer buffer;
 	private int res;
 	public final static short UNDEF = Short.MIN_VALUE;
@@ -70,14 +72,13 @@ public class HGTReader {
 								break;
 						}
 					} catch (IOException exp) {
-						System.err.println("Cannot load hgt file " + name);
 					} 
 				}
 				fName = Utils.joinPath(dir, name);
 				try (FileInputStream is = new FileInputStream(fName)) {
 					res = calcRes(is.getChannel().size());
 					if (res < 0) {
-						System.err.println("file " +  fName +  " has unexpected size " + is.getChannel().size() + " and is ignored");
+						log.error("file " +  fName +  " has unexpected size " + is.getChannel().size() + " and is ignored");
 					} else
 						buffer = is.getChannel().map(READ_ONLY, 0, is.getChannel().size());
 					break;
@@ -91,6 +92,7 @@ public class HGTReader {
 							break;
 					}
 				} catch (IOException exp) {
+					buffer = null;
 				}
 			}
 			if (buffer == null) {
@@ -98,8 +100,7 @@ public class HGTReader {
 				synchronized (missing){
 					missing.add(name);	
 				}
-				
-				System.err.println("file " + name + " not found. Is expected to cover sea.");
+				log.warn("file " + name + " not found. Is expected to cover sea.");
 			}
 		}
 		fileName = (buffer != null) ? fName : name;
@@ -115,10 +116,10 @@ public class HGTReader {
 		try(InputStream is = zipFile.getInputStream(entry)){
 			res = calcRes(entry.getSize());
 			if (res < 0) {
-				System.err.println("file " +  entry.getName() +  " has unexpected size " + entry.getSize() + " and is ignored");
+				log.error("file " +  entry.getName() +  " has unexpected size " + entry.getSize() + " and is ignored");
 				return;
 			}
-			System.out.println("extracting data for " + entry.getName() + " from " + zipFile.getName());
+			log.info("extracting data for " + entry.getName() + " from " + zipFile.getName());
 			buffer = ByteBuffer.allocate((int) entry.getSize());
 			byte[] ioBuffer = new byte[1024];
 			int len = is.read(ioBuffer);
