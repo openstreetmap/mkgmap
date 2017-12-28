@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 
+import org.openstreetmap.osmosis.core.filter.common.PolygonFileReader;
+
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Utils;
@@ -98,6 +100,7 @@ import uk.me.parabola.mkgmap.reader.hgt.HGTReader;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.util.Configurable;
 import uk.me.parabola.util.EnhancedProperties;
+import uk.me.parabola.util.Java2DConverter;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
 /**
@@ -161,6 +164,7 @@ public class MapBuilder implements Configurable {
 	private String pathToHGT;
 	private List<Integer> demDists;
 	private short demOutsidePolygonHeight;
+	private java.awt.geom.Area demPolygon;
 	
 
 	public MapBuilder() {
@@ -208,7 +212,27 @@ public class MapBuilder implements Configurable {
 		pathToHGT = props.getProperty("dem", null);
 		demDists = parseDemDists(props.getProperty("dem-dists", "-1"));
 		demOutsidePolygonHeight = (short) props.getProperty("dem-outside-polygon", HGTReader.UNDEF);
+		String demPolygonFile = props.getProperty("dem-poly", null);
+		if (demPolygonFile != null) {
+			demPolygon = readPolyFile(demPolygonFile);
+		}
 	}
+
+	private java.awt.geom.Area readPolyFile(String polygonFile) {
+		File f = new File(polygonFile);
+		if (!f.exists()) {
+			throw new IllegalArgumentException("polygon file doesn't exist: " + polygonFile);
+		}
+		try {
+			PolygonFileReader pfr = new PolygonFileReader(f);
+			java.awt.geom.Area polygonInDegrees = pfr.loadPolygon();
+			return Java2DConverter.AreaDegreesToMapUnit(polygonInDegrees);
+		} catch (Exception e) {
+			log.error("cannot read polygon file", polygonFile);
+		}
+		return null;
+	}
+
 
 	private List<Integer> parseDemDists(String demDists) {
 		List<Integer> dists = new ArrayList<>();
@@ -296,12 +320,17 @@ public class MapBuilder implements Configurable {
 			try{
 				long t1 = System.currentTimeMillis();
 				java.awt.geom.Area  demArea = null;
-				if (src instanceof OverviewMapDataSource) {
+				if (demPolygon != null) {
+					demArea = Java2DConverter.createBoundsArea(src.getBounds());
+					demArea.intersect(demPolygon);
+				} 
+				if (demArea == null && src instanceof OverviewMapDataSource) {
 					Path2D demPoly = ((OverviewMapDataSource) src).getTileAreaPath();
 					if (demPoly != null) {
 						demArea = new java.awt.geom.Area(demPoly);
 					}
 				}
+				
 				demFile.calc(src.getBounds(), demArea, pathToHGT, demDists, demOutsidePolygonHeight);
 				long t2 = System.currentTimeMillis();
 				System.out.println("DEM file calculation for " + map.getFilename() + " took " + (t2 - t1) + " ms");

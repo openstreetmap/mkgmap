@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 
@@ -318,5 +319,43 @@ public class Java2DConverter {
 		return outputs;
 	}
 
+	/**
+	 * Convert area with coordinates in degrees to area in MapUnits
+	 * @param area
+	 * @return
+	 */
+	public static java.awt.geom.Area AreaDegreesToMapUnit(java.awt.geom.Area area){
+		if (area == null)
+			return null;
+		double[] res = new double[6];
+		Path2D path = new Path2D.Double();
+		PathIterator pit = area.getPathIterator(null);
+		while (!pit.isDone()) {
+			int type = pit.currentSegment(res);
+
+			double fLat = res[1];
+			double fLon = res[0];
+			int lat = Utils.toMapUnit(fLat);
+			int lon = Utils.toMapUnit(fLon);
+			
+			switch (type) {
+			case PathIterator.SEG_LINETO:
+				path.lineTo(lon, lat);
+				break;
+			case PathIterator.SEG_MOVETO: 
+				path.moveTo(lon, lat);
+				break;
+			case PathIterator.SEG_CLOSE:
+				path.closePath();
+				break;
+			default:
+				System.out.println("Unsupported path iterator type " + type
+						+ ". This is an internal splitter error.");
+			}
+
+			pit.next();
+		}
+		return new java.awt.geom.Area(path);
+	} 
 
 } 
