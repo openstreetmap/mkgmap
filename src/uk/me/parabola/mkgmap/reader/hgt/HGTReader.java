@@ -12,7 +12,9 @@
  */ 
 package uk.me.parabola.mkgmap.reader.hgt;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -42,6 +44,7 @@ public class HGTReader {
 	private long count;
 	
 	private final static Set<String> missing = new HashSet<>();
+	private final static Set<String> badDir = new HashSet<>();
 	
 	/**
 	 * Class to read a single HGT file. 
@@ -56,43 +59,63 @@ public class HGTReader {
 						lon < 0 ? "W" : "E", lon < 0 ? -lon : lon);
 		
 		String[] dirs = dirsWithHGT.split("[,]");
+		
 		String fName = ".";
 		boolean knwonAsMissing;
 		synchronized (missing) {
 			knwonAsMissing = missing.contains(name); 
 		}
-		if (!knwonAsMissing) { 
+		if (!knwonAsMissing) {
 			for (String dir : dirs) {
-				if (dir.endsWith(".zip")) {
-					try(ZipFile zipFile = new ZipFile(dir)){
+				File f = new File (dir);
+				if (!f.exists()) {
+					synchronized (badDir) {
+						if (badDir.add(dir))
+							log.error(dir, "does not exist");
+					}
+				}
+				if (f.isDirectory()) {
+					fName = Utils.joinPath(dir, name);
+					try (FileInputStream is = new FileInputStream(fName)) {
+						res = calcRes(is.getChannel().size());
+						if (res < 0) {
+							log.error("file " +  fName +  " has unexpected size " + is.getChannel().size() + " and is ignored");
+						} else
+							buffer = is.getChannel().map(READ_ONLY, 0, is.getChannel().size());
+						break;
+					} catch (FileNotFoundException e) {
+						
+					} catch (IOException e) {
+						log.error("failed to create buffer for file",fName);
+					}
+					fName += ".zip"; 
+					try(ZipFile zipFile = new ZipFile(fName)){
 						ZipEntry entry = zipFile.getEntry(name);
-						if (entry != null){ 
+						if (entry != null){
 							extractFromZip(zipFile, entry);
 							if (buffer != null)
 								break;
 						}
+					} catch (FileNotFoundException e) {
 					} catch (IOException exp) {
-					} 
-				}
-				fName = Utils.joinPath(dir, name);
-				try (FileInputStream is = new FileInputStream(fName)) {
-					res = calcRes(is.getChannel().size());
-					if (res < 0) {
-						log.error("file " +  fName +  " has unexpected size " + is.getChannel().size() + " and is ignored");
-					} else
-						buffer = is.getChannel().map(READ_ONLY, 0, is.getChannel().size());
-					break;
-				} catch (IOException e) {
-				}
-				try(ZipFile zipFile = new ZipFile(fName + ".zip")){
-					ZipEntry entry = zipFile.getEntry(name);
-					if (entry != null){
-						extractFromZip(zipFile, entry);
-						if (buffer != null)
-							break;
+						log.error("failed to fill buffer for file",fName);
+						buffer = null;
 					}
-				} catch (IOException exp) {
-					buffer = null;
+				} else {
+					if (dir.endsWith(".zip")) {
+						try(ZipFile zipFile = new ZipFile(dir)){
+							ZipEntry entry = zipFile.getEntry(name);
+							if (entry != null){ 
+								extractFromZip(zipFile, entry);
+								if (buffer != null)
+									break;
+							}
+						} catch (FileNotFoundException e) {
+						} catch (IOException exp) {
+							log.error("failed to fill buffer for file",fName);
+							buffer = null;
+						} 
+					}
 				}
 			}
 			if (buffer == null) {
