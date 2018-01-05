@@ -13,7 +13,6 @@
 package uk.me.parabola.mkgmap.reader.hgt;
 
 import java.awt.geom.Rectangle2D;
-import java.util.Arrays;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
@@ -79,23 +78,24 @@ public class HGTConverter {
 	 * Return elevation in meter for a point given in DEM units (32 bit res).
 	 * @param lat32
 	 * @param lon32
-	 * @param checkPolygon if true, check if polygon contains point
+	 * @param testArea 
 	 * @return height in m or Short.MIN_VALUE if value is invalid 
 	 */
-	public short getElevation(int lat32, int lon32, boolean checkPolygon) {
+	public short getElevation(int lat32, int lon32, java.awt.geom.Area testArea) {
 		// TODO: maybe calculate the borders in 32 bit res ?
 		int row = (int) ((lat32 - minLat32) * FACTOR);
 		int col = (int) ((lon32 - minLon32) * FACTOR);
-		if (checkPolygon) {
+		if (testArea != null) {
 			double yTest = lat32 /256.0;
 			double xTest = lon32 /256.0;
-			if (!demArea.contains(xTest, yTest)) {
+			if (!testArea.contains(xTest, yTest)) {
 				return outsidePolygonHeight;
 			}
 		}
 		
 		HGTReader rdr = readers[row][col];
 		int res = rdr.getRes();
+		rdr.prepRead();
 		if (res <= 0)
 			return 0; // assumed to be an area in the ocean
 		double scale  = res * FACTOR;
@@ -108,17 +108,18 @@ public class HGTConverter {
 		int xRight = xLeft + 1;
 		int yTop = yBelow + 1;
 		
+		
 		int hLT = rdr.ele(xLeft, yTop);
 		int hRT = rdr.ele(xRight, yTop);
 		int hLB = rdr.ele(xLeft, yBelow);
 		int hRB = rdr.ele(xRight, yBelow);
 		lastRow = row;
-		
 		double rc = interpolatedHeightInNormatedRectangle(x1-xLeft, y1-yBelow, hLT, hRT, hRB, hLB);
 		if (rc == HGTReader.UNDEF) {
 			int sum = 0;
 			int valid = 0;
-			for (int h : Arrays.asList(hLT,hRT,hLB,hRB)) {
+			int[] heights = { hLT, hRT, hLB, hRB };
+			for (int h : heights) {
 				if (h == HGTReader.UNDEF)
 					continue;
 				valid++;

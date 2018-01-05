@@ -228,4 +228,10 @@ public class HGTReader {
 		read = false;
 		return true;
 	}
+
+	public void prepRead() {
+		if (!read && directory != null) {
+			extractFromZip(directory, fileName);
+		}
+	}
 }

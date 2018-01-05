@@ -14,6 +14,7 @@
 package uk.me.parabola.mkgmap.build;
 
 import java.awt.geom.Path2D;
+import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -35,6 +36,7 @@ import org.openstreetmap.osmosis.core.filter.common.PolygonFileReader;
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.Label;
@@ -321,7 +323,10 @@ public class MapBuilder implements Configurable {
 				long t1 = System.currentTimeMillis();
 				java.awt.geom.Area  demArea = null;
 				if (demPolygon != null) {
-					demArea = Java2DConverter.createBoundsArea(src.getBounds());
+					Area bbox = src.getBounds();
+					// the rectangle is a bit larger to avoid problems at tile boundaries
+					Rectangle2D r = new Rectangle2D.Double(bbox.getMinLong()-0.001, bbox.getMinLat()-0.001, bbox.getWidth()+0.002, bbox.getHeight()+0.002);
+					demArea = new java.awt.geom.Area(r);
 					demArea.intersect(demPolygon);
 				} 
 				if (demArea == null && src instanceof OverviewMapDataSource) {

@@ -112,8 +112,7 @@ public class DEMTile {
 		if (min == max) {
 			return; // all heights equal 
 		}
-		if (realHeights != null)
-			createBitStream(realHeights);
+		createBitStream(realHeights);
 	}
 	
 	public int getBaseHeight() {
