@@ -12,7 +12,9 @@
  */ 
 package uk.me.parabola.imgfmt.app.dem;
 
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Area;
@@ -89,6 +91,7 @@ public class DEMSection {
 		int minBaseHeight = Integer.MAX_VALUE;
 		int maxBaseHeight = Integer.MIN_VALUE;
 		
+		java.awt.geom.Area polygon = hgtConverter.getPolygon();
 		for (int m = 0; m < tilesLat; m++) {
 			latOff = top - m * resLat;
 			
@@ -103,14 +106,31 @@ public class DEMSection {
 					width = nonStdWidth;
 				}
 				short[] realHeights = new short[width * height];
-				int count = 0;
-				for (int y = 0; y < height; y++) {
-					// top to botton
-					int py = latOff - (y * pointsDistanceLat);
-					for (int x = 0; x < width; x++) {
-						// left to right
-						int px = lonOff + (x * pointsDistanceLon);
-						realHeights[count++] = hgtConverter.getElevation(py, px);
+				int intersection = -1;
+				if (polygon != null) {
+					Rectangle2D r = new Rectangle2D.Double(lonOff/256.0, (latOff-height*pointsDistanceLat)/256.0, width*pointsDistanceLon/256.0, height*pointsDistanceLat/256.0);
+					java.awt.geom.Area testArea = new java.awt.geom.Area(r);
+					testArea.intersect(polygon);
+					if (testArea.isEmpty())
+						intersection = 0;
+					else if (testArea.getBounds().equals(r) && testArea.equals(new java.awt.geom.Area(r))) {
+						intersection = 2;
+					} else {
+						intersection = 1;
+					}
+				}
+				if (intersection == 0) {
+					Arrays.fill(realHeights, hgtConverter.getOutsidePolyHeight());
+				} else {
+					int count = 0;
+					for (int y = 0; y < height; y++) {
+						// top to bottom
+						int py = latOff - (y * pointsDistanceLat);
+						for (int x = 0; x < width; x++) {
+							// left to right
+							int px = lonOff + (x * pointsDistanceLon);
+							realHeights[count++] = hgtConverter.getElevation(py, px, intersection == 1);
+						}
 					}
 				}
 				DEMTile tile = new DEMTile(this, n, m, width, height, realHeights);
@@ -126,8 +146,12 @@ public class DEMSection {
 					dataLen += bsLen;
 				}
 			}
+			if (m > 1 && tilesLon > 10 && pointsDistanceLat > 50000) {
+				//TODO: this is a rather poor workaround to avoid an OutOfMemoryExeption 
+				hgtConverter.freeMem();
+			}
 		}
-		hgtConverter = null;
+		
 		if (dataLen > 0) {
 			minHeight = minBaseHeight;
 		} else { 

@@ -333,7 +333,7 @@ public class MapBuilder implements Configurable {
 				
 				demFile.calc(src.getBounds(), demArea, pathToHGT, demDists, demOutsidePolygonHeight);
 				long t2 = System.currentTimeMillis();
-				System.out.println("DEM file calculation for " + map.getFilename() + " took " + (t2 - t1) + " ms");
+				log.info("DEM file calculation for", map.getFilename(), "took", (t2 - t1), "ms");
 				demFile.write();
 			} catch (MapFailedException e) {
 				log.error("exception while creating DEM file", e.getMessage());

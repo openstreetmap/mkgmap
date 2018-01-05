@@ -43,6 +43,14 @@ public class DEMFile extends ImgFile {
 		}
 	}
 
+	/**
+	 * Calculate the DEM data for a tile. 
+	 * @param area the bounding box of the tile
+	 * @param demPolygonMapUnits a bounding polygon which might be smaller than the area 
+	 * @param pathToHGT comma separated list of directories or zip files
+	 * @param pointDistances list of distances which determine the resolution
+	 * @param outsidePolygonHeight the height value that should be used for points outside of the bounding polygon 
+	 */
 	public void calc(Area area, java.awt.geom.Area demPolygonMapUnits, String pathToHGT, List<Integer> pointDistances, short outsidePolygonHeight) {
 		HGTConverter hgtConverter = new HGTConverter(pathToHGT, area, demPolygonMapUnits);
 		hgtConverter.setOutsidePolygonHeight(outsidePolygonHeight);

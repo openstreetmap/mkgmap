@@ -14,8 +14,10 @@ package uk.me.parabola.mkgmap.reader.hgt;
 
 import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
+
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.log.Logger;
 
 /**
  * Very basic routine to find the correct hgt reader for a given coordinate.
@@ -23,15 +25,16 @@ import uk.me.parabola.imgfmt.app.Area;
  *
  */
 public class HGTConverter {
+	private static final Logger log = Logger.getLogger(HGTConverter.class);
 	final static double FACTOR = 45.0d / (1<<29);
 	
 	private HGTReader[][] readers;
-	private int[][] testModes;
 	private final int minLat32;
 	private final int minLon32;
 	private final int res;
 	private final java.awt.geom.Area demArea;
 	private short outsidePolygonHeight = HGTReader.UNDEF;
+	int lastRow = -1;
 	
 	/**
 	 * Class to extract elevation information from SRTM files in hgt format.
@@ -51,7 +54,6 @@ public class HGTConverter {
 		int dimLat = maxLat - minLat;
 		int dimLon = maxLon - minLon;
 		readers = new HGTReader[dimLat][dimLon];
-		testModes = new int[dimLat][dimLon];
 		demArea = demPolygonMapUnits;
 
 		int maxRes = -1;
@@ -61,7 +63,6 @@ public class HGTConverter {
 				int lon =  col + minLon;
 				Area rdrBbox = new Area(lat, lon, lat+1.0, lon+1.0); 
 				int testMode = intersectsPoly(rdrBbox);
-				testModes[row][col] = testMode;
 				if (testMode != 0) {
 					HGTReader rdr = new HGTReader(lat, lon, path);
 					readers[row][col] = rdr;
@@ -78,22 +79,21 @@ public class HGTConverter {
 	 * Return elevation in meter for a point given in DEM units (32 bit res).
 	 * @param lat32
 	 * @param lon32
+	 * @param checkPolygon if true, check if polygon contains point
 	 * @return height in m or Short.MIN_VALUE if value is invalid 
 	 */
-	public short getElevation(int lat32, int lon32) {
+	public short getElevation(int lat32, int lon32, boolean checkPolygon) {
 		// TODO: maybe calculate the borders in 32 bit res ?
 		int row = (int) ((lat32 - minLat32) * FACTOR);
 		int col = (int) ((lon32 - minLon32) * FACTOR);
-		int testMode = testModes[row][col];
-		if (testMode == 0)
-			return outsidePolygonHeight;
-		if (testMode == 1) {
-			double yTest = lat32 /256;
-			double xTest = lon32 /256;
+		if (checkPolygon) {
+			double yTest = lat32 /256.0;
+			double xTest = lon32 /256.0;
 			if (!demArea.contains(xTest, yTest)) {
 				return outsidePolygonHeight;
 			}
 		}
+		
 		HGTReader rdr = readers[row][col];
 		int res = rdr.getRes();
 		if (res <= 0)
@@ -112,6 +112,7 @@ public class HGTConverter {
 		int hRT = rdr.ele(xRight, yTop);
 		int hLB = rdr.ele(xLeft, yBelow);
 		int hRB = rdr.ele(xRight, yBelow);
+		lastRow = row;
 		
 		double rc = interpolatedHeightInNormatedRectangle(x1-xLeft, y1-yBelow, hLT, hRT, hRB, hLB);
 		if (rc == HGTReader.UNDEF) {
@@ -134,6 +135,23 @@ public class HGTConverter {
 //			long dd = 4;
 //		}
 		return rc2;
+	}
+	
+	/**
+	 * Try to free java heap memory allocated by the readers.
+	 */
+	public void freeMem() {
+		// if zipped hgt files are used we allocate buffers for each file on JAVA heap
+		// so, if we got an OutOfMemoryError  we can try to free readers
+		// this is expected to happen only for the overview map 
+		log.info("trying to free mem for hgt buffers");
+		for (int i = readers.length - 1; i > lastRow + 1; i--) {
+			for (HGTReader r : readers[i]) {
+				if (r != null) {
+					r.freeBuf();
+				}
+			}
+		}
 	}
 	
 	/**
@@ -223,5 +241,13 @@ public class HGTConverter {
 		this.outsidePolygonHeight = outsidePolygonHeight;
 	}
 
-	
+
+	public java.awt.geom.Area getPolygon() {
+		return demArea;
+	}
+
+
+	public short getOutsidePolyHeight() {
+		return outsidePolygonHeight;
+	}
 }

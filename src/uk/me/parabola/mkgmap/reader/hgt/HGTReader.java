@@ -18,6 +18,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -41,10 +42,13 @@ public class HGTReader {
 	private int res;
 	public final static short UNDEF = Short.MIN_VALUE;
 	public final String fileName;
+	public final String directory;
+	public boolean read;
 	private long count;
 	
 	private final static Set<String> missing = new HashSet<>();
 	private final static Set<String> badDir = new HashSet<>();
+	
 	
 	/**
 	 * Class to read a single HGT file. 
@@ -59,6 +63,7 @@ public class HGTReader {
 						lon < 0 ? "W" : "E", lon < 0 ? -lon : lon);
 		
 		String[] dirs = dirsWithHGT.split("[,]");
+		fileName = name;
 		
 		String fName = ".";
 		boolean knwonAsMissing;
@@ -80,45 +85,27 @@ public class HGTReader {
 						res = calcRes(is.getChannel().size());
 						if (res < 0) {
 							log.error("file " +  fName +  " has unexpected size " + is.getChannel().size() + " and is ignored");
-						} else
+						} else {
 							buffer = is.getChannel().map(READ_ONLY, 0, is.getChannel().size());
+							read = true;
+						}
 						break;
 					} catch (FileNotFoundException e) {
-						
 					} catch (IOException e) {
 						log.error("failed to create buffer for file",fName);
 					}
-					fName += ".zip"; 
-					try(ZipFile zipFile = new ZipFile(fName)){
-						ZipEntry entry = zipFile.getEntry(name);
-						if (entry != null){
-							extractFromZip(zipFile, entry);
-							if (buffer != null)
-								break;
-						}
-					} catch (FileNotFoundException e) {
-					} catch (IOException exp) {
-						log.error("failed to fill buffer for file",fName);
-						buffer = null;
-					}
+					checkZip(fName + ".zip", name); // try to find *.hgt.zip in dir that contains *.hgt
 				} else {
 					if (dir.endsWith(".zip")) {
-						try(ZipFile zipFile = new ZipFile(dir)){
-							ZipEntry entry = zipFile.getEntry(name);
-							if (entry != null){ 
-								extractFromZip(zipFile, entry);
-								if (buffer != null)
-									break;
-							}
-						} catch (FileNotFoundException e) {
-						} catch (IOException exp) {
-							log.error("failed to fill buffer for file",fName);
-							buffer = null;
-						} 
+						checkZip(dir, name); // try to find *.hgt in zip file  
 					}
 				}
+				if (res > 0) {
+					directory = dir;
+					return;
+				}
 			}
-			if (buffer == null) {
+			if (res <= 0) {
 				res = -1;
 				synchronized (missing){
 					missing.add(name);	
@@ -126,30 +113,57 @@ public class HGTReader {
 				log.warn("file " + name + " not found. Is expected to cover sea.");
 			}
 		}
-		fileName = (buffer != null) ? fName : name;
+		directory = null;
 	}
 	
+	/**
+	 * Check if we can find the wanted file in a zip container and if it has the right size. 
+	 * @param fName path to container
+	 * @param name wanted file
+	 */
+	private void checkZip(String fName, String name) {
+		try(ZipFile zipFile = new ZipFile(fName)){
+			ZipEntry entry = zipFile.getEntry(name);
+			if (entry != null){
+				res = calcRes(entry.getSize());
+				if (res < 0) {
+					log.error("file " +  entry.getName() +  " has unexpected size " + entry.getSize() + " and is ignored");
+				}
+			}
+		} catch (FileNotFoundException e) {
+		} catch (IOException exp) {
+			log.error("failed to get size for file", name, "from", fName);
+		}
+	}
+
 	/**
 	 * Try to unzip the file contained in a zip file.
 	 * @param zipFile
 	 * @param entry
 	 * @throws IOException
 	 */
-	private void extractFromZip(ZipFile zipFile, ZipEntry entry) throws IOException {
-		try(InputStream is = zipFile.getInputStream(entry)){
-			res = calcRes(entry.getSize());
-			if (res < 0) {
-				log.error("file " +  entry.getName() +  " has unexpected size " + entry.getSize() + " and is ignored");
-				return;
+	private void extractFromZip(String fName, String name) {
+		try (ZipFile zipFile = new ZipFile(fName)) {
+			ZipEntry entry = zipFile.getEntry(name);
+			if (entry != null) {
+				if (count == 0)
+					log.info("allocating buffer for", fileName);
+				else 
+					log.info("re-allocating buffer for", fileName);
+				InputStream is = zipFile.getInputStream(entry);
+				log.info("extracting data for " + entry.getName() + " from " + zipFile.getName());
+				buffer = ByteBuffer.allocate((int) entry.getSize());
+				byte[] ioBuffer = new byte[1024];
+				int len = is.read(ioBuffer);
+				while (len != -1) {
+					buffer.put(ioBuffer, 0, len);
+					len = is.read(ioBuffer);
+				}
 			}
-			log.info("extracting data for " + entry.getName() + " from " + zipFile.getName());
-			buffer = ByteBuffer.allocate((int) entry.getSize());
-			byte[] ioBuffer = new byte[1024];
-			int len = is.read(ioBuffer);
-			while (len != -1) {
-				buffer.put(ioBuffer, 0, len);
-				len = is.read(ioBuffer);
-			}
+			read = true;
+		} catch (FileNotFoundException e) {
+		} catch (IOException exp) {
+			log.error("failed to get size for file", name, "from", fName);
 		}
 	}
 
@@ -173,13 +187,17 @@ public class HGTReader {
 	 * @return the elevation value stored in the file or 0 if 
 	 */
 	public short ele(int x, int y) {
+		if (!read && directory != null) {
+			extractFromZip(directory, fileName);
+		}
 		if (buffer == null)
 			return 0;
 		if (x < 0 || x > res || y < 0 || y > res) {
 			throw new RuntimeException("wrong x/y value for res" + res + " x=" + x + " y=" + y);
 		}
 		count++;
-		return buffer.getShort(2 * ((res - y) * (res + 1) + x));
+		short rc = buffer.getShort(2 * ((res - y) * (res + 1) + x));
+		return rc;
 		
 	}
 
@@ -193,5 +211,21 @@ public class HGTReader {
 	@Override
 	public String toString() {
 		return fileName + " (" + count + " reads)" ;
+	}
+
+	/**
+	 * Return memory to GC. 
+	 * @return true if heap memory was freed.
+	 */
+	public boolean freeBuf() {
+		if (buffer == null)
+			return false;
+		if (buffer instanceof MappedByteBuffer) {
+			// memory is not managed by GC
+			return false;
+		}
+		buffer = null;
+		read = false;
+		return true;
 	}
 }
