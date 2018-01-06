@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.log.Logger;
 
@@ -42,7 +43,7 @@ public class HGTReader {
 	private int res;
 	public final static short UNDEF = Short.MIN_VALUE;
 	public final String fileName;
-	public final String path;
+	public String path;
 	public boolean read;
 	private long count;
 	
@@ -168,6 +169,7 @@ public class HGTReader {
 			}
 			read = true;
 		} catch (FileNotFoundException e) {
+			throw new MapFailedException("previously existing zip file is missing: " + fName);
 		} catch (IOException exp) {
 			log.error("failed to get size for file", name, "from", fName);
 		}
