@@ -287,7 +287,7 @@ number is 63240000.
 overview map. Counting of the levels should continue. Up to 8 additional 
 levels may be specified, but the lowest usable resolution with MapSource 
 seems to be 11. The hard coded default is empty.
-:	See also option --overview-dem.      
+:	See also option --overview-dem-dist.      
 <p>
 ;--remove-ovm-work-files
 :   If overview-levels is used, mkgmap creates one additional file 
@@ -472,7 +472,7 @@ file format. The polygon described in the file is used to determine the area
 for which DEM data should be added to the map. If not given, the DEM data will
 cover the full tile area.
 <p>   
-;--overview-dem=number
+;--overview-dem-dist=number
 :   If given, the option specifies the resolution(s) for the DEM data in the
 overview map. If not given or 0, mkgmap will not add DEM to the overview map.
 Reasonable values depend on the size of the area and the lowest resolution
