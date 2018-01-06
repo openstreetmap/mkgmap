@@ -138,7 +138,7 @@ So for example if the street is "Aleksandra Gryglewskiego" then you will be able
 search for it as both "Aleksandra" and "Gryglewskiego".  It will also increase the
 size of the index.  Useful in countries where searching for the first word in name
 is not the right thing to do. Words following an opening bracket '(' are ignored. 
-See also option road-name-config.  
+:	See also option road-name-config.  
 <p>
 ;--road-name-config=file
 :	This option handles the problem that some countries have road names which 
@@ -287,7 +287,7 @@ number is 63240000.
 overview map. Counting of the levels should continue. Up to 8 additional 
 levels may be specified, but the lowest usable resolution with MapSource 
 seems to be 11. The hard coded default is empty.
-See also option --overview-dem.      
+:	See also option --overview-dem.      
 <p>
 ;--remove-ovm-work-files
 :   If overview-levels is used, mkgmap creates one additional file 
@@ -428,7 +428,7 @@ Default is enabled, use --no-merge-lines to disable.
 :   Removes all polygons smaller than NUM from the map.
 This reduces map size and speeds up redrawing of maps. 
 Recommended value is 8 to 15, default is 8.
-See also polygon-size-limits.
+:	See also polygon-size-limits.
 <p>
 ;--polygon-size-limits=limits code
 :   Allows to specify different min-size-polygon values for each resolution.
@@ -463,8 +463,8 @@ distance between two DEM points. Higher disances mean lower resolution and
 thus fewer bytes in the map. Reasonable values for the highest resolution are 
 somewhere between 1648 and 5520, 3312 is often used.
 :	Example which should work with levels="0:24, 1:22, 2:20, 3:18, 4:16":
---dem-dists=3312,13248,26512,53024
-This was found in a Garmin Demo map for transalpin data created 2009.
+:	--dem-dists=3312,13248,26512,53024
+:	This was found in a Garmin Demo map for transalpin data created 2009.
 <p>
 ;--dem-poly=filename
 :   If given, the filename should point to a *.poly file in osmosis polygon 
@@ -773,7 +773,7 @@ This happens before the style rules are processed.
 This allows to use any routable Garmin type (except 0x08 and 0x09)
 for that part so that the Garmin device tells the name of
 this part as hint which destination to follow.
-See also --process-exits.
+:	See also --process-exits.
 <p>
 ;--process-exits
 :     Usual Garmin devices do not tell the name of the exit on motorways 
