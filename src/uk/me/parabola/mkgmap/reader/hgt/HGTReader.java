@@ -42,7 +42,7 @@ public class HGTReader {
 	private int res;
 	public final static short UNDEF = Short.MIN_VALUE;
 	public final String fileName;
-	public final String directory;
+	public final String path;
 	public boolean read;
 	private long count;
 	
@@ -94,14 +94,19 @@ public class HGTReader {
 					} catch (IOException e) {
 						log.error("failed to create buffer for file",fName);
 					}
-					checkZip(fName + ".zip", name); // try to find *.hgt.zip in dir that contains *.hgt
+					fName += ".zip";
+					checkZip(fName, name); // try to find *.hgt.zip in dir that contains *.hgt
+					if (res > 0) {
+						path = fName;
+						return;
+					}
 				} else {
 					if (dir.endsWith(".zip")) {
-						checkZip(dir, name); // try to find *.hgt in zip file  
+						checkZip(dir, name); // try to find *.hgt in zip file
 					}
 				}
 				if (res > 0) {
-					directory = dir;
+					path = dir;
 					return;
 				}
 			}
@@ -113,7 +118,7 @@ public class HGTReader {
 				log.warn("file " + name + " not found. Is expected to cover sea.");
 			}
 		}
-		directory = null;
+		path = null;
 	}
 	
 	/**
@@ -143,6 +148,7 @@ public class HGTReader {
 	 * @throws IOException
 	 */
 	private void extractFromZip(String fName, String name) {
+		
 		try (ZipFile zipFile = new ZipFile(fName)) {
 			ZipEntry entry = zipFile.getEntry(name);
 			if (entry != null) {
@@ -187,8 +193,8 @@ public class HGTReader {
 	 * @return the elevation value stored in the file or 0 if 
 	 */
 	public short ele(int x, int y) {
-		if (!read && directory != null) {
-			extractFromZip(directory, fileName);
+		if (!read && path != null) {
+			extractFromZip(path, fileName);
 		}
 		if (buffer == null)
 			return 0;
@@ -230,8 +236,8 @@ public class HGTReader {
 	}
 
 	public void prepRead() {
-		if (!read && directory != null) {
-			extractFromZip(directory, fileName);
+		if (!read && path != null) {
+			extractFromZip(path, fileName);
 		}
 	}
 }
