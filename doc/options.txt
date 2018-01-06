@@ -452,7 +452,7 @@ files have 2 * 3601 * 3601 = 25.934.402 bytes. The list is searched in the
 given order, so if you want to use 1'' files make sure that they are found 
 first. There are different sources for *.hgt files, some have so called voids
 which are areas without data. Those should be avoided.  
- <p>
+<p>
 ;--dem-dists=number[,number]
 :   If given, the option specifies the resolution(s) or zoom level for the DEM 
 data. If not given, mkgmap tries to determine a reasonable value based on the 
@@ -465,7 +465,7 @@ somewhere between 1648 and 5520, 3312 is often used.
 Example which should work with levels="0:24, 1:22, 2:20, 3:18, 4:16":
 --dem-dists=3312,13248,26512,53024
 This was found in a Garmin Demo map for transalpin data created 2009.
- <p>
+<p>
 ;--dem-poly=filename
 :   If given, the filename should point to a *.poly file in osmosis polygon 
 file format. The polygon described in the file is used to determine the area
@@ -479,7 +479,6 @@ Reasonable values depend on the size of the area and the lowest resolution
 used for the single tiles, good compromises are somewhere between 55000 
 and 276160.  
 <p>
- 
 === Miscellaneous options ===
 
 ;--max-jobs[=number]
