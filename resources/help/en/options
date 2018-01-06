@@ -434,6 +434,46 @@ Optimization options:
 	Value 0 means to skip the size filter. 
 	Note that in resolution 24 the filter is not used.  
 
+Hill Shading (DEM) options:
+
+--dem=path[,path]
+	The option expects a comma separated list of paths to directories or zip 
+	files containing *.hgt files (SRTM). Directories are searched for *.hgt 
+	files and also for *.hgt.zip files. Zipped files are supported but unzipped 
+	files are preferred because they require less memory. Supported formats 
+	contain either 1'' or 3'' data. 
+	3'' files have 2 * 1201 * 1201 = 2.884.802 bytes, 1'' files have 
+	2 * 3601 * 3601 = 25.934.402 bytes. The list is searched in the given order, 
+	so if you want to use 1'' files make sure that they are found first. There 
+	are different sources for *.hgt files, some have so called voids which are 
+	areas without data. Those should be avoided.  
+ 
+--dem-dists=number[,number]
+	If given, the option specifies the resolution(s) or zoom level for the DEM 
+	data. If not given, mkgmap tries to determine a reasonable value based on 
+	the resolution found in the *.hgt files. For PC programs like MapSource or 
+	Basecamp you only need one zoom level, for gps devies you need one for each 
+	resolution given with the --levels option. The actual values are given as 
+	distance between two DEM points. Higher disances mean lower resolution and 
+	thus fewer bytes in the map. Reasonable values for the highest resolution 
+	are somewhere between 1648 and 5520, 3312 is often used.
+	Example which should work with levels="0:24, 1:22, 2:20, 3:18, 4:16":
+	--dem-dists=3312,13248,26512,53024
+	This was found in a Garmin Demo map for transalpin data created 2009.
+ 
+--dem-poly=filename
+	If given, the filename should point to a *.poly file in osmosis polygon 
+	file format. The polygon described in the file is used to determine the area
+	for which DEM data should be added to the map. If not given, the DEM data 
+	will cover the full tile area.
+  
+--overview-dem=number
+	If given, the option specifies the resolution(s) for the DEM data in the
+	overview map. If not given or 0, mkgmap will not add DEM to the 
+	overview map. Reasonable values depend on the size of the area and the 
+	lowest resolution used for the single tiles, good compromises are 
+	somewhere between 55000 and 276160.  
+
 Miscellaneous options:
 
 --max-jobs[=number]
