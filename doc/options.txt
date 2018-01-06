@@ -462,7 +462,7 @@ resolution given with the --levels option. The actual values are given as
 distance between two DEM points. Higher disances mean lower resolution and 
 thus fewer bytes in the map. Reasonable values for the highest resolution are 
 somewhere between 1648 and 5520, 3312 is often used.
-Example which should work with levels="0:24, 1:22, 2:20, 3:18, 4:16":
+:	Example which should work with levels="0:24, 1:22, 2:20, 3:18, 4:16":
 --dem-dists=3312,13248,26512,53024
 This was found in a Garmin Demo map for transalpin data created 2009.
 <p>
@@ -472,7 +472,7 @@ file format. The polygon described in the file is used to determine the area
 for which DEM data should be added to the map. If not given, the DEM data will
 cover the full tile area.
 <p>   
---overview-dem=number
+;--overview-dem=number
 :   If given, the option specifies the resolution(s) for the DEM data in the
 overview map. If not given or 0, mkgmap will not add DEM to the overview map.
 Reasonable values depend on the size of the area and the lowest resolution
