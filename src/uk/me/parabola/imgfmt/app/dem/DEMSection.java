@@ -12,7 +12,6 @@
  */ 
 package uk.me.parabola.imgfmt.app.dem;
 
-import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 import uk.me.parabola.imgfmt.app.Area;
@@ -88,8 +87,8 @@ public class DEMSection {
 		int dataLen = 0;
 		int minBaseHeight = Integer.MAX_VALUE;
 		int maxBaseHeight = Integer.MIN_VALUE;
-		short[] noHeights = { hgtConverter.getOutsidePolyHeight() };
-		java.awt.geom.Area polygon = hgtConverter.getPolygon();
+		hgtConverter.setLatDist(pointsDistanceLat);
+		hgtConverter.setLonDist(pointsDistanceLon);
 		for (int m = 0; m < tilesLat; m++) {
 			latOff = top - m * resLat;
 			
@@ -103,42 +102,7 @@ public class DEMSection {
 				if (n + 1 == tilesLon) {
 					width = nonStdWidth;
 				}
-				short[] realHeights = noHeights;
-				int intersection = -1;
-				java.awt.geom.Area testArea = null;
-				if (polygon != null) {
-					// create rectangle that slightly overlaps the tile 
-					Rectangle2D r = new Rectangle2D.Double(lonOff / 256.0 - 0.01,
-							(latOff - height * pointsDistanceLat) / 256.0 - 0.01,
-							width * pointsDistanceLon / 256.0 + 0.02, 
-							height * pointsDistanceLat / 256.0 + 0.02);
-					testArea = new java.awt.geom.Area(r);
-					testArea.intersect(polygon);
-					if (testArea.isEmpty())
-						intersection = 0;
-					else if (testArea.getBounds().equals(r) && testArea.equals(new java.awt.geom.Area(r))) {
-						intersection = 2;
-						testArea = null;
-					} else {
-						intersection = 1;
-					}
-				}
-				
-				if (intersection != 0) {
-					realHeights = new short[width * height];
-					int count = 0;
-					int py = latOff;
-					for (int y = 0; y < height; y++) {
-						int px = lonOff;
-						for (int x = 0; x < width; x++) {
-							realHeights[count++] = hgtConverter.getElevation(py, px, testArea); 
-							// left to right
-							px += pointsDistanceLon;
-						}
-						// top to bottom
-						py -= pointsDistanceLat;
-					}
-				}
+				short[] realHeights = hgtConverter.getHeights(latOff, lonOff, height, width);
 				DEMTile tile;
 				tile = new DEMTile(this, n, m, width, height, realHeights);
 				tiles.add(tile);

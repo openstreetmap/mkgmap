@@ -13,7 +13,6 @@
 package uk.me.parabola.mkgmap.reader.hgt;
 
 import java.awt.geom.Rectangle2D;
-
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.log.Logger;
@@ -26,7 +25,7 @@ import uk.me.parabola.log.Logger;
 public class HGTConverter {
 	private static final Logger log = Logger.getLogger(HGTConverter.class);
 	final static double FACTOR = 45.0d / (1<<29);
-	
+	short[] noHeights = { HGTReader.UNDEF };
 	private HGTReader[][] readers;
 	private final int minLat32;
 	private final int minLon32;
@@ -34,6 +33,8 @@ public class HGTConverter {
 	private final java.awt.geom.Area demArea;
 	private short outsidePolygonHeight = HGTReader.UNDEF;
 	int lastRow = -1;
+	private int pointsDistanceLat;
+	private int pointsDistanceLon;
 	
 	/**
 	 * Class to extract elevation information from SRTM files in hgt format.
@@ -54,7 +55,6 @@ public class HGTConverter {
 		int dimLon = maxLon - minLon;
 		readers = new HGTReader[dimLat][dimLon];
 		demArea = demPolygonMapUnits;
-
 		int maxRes = -1;
 		for (int row = 0; row < dimLat; row++) {
 			int lat = row + minLat;
@@ -78,21 +78,13 @@ public class HGTConverter {
 	 * Return elevation in meter for a point given in DEM units (32 bit res).
 	 * @param lat32
 	 * @param lon32
-	 * @param testArea 
 	 * @return height in m or Short.MIN_VALUE if value is invalid 
 	 */
-	public short getElevation(int lat32, int lon32, java.awt.geom.Area testArea) {
+	private short getElevation(int lat32, int lon32) {
 		// TODO: maybe calculate the borders in 32 bit res ?
 		int row = (int) ((lat32 - minLat32) * FACTOR);
 		int col = (int) ((lon32 - minLon32) * FACTOR);
-		if (testArea != null) {
-			double yTest = lat32 /256.0;
-			double xTest = lon32 /256.0;
-			if (!testArea.contains(xTest, yTest)) {
-				return outsidePolygonHeight;
-			}
-		}
-		
+
 		HGTReader rdr = readers[row][col];
 		int res = rdr.getRes();
 		rdr.prepRead();
@@ -104,17 +96,16 @@ public class HGTConverter {
 		double y1 = (lat32 - minLat32) * scale - row * res;
 		double x1 = (lon32 - minLon32) * scale - col * res;
 		int xLeft = (int) x1;
-		int yBelow = (int) y1;
+		int yBottom = (int) y1;
 		int xRight = xLeft + 1;
-		int yTop = yBelow + 1;
-		
+		int yTop = yBottom + 1;
 		
 		int hLT = rdr.ele(xLeft, yTop);
 		int hRT = rdr.ele(xRight, yTop);
-		int hLB = rdr.ele(xLeft, yBelow);
-		int hRB = rdr.ele(xRight, yBelow);
+		int hLB = rdr.ele(xLeft, yBottom);
+		int hRB = rdr.ele(xRight, yBottom);
 		lastRow = row;
-		double rc = interpolatedHeightInNormatedRectangle(x1-xLeft, y1-yBelow, hLT, hRT, hRB, hLB);
+		double rc = interpolatedHeightInNormatedRectangle(x1-xLeft, y1-yBottom, hLT, hRT, hRB, hLB);
 		if (rc == HGTReader.UNDEF) {
 			int sum = 0;
 			int valid = 0;
@@ -237,18 +228,69 @@ public class HGTConverter {
 		return 0;
 	}
 
-
 	public void setOutsidePolygonHeight(short outsidePolygonHeight) {
 		this.outsidePolygonHeight = outsidePolygonHeight;
+		noHeights[0]= outsidePolygonHeight;
+	}
+
+	public void setLatDist(int pointsDistance) {
+		this.pointsDistanceLat = pointsDistance;
+	}
+	public void setLonDist(int pointsDistance) {
+		this.pointsDistanceLon = pointsDistance;
 	}
 
 
-	public java.awt.geom.Area getPolygon() {
-		return demArea;
-	}
+	/**
+	 * Fill array with real height values for a given upper left corner of a rectangle.
+	 * @param lat32 latitude of upper left corner
+	 * @param lon32 longitude of upper left corner
+	 * @param height 
+	 * @param width 
+	 * @return either an array with a single value if rectangle is outside of the bounding polygon or
+	 * a an array with one value for each point, in the order top -> down and left -> right.
+	 */
+	public short[] getHeights(int lat32, int lon32, int height, int width) {
+		// TODO Auto-generated method stub
+		short[] realHeights = noHeights;
+		
+		java.awt.geom.Area testArea = null;
+		if (demArea != null) {
+			// we have a bounding polygon
+			// create rectangle that slightly overlaps the DEM tile
+			Rectangle2D r = new Rectangle2D.Double(lon32 / 256.0 - 0.01,
+					(lat32 - height * pointsDistanceLat) / 256.0 - 0.01, 
+					width * pointsDistanceLon / 256.0 + 0.02,
+					height * pointsDistanceLat / 256.0 + 0.02);
+			if (!demArea.intersects(r))
+				return noHeights; // all points outside of bounding polygon
+			if (!demArea.contains(r)) {
+				testArea = new java.awt.geom.Area(r);
+				testArea.intersect(demArea);
+			}
+		}
 
-
-	public short getOutsidePolyHeight() {
-		return outsidePolygonHeight;
+		realHeights = new short[width * height];
+		int count = 0;
+		int py = lat32;
+		for (int y = 0; y < height; y++) {
+			int px = lon32;
+			for (int x = 0; x < width; x++) {
+				boolean needHeight = true;
+				if (testArea != null) {
+					double yTest = py / 256.0;
+					double xTest = px / 256.0;
+					if (!testArea.contains(xTest, yTest)) {
+						needHeight = false;
+					}
+				}
+				realHeights[count++] = needHeight ? getElevation(py, px) : outsidePolygonHeight;
+				// left to right
+				px += pointsDistanceLon;
+			}
+			// top to bottom
+			py -= pointsDistanceLat;
+		}
+		return realHeights;
 	}
 }

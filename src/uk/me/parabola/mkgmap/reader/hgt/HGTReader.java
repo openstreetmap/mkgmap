@@ -46,7 +46,7 @@ public class HGTReader {
 	public String path;
 	public boolean read;
 	private long count;
-	
+
 	private final static Set<String> missing = new HashSet<>();
 	private final static Set<String> badDir = new HashSet<>();
 	
@@ -200,12 +200,9 @@ public class HGTReader {
 		}
 		if (buffer == null)
 			return 0;
-		if (x < 0 || x > res || y < 0 || y > res) {
-			throw new RuntimeException("wrong x/y value for res" + res + " x=" + x + " y=" + y);
-		}
+		assert (x >= 0 && x <= res && y >= 0 && y <= res) : "wrong x/y value for res" + res + " x=" + x + " y=" + y;
 		count++;
-		short rc = buffer.getShort(2 * ((res - y) * (res + 1) + x));
-		return rc;
+		return buffer.getShort(2 * ((res - y) * (res + 1) + x));
 		
 	}
 

@@ -124,7 +124,7 @@ public class DEMTile {
 	}
 	
 	private void createBitStream(short[] realHeights) {
-		bits = new ByteArrayOutputStream(128); 
+		bits = new ByteArrayOutputStream(1024); 
 		heights = new int[realHeights.length];
 		// normalise the height matrix
 		for (int i = 0; i < realHeights.length; i++) {
@@ -134,7 +134,9 @@ public class DEMTile {
 				heights[i] = (realHeights[i] - baseHeight);
 		}
 		// all values in heights are now expected to be between 0 .. maxDeltaHeight
-		bs = new StringBuilder();
+		if (DEBUG) {
+			bs = new StringBuilder();
+		}
 		encodeDeltas();
 		// cleanup 
 		bs = null;
@@ -168,7 +170,9 @@ public class DEMTile {
 		ValPredicter encoder = null;
 		boolean writeFollower = false;
 		while (pos < heights.length) {
-			bs.setLength(0);
+			if (DEBUG) {
+				bs.setLength(0);
+			}
 			int n = pos % width;
 			int m = pos / width;
 			int hUpper = getHeight(n, m - 1);
@@ -211,7 +215,9 @@ public class DEMTile {
 				// plateau follower: predicted value is upper height 
 				v = h - hUpper;
 			}
-			bs.setLength(0);
+			if (DEBUG) {
+				bs.setLength(0);
+			}
 			encoder.write(v);
 			pos++;
 		}

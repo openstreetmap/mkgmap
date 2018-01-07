@@ -325,7 +325,8 @@ public class MapBuilder implements Configurable {
 				if (demPolygon != null) {
 					Area bbox = src.getBounds();
 					// the rectangle is a bit larger to avoid problems at tile boundaries
-					Rectangle2D r = new Rectangle2D.Double(bbox.getMinLong()-0.001, bbox.getMinLat()-0.001, bbox.getWidth()+0.002, bbox.getHeight()+0.002);
+					Rectangle2D r = new Rectangle2D.Double(bbox.getMinLong() - 2, bbox.getMinLat() - 2,
+							bbox.getWidth() + 4, bbox.getHeight() + 4);
 					demArea = new java.awt.geom.Area(r);
 					demArea.intersect(demPolygon);
 				} 
