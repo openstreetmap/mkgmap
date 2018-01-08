@@ -86,6 +86,10 @@ public class HGTConverter {
 		int col = (int) ((lon32 - minLon32) * FACTOR);
 
 		HGTReader rdr = readers[row][col];
+		if (rdr == null) {
+			// no reader : ocean or missing file
+			return outsidePolygonHeight;
+		}
 		int res = rdr.getRes();
 		rdr.prepRead();
 		if (res <= 0)
