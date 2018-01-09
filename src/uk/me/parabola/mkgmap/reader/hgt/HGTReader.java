@@ -77,7 +77,7 @@ public class HGTReader {
 				if (!f.exists()) {
 					synchronized (badDir) {
 						if (badDir.add(dir))
-							log.error(dir, "does not exist");
+							log.error("extracted path >" + dir + "< does not exist, check", dirsWithHGT);
 					}
 				}
 				if (f.isDirectory()) {
