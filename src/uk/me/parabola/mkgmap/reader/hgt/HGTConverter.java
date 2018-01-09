@@ -137,11 +137,9 @@ public class HGTConverter {
 	 * Try to free java heap memory allocated by the readers.
 	 */
 	public void freeMem() {
-		// if zipped hgt files are used we allocate buffers for each file on JAVA heap
-		// so, if we got an OutOfMemoryError  we can try to free readers
-		// this is expected to happen only for the overview map 
 		log.info("trying to free mem for hgt buffers");
-		for (int i = readers.length - 1; i > lastRow + 1; i--) {
+		// top to bottom
+		for (int i = readers.length - 1; i > lastRow; i--) {
 			for (HGTReader r : readers[i]) {
 				if (r != null) {
 					r.freeBuf();

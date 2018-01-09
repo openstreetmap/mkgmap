@@ -18,8 +18,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -31,7 +32,7 @@ import uk.me.parabola.log.Logger;
 import static java.nio.channels.FileChannel.MapMode.READ_ONLY;
 
 /**
- * Very simple code to read a single HGT file with SRTM data. Based on old code in class HGTDEM 
+ * Rather simple code to read a single HGT file with SRTM data. Based on old code in class HGTDEM 
  * in package uk.me.parabola.mkgmap.reader.dem which was removed in 2017.
  * @author Gerd Petermann
  *
@@ -47,7 +48,8 @@ public class HGTReader {
 	public boolean read;
 	private long count;
 
-	private final static Set<String> missing = new HashSet<>();
+	
+	private final static Map<String,Set<String>> missingMap = new HashMap<>();
 	private final static Set<String> badDir = new HashSet<>();
 	
 	
@@ -63,37 +65,38 @@ public class HGTReader {
 				lat < 0 ? "S" : "N", lat < 0 ? -lat : lat, 
 						lon < 0 ? "W" : "E", lon < 0 ? -lon : lon);
 		
-		String[] dirs = dirsWithHGT.split("[,]");
+ 		String[] dirs = dirsWithHGT.split("[,]");
 		fileName = name;
 		
 		String fName = ".";
-		boolean knwonAsMissing;
-		synchronized (missing) {
-			knwonAsMissing = missing.contains(name); 
+		boolean knwonAsMissing = false;
+		synchronized (missingMap) {
+			Set<String> missingSet = missingMap.get(dirsWithHGT);
+			if (missingSet != null)
+				knwonAsMissing = missingSet.contains(name);
 		}
 		if (!knwonAsMissing) {
 			for (String dir : dirs) {
+				dir = dir.trim();
 				File f = new File (dir);
 				if (!f.exists()) {
 					synchronized (badDir) {
 						if (badDir.add(dir))
-							log.error("extracted path >" + dir + "< does not exist, check", dirsWithHGT);
+							log.error("extracted path >" + dir + "< does not exist, check option dem:", dirsWithHGT);
 					}
+					continue;
 				}
 				if (f.isDirectory()) {
 					fName = Utils.joinPath(dir, name);
-					try (FileInputStream is = new FileInputStream(fName)) {
-						res = calcRes(is.getChannel().size());
-						if (res < 0) {
-							log.error("file " +  fName +  " has unexpected size " + is.getChannel().size() + " and is ignored");
-						} else {
-							buffer = is.getChannel().map(READ_ONLY, 0, is.getChannel().size());
-							read = true;
+					try (FileInputStream fis = new FileInputStream(fName)) {
+						res = calcRes(fis.getChannel().size(), fName);
+						if (res >= 0) {
+							path = fName;
 						}
 						break;
 					} catch (FileNotFoundException e) {
 					} catch (IOException e) {
-						log.error("failed to create buffer for file",fName);
+						log.error("failed to get size for file", fName);
 					}
 					fName += ".zip";
 					checkZip(fName, name); // try to find *.hgt.zip in dir that contains *.hgt
@@ -111,15 +114,20 @@ public class HGTReader {
 					return;
 				}
 			}
-			if (res <= 0) {
+			if (res <= 0 || path == null) {
 				res = -1;
-				synchronized (missing){
-					missing.add(name);	
+				path = null;
+				synchronized (missingMap){
+					Set<String> missingSet = missingMap.get(dirsWithHGT);
+					if (missingSet == null) { 
+						missingSet = new HashSet<>();
+						missingMap.put(dirsWithHGT, missingSet);
+					}
+					missingSet.add(name);
 				}
 				log.warn("file " + name + " not found. Is expected to cover sea.");
 			}
 		}
-		path = null;
 	}
 	
 	/**
@@ -131,10 +139,7 @@ public class HGTReader {
 		try(ZipFile zipFile = new ZipFile(fName)){
 			ZipEntry entry = zipFile.getEntry(name);
 			if (entry != null){
-				res = calcRes(entry.getSize());
-				if (res < 0) {
-					log.error("file " +  entry.getName() +  " has unexpected size " + entry.getSize() + " and is ignored");
-				}
+				res = calcRes(entry.getSize(), entry.getName());
 			}
 		} catch (FileNotFoundException e) {
 		} catch (IOException exp) {
@@ -148,15 +153,10 @@ public class HGTReader {
 	 * @param entry
 	 * @throws IOException
 	 */
-	private void extractFromZip(String fName, String name) {
-		
+	private void extractFromZip(String fName, String name) throws IOException {
 		try (ZipFile zipFile = new ZipFile(fName)) {
 			ZipEntry entry = zipFile.getEntry(name);
 			if (entry != null) {
-				if (count == 0)
-					log.info("allocating buffer for", fileName);
-				else 
-					log.info("re-allocating buffer for", fileName);
 				InputStream is = zipFile.getInputStream(entry);
 				log.info("extracting data for " + entry.getName() + " from " + zipFile.getName());
 				buffer = ByteBuffer.allocate((int) entry.getSize());
@@ -168,22 +168,20 @@ public class HGTReader {
 				}
 			}
 			read = true;
-		} catch (FileNotFoundException e) {
-			throw new MapFailedException("previously existing zip file is missing: " + fName);
-		} catch (IOException exp) {
-			log.error("failed to get size for file", name, "from", fName);
-		}
+		} 
 	}
 
 	/**
 	 * calculate the resolution of the hgt file. size should be exactly 2 * (res+1) * (res+1) 
 	 * @param size number of bytes
+	 * @param fname file name (for error possible message)
 	 * @return resolution (typically 1200 for 3'' or 3600 for 1'')
 	 */
-	private int calcRes(long size) {
+	private int calcRes(long size, String fname) {
 		long numVals = (long) Math.sqrt(size/2);
 		if (2 * numVals*numVals  == size)
 			return (int) (numVals - 1);
+		log.error("file", fname, "has unexpected size", size, "and is ignored");
 		return -1;
 	}
 
@@ -196,7 +194,7 @@ public class HGTReader {
 	 */
 	public short ele(int x, int y) {
 		if (!read && path != null) {
-			extractFromZip(path, fileName);
+			prepRead();
 		}
 		if (buffer == null)
 			return 0;
@@ -225,10 +223,6 @@ public class HGTReader {
 	public boolean freeBuf() {
 		if (buffer == null)
 			return false;
-		if (buffer instanceof MappedByteBuffer) {
-			// memory is not managed by GC
-			return false;
-		}
 		buffer = null;
 		read = false;
 		return true;
@@ -236,7 +230,25 @@ public class HGTReader {
 
 	public void prepRead() {
 		if (!read && path != null) {
-			extractFromZip(path, fileName);
+			try {
+				if (count == 0)
+					log.info("allocating buffer for", fileName);
+				else 
+					log.warn("re-allocating buffer for", fileName);
+				if (path.endsWith(".zip"))
+					extractFromZip(path, fileName);
+				else {
+					try (FileInputStream is = new FileInputStream(path)) {
+						buffer = is.getChannel().map(READ_ONLY, 0, is.getChannel().size());
+						read = true;
+					}
+				}
+			} catch (FileNotFoundException e) {
+				throw new MapFailedException("previously existing file is missing: " + path);
+			} catch (IOException e) {
+				log.error("failed to create buffer for file", path);
+			}
+
 		}
 	}
 }

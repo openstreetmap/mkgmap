@@ -21,6 +21,7 @@ import uk.me.parabola.mkgmap.reader.hgt.HGTConverter;
 public class DEMSection {
 	private byte unknown1 = 0;
 	private final int zoomLevel;
+	private final boolean lastLevel;
 	private final int pointsPerLat = 64;
 	private final int pointsPerLon = 64;
 	private int nonStdHeight;
@@ -43,8 +44,9 @@ public class DEMSection {
 	private int maxHeight = Integer.MIN_VALUE;
 	private List<DEMTile> tiles = new ArrayList<>();
 	
-	public DEMSection(int zoomLevel, Area bbox, HGTConverter hgtConverter, int pointDist) {
+	public DEMSection(int zoomLevel, Area bbox, HGTConverter hgtConverter, int pointDist, boolean lastLevel) {
 		this.zoomLevel = zoomLevel;
+		this.lastLevel = lastLevel;
 		
 		if (pointDist == -1) {
 			int res = 1200;
@@ -117,8 +119,7 @@ public class DEMSection {
 					dataLen += bsLen;
 				}
 			}
-			if (m > 1 && tilesLon > 10 && pointsDistanceLat > 50000) {
-				//TODO: this is a rather poor workaround to avoid an OutOfMemoryExeption 
+			if (lastLevel) {
 				hgtConverter.freeMem();
 			}
 		}

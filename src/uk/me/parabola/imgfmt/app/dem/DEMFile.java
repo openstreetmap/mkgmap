@@ -56,8 +56,9 @@ public class DEMFile extends ImgFile {
 		hgtConverter.setOutsidePolygonHeight(outsidePolygonHeight);
 
 		int zoom = 0;
+		int lastDist = pointDistances.get(pointDistances.size()-1); 
 		for (int pointDist : pointDistances) {
-			DEMSection section = new DEMSection(zoom++, area, hgtConverter, pointDist);
+			DEMSection section = new DEMSection(zoom++, area, hgtConverter, pointDist, pointDist == lastDist);
 			demHeader.addSection(section);
 		}
 		return;
