@@ -451,9 +451,9 @@ public class DEMTile {
 	private class ValPredicter {
 		private EncType encType;
 		private WrapType wrapType;
-		private int SumH;
-		private int SumL;
-		private int ElemCount;
+		private int sumH;
+		private int sumL;
+		private int elemCount;
 		private int hunit;
 		private final CalcType type;
 		private final int unitDelta;
@@ -584,14 +584,16 @@ public class DEMTile {
 			if (type == CalcType.CALC_STD) {
 					
 				// calculate threshold sum hybrid 
-				SumH += delta1 > 0 ? delta1 : -delta1;
+				sumH += delta1 > 0 ? delta1 : -delta1;
+				if (sumH + unitDelta  + 1 >= 0xffff)
+					sumH -= 0x10000;
 
 				// calculate threshold sum for length encoding
 				int workData = delta1;
-				if (ElemCount == 63) {
+				if (elemCount == 63) {
 					// special case
-					if (SumL > 0) { // pos. SumL
-						if ((SumL + 1) % 4 == 0) {
+					if (sumL > 0) { // pos. SumL
+						if ((sumL + 1) % 4 == 0) {
 							if (workData % 2 != 0)
 								workData--;
 						} else {
@@ -600,7 +602,7 @@ public class DEMTile {
 						}
 
 					} else { // neg. SumL
-						if ((SumL - 1) % 4 == 0) {
+						if ((sumL - 1) % 4 == 0) {
 							if (workData % 2 != 0)
 								workData++;
 						} else {
@@ -609,23 +611,24 @@ public class DEMTile {
 						}
 					}
 				}
-				int eval = evalSumSpec(SumL, ElemCount, workData);
-				SumL += eval;
+				int eval = evalSumSpec(sumL, elemCount, workData);
+				sumL += eval;
 
 				// now update elem counter
-				ElemCount++;
+				elemCount++;
 
-				if (ElemCount == 64) {
-					ElemCount = 32;
-					SumH = ((SumH - unitDelta) >> 1) - 1;
-					SumL /= 2;
-					if (SumL % 2 != 0) {
-						SumL++;
+				if (elemCount == 64) {
+					elemCount = 32;
+					sumH = ((sumH - unitDelta) >> 1) - 1;
+					
+					sumL /= 2;
+					if (sumL % 2 != 0) {
+						sumL++;
 					}
 				}
 
 				// calculate new hunit
-				hunit = normalizeHUnit((unitDelta + SumH + 1) / (ElemCount + 1));
+				hunit = normalizeHUnit((unitDelta + sumH + 1) / (elemCount + 1));
 
 				// finally determine encode type for next value
 				wrapType = WrapType.WRAP_0;
@@ -633,62 +636,68 @@ public class DEMTile {
 					encType = EncType.HYBRID;
 				} else {
 					encType = EncType.LEN;
-					if (SumL > 0)
+					if (sumL > 0)
 						wrapType = WrapType.WRAP_1;
 				}
 			} else if (type == CalcType.CALC_PLATEAU_ZERO) {
 				// calculate threshold sum hybrid 
-				SumH += delta1 > 0 ? delta1 : 1 - delta1; // different to standard
-				// calculate threshold sum for length encoding
-				SumL += delta1 <= 0 ? -1 : 1;
-				ElemCount++;
+				sumH += delta1 > 0 ? delta1 : 1 - delta1; // different to standard
+				if (sumH + unitDelta  + 1 >= 0xffff)
+					sumH -= 0x10000;
 				
-				if (ElemCount == 64) {
-					ElemCount = 32;
-					SumH = ((SumH - unitDelta) >> 1) - 1;
-					SumL /= 2;
-					if (SumL % 2 != 0) {
-						SumL++;
+				// calculate threshold sum for length encoding
+				sumL += delta1 <= 0 ? -1 : 1;
+				elemCount++;
+				
+				if (elemCount == 64) {
+					elemCount = 32;
+					sumH = ((sumH - unitDelta) >> 1) - 1;
+					sumL /= 2;
+					if (sumL % 2 != 0) {
+						sumL++;
 					}
 				}
 
 				// calculate new hunit
-				hunit = normalizeHUnit((unitDelta + SumH + 1 - ElemCount / 2) / (ElemCount + 1));
+				hunit = normalizeHUnit((unitDelta + sumH + 1 - elemCount / 2) / (elemCount + 1));
 				// finally determine encode type for next value
 				wrapType = WrapType.WRAP_0;
 				if (hunit > 0) {
 					encType = EncType.HYBRID;
 				} else {
 					encType = EncType.LEN;
-					if (SumL >= 0)
+					if (sumL >= 0)
 						wrapType = WrapType.WRAP_1;
 				}
 			} else {
 				assert type == CalcType.CALC_PLATEAU_NON_ZERO;
 				// calculate threshold sum hybrid 
-				SumH += delta1 < 0 ? -delta1 : delta1; // simple absolute sum 
+				sumH += delta1 < 0 ? -delta1 : delta1; // simple absolute sum
+				if (sumH + unitDelta  + 1 >= 0xffff)
+					sumH -= 0x10000;
+
 				// calculate threshold sum for length encoding
-				SumL += delta1 <= 0 ? -1 : 1;
-				ElemCount++;
+				sumL += delta1 <= 0 ? -1 : 1;
+				elemCount++;
 				
-				if (ElemCount == 64) {
-					ElemCount = 32;
-					SumH = ((SumH - unitDelta) >> 1) - 1;
-					SumL /= 2;
-					if (SumL % 2 != 0) {
-						SumL--; // different to CALC_PLATEAU_ZERO !
+				if (elemCount == 64) {
+					elemCount = 32;
+					sumH = ((sumH - unitDelta) >> 1) - 1;
+					sumL /= 2;
+					if (sumL % 2 != 0) {
+						sumL--; // different to CALC_PLATEAU_ZERO !
 					}
 				}
 
 				// calculate new hunit
-				hunit = normalizeHUnit((unitDelta + SumH + 1) / (ElemCount + 1));
+				hunit = normalizeHUnit((unitDelta + sumH + 1) / (elemCount + 1));
 				// finally determine encode type for next value
 				wrapType = WrapType.WRAP_0;
 				if (hunit > 0) {
 					encType = EncType.HYBRID;
 				} else {
 					encType = EncType.LEN;
-					if (SumL <= 0)
+					if (sumL <= 0)
 						wrapType = WrapType.WRAP_2;
 				}
 			}
