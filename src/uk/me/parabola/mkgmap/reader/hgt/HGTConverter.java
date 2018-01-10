@@ -13,6 +13,7 @@
 package uk.me.parabola.mkgmap.reader.hgt;
 
 import java.awt.geom.Rectangle2D;
+
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.log.Logger;
@@ -25,6 +26,7 @@ import uk.me.parabola.log.Logger;
 public class HGTConverter {
 	private static final Logger log = Logger.getLogger(HGTConverter.class);
 	final static double FACTOR = 45.0d / (1<<29);
+	final static double NO_VAL = Double.NEGATIVE_INFINITY;
 	short[] noHeights = { HGTReader.UNDEF };
 	private HGTReader[][] readers;
 	private final int minLat32;
@@ -109,21 +111,9 @@ public class HGTConverter {
 		int hLB = rdr.ele(xLeft, yBottom);
 		int hRB = rdr.ele(xRight, yBottom);
 		lastRow = row;
-		double rc = interpolatedHeightInNormatedRectangle(x1-xLeft, y1-yBottom, hLT, hRT, hRB, hLB);
-		if (rc == HGTReader.UNDEF) {
-			int sum = 0;
-			int valid = 0;
-			int[] heights = { hLT, hRT, hLB, hRB };
-			for (int h : heights) {
-				if (h == HGTReader.UNDEF)
-					continue;
-				valid++;
-				sum += h;	
-			}
-			if(valid >= 2)
-				rc = Math.round((double)sum/valid);
-		}
-		short rc2 = (short) Math.round(rc); 
+		
+		double rc = interpolatedHeight(x1-xLeft, y1-yBottom, hLT, hRT, hRB, hLB);
+		short rc2 = (rc != NO_VAL) ? ((short) Math.round(rc)) : HGTReader.UNDEF; 
 //		double lon = lon32 * FACTOR;
 //		double lat = lat32 * FACTOR;
 //		System.out.println(String.format("%.7f %.7f: (%.2f) %d", lat,lon,rc,rc2));
@@ -147,10 +137,10 @@ public class HGTConverter {
 			}
 		}
 	}
-	
+
 	/**
 	 * Interpolate the height of point p from the 4 closest values in the hgt matrix.
-	 * Code is a copy from Frank Stinners program BuildDEMFile (Hgtreader.cs) 
+	 * Bilinear interpolation with single node restore
 	 * @param qx value from 0 .. 1 gives relative x position in matrix 
 	 * @param qy value from 0 .. 1 gives relative y position in matrix
 	 * @param hlt height left top
@@ -159,42 +149,67 @@ public class HGTConverter {
 	 * @param hlb height left bottom
 	 * @return the interpolated height
 	 */
-	double interpolatedHeightInNormatedRectangle(double qx, double qy, int hlt, int hrt, int hrb, int hlb) {
-		if (hlb == HGTReader.UNDEF || hrt == HGTReader.UNDEF)
-			return HGTReader.UNDEF; // keine Berechnung möglich
-
-		/*
-		 * In welchem Dreieck liegt der Punkt? oben +-/ |/
-		 * 
-		 * unten /| /-+
-		 */
-		if (qy >= qx) { // oberes Dreieck aus hlb, hrt und hlt (Anstieg py/px
-						// ist größer als height/width)
-
-			if (hlt == HGTReader.UNDEF)
-				return HGTReader.UNDEF;
-
-			// hlt als Koordinatenursprung normieren; mit hrt und hlb 3 Punkte
-			// einer Ebene (3-Punkt-Gleichung)
-			hrt -= hlt;
-			hlb -= hlt;
-			qy -= 1;
-
-			return hlt + qx * hrt - qy * hlb;
-
-		} else { // unteres Dreieck aus hlb, hrb und hrt
-
-			if (hrb == HGTReader.UNDEF)
-				return HGTReader.UNDEF;
-
-			// hrb als Koordinatenursprung normieren; mit hrt und hlb 3 Punkte
-			// einer Ebene (3-Punkt-Gleichung)
-			hrt -= hrb;
-			hlb -= hrb;
-			qx -= 1;
-
-			return hrb - qx * hlb + qy * hrt;
+	private static double interpolatedHeight(double qx, double qy, int hlt, int hrt, int hrb, int hlb) {
+		// extrapolate single node height if requested point is not near
+		// for multiple missing nodes, return the height of the neares node
+		if (hlb == HGTReader.UNDEF) {
+			if (hrb == HGTReader.UNDEF || hlt == HGTReader.UNDEF || hrt == HGTReader.UNDEF) {
+				if (hrt != HGTReader.UNDEF && hlt != HGTReader.UNDEF && qy > 0.5D)	//top edge
+					return (1.0D - qx)*hlt + qx*hrt;
+				if (hrt != HGTReader.UNDEF && hrb != HGTReader.UNDEF && qx > 0.5D)	//right edge
+					return (1.0D - qy)*hrb + qy*hrt;
+				//if (hlt != HGTReader.UNDEF && hrb != HGTReader.UNDEF && qx + qy > 0.5D && gx + qy < 1.5D)	//diagonal
+				// nearest value
+				return (double)((qx < 0.5D)? ((qy < 0.5D)? hlb: hlt): ((qy < 0.5D)? hrb: hrt));
+			}
+			if (qx + qy < 0.4D)	// point is near missing value
+				return NO_VAL;
+			hlb = hlt + hrb - hrt;
+		} else if (hrt == HGTReader.UNDEF) {
+			if (hlb == HGTReader.UNDEF || hrb == HGTReader.UNDEF || hlt == HGTReader.UNDEF) {
+				if (hlb != HGTReader.UNDEF && hrb != HGTReader.UNDEF && qy < 0.5D)	//lower edge
+					return (1.0D - qx)*hlb + qx*hrb;
+				if (hlb != HGTReader.UNDEF && hlt != HGTReader.UNDEF && qx < 0.5D)	//left edge
+					return (1.0D - qy)*hlb + qy*hlt;
+				//if (hlt != HGTReader.UNDEF && hrb != HGTReader.UNDEF && qx + qy > 0.5D && gx + qy < 1.5D)	//diagonal
+				// nearest value
+				return (double)((qx < 0.5D)? ((qy < 0.5D)? hlb: hlt): ((qy < 0.5D)? hrb: hrt));
+			}
+			if (qx + qy > 1.6D)	// point is near missing value
+				return NO_VAL;
+			hrt = hlt + hrb - hlb;
+		} else if (hrb == HGTReader.UNDEF) {
+			if (hlb == HGTReader.UNDEF || hlt == HGTReader.UNDEF || hrt == HGTReader.UNDEF) {
+				if (hlt != HGTReader.UNDEF && hrt != HGTReader.UNDEF && qy > 0.5D)	//top edge
+					return (1.0D - qx)*hlt + qx*hrt;
+				if (hlt != HGTReader.UNDEF && hlb != HGTReader.UNDEF && qx < 0.5D)	//left edge
+					return (1.0D - qy)*hlb + qy*hlt;
+				//if (hlb != HGTReader.UNDEF && hrt != HGTReader.UNDEF && qy > qx - 0.5D && qy < qx + 0.5D)	//diagonal
+				// nearest value
+				return (double)((qx < 0.5D)? ((qy < 0.5D)? hlb: hlt): ((qy < 0.5D)? hrb: hrt));
+			}
+			if (qy < qx - 0.4D)	// point is near missing value 
+				return NO_VAL;
+			hrb = hlb + hrt - hlt;
+		} else if (hlt == HGTReader.UNDEF) {
+			if (hlb == HGTReader.UNDEF || hrb == HGTReader.UNDEF || hrt == HGTReader.UNDEF) {
+				if (hrb != HGTReader.UNDEF && hlb != HGTReader.UNDEF && qy < 0.5D)	//lower edge
+					return (1.0D - qx)*hlb + qx*hrb;
+				if (hrb != HGTReader.UNDEF && hrt != HGTReader.UNDEF && qx > 0.5D)	//right edge
+					return (1.0D - qy)*hrb + qy*hrt;
+				//if (hlb != HGTReader.UNDEF && hrt != HGTReader.UNDEF && qy > qx - 0.5D && qy < qx + 0.5D)	//diagonal
+				// nearest value
+				return (double)((qx < 0.5D)? ((qy < 0.5D)? hlb: hlt): ((qy < 0.5D)? hrb: hrt));
+			}
+			if (qy > qx + 0.6D)	// point is near missing value
+				return NO_VAL;
+			hlt = hlb + hrt - hrb;
 		}
+
+		// bilinera interpolation
+		double hxt = (1.0D - qx)*hlt + qx*hrt;
+		double hxb = (1.0D - qx)*hlb + qx*hrb;
+		return (1.0D - qy)*hxb + qy*hxt;
 	}
 
 	public void stats() {
