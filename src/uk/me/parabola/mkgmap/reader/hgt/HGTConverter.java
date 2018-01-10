@@ -26,7 +26,6 @@ import uk.me.parabola.log.Logger;
 public class HGTConverter {
 	private static final Logger log = Logger.getLogger(HGTConverter.class);
 	final static double FACTOR = 45.0d / (1<<29);
-	final static double NO_VAL = Double.NEGATIVE_INFINITY;
 	short[] noHeights = { HGTReader.UNDEF };
 	private HGTReader[][] readers;
 	private final int minLat32;
@@ -112,8 +111,7 @@ public class HGTConverter {
 		int hRB = rdr.ele(xRight, yBottom);
 		lastRow = row;
 		
-		double rc = interpolatedHeight(x1-xLeft, y1-yBottom, hLT, hRT, hRB, hLB);
-		short rc2 = (rc != NO_VAL) ? ((short) Math.round(rc)) : HGTReader.UNDEF; 
+		short rc2 = interpolatedHeight(x1-xLeft, y1-yBottom, hLT, hRT, hRB, hLB);
 //		double lon = lon32 * FACTOR;
 //		double lat = lat32 * FACTOR;
 //		System.out.println(String.format("%.7f %.7f: (%.2f) %d", lat,lon,rc,rc2));
@@ -149,67 +147,67 @@ public class HGTConverter {
 	 * @param hlb height left bottom
 	 * @return the interpolated height
 	 */
-	private static double interpolatedHeight(double qx, double qy, int hlt, int hrt, int hrb, int hlb) {
+	private static short interpolatedHeight(double qx, double qy, int hlt, int hrt, int hrb, int hlb) {
 		// extrapolate single node height if requested point is not near
 		// for multiple missing nodes, return the height of the neares node
 		if (hlb == HGTReader.UNDEF) {
 			if (hrb == HGTReader.UNDEF || hlt == HGTReader.UNDEF || hrt == HGTReader.UNDEF) {
 				if (hrt != HGTReader.UNDEF && hlt != HGTReader.UNDEF && qy > 0.5D)	//top edge
-					return (1.0D - qx)*hlt + qx*hrt;
+					return (short) Math.round((1.0D - qx) * hlt + qx * hrt);
 				if (hrt != HGTReader.UNDEF && hrb != HGTReader.UNDEF && qx > 0.5D)	//right edge
-					return (1.0D - qy)*hrb + qy*hrt;
+					return (short) Math.round((1.0D - qy) * hrb + qy * hrt);
 				//if (hlt != HGTReader.UNDEF && hrb != HGTReader.UNDEF && qx + qy > 0.5D && gx + qy < 1.5D)	//diagonal
 				// nearest value
-				return (double)((qx < 0.5D)? ((qy < 0.5D)? hlb: hlt): ((qy < 0.5D)? hrb: hrt));
+				return (short)((qx < 0.5D)? ((qy < 0.5D)? hlb: hlt): ((qy < 0.5D)? hrb: hrt));
 			}
 			if (qx + qy < 0.4D)	// point is near missing value
-				return NO_VAL;
+				return HGTReader.UNDEF;
 			hlb = hlt + hrb - hrt;
 		} else if (hrt == HGTReader.UNDEF) {
 			if (hlb == HGTReader.UNDEF || hrb == HGTReader.UNDEF || hlt == HGTReader.UNDEF) {
 				if (hlb != HGTReader.UNDEF && hrb != HGTReader.UNDEF && qy < 0.5D)	//lower edge
-					return (1.0D - qx)*hlb + qx*hrb;
+					return (short) Math.round((1.0D - qx) * hlb + qx * hrb);
 				if (hlb != HGTReader.UNDEF && hlt != HGTReader.UNDEF && qx < 0.5D)	//left edge
-					return (1.0D - qy)*hlb + qy*hlt;
+					return (short) Math.round((1.0D - qy) * hlb + qy * hlt);
 				//if (hlt != HGTReader.UNDEF && hrb != HGTReader.UNDEF && qx + qy > 0.5D && gx + qy < 1.5D)	//diagonal
 				// nearest value
-				return (double)((qx < 0.5D)? ((qy < 0.5D)? hlb: hlt): ((qy < 0.5D)? hrb: hrt));
+				return (short) ((qx < 0.5D) ? ((qy < 0.5D) ? hlb : hlt) : ((qy < 0.5D) ? hrb : hrt));
 			}
 			if (qx + qy > 1.6D)	// point is near missing value
-				return NO_VAL;
+				return HGTReader.UNDEF;
 			hrt = hlt + hrb - hlb;
 		} else if (hrb == HGTReader.UNDEF) {
 			if (hlb == HGTReader.UNDEF || hlt == HGTReader.UNDEF || hrt == HGTReader.UNDEF) {
 				if (hlt != HGTReader.UNDEF && hrt != HGTReader.UNDEF && qy > 0.5D)	//top edge
-					return (1.0D - qx)*hlt + qx*hrt;
+					return (short) Math.round((1.0D - qx) * hlt + qx * hrt);
 				if (hlt != HGTReader.UNDEF && hlb != HGTReader.UNDEF && qx < 0.5D)	//left edge
-					return (1.0D - qy)*hlb + qy*hlt;
+					return (short) Math.round((1.0D - qy) * hlb + qy * hlt);
 				//if (hlb != HGTReader.UNDEF && hrt != HGTReader.UNDEF && qy > qx - 0.5D && qy < qx + 0.5D)	//diagonal
 				// nearest value
-				return (double)((qx < 0.5D)? ((qy < 0.5D)? hlb: hlt): ((qy < 0.5D)? hrb: hrt));
+				return (short) ((qx < 0.5D) ? ((qy < 0.5D) ? hlb : hlt) : ((qy < 0.5D) ? hrb : hrt));
 			}
 			if (qy < qx - 0.4D)	// point is near missing value 
-				return NO_VAL;
+				return HGTReader.UNDEF;
 			hrb = hlb + hrt - hlt;
 		} else if (hlt == HGTReader.UNDEF) {
 			if (hlb == HGTReader.UNDEF || hrb == HGTReader.UNDEF || hrt == HGTReader.UNDEF) {
 				if (hrb != HGTReader.UNDEF && hlb != HGTReader.UNDEF && qy < 0.5D)	//lower edge
-					return (1.0D - qx)*hlb + qx*hrb;
+					return (short) Math.round((1.0D - qx) * hlb + qx * hrb);
 				if (hrb != HGTReader.UNDEF && hrt != HGTReader.UNDEF && qx > 0.5D)	//right edge
-					return (1.0D - qy)*hrb + qy*hrt;
+					return (short) Math.round((1.0D - qy) * hrb + qy * hrt);
 				//if (hlb != HGTReader.UNDEF && hrt != HGTReader.UNDEF && qy > qx - 0.5D && qy < qx + 0.5D)	//diagonal
 				// nearest value
-				return (double)((qx < 0.5D)? ((qy < 0.5D)? hlb: hlt): ((qy < 0.5D)? hrb: hrt));
+				return (short) ((qx < 0.5D) ? ((qy < 0.5D) ? hlb : hlt) : ((qy < 0.5D) ? hrb : hrt));
 			}
 			if (qy > qx + 0.6D)	// point is near missing value
-				return NO_VAL;
+				return HGTReader.UNDEF;
 			hlt = hlb + hrt - hrb;
 		}
 
 		// bilinera interpolation
 		double hxt = (1.0D - qx)*hlt + qx*hrt;
 		double hxb = (1.0D - qx)*hlb + qx*hrb;
-		return (1.0D - qy)*hxb + qy*hxt;
+		return (short) Math.round((1.0D - qy) * hxb + qy * hxt);
 	}
 
 	public void stats() {
