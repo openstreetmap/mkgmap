@@ -26,6 +26,10 @@ device in USB mass storage mode).  It can be used on ready
 compiled img files, if the input files are not already compiled
 then they are compiled first and then the gmapsupp is created.
 
+;--gmapi
+: 	Create a directory in the "gmapi" format required by Mac applications. Can 
+also be used for Windows programs.
+
 ;-c filename
 ;--read-config=filename
 : 	The given file is opened and each line is an option setting of
@@ -446,12 +450,13 @@ Note that in resolution 24 the filter is not used.
 :   The option expects a comma separated list of paths to directories or zip 
 files containing *.hgt files (SRTM). Directories are searched for *.hgt files 
 and also for *.hgt.zip files. Zipped files are supported but unzipped files 
-are preferred because they require less memory. Supported formats contain 
+are preferred because they require less memory. Typical hgt files contain 
 either 1'' or 3'' data. 3'' files have 2 * 1201 * 1201 = 2.884.802 bytes, 1'' 
-files have 2 * 3601 * 3601 = 25.934.402 bytes. The list is searched in the 
-given order, so if you want to use 1'' files make sure that they are found 
-first. There are different sources for *.hgt files, some have so called voids
-which are areas without data. Those should be avoided.  
+files have 2 * 3601 * 3601 = 25.934.402 bytes. Other files are supported as 
+long as the formular sqrt(size/2) gives an integer value. The list is searched 
+in the given order, so if you want to use 1'' files make sure that they are 
+found first. There are different sources for *.hgt files, some have so called 
+voids which are areas without data. Those should be avoided.
 <p>
 ;--dem-dists=number[,number]
 :   If given, the option specifies the resolution(s) or zoom level for the DEM 
@@ -809,9 +814,14 @@ compared with these patterns and those that match are deleted.
 an overview map.
 <p>
 ;--show-profiles=1
-: 	Sets a flag in tdb file which marks set mapset as having contour 
-lines and allows showing profile in MapSource. Default is 0 
-which means disabled. 
+: 	Sets a flag in tdb file. The meaning depends on the availability of DEM 
+data (see "Hill Shading (DEM) options"). 
+: 	Without DEM data the flag enables profile calculation in MapSource or 
+Basecamp based on information from contour lines. 
+: 	If DEM data is available the profile is calculated with that 
+information and the flag only changes the status line to show the height when 
+you hover over an area with valid DEM data. 
+: 	The default is show-profiles=0.
 <p>
 ;--draw-priority=25
 : 	When two maps cover the same area, this option controls what
