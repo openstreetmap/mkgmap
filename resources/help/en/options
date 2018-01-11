@@ -460,7 +460,7 @@ Hill Shading (DEM) options:
 	distance between two DEM points. Higher disances mean lower resolution and 
 	thus fewer bytes in the map. Reasonable values for the highest resolution 
 	are somewhere between 1648 and 5520, 3312 is often used.
-	Example which should work with levels="0:24, 1:22, 2:20, 3:18, 4:16":
+	Example which should work with levels="0:24, 1:22, 2:20, 3:18":
 	--dem-dists=3312,13248,26512,53024
 	This was found in a Garmin Demo map for transalpin data created 2009.
  
