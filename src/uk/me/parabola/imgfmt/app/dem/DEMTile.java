@@ -13,6 +13,7 @@
 package uk.me.parabola.imgfmt.app.dem;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
 
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -94,10 +95,13 @@ public class DEMTile {
 			}
 		}
 		if (min == Integer.MAX_VALUE) {
-			// all values are invalid -> don't encode anything
+			// all values are invalid 
 			encodingType = 2;
 			min = 0;
-			max = 0;
+			max = 1;
+			// seems we still need a bit stream in this case
+			realHeights = new short[width * height];
+			Arrays.fill(realHeights, HGTReader.UNDEF);
 		} else if (countInvalid > 0) {
 			// some values are invalid
 			encodingType = 2; // don't display highest value 
