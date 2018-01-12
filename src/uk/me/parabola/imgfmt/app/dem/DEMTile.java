@@ -102,11 +102,13 @@ public class DEMTile {
 			// some values are invalid
 			encodingType = 2; // don't display highest value 
 			max++;
-			section.setHasExtra(true);
 		} else {
 			// all height values are valid
 			encodingType = 0;
 		}
+		if (encodingType != 0)
+			section.setHasExtra(true);
+
 		this.baseHeight = min;
 		this.maxDeltaHeight = max - min;
 		if (min == max) {
