@@ -49,15 +49,11 @@ public class DEMSection {
 		this.lastLevel = lastLevel;
 		
 		if (pointDist == -1) {
-			int res = 1200;
-			if (hgtConverter.getHighestRes() == 3600)
-				res = 3600;
-			this.pointsDistanceLat = (int) ((1 << 29) / (res * 45));
-			this.pointsDistanceLon = (int) ((1 << 29) / (res * 45));
-		} else {
-			this.pointsDistanceLat = pointDist;
-			this.pointsDistanceLon = pointDist;
+			int res = (hgtConverter.getHighestRes() > 0) ? hgtConverter.getHighestRes() : 1200;
+			pointDist = (int) ((1 << 29) / (res * 45));
 		}
+		this.pointsDistanceLat = pointDist;
+		this.pointsDistanceLon = pointDist;
 		
 		this.top = bbox.getMaxLat() * 256;
 		this.left = bbox.getMinLong() * 256;
