@@ -304,6 +304,10 @@ public class FileNode implements ImgChannel, FileLink {
 		outerSync = syncable;
 	}
 
+	public long getSize() {
+		return dirent.getSize();
+	}
+
 	/**
 	 * Write out any unsaved data to disk.
 	 *

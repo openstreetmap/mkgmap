@@ -22,6 +22,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.FileExistsException;
@@ -31,6 +32,9 @@ import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
+
+import static uk.me.parabola.imgfmt.fs.DirectoryEntry.ENTRY_SIZE;
+import static uk.me.parabola.imgfmt.fs.DirectoryEntry.SLOTS_PER_ENTRY;
 
 /**
  * The img file is really a filesystem containing several files.
@@ -51,6 +55,7 @@ public class ImgFS implements FileSystem {
 
 	// The header contains general information.
 	private ImgHeader header;
+	private FileSystemParam fsparam;
 
 	// There is only one directory that holds all filename and block allocation
 	// information.
@@ -63,7 +68,11 @@ public class ImgFS implements FileSystem {
 	private static final long ENTRY_BLOCK_SIZE = 512L;
 	private BlockManager headerBlockManager;
 
-	private byte xorByte;	// if non-zero, all bytes are XORed with this
+	// Open files for write
+	private final List<FileNode> openNodes = new ArrayList<>();
+
+	// if non-zero, all bytes are XORed with this
+	private byte xorByte;
 
 	/**
 	 * Private constructor, use the static {@link #createFs} and {@link #openFs}
@@ -146,7 +155,9 @@ public class ImgFS implements FileSystem {
 	public ImgChannel create(String name) throws FileExistsException {
 		Dirent dir = directory.create(name, fileBlockManager);
 
-		return new FileNode(file, dir, "w");
+		FileNode node = new FileNode(file, dir, "w");
+		openNodes.add(node);
+		return node;
 	}
 
 	/**
@@ -182,7 +193,9 @@ public class ImgFS implements FileSystem {
 					throw new FileNotFoundException("Attempt to duplicate a file name");
 				}
 			}
-			return new FileNode(file, ent, "w");
+			FileNode node = new FileNode(file, ent, "w");
+			openNodes.add(node);
+			return node;
 		} else {
 			throw new IllegalArgumentException("Invalid mode given");
 		}
@@ -209,16 +222,6 @@ public class ImgFS implements FileSystem {
 		return directory.getEntries();
 	}
 
-	public FileSystemParam fsparam() {
-		return header.getParams();
-	}
-
-	public void fsparam(FileSystemParam param) {
-		int reserved = param.getReservedDirectoryBlocks() + 2;
-		fileBlockManager.setCurrentBlock(reserved);
-		headerBlockManager.setMaxBlock(reserved);
-	}
-
 	/**
 	 * Sync with the underlying file.  All unwritten data is written out to
 	 * the underlying file.
@@ -229,9 +232,85 @@ public class ImgFS implements FileSystem {
 		if (readOnly)
 			return;
 
+		if (fileBlockManager.getMaxBlockAllocated() == 0) {
+			System.out.println("NEW imgfs sync");
+			newSync();
+			return;
+		}
+
+		System.out.println("OLD imgfs sync");
 		header.setNumBlocks(fileBlockManager.getMaxBlockAllocated());
 		header.sync();
 		directory.sync();
+	}
+
+	/** TEMP: separate out old and new ways */
+	private void newSync() throws IOException {
+		FileSystemParam param = fsparam;
+		int totalBlocks = calcBlockParam(param);
+
+		fileBlockManager.setBlockSize(param.getBlockSize());
+		headerBlockManager.setBlockSize(param.getBlockSize());
+		file.position(param.getReservedDirectoryBlocks() * param.getBlockSize());
+
+		fileBlockManager.setCurrentBlock(param.getReservedDirectoryBlocks());
+		for (FileNode n : openNodes) {
+			System.out.printf("closing pos %x\n", file.position());
+			n.close();
+		}
+
+		header.createHeader(param);
+		header.setNumBlocks(totalBlocks);
+		header.sync();
+		directory.sync();
+	}
+
+	private int calcBlockParam(FileSystemParam param) {
+		int bestBlockSize = 0;
+		int reserved = 0;
+		int sizeInBlocks = 0;
+		int bestSize = Integer.MAX_VALUE;
+
+		for (int blockSize = param.getBlockSize(); blockSize < (1 << 24); blockSize <<= 1) {
+			int headerSlotsRequired = 1;  // for the top level directory entry
+			int fileBlocks = 0;
+
+			for (FileNode fn : openNodes) {
+				long len = fn.getSize();
+
+				// Blocks required for this file
+				int nBlocks = (int) ((len + blockSize - 1) / blockSize);
+				fileBlocks += nBlocks;
+
+				// Now we calculate how many directory blocks we need, you have
+				// to round up as files do not share directory blocks.
+				headerSlotsRequired += (nBlocks + SLOTS_PER_ENTRY - 1) / SLOTS_PER_ENTRY;
+			}
+
+			// Header blocks include the blocks before the directory.
+			int requiredSlots = param.getDirectoryStartEntry() + headerSlotsRequired;
+			int headerBlocks = (requiredSlots * ENTRY_SIZE + blockSize - 1) / blockSize;
+			int totalBlocks = headerBlocks + fileBlocks;
+			int size = totalBlocks * blockSize;
+			System.out.printf("bs=%d, whole size=%d, hb=%d, fb=%d, blocks=%d\n", blockSize, size,
+					headerBlocks, fileBlocks, totalBlocks);
+
+			if (totalBlocks > 0xfffe)
+				continue;
+
+			if (size > bestSize)
+				break;
+
+			bestBlockSize = blockSize;
+			reserved = headerBlocks;
+			sizeInBlocks = fileBlocks + headerBlocks;
+			bestSize = size;
+		}
+		System.out.printf("Best block size: %d sizeInBlocks=%d, reserved=%d\n", bestBlockSize, sizeInBlocks, reserved);
+
+		param.setBlockSize(bestBlockSize);
+		param.setReservedDirectoryBlocks(reserved);
+		return sizeInBlocks;
 	}
 
 	/**
@@ -253,6 +332,10 @@ public class ImgFS implements FileSystem {
 		}
 	}
 
+	public FileSystemParam fsparam() {
+		return fsparam;
+	}
+
 	/**
 	 * Set up and ImgFS that has just been created.
 	 *
@@ -263,6 +346,8 @@ public class ImgFS implements FileSystem {
 	 */
 	private void createInitFS(FileChannel chan, FileSystemParam params) throws FileNotWritableException {
 		readOnly = false;
+
+		this.fsparam = params;
 
 		// The block manager allocates blocks for files.
 		headerBlockManager = new BlockManager(params.getBlockSize(), 0);
@@ -315,13 +400,13 @@ public class ImgFS implements FileSystem {
 
 		header = new ImgHeader(null);
 		header.setHeader(headerBuf);
-		FileSystemParam params = header.getParams();
+		fsparam = header.getParams();
 
-		BlockManager headerBlockManager = new BlockManager(params.getBlockSize(), 0);
-		headerBlockManager.setMaxBlock(params.getReservedDirectoryBlocks());
+		BlockManager headerBlockManager = new BlockManager(fsparam.getBlockSize(), 0);
+		headerBlockManager.setMaxBlock(fsparam.getReservedDirectoryBlocks());
 
-		directory = new Directory(headerBlockManager, params.getDirectoryStartEntry());
-		directory.setStartPos(params.getDirectoryStartEntry() * ENTRY_BLOCK_SIZE);
+		directory = new Directory(headerBlockManager, fsparam.getDirectoryStartEntry());
+		directory.setStartPos(fsparam.getDirectoryStartEntry() * ENTRY_BLOCK_SIZE);
 
 		Dirent ent = directory.create(DIRECTORY_FILE_NAME, headerBlockManager);
 		FileNode f = new FileNode(chan, ent, "r");

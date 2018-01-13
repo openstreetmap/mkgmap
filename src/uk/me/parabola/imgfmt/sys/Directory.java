@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.Utils;
@@ -71,7 +72,7 @@ class Directory {
 			throw new FileExistsException("File " + name + " already exists");
 
 		Dirent ent;
-		if (name.equals(ImgFS.DIRECTORY_FILE_NAME)) {
+		if (Objects.equals(name, ImgFS.DIRECTORY_FILE_NAME)) {
 			ent = new HeaderDirent(name, blockManager);
 		} else {
 			ent = new Dirent(name, blockManager);
@@ -95,7 +96,7 @@ class Directory {
 
 		chan.position(startPos);
 		Dirent current = null;
-		while ((chan.read(buf)) > 0) {
+		while (chan.read(buf) > 0) {
 			buf.flip();
 			if(xorByte != 0) {
 				byte[] bufBytes = buf.array();
@@ -139,35 +140,14 @@ class Directory {
 	 */
 	public void sync() throws IOException {
 
-		// The first entry can't really be written until the rest of the directory is
-		// so we have to step through once to calculate the size and then again
-		// to write it out.
-		int headerEntries = 0;
-		for (DirectoryEntry dir : entries.values()) {
-			Dirent ent = (Dirent) dir;
-			log.debug("ent size", ent.getSize());
-			int n = ent.numberHeaderBlocks();
-			headerEntries += n;
-		}
-
 		// Save the current position
 		long dirPosition = chan.position();
 		int blockSize = headerBlockManager.getBlockSize();
 
-		// Get the number of blocks required for the directory entry representing the header.
-		// First calculate the number of blocks required for the directory entries.
-		int headerBlocks = (int) Math.ceil((startEntry + 1.0 + headerEntries) * DirectoryEntry.ENTRY_SIZE / blockSize);
-		int forHeader = (headerBlocks + DirectoryEntry.ENTRY_SIZE - 1)/DirectoryEntry.ENTRY_SIZE;
-
-		log.debug("header blocks needed", forHeader);
-
-		// There is nothing really wrong with larger values (perhaps, I don't
-		// know for sure!) but the code is written to make it 1, so make sure that it is.
-		assert forHeader == 1;
+		// Skip the header/directory entry for now
+		chan.position(dirPosition + DirectoryEntry.ENTRY_SIZE);
 
 		// Write the blocks that will will contain the header blocks.
-		chan.position(dirPosition + (long) forHeader * DirectoryEntry.ENTRY_SIZE);
-
 		for (DirectoryEntry dir : entries.values()) {
 			Dirent ent = (Dirent) dir;
 
@@ -178,19 +158,11 @@ class Directory {
 			}
 		}
 
-		long end = (long) blockSize * headerBlockManager.getMaxBlock();
-		ByteBuffer buf = ByteBuffer.allocate((int) (end - chan.position()));
-		for (int i = 0; i < buf.capacity(); i++)
-			buf.put((byte) 0);
-		buf.flip();
-		chan.write(buf);
-
 		// Now go back and write in the directory entry for the header.
 		chan.position(dirPosition);
 		Dirent ent = (Dirent) entries.values().iterator().next();
 		log.debug("ent header size", ent.getSize());
 		ent.sync(chan);
-
 	}
 
 	/**

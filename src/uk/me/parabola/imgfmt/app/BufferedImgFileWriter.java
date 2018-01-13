@@ -57,7 +57,7 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 		this.chan = chan;
 		buf.order(ByteOrder.LITTLE_ENDIAN);
 		if (chan instanceof FileLink) {
-			//((OuterLink) chan).link(this::getSize, this::sync);
+			((FileLink) chan).link(this::getSize, this::sync);
 		}
 	}
 
