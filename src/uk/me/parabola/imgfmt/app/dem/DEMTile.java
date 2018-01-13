@@ -847,4 +847,8 @@ public class DEMTile {
 		return tileNumberLat + " " + tileNumberLon + " w=" + width + " h=" + height;
 	}
 
+	public int getMaxDeltaHeight() {
+		return maxDeltaHeight;
+	}
+
 }

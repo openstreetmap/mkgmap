@@ -13,6 +13,7 @@
 package uk.me.parabola.imgfmt.app.dem;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -85,6 +86,7 @@ public class DEMSection {
 		int dataLen = 0;
 		int minBaseHeight = Integer.MAX_VALUE;
 		int maxBaseHeight = Integer.MIN_VALUE;
+		int maxDeltaHeight = Integer.MIN_VALUE;
 		hgtConverter.setLatDist(pointsDistanceLat);
 		hgtConverter.setLonDist(pointsDistanceLon);
 		for (int m = 0; m < tilesLat; m++) {
@@ -112,6 +114,8 @@ public class DEMSection {
 						maxBaseHeight = tile.getBaseHeight();
 					if (tile.getMaxHeight() > maxHeight)
 						maxHeight = tile.getMaxHeight();
+					if (tile.getMaxDeltaHeight() > maxDeltaHeight)
+						maxDeltaHeight = tile.getMaxDeltaHeight();
 					dataLen += bsLen;
 				}
 			}
@@ -126,7 +130,7 @@ public class DEMSection {
 			minHeight = 0;
 			maxHeight = 0;
 		}
-		differenceSize = (maxHeight > 255) ? 2 : 1;
+		differenceSize = (maxDeltaHeight > 255) ? 2 : 1;
 		if (-128 < minBaseHeight && maxBaseHeight < 128)
 			baseSize = 1;
 		else
