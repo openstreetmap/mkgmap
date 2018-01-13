@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import uk.me.parabola.imgfmt.Sized;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
@@ -57,8 +58,11 @@ class Dirent implements DirectoryEntry {
 	private String name;
 	private String ext;
 
-	// The file size.
-	private int size;
+	// The file size - always use getSize() rather than this field.
+	private int _size;
+
+	// This may be used when writing the file
+	private Sized sizeSource;
 
 	private final BlockManager blockManager;
 
@@ -81,6 +85,8 @@ class Dirent implements DirectoryEntry {
 			throw new IllegalArgumentException("Filename did not have dot");
 
 		blockTable = new BlockTable();
+
+		sizeSource = () -> _size;
 	}
 
 	/**
@@ -105,8 +111,8 @@ class Dirent implements DirectoryEntry {
 
 			// Size is only present in the first part
 			if (part == 0) {
-				log.debug("dirent", name, '.', ext, "size is going to", size);
-				buf.putInt(size);
+				log.debug("dirent", name, '.', ext, "size is going to", getSize());
+				buf.putInt(getSize());
 			} else {
 				buf.putInt(0);
 			}
@@ -165,7 +171,7 @@ class Dirent implements DirectoryEntry {
 
 		int part = buf.get(OFF_FILE_PART) & 0xff;
 		if (part == 0 || (isSpecial() && part == 3))
-			size = buf.getInt(OFF_SIZE);
+			_size = buf.getInt(OFF_SIZE);
 
 		blockTable.readTable(buf);
 		initialized = true;
@@ -177,7 +183,14 @@ class Dirent implements DirectoryEntry {
 	 * @return The size of the file in bytes.
 	 */
 	public int getSize() {
-		return size;
+		return (int) sizeSource.getSize();
+	}
+
+	/**
+	 * Calls to getSize() will use this to get the value.
+	 */
+	public void setSizeSource(Sized sizeSource) {
+		this.sizeSource = sizeSource;
 	}
 
 	/**
@@ -191,7 +204,7 @@ class Dirent implements DirectoryEntry {
 		if (len > MAX_FILE_LEN) {
 			this.name = name.substring(0, 8);
 		} else if (len < MAX_FILE_LEN) {
-			StringBuffer sb = new StringBuffer();
+			StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < MAX_FILE_LEN - len; i++) {
 				sb.append('0');
 			}
@@ -225,7 +238,7 @@ class Dirent implements DirectoryEntry {
 	void setSize(int size) {
 		if (log.isDebugEnabled())
 			log.debug("setting size", getName(), getExt(), "to", size);
-		this.size = size;
+		this._size = size;
 	}
 
 	/**

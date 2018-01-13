@@ -22,6 +22,7 @@ import java.nio.ByteOrder;
 
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.imgfmt.sys.FileLink;
 import uk.me.parabola.log.Logger;
 
 /**
@@ -55,6 +56,9 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 	public BufferedImgFileWriter(ImgChannel chan) {
 		this.chan = chan;
 		buf.order(ByteOrder.LITTLE_ENDIAN);
+		if (chan instanceof FileLink) {
+			//((OuterLink) chan).link(this::getSize, this::sync);
+		}
 	}
 
 	/**

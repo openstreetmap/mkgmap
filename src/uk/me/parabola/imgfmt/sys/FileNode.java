@@ -25,6 +25,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.NonReadableChannelException;
 import java.nio.channels.NonWritableChannelException;
 
+import uk.me.parabola.imgfmt.Sized;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
@@ -34,7 +35,7 @@ import uk.me.parabola.log.Logger;
  *
  * @author Steve Ratcliffe
  */
-public class FileNode implements ImgChannel {
+public class FileNode implements ImgChannel, FileLink {
 	private static final Logger log = Logger.getLogger(FileNode.class);
 
 	private boolean open;
@@ -49,6 +50,7 @@ public class FileNode implements ImgChannel {
 	private long position;
 
 	private byte xorByte;
+	private Syncable outerSync;
 
 	/**
 	 * Creates a new file in the file system.  You can treat this just like
@@ -297,6 +299,11 @@ public class FileNode implements ImgChannel {
 		this.position = pos;
 	}
 
+	public void link(Sized source, Syncable syncable) {
+		dirent.setSizeSource(source);
+		outerSync = syncable;
+	}
+
 	/**
 	 * Write out any unsaved data to disk.
 	 *
@@ -305,7 +312,10 @@ public class FileNode implements ImgChannel {
 	private void sync() throws IOException {
 		if (!writeable)
 			return;
-		
+
+		if (outerSync != null)
+			outerSync.sync();
+
 		// Ensure that a complete block is written out.
 		int bs = blockManager.getBlockSize();
 		long rem = bs - (file.position() % bs);
