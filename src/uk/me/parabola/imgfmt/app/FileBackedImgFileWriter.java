@@ -23,6 +23,7 @@ import java.nio.channels.FileChannel;
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.imgfmt.sys.FileLink;
 
 /**
  * Write img file data to a temporary file. On a call to sync() the data
@@ -35,6 +36,7 @@ public class FileBackedImgFileWriter implements ImgFileWriter{
 	private final File tmpFile;
 	private final BufferedOutputStream file;
 	private final FileChannel tmpChannel;
+	private long finalSize;
 
 	public FileBackedImgFileWriter(ImgChannel chan, File outputDir) {
 		this.outputChan = chan;
@@ -49,6 +51,10 @@ public class FileBackedImgFileWriter implements ImgFileWriter{
 		} catch (IOException e) {
 			throw new MapFailedException("Could not create mdr temporary file");
 		}
+
+		if (chan instanceof FileLink) {
+			((FileLink) chan).link(this::getSize, this::sync);
+		}
 	}
 
 	/**
@@ -57,6 +63,7 @@ public class FileBackedImgFileWriter implements ImgFileWriter{
 	 * @throws IOException If there is an error writing.
 	 */
 	public void sync() throws IOException {
+		finalSize = getSize();
 		file.close();
 
 		FileInputStream is = null;
@@ -261,6 +268,9 @@ public class FileBackedImgFileWriter implements ImgFileWriter{
 	 * @return The file size in bytes.
 	 */
 	public long getSize() {
+		if (finalSize > 0)
+			return finalSize;
+
 		try {
 			file.flush();
 			return tmpChannel.size();
