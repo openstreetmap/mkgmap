@@ -344,9 +344,6 @@ public class MdrBuilder implements Combiner {
 	void onFinishForDevice() {
 		// Write out the mdr file
 		mdrFile.write();
-
-		// Close the mdr.img file, thus causing it to be written out fully.
-		imgfs.close();
 	}
 
 	public String getFilename() {
