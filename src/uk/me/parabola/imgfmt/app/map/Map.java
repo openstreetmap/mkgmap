@@ -312,7 +312,7 @@ public class Map implements InternalFiles, Configurable {
 
 		// A header slot is always 512 bytes, so we need to calculate the
 		// number of blocks if the block-size is different.
-		// There are 2 slots for the header itself.
+		// There are 2 slots for the header itself. (slots or blocks? code adds blocks)
 		int blocksRequired = 2 + headerSlotsRequired * 512 / blockSize;
 
 		param.setReservedDirectoryBlocks(blocksRequired);

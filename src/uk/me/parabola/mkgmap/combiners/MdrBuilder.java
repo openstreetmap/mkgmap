@@ -87,7 +87,10 @@ public class MdrBuilder implements Combiner {
 		try {
 			// Create the .img file system/archive
 			FileSystemParam params = new FileSystemParam();
-			params.setBlockSize(args.get("block-size", 16384));
+			// prepare for index size up to 1GB
+			params.setBlockSize(16384);
+			// reduce maximum blocks number reserved for directory, exact value should be calculated instead
+			params.setReservedDirectoryBlocks(1 + 280*512/params.getBlockSize());
 
 			tmpName = File.createTempFile("mdr", null, new File(outputDir));
 			tmpName.deleteOnExit();
