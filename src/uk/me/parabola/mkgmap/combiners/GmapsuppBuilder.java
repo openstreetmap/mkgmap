@@ -277,8 +277,8 @@ public class GmapsuppBuilder implements Combiner {
 	private void addImg(FileSystem outfs, FileInfo info) {
 		FileCopier fc = new FileCopier(info.getFilename());
 		List<SubFileInfo> subFiles = info.subFiles();
+
 		for (SubFileInfo sf : subFiles) {
-			System.out.println("ADD img " + sf.getName());
 			try {
 				ImgChannel chan = outfs.create(sf.getName());
 				Syncable sync = fc.add(sf.getName(), chan);
@@ -293,6 +293,7 @@ public class GmapsuppBuilder implements Combiner {
 	private void addFile(FileSystem outfs, FileInfo info) {
 		String filename = info.getFilename();
 		FileCopier fc = new FileCopier(filename);
+
 		try {
 			ImgChannel chan = outfs.create(createImgFilename(filename));
 			((FileLink) chan).link(info.subFiles().get(0), fc.file(chan));
@@ -438,7 +439,6 @@ class FileCopier {
 	 * @param fout Where to copy the file
 	 */
 	void sync(String name, ImgChannel fout) throws IOException {
-		System.out.printf("SYNC: %s\n", name);
 		if (fs == null)
 			fs = ImgFS.openFs(filename);
 
@@ -446,7 +446,6 @@ class FileCopier {
 
 		refCount--;
 		if (refCount <= 0) {
-			System.out.println("Copier close...");
 			fs.close();
 		}
 	}

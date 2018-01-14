@@ -284,7 +284,7 @@ public class ImgFS implements FileSystem {
 			int headerBlocks = (requiredSlots * ENTRY_SIZE + blockSize - 1) / blockSize;
 			int totalBlocks = headerBlocks + fileBlocks;
 			int size = totalBlocks * blockSize;
-			System.out.printf("bs=%d, whole size=%d, hb=%d, fb=%d, blocks=%d\n", blockSize, size,
+			log.info("bs=%d, whole size=%d, hb=%d, fb=%d, blocks=%d\n", blockSize, size,
 					headerBlocks, fileBlocks, totalBlocks);
 
 			if (totalBlocks > 0xfffe)
@@ -298,7 +298,7 @@ public class ImgFS implements FileSystem {
 			sizeInBlocks = fileBlocks + headerBlocks;
 			bestSize = size;
 		}
-		System.out.printf("Best block size: %d sizeInBlocks=%d, reserved=%d\n", bestBlockSize, sizeInBlocks, reserved);
+		log.info("Best block size: %d sizeInBlocks=%d, reserved=%d\n", bestBlockSize, sizeInBlocks, reserved);
 
 		param.setBlockSize(bestBlockSize);
 		param.setReservedDirectoryBlocks(reserved);
