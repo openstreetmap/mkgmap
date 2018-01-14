@@ -13,23 +13,25 @@
 package uk.me.parabola.imgfmt.app.dem;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.reader.hgt.HGTConverter;
 
 public class DEMSection {
+	private static final Logger log = Logger.getLogger(DEMSection.class);
+	private static final int STD_DIM = 64; 
 	private byte unknown1 = 0;
 	private final int zoomLevel;
 	private final boolean lastLevel;
-	private final int pointsPerLat = 64;
-	private final int pointsPerLon = 64;
-	private int nonStdHeight;
-	private int nonStdWidth;
-	private short flags1;
-	private int tilesLat;
-	private int tilesLon;
+	private final int pointsPerLat = STD_DIM;
+	private final int pointsPerLon = STD_DIM;
+	private final int nonStdHeight;
+	private final int nonStdWidth;
+	private final short flags1 = 0;
+	private final int tilesLat;
+	private final int tilesLon;
 	private int offsetSize;
 	private int baseSize;
 	private int differenceSize;
@@ -53,31 +55,51 @@ public class DEMSection {
 			int res = (hgtConverter.getHighestRes() > 0) ? hgtConverter.getHighestRes() : 1200;
 			pointDist = (int) ((1 << 29) / (res * 45));
 		}
-		this.pointsDistanceLat = pointDist;
-		this.pointsDistanceLon = pointDist;
 		
 		this.top = bbox.getMaxLat() * 256;
 		this.left = bbox.getMinLong() * 256;
-		int bottom = bbox.getMinLat() * 256;
-		int right= bbox.getMaxLong() * 256;
-		int resLon = pointsPerLon * pointsDistanceLon;
-		int resLat = pointsPerLat * pointsDistanceLat;
+		// calculate raster that starts at top left corner
+		// last row and right column have non-standard height / row values 
+		pointsDistanceLat = pointDist; 
+		pointsDistanceLon = pointDist;
 		
-		this.tilesLat = Math.max((top - bottom) / resLat, 1);
-		if (resLat * tilesLat < top - bottom) {
-			tilesLat++;
-		}
-		this.tilesLon = Math.max((right - left) / resLon, 1);
-		this.nonStdWidth = (right - (left + (tilesLon - 1) * resLon)) / pointsDistanceLon + 1;
-		this.nonStdHeight = ((top - (tilesLat - 1) * resLat) - bottom) / pointsDistanceLat + 1;
-		if (nonStdWidth >= 128) {
-			tilesLon++;
-			nonStdWidth -= pointsPerLon;
-		}
+		int []latInfo = getTileInfo(bbox.getHeight() * 256, pointsDistanceLat);
+		int []lonInfo = getTileInfo(bbox.getWidth() * 256, pointsDistanceLon);
+		// store the values written to the header
+		tilesLat = latInfo[0];
+		tilesLon = lonInfo[0];
+		nonStdHeight = latInfo[1];
+		nonStdWidth = lonInfo[1];
+		log.info("calculating zoom level:",zoomLevel,", dist:",pointDist,tilesLon,"x",tilesLat,"std tiles, nonstd x/y",nonStdWidth,"/",nonStdHeight);
 		calcTiles(hgtConverter);
 		hgtConverter = null;
 	}
 
+	/**
+	 * Calculate the number of rows / columns and the non-standard height/width 
+	 * @param demPoints number of 32 bit points 
+	 * @param demDist distance between two sample points
+	 * @return array with dimension and non standard value normalised to 1 .. 95
+	 */
+	private int[] getTileInfo(int demPoints, int demDist) {
+		int resolution = STD_DIM * demDist;
+		int nFull = demPoints / resolution;
+		int rest = demPoints - nFull * resolution;
+		int num = nFull;
+		int nonstd = rest / demDist;
+		if (rest % demDist != 0)
+			++nonstd;
+		// normalise non std value so that it is between 1 .. 95 because Garmin does it also
+		if (nonstd >= STD_DIM / 2) {
+			++num;
+		} else {
+			nonstd += STD_DIM;
+		}
+		if (num == 0)
+			num = 1;
+		int[] res = {num, nonstd};
+		return res;
+	}
 	private void calcTiles(HGTConverter hgtConverter) {
 		int resLon = pointsPerLon * pointsDistanceLon;
 		int resLat = pointsPerLat * pointsDistanceLat;
