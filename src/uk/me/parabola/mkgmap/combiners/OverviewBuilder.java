@@ -64,10 +64,9 @@ public class OverviewBuilder implements Combiner {
 	private List<String[]> licenseInfos = new ArrayList<String[]>();
 	private LevelInfo[] wantedLevels;
 	private Area bounds;
+	private boolean hasBackground;
 	private EnhancedProperties demProps = new EnhancedProperties();
 	
-
-
 	public OverviewBuilder() {
 		this.overviewSource = new OverviewMapDataSource();
 	}
@@ -98,7 +97,9 @@ public class OverviewBuilder implements Combiner {
 	}
 
 	public void onFinish() {
-		overviewSource.addBackground();
+		if (!hasBackground) {
+			overviewSource.addBackground();
+		}
 		calcLevels();
 		writeOverviewMap();
 		bounds = overviewSource.getBounds();
@@ -360,8 +361,7 @@ public class OverviewBuilder implements Combiner {
 				if (log.isDebugEnabled())
 					log.debug("got polygon", shape);
 				if (shape.getType() == 0x4b){
-					// ignore existing background polygons as we will add our own
-					continue;
+					hasBackground = true;
 				}
 				MapShape ms = new MapShape();
 
