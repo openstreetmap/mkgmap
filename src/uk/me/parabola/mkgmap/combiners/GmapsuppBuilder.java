@@ -38,6 +38,7 @@ import uk.me.parabola.imgfmt.mps.MapBlock;
 import uk.me.parabola.imgfmt.mps.MpsFile;
 import uk.me.parabola.imgfmt.mps.MpsFileReader;
 import uk.me.parabola.imgfmt.mps.ProductBlock;
+import uk.me.parabola.imgfmt.sys.FileImgChannel;
 import uk.me.parabola.imgfmt.sys.FileLink;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.imgfmt.sys.Syncable;
@@ -253,14 +254,21 @@ public class GmapsuppBuilder implements Combiner {
 
 	private void addAllFiles(FileSystem outfs) {
 		for (FileInfo info : files.values()) {
-			addImg(outfs, info);
 
 			switch (info.getKind()) {
 			case IMG_KIND:
+				addImg(outfs, info);
 				addMpsEntry(info);
 				break;
 			case GMAPSUPP_KIND:
+				addImg(outfs, info);
 				addMpsFile(info);
+				break;
+			case APP_KIND:
+			case TYP_KIND:
+				addFile(outfs, info);
+				break;
+			default:
 				break;
 			}
 		}
@@ -279,6 +287,17 @@ public class GmapsuppBuilder implements Combiner {
 			} catch (FileExistsException e) {
 				log.warn("Could not copy " + sf.getName(), e);
 			}
+		}
+	}
+
+	private void addFile(FileSystem outfs, FileInfo info) {
+		String filename = info.getFilename();
+		FileCopier fc = new FileCopier(filename);
+		try {
+			ImgChannel chan = outfs.create(createImgFilename(filename));
+			((FileLink) chan).link(info.subFiles().get(0), fc.file(chan));
+		} catch (FileExistsException e) {
+			log.warn("Counld not copy " + filename, e);
 		}
 	}
 
@@ -398,12 +417,26 @@ class FileCopier {
 
 	Syncable add(String name, ImgChannel fout) {
 		refCount++;
-		return () -> {
-			System.out.println("Creating syncer gmapsupp " + name);
-			sync(name, fout);
-		};
+		return () -> sync(name, fout);
 	}
 
+	Syncable file(ImgChannel fout) {
+		return () -> sync(fout);
+	}
+
+	/**
+	 * This version of sync() is used for single files.
+	 */
+	public void sync(ImgChannel fout) throws IOException {
+		ImgChannel fin = new FileImgChannel(filename, "r");
+		copyFile(fin, fout);
+	}
+
+	/**
+	 * This version of sync is used for subfiles within a .img file.
+	 * @param name The sub file name.
+	 * @param fout Where to copy the file
+	 */
 	void sync(String name, ImgChannel fout) throws IOException {
 		System.out.printf("SYNC: %s\n", name);
 		if (fs == null)
@@ -420,12 +453,16 @@ class FileCopier {
 
 	private void copyFile(String name, ImgChannel fout) throws IOException {
 		try (ImgChannel fin = fs.open(name, "r")) {
-			ByteBuffer buf = ByteBuffer.allocate(1024);
-			while (fin.read(buf) > 0) {
-				buf.flip();
-				fout.write(buf);
-				buf.compact();
-			}
+			copyFile(fin, fout);
+		}
+	}
+
+	private void copyFile(ImgChannel fin, ImgChannel fout) throws IOException {
+		ByteBuffer buf = ByteBuffer.allocate(1024);
+		while (fin.read(buf) > 0) {
+			buf.flip();
+			fout.write(buf);
+			buf.compact();
 		}
 	}
 }

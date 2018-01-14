@@ -14,6 +14,7 @@
 package func.files;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -410,6 +411,27 @@ public class GmapsuppTest extends Base {
 		);
 
 		outputs.checkError("different code page");
+	}
+
+	@Test
+	public void testWithTypFile() throws IOException {
+		File f = new File(GMAPSUPP_IMG);
+		assertFalse("does not pre-exist", f.exists());
+
+		Main.mainNoSystemExit(Args.TEST_STYLE_ARG,
+				"--gmapsupp",
+				Args.TEST_RESOURCE_IMG + "63240001.img",
+				Args.TEST_RESOURCE_TYP + "test.txt");
+
+		assertTrue("gmapsupp.img is created", f.exists());
+
+		FileSystem fs = openFs(GMAPSUPP_IMG);
+		DirectoryEntry entry = fs.lookup("63240001.TRE");
+		assertNotNull("first file TRE", entry);
+		assertEquals("first file TRE size", getFileSize(Args.TEST_RESOURCE_IMG + "63240001.img", "63240001.TRE"), entry.getSize());
+
+		entry = fs.lookup("0000TEST.TYP");
+		assertNotNull("contains typ file", entry);
 	}
 
 	private MpsFileReader getMpsFile() throws IOException {
