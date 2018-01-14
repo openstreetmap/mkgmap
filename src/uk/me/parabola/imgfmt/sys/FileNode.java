@@ -337,4 +337,8 @@ public class FileNode implements ImgChannel, FileLink {
 	public void setXorByte(byte xorByte) {
 		this.xorByte = xorByte;
 	}
+
+	public String toString() {
+		return String.format("%s %d", dirent.getFullName(), getSize());
+	}
 }

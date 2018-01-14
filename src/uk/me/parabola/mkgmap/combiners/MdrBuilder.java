@@ -44,7 +44,6 @@ import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
-import uk.me.parabola.imgfmt.sys.FileImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.srt.SrtTextReader;
@@ -120,7 +119,12 @@ public class MdrBuilder implements Combiner {
 		}
 	}
 
-	void initForDevice(Sort sort, String outputDir, MdrConfig baseConfig) {
+	/**
+	 * Create an mdr file, in the format used in a gmapsupp.
+	 *
+	 * @param chan Reference to an open file within the gmapsupp file.
+	 */
+	void initForDevice(ImgChannel chan, Sort sort, MdrConfig baseConfig) {
 		// Set the options that we are using for the mdr.
 		MdrConfig config = new MdrConfig(baseConfig);
 		config.setHeaderLen(568);
@@ -129,14 +133,7 @@ public class MdrBuilder implements Combiner {
 		config.setSort(sort);
 
 		// Wrap the MDR channel with the MDRFile object
-		try {
-			tmpName = File.createTempFile("mdr", null, new File(outputDir));
-			tmpName.deleteOnExit();
-			ImgChannel channel = new FileImgChannel(tmpName.getPath(), "rw");
-			mdrFile = new MDRFile(channel, config);
-		} catch (IOException e) {
-			throw new ExitException("Could not create temporary index file");
-		}
+		mdrFile = new MDRFile(chan, config);
 	}
 
 	/**
@@ -352,10 +349,6 @@ public class MdrBuilder implements Combiner {
 
 	public int getSize() {
 		return (int) tmpName.length();
-	}
-
-	public String getFileName() {
-		return tmpName.getPath();
 	}
 
 	/**

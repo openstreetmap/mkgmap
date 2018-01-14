@@ -232,20 +232,8 @@ public class ImgFS implements FileSystem {
 		if (readOnly)
 			return;
 
-		if (fileBlockManager.getMaxBlockAllocated() == 0) {
-			System.out.println("NEW imgfs sync");
-			newSync();
-			return;
-		}
+		assert fileBlockManager.getMaxBlockAllocated() == 0;
 
-		System.out.println("OLD imgfs sync");
-		header.setNumBlocks(fileBlockManager.getMaxBlockAllocated());
-		header.sync();
-		directory.sync();
-	}
-
-	/** TEMP: separate out old and new ways */
-	private void newSync() throws IOException {
 		FileSystemParam param = fsparam;
 		int totalBlocks = calcBlockParam(param);
 
@@ -255,7 +243,6 @@ public class ImgFS implements FileSystem {
 
 		fileBlockManager.setCurrentBlock(param.getReservedDirectoryBlocks());
 		for (FileNode n : openNodes) {
-			System.out.printf("closing pos %x\n", file.position());
 			n.close();
 		}
 
@@ -265,6 +252,11 @@ public class ImgFS implements FileSystem {
 		directory.sync();
 	}
 
+	/**
+	 * Calculate the block size and related parameters.
+	 *
+	 * We need to know the block size and the size of the directory before writing any of the files.
+	 */
 	private int calcBlockParam(FileSystemParam param) {
 		int bestBlockSize = 0;
 		int reserved = 0;
@@ -433,5 +425,4 @@ public class ImgFS implements FileSystem {
 
 		return ent;
 	}
-
 }

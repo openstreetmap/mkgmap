@@ -17,14 +17,15 @@
 package uk.me.parabola.imgfmt.mps;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.channels.Channels;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.imgfmt.sys.FileNode;
 
 /**
  * This file is a description of the map set that is loaded into the
@@ -41,23 +42,23 @@ public class MpsFile {
 	private final Set<ProductBlock> products = new HashSet<>();
 	private final List<MapBlock> maps = new ArrayList<>();
 
-	private final ImgChannel chan;
+	private final ImgFileWriter writer;
 
 	public MpsFile(ImgChannel chan) {
-		this.chan = chan;
+		assert chan instanceof FileNode;
+		writer = new BufferedImgFileWriter(chan);
 	}
 
 	public void sync() throws IOException {
-		OutputStream os = Channels.newOutputStream(chan);
 		for (MapBlock map : maps)
-			map.writeTo(os, map.getCodePage());
+			map.writeTo(writer, map.getCodePage());
 
 		for (ProductBlock block : products)
-			block.writeTo(os, block.getCodePage());
+			block.writeTo(writer, block.getCodePage());
 
 		MapsetBlock mapset = new MapsetBlock();
 		mapset.setName(mapsetName);
-		mapset.writeTo(os, mapset.getCodePage());
+		mapset.writeTo(writer, mapset.getCodePage());
 	}
 
 	public void addMap(MapBlock map) {
@@ -70,9 +71,5 @@ public class MpsFile {
 
 	public void setMapsetName(String mapsetName) {
 		this.mapsetName = mapsetName;
-	}
-
-	public void close() throws IOException {
-		chan.close();
 	}
 }
