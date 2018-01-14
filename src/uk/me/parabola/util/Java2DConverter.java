@@ -18,9 +18,12 @@ import java.awt.Shape;
 import java.awt.geom.Area;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import org.openstreetmap.osmosis.core.filter.common.PolygonFileReader;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -357,5 +360,26 @@ public class Java2DConverter {
 		}
 		return new java.awt.geom.Area(path);
 	} 
+
+	/**
+	 * Read am osmosis *.poly file that describes a polygon with coordinates in degrees.  
+	 * @param polygonFile path to the poly file
+	 * @return the polygon converted to map units or null in case of error. 
+	 */
+	public static java.awt.geom.Area readPolyFile(String polygonFile) {
+		File f = new File(polygonFile);
+		if (!f.exists()) {
+			throw new IllegalArgumentException("polygon file doesn't exist: " + polygonFile);
+		}
+		try {
+			PolygonFileReader pfr = new PolygonFileReader(f);
+			java.awt.geom.Area polygonInDegrees = pfr.loadPolygon();
+			return Java2DConverter.AreaDegreesToMapUnit(polygonInDegrees);
+		} catch (Exception e) {
+			log.error("cannot read polygon file", polygonFile);
+		}
+		return null;
+	}
+
 
 } 

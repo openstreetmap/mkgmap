@@ -31,8 +31,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 
-import org.openstreetmap.osmosis.core.filter.common.PolygonFileReader;
-
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Utils;
@@ -216,25 +214,9 @@ public class MapBuilder implements Configurable {
 		demOutsidePolygonHeight = (short) props.getProperty("dem-outside-polygon", HGTReader.UNDEF);
 		String demPolygonFile = props.getProperty("dem-poly", null);
 		if (demPolygonFile != null) {
-			demPolygon = readPolyFile(demPolygonFile);
+			demPolygon = Java2DConverter.readPolyFile(demPolygonFile);
 		}
 	}
-
-	private java.awt.geom.Area readPolyFile(String polygonFile) {
-		File f = new File(polygonFile);
-		if (!f.exists()) {
-			throw new IllegalArgumentException("polygon file doesn't exist: " + polygonFile);
-		}
-		try {
-			PolygonFileReader pfr = new PolygonFileReader(f);
-			java.awt.geom.Area polygonInDegrees = pfr.loadPolygon();
-			return Java2DConverter.AreaDegreesToMapUnit(polygonInDegrees);
-		} catch (Exception e) {
-			log.error("cannot read polygon file", polygonFile);
-		}
-		return null;
-	}
-
 
 	private List<Integer> parseDemDists(String demDists) {
 		List<Integer> dists = new ArrayList<>();
