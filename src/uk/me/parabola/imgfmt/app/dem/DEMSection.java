@@ -93,7 +93,8 @@ public class DEMSection {
 		if (nonstd >= STD_DIM / 2) {
 			++num;
 		} else {
-			nonstd += STD_DIM;
+			if (num > 0)
+				nonstd += STD_DIM;
 		}
 		if (num == 0)
 			num = 1;
