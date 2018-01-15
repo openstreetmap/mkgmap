@@ -35,15 +35,14 @@ import uk.me.parabola.mkgmap.reader.hgt.HGTReader;
  *
  */
 public class DEMTile {
-	private final DEMSection section;
 	private ByteArrayOutputStream bits;
 	private int[] heights;
 	private final int height;
 	private final int width;
-	private int offset;       		// offset from section.dataOffset2
+	private int offset;					// offset from section.dataOffset2
 	private final int baseHeight;		// base or minimum height in this tile 
 	private final int maxDeltaHeight;	// delta between max height and base height
-	private final byte encodingType;  // seems to determine how the highest values are displayed 
+	private final byte encodingType;  	// determines how the highest values are displayed 
 
 	private int bitPos;
 	private byte currByte;
@@ -73,8 +72,7 @@ public class DEMTile {
 	static final int[] plateauUnit = { 1, 1, 1, 1, 2, 2, 2, 2, 4, 4, 4, 4, 8, 8, 8, 8, 16, 16, 32, 32, 64, 64, 128 };
 	static final int[] plateauBinBits = { 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 5, 5, 6, 6, 7, 8 };
 
-	public DEMTile (DEMSection parent, int col, int row, int width, int height, short[] realHeights) {
-		this.section = parent;
+	public DEMTile (int col, int row, int width, int height, short[] realHeights) {
 		this.width = width;
 		this.height = height;
 		this.tileNumberLon = col;
@@ -110,8 +108,6 @@ public class DEMTile {
 			// all height values are valid
 			encodingType = 0;
 		}
-		if (encodingType != 0)
-			section.setHasExtra(true);
 
 		this.baseHeight = min;
 		this.maxDeltaHeight = max - min;
@@ -383,7 +379,7 @@ public class DEMTile {
 		return heights[col + row * width];
 	}
 
-	public void writeHeader(ImgFileWriter writer) {
+	public void writeHeader(ImgFileWriter writer, DEMSection section) {
 		if (maxDeltaHeight == 0)
 			offset = 0;
 		switch (section.getOffsetSize()) {
@@ -404,7 +400,7 @@ public class DEMTile {
 		else 
 			writer.putChar((char) baseHeight);
 		writer.putN(section.getDifferenceSize(), maxDeltaHeight);
-		if (section.isHasExtra())
+		if (section.hasExtra())
 			writer.put(encodingType);
 	}
 
@@ -851,4 +847,11 @@ public class DEMTile {
 		return maxDeltaHeight;
 	}
 
+	public int getEncodingType() {
+		return encodingType;
+	}
+
+	public byte[] getBitStream() {
+		return bits.toByteArray();
+	}
 }

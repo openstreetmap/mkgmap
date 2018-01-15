@@ -127,8 +127,10 @@ public class DEMSection {
 				}
 				short[] realHeights = hgtConverter.getHeights(latOff, lonOff, height, width);
 				DEMTile tile;
-				tile = new DEMTile(this, n, m, width, height, realHeights);
+				tile = new DEMTile(n, m, width, height, realHeights);
 				tiles.add(tile);
+				if (tile.getEncodingType() != 0)
+					hasExtra = true;
 				int bsLen = tile.getBitStreamLen();
 				if (bsLen > 0) {
 					if (tile.getBaseHeight() < minBaseHeight)
@@ -209,7 +211,7 @@ public class DEMSection {
 		int off = 0;
 		for (DEMTile tile : tiles) {
 			tile.setOffset(off);
-			tile.writeHeader(writer);
+			tile.writeHeader(writer, this);
 			off += tile.getBitStreamLen();
 		}
 		dataOffset2 = writer.position();
@@ -242,12 +244,8 @@ public class DEMSection {
 		this.differenceSize = differenceSize;
 	}
 
-	public boolean isHasExtra() {
+	public boolean hasExtra() {
 		return hasExtra;
-	}
-
-	public void setHasExtra(boolean hasExtra) {
-		this.hasExtra = hasExtra;
 	}
 }
 
