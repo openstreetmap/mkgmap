@@ -13,9 +13,11 @@
 package uk.me.parabola.mkgmap.reader.hgt;
 
 import java.awt.geom.Rectangle2D;
+import java.util.logging.Level;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 
 /**
@@ -111,14 +113,18 @@ public class HGTConverter {
 		int hRB = rdr.ele(xRight, yBottom);
 		lastRow = row;
 		
-		short rc2 = interpolatedHeight(x1-xLeft, y1-yBottom, hLT, hRT, hRB, hLB);
-//		double lon = lon32 * FACTOR;
-//		double lat = lat32 * FACTOR;
+		short h = interpolatedHeight(x1-xLeft, y1-yBottom, hLT, hRT, hRB, hLB);
 //		System.out.println(String.format("%.7f %.7f: (%.2f) %d", lat,lon,rc,rc2));
 //		if (Math.round(rc2) != (short) rc2) {
 //			long dd = 4;
 //		}
-		return rc2;
+		if (h == HGTReader.UNDEF && log.isLoggable(Level.WARNING)) {
+			double lon = lon32 * FACTOR;
+			double lat = lat32 * FACTOR;
+			Coord c = new Coord(lat, lon);
+			log.warn("height interpolation returns void at", c.toDegreeString());
+		}
+		return h;
 	}
 	
 	/**
