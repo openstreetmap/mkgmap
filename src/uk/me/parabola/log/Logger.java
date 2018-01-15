@@ -171,6 +171,11 @@ public class Logger {
 			arrayFormat(Level.INFO, olist);
 	}
 
+	public void infof(String fmt, Object... args) {
+		if (log.isLoggable(Level.INFO))
+			printf(Level.INFO, fmt, args);
+	}
+
 	public void warn(Object o) {
 		log.warning(tagMessage(o == null? "null" : o.toString()));
 	}
@@ -213,7 +218,7 @@ public class Logger {
 	 * @param olist The argument list as objects.
 	 */
 	private void arrayFormat(Level type, Object... olist) {
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 
 		for (Object o : olist) {
 			sb.append(o);
@@ -222,6 +227,11 @@ public class Logger {
 		sb.setLength(sb.length()-1);
 
 		log.log(type, tagMessage(sb.toString()));
+	}
+
+	private void printf(Level type, String fmt, Object... args) {
+		String msg = String.format(fmt, args);
+		log.log(type, tagMessage(msg));
 	}
 
 	private String tagMessage(String message) {
