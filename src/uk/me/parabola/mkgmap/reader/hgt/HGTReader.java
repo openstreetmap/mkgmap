@@ -213,7 +213,7 @@ public class HGTReader {
 	
 	@Override
 	public String toString() {
-		return fileName + " (" + count + " reads)" ;
+		return fileName + " (" + count + " reads) " + res ;
 	}
 
 	/**
