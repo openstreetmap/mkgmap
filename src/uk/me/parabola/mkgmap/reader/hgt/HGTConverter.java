@@ -27,15 +27,15 @@ import uk.me.parabola.log.Logger;
  */
 public class HGTConverter {
 	private static final Logger log = Logger.getLogger(HGTConverter.class);
-	final static double FACTOR = 45.0d / (1<<29);
-	short[] noHeights = { HGTReader.UNDEF };
+	protected final static double FACTOR = 45.0d / (1<<29);
+	private short[] noHeights = { HGTReader.UNDEF };
 	private HGTReader[][] readers;
 	private final int minLat32;
 	private final int minLon32;
 	private final int res;
 	private final java.awt.geom.Area demArea;
 	private short outsidePolygonHeight = HGTReader.UNDEF;
-	int lastRow = -1;
+	private int lastRow = -1;
 	private int pointsDistanceLat;
 	private int pointsDistanceLon;
 	

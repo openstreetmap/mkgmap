@@ -77,5 +77,4 @@ public class DemTileTest {
 		String res = Arrays.toString(dt.getBitStream());
 		assertEquals(Arrays.toString(exprectedRes), res); 
 	}	
-	
 } 
