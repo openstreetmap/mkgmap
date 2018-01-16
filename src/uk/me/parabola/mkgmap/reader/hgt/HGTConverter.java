@@ -49,8 +49,11 @@ public class HGTConverter {
 	public HGTConverter(String path, Area bbox, java.awt.geom.Area demPolygonMapUnits) {
 		int minLat = (int) Math.floor(Utils.toDegrees(bbox.getMinLat()));
 		int minLon = (int) Math.floor(Utils.toDegrees(bbox.getMinLong()));
-		int maxLat = (int) Math.ceil(Utils.toDegrees(bbox.getMaxLat()));
-		int maxLon = (int) Math.ceil(Utils.toDegrees(bbox.getMaxLong()));
+		// the bbox is slightly enlarged so that we dont fail when rounding has no effect
+		// e.g. if getMaxLat() returns 0
+		int maxLat = (int) Math.ceil(Utils.toDegrees(bbox.getMaxLat() + 1));
+		int maxLon = (int) Math.ceil(Utils.toDegrees(bbox.getMaxLong() + 1));
+
 		minLat32 = Utils.toMapUnit(minLat) * 256; 
 		minLon32 = Utils.toMapUnit(minLon) * 256; 
 		// create matrix of readers 
@@ -83,7 +86,7 @@ public class HGTConverter {
 	 * @param lon32
 	 * @return height in m or Short.MIN_VALUE if value is invalid 
 	 */
-	private short getElevation(int lat32, int lon32) {
+	protected short getElevation(int lat32, int lon32) {
 		// TODO: maybe calculate the borders in 32 bit res ?
 		int row = (int) ((lat32 - minLat32) * FACTOR);
 		int col = (int) ((lon32 - minLon32) * FACTOR);
