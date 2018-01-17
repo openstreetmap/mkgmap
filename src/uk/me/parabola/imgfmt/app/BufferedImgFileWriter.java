@@ -24,7 +24,6 @@ import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Sized;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.FileLink;
-import uk.me.parabola.imgfmt.sys.Syncable;
 import uk.me.parabola.log.Logger;
 
 /**
@@ -33,7 +32,7 @@ import uk.me.parabola.log.Logger;
  *
  * @author Steve Ratcliffe
  */
-public class BufferedImgFileWriter implements ImgFileWriter, Sized, Syncable {
+public class BufferedImgFileWriter implements ImgFileWriter, Sized {
 	private static final Logger log = Logger.getLogger(BufferedImgFileWriter.class);
 
 	private static final int KBYTE = 1024;
@@ -99,10 +98,10 @@ public class BufferedImgFileWriter implements ImgFileWriter, Sized, Syncable {
 	}
 
 	/**
-	 * Called when the stream is closed.  Any resources can be freed.
+	 * Called when the stream is closed.
 	 */
 	public void close() throws IOException {
-		chan.close();
+		sync();
 	}
 
 	/**

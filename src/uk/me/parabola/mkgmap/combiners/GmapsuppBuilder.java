@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.mkgmap.combiners;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -41,7 +42,6 @@ import uk.me.parabola.imgfmt.mps.ProductBlock;
 import uk.me.parabola.imgfmt.sys.FileImgChannel;
 import uk.me.parabola.imgfmt.sys.FileLink;
 import uk.me.parabola.imgfmt.sys.ImgFS;
-import uk.me.parabola.imgfmt.sys.Syncable;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
 
@@ -281,7 +281,7 @@ public class GmapsuppBuilder implements Combiner {
 		for (SubFileInfo sf : subFiles) {
 			try {
 				ImgChannel chan = outfs.create(sf.getName());
-				Syncable sync = fc.add(sf.getName(), chan);
+				Closeable sync = fc.add(sf.getName(), chan);
 
 				((FileLink)chan).link(sf, sync);
 			} catch (FileExistsException e) {
@@ -416,12 +416,12 @@ class FileCopier {
 		this.filename = filename;
 	}
 
-	Syncable add(String name, ImgChannel fout) {
+	Closeable add(String name, ImgChannel fout) {
 		refCount++;
 		return () -> sync(name, fout);
 	}
 
-	Syncable file(ImgChannel fout) {
+	Closeable file(ImgChannel fout) {
 		return () -> sync(fout);
 	}
 

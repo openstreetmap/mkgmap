@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousCloseException;
@@ -50,7 +51,7 @@ public class FileNode implements ImgChannel, FileLink {
 	private long position;
 
 	private byte xorByte;
-	private Syncable outerSync;
+	private Closeable outerClose;
 
 	/**
 	 * Creates a new file in the file system.  You can treat this just like
@@ -101,6 +102,9 @@ public class FileNode implements ImgChannel, FileLink {
 	public void close() throws IOException {
 		if (!open)
 			return;
+
+		if (writeable && outerClose != null)
+			outerClose.close();
 
 		sync();
 
@@ -299,9 +303,9 @@ public class FileNode implements ImgChannel, FileLink {
 		this.position = pos;
 	}
 
-	public void link(Sized source, Syncable syncable) {
+	public void link(Sized source, Closeable syncable) {
 		dirent.setSizeSource(source);
-		outerSync = syncable;
+		outerClose = syncable;
 	}
 
 	public long getSize() {
@@ -316,9 +320,6 @@ public class FileNode implements ImgChannel, FileLink {
 	private void sync() throws IOException {
 		if (!writeable)
 			return;
-
-		if (outerSync != null)
-			outerSync.sync();
 
 		// Ensure that a complete block is written out.
 		int bs = blockManager.getBlockSize();

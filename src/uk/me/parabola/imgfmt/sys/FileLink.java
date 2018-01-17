@@ -12,6 +12,8 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
+import java.io.Closeable;
+
 import uk.me.parabola.imgfmt.Sized;
 
 /**
@@ -27,5 +29,5 @@ public interface FileLink {
 	 * A buffering ImgWriter can supply methods to the FileNode to obtain its
 	 * size and access to its sync() routine.
 	 */
-	public void link(Sized sized, Syncable syncable);
+	public void link(Sized sized, Closeable syncable);
 }
