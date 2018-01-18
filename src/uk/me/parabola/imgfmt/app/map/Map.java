@@ -283,44 +283,6 @@ public class Map implements InternalFiles, Configurable {
 	 * Some history: 
 	 */
 	public void close() {
-		ImgFile[] files = {
-				rgnFile, treFile, lblFile,
-				netFile, nodFile, demFile
-		};
-
-		int headerSlotsRequired = 0;
-
-		FileSystemParam param = fileSystem.fsparam();
-		int blockSize = param.getBlockSize();
-
-		for (ImgFile f : files) {
-			if (f == null)
-				continue;
-
-			long len = f.getSize();
-			log.debug("img file len=", len);
-
-			// Blocks required for this file
-			int nBlocks = (int) ((len + blockSize - 1) / blockSize);
-
-			// Now we calculate how many directory blocks we need, you have
-			// to round up as files do not share directory blocks.
-			headerSlotsRequired += (nBlocks + DirectoryEntry.SLOTS_PER_ENTRY - 1)/DirectoryEntry.SLOTS_PER_ENTRY;
-		}
-
-		log.debug("header slots required", headerSlotsRequired);
-
-		// A header slot is always 512 bytes, so we need to calculate the
-		// number of blocks if the block-size is different.
-		// There are 2 slots for the header itself. (slots or blocks? code adds blocks)
-		int blocksRequired = 2 + headerSlotsRequired * 512 / blockSize;
-
-		param.setReservedDirectoryBlocks(blocksRequired);
-		fileSystem.fsparam(param);
-
-		for (ImgFile f : files)
-			Utils.closeFile(f);
-
 		fileSystem.close();
 	}
 

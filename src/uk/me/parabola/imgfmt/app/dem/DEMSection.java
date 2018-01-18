@@ -14,6 +14,7 @@ package uk.me.parabola.imgfmt.app.dem;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.log.Logger;
@@ -55,9 +56,9 @@ public class DEMSection {
 			int res = (hgtConverter.getHighestRes() > 0) ? hgtConverter.getHighestRes() : 1200;
 			pointDist = (int) ((1 << 29) / (res * 45));
 		}
-		
 		this.top = bbox.getMaxLat() * 256;
 		this.left = bbox.getMinLong() * 256;
+
 		// calculate raster that starts at top left corner
 		// last row and right column have non-standard height / row values 
 		pointsDistanceLat = pointDist; 

@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.Utils;
@@ -51,8 +52,6 @@ import static uk.me.parabola.mkgmap.combiners.FileKind.*;
 public class FileInfo {
 	private static final Logger log = Logger.getLogger(FileInfo.class);
 
-	private static final int ENTRY_SIZE = 240;
-
 	private static final List<String> KNOWN_FILE_TYPE_EXT = Arrays.asList(
 			"TRE", "RGN", "LBL", "NET", "NOD",
 			"TYP"
@@ -76,7 +75,7 @@ public class FileInfo {
 	private int netsize;
 	private int nodsize;
 
-	private final List<Integer> fileSizes = new ArrayList<>();
+	private final List<SubFileInfo> subFiles = new ArrayList<>();
 	private String[] licenceInfo;
 	private CommandArgs args;
 	private String mpsName;
@@ -149,7 +148,7 @@ public class FileInfo {
 		String ext = inputName.substring(end - 3).toUpperCase(Locale.ENGLISH);
 		FileInfo info;
 
-		if ("IMG".equals(ext)) {
+		if (Objects.equals(ext, "IMG")) {
 			info = imgInfo(inputName);
 		} else if ("TYP".equals(ext)) {
 			info = fileInfo(inputName, TYP_KIND);
@@ -175,7 +174,7 @@ public class FileInfo {
 
 		// Get the size of the file.
 		File f = new File(inputName);
-		info.fileSizes.add((int) f.length());
+		info.subFiles.add(new SubFileInfo(inputName, f.length()));
 
 		if (inputName.toLowerCase().endsWith(".lbl")) {
 			lblInfo(inputName, info);
@@ -203,8 +202,8 @@ public class FileInfo {
 	}
 
 	/**
-	 * An IMG file, this involves real work. We have to read in the file and extract several pieces of information from
-	 * it.
+	 * An IMG file, this involves real work. We have to read in the file and
+	 * extract several pieces of information from it.
 	 *
 	 * @param inputName The name of the file.
 	 * @return The information obtained.
@@ -274,7 +273,7 @@ public class FileInfo {
 					info.mpsName = ent.getFullName();
 				}
 
-				info.fileSizes.add(ent.getSize());
+				info.subFiles.add(new SubFileInfo(ent.getFullName(), ent.getSize()));
 			}
 
 			if (hasTre)
@@ -355,46 +354,6 @@ public class FileInfo {
 		return kind;
 	}
 
-	/**
-	 * Get the number header slots (512 byte entry) required to represent this file
-	 * at the given block size.
-	 * Each sub-file will need at least one block and so we go through each
-	 * separately and round up for each and return the total.
-	 *
-	 * @param blockSize The block size.
-	 * @return The number of 512 byte header entries that are needed for all the subfiles
-	 * in this .img file.
-	 */
-	public int getNumHeaderEntries(int blockSize) {
-		int totHeaderSlots = 0;
-		for (int size : fileSizes) {
-			// You use up one header slot for every 240 blocks with a minimum
-			// of one slot
-			int nblocks = (size + blockSize-1) / blockSize;
-			totHeaderSlots += (nblocks + ENTRY_SIZE - 1) / ENTRY_SIZE;
-		}
-		return totHeaderSlots;
-	}
-
-	/**
-	 * Get the number of blocks for all the sub-files of this file at the given block size.
-	 * Note that a complete block is always used for a file.
-	 *
-	 * For TYP files and other files that do not have sub-files, then it is just the number of blocks
-	 * for the complete file.
-	 * 
-	 * @param bs The block size at which to calculate the value.
-	 * @return The number of blocks at the given size required to save all the sub-files of this file.
-	 */
-	public int getNumBlocks(int bs) {
-		int totBlocks = 0;
-		for (int size : fileSizes) {
-			int nblocks = (size + bs - 1) / bs;
-			totBlocks += nblocks;
-		}
-		return totBlocks;
-	}
-
 	public int getMapnameAsInt() {
 		try {
 			return Integer.valueOf(mapname);
@@ -403,7 +362,10 @@ public class FileInfo {
 		}
 	}
 
-	
+	public List<SubFileInfo> subFiles() {
+		return subFiles;
+	}
+
 	private void setLicenceInfo(String[] info) {
 		this.licenceInfo = info;
 	}

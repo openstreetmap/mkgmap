@@ -43,7 +43,7 @@ public class CommandArgs {
 	// ////
 
 	public int getBlockSize() {
-		return get("block-size", 1024);
+		return get("block-size", 512);
 	}
 
 	public String getMapname() {

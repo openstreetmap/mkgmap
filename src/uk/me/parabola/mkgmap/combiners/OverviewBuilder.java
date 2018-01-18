@@ -169,7 +169,6 @@ public class OverviewBuilder implements Combiner {
 		mb.setEnableLineCleanFilters(false);
 
 		FileSystemParam params = new FileSystemParam();
-		params.setBlockSize(1024);
 		params.setMapDescription(areaName);
 		mb.setCopyrights(creMsgList(copyrightMsgs));
 		mb.setMapInfo(creMsgList(licenseInfos));

@@ -17,7 +17,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Comparator;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.Utils;
@@ -211,14 +210,12 @@ public class GmapsuppTest extends Base {
 		MpsFileReader reader = getMpsFile();
 
 		List<ProductBlock> products = reader.getProducts();
-		products.sort(new Comparator<ProductBlock>() {
-			public int compare(ProductBlock o1, ProductBlock o2) {
-				if (o1.getFamilyId() == o2.getFamilyId())
-					return 0;
-				else if (o1.getFamilyId() > o2.getFamilyId())
-					return 1;
-				else return -1;
-			}
+		products.sort((o1, o2) -> {
+			if (o1.getFamilyId() == o2.getFamilyId())
+				return 0;
+			else if (o1.getFamilyId() > o2.getFamilyId())
+				return 1;
+			else return -1;
 		});
 
 		ProductBlock block = products.get(0);
@@ -396,7 +393,7 @@ public class GmapsuppTest extends Base {
 	 * If there are mis-matching code-pages in the input files there should be a warning.
 	 */
 	@Test
-	public void testWarningOnMismatchedCodePages() throws IOException {
+	public void testWarningOnMismatchedCodePages() {
 		TestUtils.registerFile("osmmap.img");
 
 		Main.mainNoSystemExit(Args.TEST_STYLE_ARG, "--route", "--code-page=1256",
@@ -413,6 +410,27 @@ public class GmapsuppTest extends Base {
 		);
 
 		outputs.checkError("different code page");
+	}
+
+	@Test
+	public void testWithTypFile() throws IOException {
+		File f = new File(GMAPSUPP_IMG);
+		assertFalse("does not pre-exist", f.exists());
+
+		Main.mainNoSystemExit(Args.TEST_STYLE_ARG,
+				"--gmapsupp",
+				Args.TEST_RESOURCE_IMG + "63240001.img",
+				Args.TEST_RESOURCE_TYP + "test.txt");
+
+		assertTrue("gmapsupp.img is created", f.exists());
+
+		FileSystem fs = openFs(GMAPSUPP_IMG);
+		DirectoryEntry entry = fs.lookup("63240001.TRE");
+		assertNotNull("first file TRE", entry);
+		assertEquals("first file TRE size", getFileSize(Args.TEST_RESOURCE_IMG + "63240001.img", "63240001.TRE"), entry.getSize());
+
+		entry = fs.lookup("0000TEST.TYP");
+		assertNotNull("contains typ file", entry);
 	}
 
 	private MpsFileReader getMpsFile() throws IOException {

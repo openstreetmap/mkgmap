@@ -16,8 +16,8 @@
  */
 package uk.me.parabola.mkgmap.combiners;
 
+import java.io.Closeable;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
@@ -28,11 +28,11 @@ import java.util.Map;
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.mdr.MdrConfig;
 import uk.me.parabola.imgfmt.app.srt.SRTFile;
 import uk.me.parabola.imgfmt.app.srt.Sort;
-import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.mps.MapBlock;
@@ -40,6 +40,7 @@ import uk.me.parabola.imgfmt.mps.MpsFile;
 import uk.me.parabola.imgfmt.mps.MpsFileReader;
 import uk.me.parabola.imgfmt.mps.ProductBlock;
 import uk.me.parabola.imgfmt.sys.FileImgChannel;
+import uk.me.parabola.imgfmt.sys.FileLink;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
@@ -63,12 +64,6 @@ public class GmapsuppBuilder implements Combiner {
 
 	private static final String GMAPSUPP = "gmapsupp.img";
 
-	/**
-	 * The number of block numbers that will fit into one entry block
-	 */
-	private static final int ENTRY_SIZE = 240;
-	private static final int DIRECTORY_OFFSET_ENTRY = 2;
-
 	private final Map<String, FileInfo> files = new LinkedHashMap<>();
 
 	// all these need to be set in the init routine from arguments.
@@ -88,6 +83,7 @@ public class GmapsuppBuilder implements Combiner {
 	private boolean hideGmapsuppOnPC;
 	private int productVersion;
 
+	private FileSystem imgFs;
 
 	public void init(CommandArgs args) {
 		areaName = args.get("area-name", null);
@@ -98,25 +94,36 @@ public class GmapsuppBuilder implements Combiner {
 		productVersion = args.get("product-version", 100);
 		mdrConfig = new MdrConfig();
 		mdrConfig.setIndexOptions(args);
-		
+
+		try {
+			imgFs = createGmapsupp();
+		} catch (FileNotWritableException e) {
+			throw new MapFailedException("Could not create gmapsupp.img file");
+		}
 	}
 
 	/**
 	 * Add or retrieve the MDR file for the given familyId.
 	 * @param familyId The family id to create the mdr file for.
 	 * @param sort The sort for this family id.
-	 * @param outputDir The place to write the file.
 	 * @return If there is already an mdr file for this family then it is returned, else the newly created
 	 * one.
 	 */
-	private MdrBuilder addMdrFile(int familyId, Sort sort, String outputDir) {
+	private MdrBuilder addMdrFile(int familyId, Sort sort) {
 		MdrBuilder mdrBuilder = mdrBuilderMap.get(familyId);
 		if (mdrBuilder != null)
 			return mdrBuilder;
 
 		mdrBuilder = new MdrBuilder();
-		mdrBuilder.initForDevice(sort, outputDir, mdrConfig);
-		
+
+		try {
+			String imgname = String.format("%08d.MDR", familyId);
+			ImgChannel chan = imgFs.create(imgname);
+			mdrBuilder.initForDevice(chan, sort, mdrConfig);
+		} catch (FileExistsException e) {
+			System.err.println("Could not create duplicate MDR file");
+		}
+
 		mdrBuilderMap.put(familyId, mdrBuilder);
 		return mdrBuilder;
 	}
@@ -153,7 +160,7 @@ public class GmapsuppBuilder implements Combiner {
 		if (info.isImg()) {
 			int familyId = info.getFamilyId();
 			if (createIndex) {
-				MdrBuilder mdrBuilder = addMdrFile(familyId, info.getSort(), info.getOutputDir());
+				MdrBuilder mdrBuilder = addMdrFile(familyId, info.getSort());
 				mdrBuilder.onMapEnd(info);
 			}
 
@@ -171,15 +178,9 @@ public class GmapsuppBuilder implements Combiner {
 			mdrBuilder.onFinishForDevice();
 		}
 
-		FileSystem imgFs = null;
 		try {
-			imgFs = createGmapsupp();
 
 			addAllFiles(imgFs);
-
-			// Add all the MDR files (one for each family)
-			for (Map.Entry<Integer, MdrBuilder> ent : mdrBuilderMap.entrySet())
-				addFile(imgFs, ent.getValue().getFileName(), String.format("%08d.MDR", ent.getKey()));
 
 			writeSrtFile(imgFs);
 			writeMpsFile();
@@ -206,19 +207,15 @@ public class GmapsuppBuilder implements Combiner {
 			if (sort.getId1() == 0 && sort.getId2() == 0)
 				return;
 
-			ImgChannel channel = null;
 			try {
-				channel = imgFs.create(String.format("%08d.SRT", familyId));
+				ImgChannel channel = imgFs.create(String.format("%08d.SRT", familyId));
 				SRTFile srtFile = new SRTFile(channel);
 				srtFile.setSort(sort);
 				srtFile.write();
-				srtFile.close();
 			} catch (FileExistsException e) {
 				// well it shouldn't exist!
 				log.error("could not create SRT file as it exists already");
 				throw new FileNotWritableException("already existed", e);
-			} finally {
-				Utils.closeFile(channel);
 			}
 		}
 	}
@@ -230,7 +227,6 @@ public class GmapsuppBuilder implements Combiner {
 	private void writeMpsFile() throws FileNotWritableException {
 		try {
 			mpsFile.sync();
-			mpsFile.close();
 		} catch (IOException e) {
 			throw new FileNotWritableException("Could not finish write to MPS file", e);
 		}
@@ -258,23 +254,51 @@ public class GmapsuppBuilder implements Combiner {
 
 	private void addAllFiles(FileSystem outfs) {
 		for (FileInfo info : files.values()) {
-			String filename = info.getFilename();
+
 			switch (info.getKind()) {
 			case IMG_KIND:
-				addImg(outfs, filename);
+				addImg(outfs, info);
 				addMpsEntry(info);
 				break;
 			case GMAPSUPP_KIND:
-				addImg(outfs, filename);
+				addImg(outfs, info);
 				addMpsFile(info);
 				break;
 			case APP_KIND:
 			case TYP_KIND:
-				addFile(outfs, filename);
+				addFile(outfs, info);
 				break;
-			case MDR_KIND:
+			default:
 				break;
 			}
+		}
+	}
+
+	private void addImg(FileSystem outfs, FileInfo info) {
+		FileCopier fc = new FileCopier(info.getFilename());
+		List<SubFileInfo> subFiles = info.subFiles();
+
+		for (SubFileInfo sf : subFiles) {
+			try {
+				ImgChannel chan = outfs.create(sf.getName());
+				Closeable sync = fc.add(sf.getName(), chan);
+
+				((FileLink)chan).link(sf, sync);
+			} catch (FileExistsException e) {
+				log.warn("Could not copy " + sf.getName(), e);
+			}
+		}
+	}
+
+	private void addFile(FileSystem outfs, FileInfo info) {
+		String filename = info.getFilename();
+		FileCopier fc = new FileCopier(filename);
+
+		try {
+			ImgChannel chan = outfs.create(createImgFilename(filename));
+			((FileLink) chan).link(info.subFiles().get(0), fc.file(chan));
+		} catch (FileExistsException e) {
+			log.warn("Counld not copy " + filename, e);
 		}
 	}
 
@@ -285,9 +309,7 @@ public class GmapsuppBuilder implements Combiner {
 	 */
 	private void addMpsFile(FileInfo info) {
 		String name = info.getFilename();
-		FileSystem fs = null;
-		try {
-			fs = ImgFS.openFs(name);
+		try (FileSystem fs = ImgFS.openFs(name)) {
 			MpsFileReader mr = new MpsFileReader(fs.open(info.getMpsName(), "r"), info.getCodePage());
 			for (MapBlock block : mr.getMaps())
 				mpsFile.addMap(block);
@@ -297,8 +319,6 @@ public class GmapsuppBuilder implements Combiner {
 			mr.close();
 		} catch (IOException e) {
 			log.error("Could not read MPS file from gmapsupp", e);
-		} finally {
-			Utils.closeFile(fs);
 		}
 	}
 
@@ -324,25 +344,6 @@ public class GmapsuppBuilder implements Combiner {
 		}
 	}
 
-	/**
-	 * Add a single file to the output.
-	 *
-	 * @param outfs The output gmapsupp file.
-	 * @param filename The input filename.
-	 */
-	private void addFile(FileSystem outfs, String filename) {
-		String imgname = createImgFilename(filename);
-		addFile(outfs, filename, imgname);
-	}
-
-	private void addFile(FileSystem outfs, String filename, String imgname) {
-		ImgChannel chan = new FileImgChannel(filename, "r");
-		try {
-			copyFile(chan, outfs, imgname);
-		} catch (IOException e) {
-			log.error("Could not write file " + filename);
-		}
-	}
 
 	/**
 	 * Create a suitable filename for use in the .img file from the external
@@ -373,66 +374,19 @@ public class GmapsuppBuilder implements Combiner {
 	}
 
 	/**
-	 * Add a complete .img file, that is all the constituent files from it.
-	 *
-	 * @param outfs The gmapsupp file to write to.
-	 * @param filename The input filename.
-	 */
-	private void addImg(FileSystem outfs, String filename) {
-		try {
-			try (FileSystem infs = ImgFS.openFs(filename)) {
-				copyAllFiles(infs, outfs);
-			}
-
-		} catch (FileNotFoundException e) {
-			log.error("Could not open file " + filename);
-		}
-	}
-
-	/**
-	 * Copy all files from the input filesystem to the output filesystem.
-	 *
-	 * @param infs The input filesystem.
-	 * @param outfs The output filesystem.
-	 */
-	private void copyAllFiles(FileSystem infs, FileSystem outfs) {
-		List<DirectoryEntry> entries = infs.list();
-		for (DirectoryEntry ent : entries) {
-			String ext = ent.getExt();
-			if (ext.equals("   ") || ext.equals("MPS"))
-				continue;
-
-			String inname = ent.getFullName();
-
-			try {
-				copyFile(inname, infs, outfs);
-			} catch (IOException e) {
-				log.warn("Could not copy " + inname, e);
-			}
-		}
-	}
-
-	/**
 	 * Create the output file.
 	 *
 	 * @return The gmapsupp file.
 	 * @throws FileNotWritableException If it cannot be created for any reason.
 	 */
 	private FileSystem createGmapsupp() throws FileNotWritableException {
-		BlockInfo bi = calcBlockSize();
-		int blockSize = bi.blockSize;
 
 		// Create this file, containing all the sub files
 		FileSystemParam params = new FileSystemParam();
-		params.setBlockSize(blockSize);
 		params.setMapDescription(overallDescription);
-		params.setDirectoryStartEntry(DIRECTORY_OFFSET_ENTRY);
 		params.setGmapsupp(true);
 		params.setHideGmapsuppOnPC(hideGmapsuppOnPC);
 		params.setProductVersion(productVersion);
-
-		int reserveBlocks = (int) Math.ceil(bi.reserveEntries * 512.0 / blockSize);
-		params.setReservedDirectoryBlocks(reserveBlocks);
 
 		FileSystem outfs = ImgFS.createFs(Utils.joinPath(outputDir, GMAPSUPP), params);
 
@@ -442,140 +396,72 @@ public class GmapsuppBuilder implements Combiner {
 		return outfs;
 	}
 
-	/**
-	 * Copy an individual file with the given name from the first archive/filesystem
-	 * to the second.
-	 *
-	 * @param inName The name of the file.
-	 * @param infs The filesystem to copy from.
-	 * @param outfs The filesystem to copy to.
-	 * @throws IOException If the copy fails.
-	 */
-	private void copyFile(String inName, FileSystem infs, FileSystem outfs) throws IOException {
-		ImgChannel fin = infs.open(inName, "r");
-		copyFile(fin, outfs, inName);
+	public void setCreateIndex(boolean create) {
+		this.createIndex = create;
+	}
+}
+
+/**
+ * Copies files from the source img to the gmapsupp.
+ *
+ * Each sub file has to be copied separately to a different 'file'.  This class makes sure
+ * that the source file is only opened once.
+ */
+class FileCopier {
+	private final String filename;
+	private FileSystem fs;
+	private int refCount;
+
+	public FileCopier(String filename) {
+		this.filename = filename;
+	}
+
+	Closeable add(String name, ImgChannel fout) {
+		refCount++;
+		return () -> sync(name, fout);
+	}
+
+	Closeable file(ImgChannel fout) {
+		return () -> sync(fout);
 	}
 
 	/**
-	 * Copy a given open file to the a new file in outfs with the name inName.
-	 * @param fin The file to copy from.
-	 * @param outfs The file system to copy to.
-	 * @param inName The name of the file to create on the destination file system.
-	 * @throws IOException If a file cannot be read or written.
+	 * This version of sync() is used for single files.
 	 */
-	private void copyFile(ImgChannel fin, FileSystem outfs, String inName) throws IOException {
-		ImgChannel fout = outfs.create(inName);
-
+	public void sync(ImgChannel fout) throws IOException {
+		ImgChannel fin = new FileImgChannel(filename, "r");
 		copyFile(fin, fout);
 	}
 
 	/**
-	 * Copy an individual file with the given name from the first archive/filesystem
-	 * to the second.
-	 *
-	 * @param fin The file to copy from.
-	 * @param fout The file to copy to.
-	 * @throws IOException If the copy fails.
+	 * This version of sync is used for subfiles within a .img file.
+	 * @param name The sub file name.
+	 * @param fout Where to copy the file
 	 */
+	void sync(String name, ImgChannel fout) throws IOException {
+		if (fs == null)
+			fs = ImgFS.openFs(filename);
+
+		copyFile(name, fout);
+
+		refCount--;
+		if (refCount <= 0) {
+			fs.close();
+		}
+	}
+
+	private void copyFile(String name, ImgChannel fout) throws IOException {
+		try (ImgChannel fin = fs.open(name, "r")) {
+			copyFile(fin, fout);
+		}
+	}
+
 	private void copyFile(ImgChannel fin, ImgChannel fout) throws IOException {
-		try {
-			ByteBuffer buf = ByteBuffer.allocate(1024);
-			while (fin.read(buf) > 0) {
-				buf.flip();
-				fout.write(buf);
-				buf.compact();
-			}
-		} finally {
-			fin.close();
-			fout.close();
-		}
-	}
-
-	/**
-	 * Calculate the block size that we need to use.  The block size must be such that
-	 * the total number of blocks is less than 0xffff.
-	 *
-	 * I am making sure that the that the root directory entry doesn't require
-	 * more than one block to hold its own block list.
-	 *
-	 * @return A suitable block size to use for the gmapsupp.img file.
-	 */
-	private BlockInfo calcBlockSize() {
-		int[] ints = {1 << 9, 1 << 10, 1 << 11, 1 << 12, 1 << 13,
-				1 << 14, 1 << 15, 1 << 16, 1 << 17, 1 << 18, 1 << 19,
-				1 << 20, 1 << 21, 1 << 22, 1 << 23, 1 << 24,
-		};
-
-		for (int bs : ints) {
-			int totBlocks = 0;
-			int totHeaderEntries = 0;
-			for (FileInfo info : files.values()) {
-				totBlocks += info.getNumBlocks(bs);
-				// Each file will take up at least one directory block.
-				// Each directory block can hold 480 block-references
-				int slots = info.getNumHeaderEntries(bs);
-				log.info("adding", slots, "slots for", info.getFilename());
-				totHeaderEntries += slots;
-			}
-
-			// Estimate the number of blocks needed for the MPS file
-			int mpsSize = files.size() * 80 + 100;
-			int mpsBlocks = (mpsSize + (bs - 1)) / bs;
-			int mpsSlots = (mpsBlocks + ENTRY_SIZE - 1) / ENTRY_SIZE;
-
-			totBlocks += mpsBlocks;
-			totHeaderEntries += mpsSlots;
-
-			// Add in number of block for mdr
-			if (createIndex) {
-				for (MdrBuilder mdrBuilder : mdrBuilderMap.values()) {
-					int sz = mdrBuilder.getSize();
-					int mdrBlocks = (sz + (bs - 1)) / bs;
-					int mdrSlots = (mdrBlocks + ENTRY_SIZE - 1) / ENTRY_SIZE;
-
-					totBlocks += mdrBlocks;
-					totHeaderEntries += mdrSlots;
-				}
-			}
-
-			for (Map.Entry<Integer, Sort> ent : sortMap.entrySet()) {
-				Sort sort = ent.getValue();
-				int sz = sort.isMulti() ? 1024 * 160 : 1024; // unicode SRT file can be much bigger
-				int srtBlocks = (sz + (bs - 1)) / bs;
-				int srtSlots = (srtBlocks + ENTRY_SIZE - 1) / ENTRY_SIZE;
-
-				totBlocks += srtBlocks;
-				totHeaderEntries += srtSlots;
-			}			
-
-			// Add for header itself, plus the first directory block.
-			totHeaderEntries += DIRECTORY_OFFSET_ENTRY + 1;
-			int totHeaderBlocks = totHeaderEntries * 512 / bs;
-
-			log.info("total blocks for", bs, "is", totHeaderBlocks, "based on slots=", totHeaderEntries);
-
-			if (totBlocks + totHeaderEntries < 0xfffe && totHeaderBlocks <= ENTRY_SIZE) {
-				return new BlockInfo(bs, totHeaderEntries);
-			}
-		}
-
-		throw new IllegalArgumentException("Could not select a suitable block size. Try to reduce the number of splits.");
-	}
-
-	public void setCreateIndex(boolean create) {
-		this.createIndex = create;
-	}
-
-	/**
-	 * Just a data value object for various bits of block size info.
-	 */
-	private static class BlockInfo {
-		private final int blockSize;
-		private final int reserveEntries;
-
-		private BlockInfo(int blockSize, int reserveEntries) {
-			this.blockSize = blockSize;
-			this.reserveEntries = reserveEntries;
+		ByteBuffer buf = ByteBuffer.allocate(1024);
+		while (fin.read(buf) > 0) {
+			buf.flip();
+			fout.write(buf);
+			buf.compact();
 		}
 	}
 }

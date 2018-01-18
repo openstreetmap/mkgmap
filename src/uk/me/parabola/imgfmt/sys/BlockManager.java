@@ -27,7 +27,7 @@ import uk.me.parabola.log.Logger;
 class BlockManager {
 	private static final Logger log = Logger.getLogger(BlockManager.class);
 
-	private final int blockSize;
+	private int blockSize;
 	
 	private int currentBlock;
 	private int maxBlock = 0xfffe;
@@ -85,5 +85,9 @@ class BlockManager {
 
 	public int getMaxBlockAllocated() {
 		return maxBlockAllocated;
+	}
+
+	public void setBlockSize(int blockSize) {
+		this.blockSize = blockSize;
 	}
 }
