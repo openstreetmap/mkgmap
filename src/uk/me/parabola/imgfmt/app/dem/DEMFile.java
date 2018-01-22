@@ -30,6 +30,9 @@ import uk.me.parabola.mkgmap.reader.hgt.HGTConverter;
  * @author Gerd Petermann
  */
 public class DEMFile extends ImgFile {
+	// allowed increase of DEM area
+	public final static double EXTRA = 0.01d; 
+	
 	private final DEMHeader demHeader = new DEMHeader();
 
 	public DEMFile(ImgChannel chan, boolean write) {
@@ -52,20 +55,56 @@ public class DEMFile extends ImgFile {
 	 * @param outsidePolygonHeight the height value that should be used for points outside of the bounding polygon 
 	 */
 	public void calc(Area area, java.awt.geom.Area demPolygonMapUnits, String pathToHGT, List<Integer> pointDistances, short outsidePolygonHeight) {
-		HGTConverter hgtConverter = new HGTConverter(pathToHGT, area, demPolygonMapUnits);
+		// HGT area is extended by EXTRA degrees in each direction
+		HGTConverter hgtConverter = new HGTConverter(pathToHGT, area, demPolygonMapUnits, EXTRA);
 		hgtConverter.setOutsidePolygonHeight(outsidePolygonHeight);
+
+		int top = area.getMaxLat() * 256;
+		int bottom = area.getMinLat() * 256;
+		int left = area.getMinLong() * 256;
+		int right = area.getMaxLong() * 256;
 
 		int zoom = 0;
 		int lastDist = pointDistances.get(pointDistances.size()-1); 
 		for (int pointDist : pointDistances) {
-			DEMSection section = new DEMSection(zoom++, area, hgtConverter, pointDist, pointDist == lastDist);
+			int distance = pointDist;
+			if (distance == -1) {
+				int res = (hgtConverter.getHighestRes() > 0) ? hgtConverter.getHighestRes() : 1200;
+				distance = (int) Math.round((1 << 29) / (res * 45.0D));
+			}
+			// last 4 bits of distance should be 0
+			distance = ((distance + 8)/16)*16;
+
+			int xtop = top;
+			int xleft = left;
+
+			// align DEM to distance raster, if distance not bigger than widening of HGT area
+			if (distance < (int)Math.floor((EXTRA/45.0D * (1 << 29)))) {
+				if (xtop >= 0) {
+					xtop -= xtop % distance;
+					if (xtop < 0x3FFFFFFF - distance)
+						xtop += distance;
+				}
+				else {
+					xtop -= xtop % distance;
+				}
+
+				if (xleft >= 0) {
+					xleft -= xleft % distance;
+				}
+				else {
+					xleft -= xleft % distance;
+					if (xleft > Integer.MIN_VALUE + distance)
+						xleft -= distance;
+				}
+			}
+
+			DEMSection section = new DEMSection(zoom++, xtop, xleft, xtop - bottom, right - xleft, hgtConverter, distance, pointDist == lastDist);
 			demHeader.addSection(section);
 		}
 		return;
 	}
 
-	
-	
 	public void write() {
 		ImgFileWriter w = getWriter();
 		if (w instanceof BufferedImgFileWriter) {

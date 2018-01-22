@@ -18,6 +18,7 @@ import org.junit.Test;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.dem.DEMFile;
 
 /**
  * Tests for HGTConverter.
@@ -31,7 +32,7 @@ public class HGTConverterTest {
 		
 		// top is exactly at 0, caused ArrayIndexOutOfBoundsException with r4065
 		Area bbox = new Area(-1.04296875, -90.9, 0.0, -90.0);
-		HGTConverter hgtConverter = new HGTConverter(HGT_PATH, bbox, null);
+		HGTConverter hgtConverter = new HGTConverter(HGT_PATH, bbox, null, DEMFile.EXTRA);
 		// test data contains sone islands with volcanos, bbox corners are all in the ocean
 		assertEquals(0, hgtConverter.getElevation(bbox.getMaxLat() * 256, bbox.getMinLong() * 256));
 		assertEquals(0, hgtConverter.getElevation(bbox.getMaxLat() * 256, bbox.getMaxLong() * 256));
@@ -48,7 +49,7 @@ public class HGTConverterTest {
 	@Test
 	public void testLat0Bottom() throws Exception {
 		Area bbox = new Area(0, -90.9, 0.1, -90.0);
-		HGTConverter hgtConverter = new HGTConverter(HGT_PATH, bbox, null);
+		HGTConverter hgtConverter = new HGTConverter(HGT_PATH, bbox, null, DEMFile.EXTRA);
 		assertEquals(0, hgtConverter.getElevation(bbox.getMaxLat() * 256, bbox.getMinLong() * 256));
 		assertEquals(0, hgtConverter.getElevation(bbox.getMaxLat() * 256, bbox.getMaxLong() * 256));
 		assertEquals(0, hgtConverter.getElevation(bbox.getMinLat() * 256, bbox.getMinLong() * 256));
@@ -59,7 +60,7 @@ public class HGTConverterTest {
 	public void testLon0Left() throws Exception {
 		
 		Area bbox = new Area(0, 0.1, 0.1, 1.0);
-		HGTConverter hgtConverter = new HGTConverter(HGT_PATH, bbox, null);
+		HGTConverter hgtConverter = new HGTConverter(HGT_PATH, bbox, null, DEMFile.EXTRA);
 		assertEquals(0, hgtConverter.getElevation(bbox.getMaxLat() * 256, bbox.getMinLong() * 256));
 		assertEquals(0, hgtConverter.getElevation(bbox.getMaxLat() * 256, bbox.getMaxLong() * 256));
 		assertEquals(0, hgtConverter.getElevation(bbox.getMinLat() * 256, bbox.getMinLong() * 256));
@@ -69,7 +70,7 @@ public class HGTConverterTest {
 	@Test
 	public void testLon0Right() throws Exception {
 		Area bbox = new Area(0, 0.1, 0.1, 0.0);
-		HGTConverter hgtConverter = new HGTConverter(HGT_PATH, bbox, null);
+		HGTConverter hgtConverter = new HGTConverter(HGT_PATH, bbox, null, DEMFile.EXTRA);
 		assertEquals(0, hgtConverter.getElevation(bbox.getMaxLat() * 256, bbox.getMinLong() * 256));
 		assertEquals(0, hgtConverter.getElevation(bbox.getMaxLat() * 256, bbox.getMaxLong() * 256));
 		assertEquals(0, hgtConverter.getElevation(bbox.getMinLat() * 256, bbox.getMinLong() * 256));
@@ -80,7 +81,7 @@ public class HGTConverterTest {
 	public void testReadHeight() throws Exception {
 		
 		Area bbox = new Area(-1.04296875, -91.1, 0.1, -89.9);
-		HGTConverter hgtConverter = new HGTConverter(HGT_PATH, bbox, null);
+		HGTConverter hgtConverter = new HGTConverter(HGT_PATH, bbox, null, DEMFile.EXTRA);
 
 		int hgtRes = 1200;
 		double hgtDis = 1.0D/hgtRes;

@@ -15,7 +15,6 @@ package uk.me.parabola.imgfmt.app.dem;
 import java.util.ArrayList;
 import java.util.List;
 
-import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.reader.hgt.HGTConverter;
@@ -48,24 +47,23 @@ public class DEMSection {
 	private int maxHeight = Integer.MIN_VALUE;
 	private List<DEMTile> tiles = new ArrayList<>();
 	
-	public DEMSection(int zoomLevel, Area bbox, HGTConverter hgtConverter, int pointDist, boolean lastLevel) {
+	public DEMSection(int zoomLevel, int areaTop, int areaLeft, int areaHeight, int areaWidth, HGTConverter hgtConverter, int pointDist, boolean lastLevel) {
 		this.zoomLevel = zoomLevel;
 		this.lastLevel = lastLevel;
 		
-		if (pointDist == -1) {
-			int res = (hgtConverter.getHighestRes() > 0) ? hgtConverter.getHighestRes() : 1200;
-			pointDist = (int) ((1 << 29) / (res * 45));
-		}
-		this.top = bbox.getMaxLat() * 256;
-		this.left = bbox.getMinLong() * 256;
+		this.top = areaTop;
+		this.left = areaLeft;
 
 		// calculate raster that starts at top left corner
 		// last row and right column have non-standard height / row values 
 		pointsDistanceLat = pointDist; 
 		pointsDistanceLon = pointDist;
-		
-		int []latInfo = getTileInfo(bbox.getHeight() * 256, pointsDistanceLat);
-		int []lonInfo = getTileInfo(bbox.getWidth() * 256, pointsDistanceLon);
+
+		// select bicubic or bilinear interpolation
+		hgtConverter.setBicubic(zoomLevel, pointDist);
+
+		int []latInfo = getTileInfo(areaHeight, pointsDistanceLat);
+		int []lonInfo = getTileInfo(areaWidth, pointsDistanceLon);
 		// store the values written to the header
 		tilesLat = latInfo[0];
 		tilesLon = lonInfo[0];
@@ -113,6 +111,7 @@ public class DEMSection {
 		int maxDeltaHeight = Integer.MIN_VALUE;
 		hgtConverter.setLatDist(pointsDistanceLat);
 		hgtConverter.setLonDist(pointsDistanceLon);
+		hgtConverter.clearStat();
 		for (int m = 0; m < tilesLat; m++) {
 			latOff = top - m * resLat;
 			
@@ -150,6 +149,8 @@ public class DEMSection {
 			}
 		}
 		
+		hgtConverter.printStat();
+
 		if (dataLen > 0) {
 			minHeight = minBaseHeight;
 		} else { 
