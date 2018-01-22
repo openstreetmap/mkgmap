@@ -579,7 +579,7 @@ public class HGTConverter {
 	}
 	public void printStat() {
 		if (useBicubic) {
-			System.out.println("DEM points: " + statPoints + "; bicubic " + statBicubic + ", no HGT " + (statRdrNull + statRdrRes) +
+			log.info("DEM points: " + statPoints + "; bicubic " + statBicubic + ", no HGT " + (statRdrNull + statRdrRes) +
 				"; bilinear " + statBilinear + ", voids " + statVoid + "; distance " + pointsDistanceLat);
 		}
 	}
