@@ -429,8 +429,9 @@ class FileCopier {
 	 * This version of sync() is used for single files.
 	 */
 	public void sync(ImgChannel fout) throws IOException {
-		ImgChannel fin = new FileImgChannel(filename, "r");
-		copyFile(fin, fout);
+		try (ImgChannel fin = new FileImgChannel(filename, "r")) {
+			copyFile(fin, fout);
+		}
 	}
 
 	/**

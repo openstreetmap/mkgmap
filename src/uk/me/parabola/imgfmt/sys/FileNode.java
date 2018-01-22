@@ -303,9 +303,9 @@ public class FileNode implements ImgChannel, FileLink {
 		this.position = pos;
 	}
 
-	public void link(Sized source, Closeable syncable) {
+	public void link(Sized source, Closeable closeable) {
 		dirent.setSizeSource(source);
-		outerClose = syncable;
+		outerClose = closeable;
 	}
 
 	public long getSize() {

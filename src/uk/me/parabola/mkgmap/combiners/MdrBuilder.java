@@ -322,6 +322,11 @@ public class MdrBuilder implements Combiner {
 		}
 	}
 
+	/**
+	 * Called after all maps are processed.
+	 *
+	 * We are building a standalone mdr file, so that is
+	 */
 	public void onFinish() {
 		// Write out the mdr file
 		mdrFile.write();
@@ -338,6 +343,12 @@ public class MdrBuilder implements Combiner {
 			throw new MapFailedException("Could not create mdr.img file");
 	}
 
+	/**
+	 * Called after all maps processed when making a gmapsupp.img
+	 *
+	 * Here by 'for device' we mean in the format required for uploading to a device, so that is
+	 * the gmapsupp.img file.
+	 */
 	void onFinishForDevice() {
 		// Write out the mdr file
 		mdrFile.write();

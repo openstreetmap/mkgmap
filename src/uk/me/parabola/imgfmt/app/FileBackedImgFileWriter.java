@@ -21,7 +21,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
 import uk.me.parabola.imgfmt.MapFailedException;
-import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.Sized;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.FileLink;
 
@@ -31,7 +31,7 @@ import uk.me.parabola.imgfmt.sys.FileLink;
  *
  * @author Steve Ratcliffe
  */
-public class FileBackedImgFileWriter implements ImgFileWriter{
+public class FileBackedImgFileWriter implements ImgFileWriter, Sized {
 	private final ImgChannel outputChan;
 	private final File tmpFile;
 	private final BufferedOutputStream file;
@@ -53,7 +53,7 @@ public class FileBackedImgFileWriter implements ImgFileWriter{
 		}
 
 		if (chan instanceof FileLink) {
-			((FileLink) chan).link(this::getSize, this::sync);
+			((FileLink) chan).link(this, this);
 		}
 	}
 
@@ -66,14 +66,9 @@ public class FileBackedImgFileWriter implements ImgFileWriter{
 		finalSize = getSize();
 		file.close();
 
-		FileInputStream is = null;
-		try {
-			is = new FileInputStream(tmpFile);
-			FileChannel channel = is.getChannel();
+		try (FileInputStream is = new FileInputStream(tmpFile); FileChannel channel = is.getChannel()) {
 			channel.transferTo(0, channel.size(), outputChan);
-			channel.close();
 		} finally {
-			Utils.closeFile(is);
 			if (!tmpFile.delete())
 				System.err.println("Could not delete mdr img temporary file");
 		}
@@ -286,6 +281,6 @@ public class FileBackedImgFileWriter implements ImgFileWriter{
 	 * @throws IOException if an I/O error occurs
 	 */
 	public void close() throws IOException {
-		outputChan.close();
+		sync();
 	}
 }
