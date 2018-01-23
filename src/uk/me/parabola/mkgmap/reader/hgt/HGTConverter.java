@@ -38,7 +38,7 @@ public class HGTConverter {
 	private int lastRow = -1;
 	private int pointsDistanceLat;
 	private int pointsDistanceLon;
-	private boolean useBicubic;
+	private boolean useComplexInterpolation;
 	private double[][] eleArray;  
 	private int statPoints;
 	private int statBicubic;
@@ -46,14 +46,20 @@ public class HGTConverter {
 	private int statVoid;
 	private int statRdrNull;
 	private int statRdrRes;
+	private InterpolationMethod interpolationMethod = InterpolationMethod.Bicubic;
 
 
+	public enum InterpolationMethod {
+		Bilinear, Bicubic, BicubicSpline
+	};
+	
 	/**
 	 * Class to extract elevation information from SRTM files in hgt format.
 	 * @param path a comma separated list of directories which may contain *.hgt files.
 	 * @param bbox the bounding box of the tile for which the DEM information is needed.
 	 * @param demPolygonMapUnits optional bounding polygon which describes the area for 
 	 * which elevation should be read from hgt files.
+	 * @param interpolationMethod 
 	 */
 	public HGTConverter(String path, Area bbox, java.awt.geom.Area demPolygonMapUnits, double extra) {
 		// make bigger box for interpolation or aligning of areas
@@ -120,16 +126,22 @@ public class HGTConverter {
 		double x1 = (lon32 - minLon32) * scale - col * res;
 		int xLeft = (int) x1;
 		int yBottom = (int) y1;
+		double qx = x1 - xLeft;
+		double qy = y1 - yBottom;
 
 		short h = HGTReader.UNDEF;
 
 		statPoints++;
-		if (useBicubic) {
-			// bicubic interpolation with 16 points
+		if (useComplexInterpolation && !InterpolationMethod.Bilinear.equals(interpolationMethod)) {
+			// bicubic or bicubic spline interpolation with 16 points
 			eleArray = fillArray(rdr, row, col, xLeft, yBottom);
 			if (eleArray != null) {
-				double h1 = bicubicInterpolation(eleArray, x1 - xLeft, y1 - yBottom);
-				h = (short) Math.round(h1);
+				if (InterpolationMethod.Bicubic.equals(interpolationMethod)) {
+					h = (short) Math.round(bicubicInterpolation(eleArray, qx, qy));
+				} else {
+					Cubic interpolator = new Cubic(Cubic.BSPLINE, eleArray);
+					h = (short) Math.round(interpolator.eval(qx, qy));
+				}
 				statBicubic++;
 			}
 		}
@@ -144,7 +156,7 @@ public class HGTConverter {
 			int hLB = rdr.ele(xLeft, yBottom);
 			int hRB = rdr.ele(xRight, yBottom);
 			
-			h = interpolatedHeight(x1-xLeft, y1-yBottom, hLT, hRT, hRB, hLB);
+			h = interpolatedHeight(qx, qy, hLT, hRT, hRB, hLB);
 			statBilinear++;
 			if (h == HGTReader.UNDEF) statVoid++;
 		}
@@ -549,7 +561,7 @@ public class HGTConverter {
 	}
 
 	/**
-	 * Estimate if bicubic interpolatin is useful 
+	 * Estimate if bicubic interpolation is useful 
 	 * @param zoomLevel number of current DEM layer
 	 * @param pointDist distance between DEM points
 	 */
@@ -561,11 +573,11 @@ public class HGTConverter {
 			//}
 			int distHGTx3 = (1 << 29)/(45 / 3 * res);	// 3 * HGT points distance in DEM units
 			if (distHGTx3 + 20 > pointDist) {		// account for rounding of pointDist and distHGTx3
-				this.useBicubic = true;			// DEM resolution is greater than 1/3 HGT resolution
+				this.useComplexInterpolation = true;			// DEM resolution is greater than 1/3 HGT resolution
 				return;
 			}
 		}
-		this.useBicubic = false;
+		this.useComplexInterpolation = false;
 	}
 
 	public void clearStat() {
@@ -577,7 +589,7 @@ public class HGTConverter {
 		statRdrRes = 0;
 	}
 	public void printStat() {
-		if (useBicubic) {
+		if (useComplexInterpolation) {
 			log.info("DEM points: " + statPoints + "; bicubic " + statBicubic + ", no HGT " + (statRdrNull + statRdrRes) +
 				"; bilinear " + statBilinear + ", voids " + statVoid + "; distance " + pointsDistanceLat);
 		}
@@ -659,5 +671,9 @@ public class HGTConverter {
 			arr[2] = cubicInterpolation(p[2], qy);
 			arr[3] = cubicInterpolation(p[3], qy);
 			return cubicInterpolation(arr, qx);
+	}
+
+	public void setInterpolationMethod(InterpolationMethod interpolationMethod) {
+		this.interpolationMethod = interpolationMethod;
 	}
 }

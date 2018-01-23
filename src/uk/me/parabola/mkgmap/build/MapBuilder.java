@@ -96,6 +96,8 @@ import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.ZipCodeInfo;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
+import uk.me.parabola.mkgmap.reader.hgt.HGTConverter;
+import uk.me.parabola.mkgmap.reader.hgt.HGTConverter.InterpolationMethod;
 import uk.me.parabola.mkgmap.reader.hgt.HGTReader;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.util.Configurable;
@@ -165,6 +167,7 @@ public class MapBuilder implements Configurable {
 	private List<Integer> demDists;
 	private short demOutsidePolygonHeight;
 	private java.awt.geom.Area demPolygon;
+	private HGTConverter.InterpolationMethod demInterpolationMethod;
 	
 
 	public MapBuilder() {
@@ -215,6 +218,20 @@ public class MapBuilder implements Configurable {
 		String demPolygonFile = props.getProperty("dem-poly", null);
 		if (demPolygonFile != null) {
 			demPolygon = Java2DConverter.readPolyFile(demPolygonFile);
+		}
+		String ipm = props.getProperty("dem-interpolation", "bicubic");
+		switch (ipm) {
+		case "bicubic": 
+			demInterpolationMethod = InterpolationMethod.Bicubic;
+			break;
+		case "bicubic-spline": 
+			demInterpolationMethod = InterpolationMethod.BicubicSpline;
+			break;
+		case "bilinear":
+			demInterpolationMethod = InterpolationMethod.Bilinear;
+			break;
+		default:
+			throw new IllegalArgumentException("invalid argument for option dem-interpolation: '" + ipm + "' supported are 'bilinear', 'bicubic', or 'bicubic-spline'");
 		}
 	}
 
@@ -318,8 +335,7 @@ public class MapBuilder implements Configurable {
 						demArea = new java.awt.geom.Area(demPoly);
 					}
 				}
-				
-				demFile.calc(src.getBounds(), demArea, pathToHGT, demDists, demOutsidePolygonHeight);
+				demFile.calc(src.getBounds(), demArea, pathToHGT, demDists, demOutsidePolygonHeight, demInterpolationMethod);
 				long t2 = System.currentTimeMillis();
 				log.info("DEM file calculation for", map.getFilename(), "took", (t2 - t1), "ms");
 				demFile.write();

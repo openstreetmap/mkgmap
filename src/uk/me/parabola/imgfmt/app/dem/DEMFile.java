@@ -22,6 +22,7 @@ import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.mkgmap.reader.hgt.HGTConverter;
+import uk.me.parabola.mkgmap.reader.hgt.HGTConverter.InterpolationMethod;
 
 /**
  * The DEM file. This consists of information about elevation. It is used for hill shading
@@ -52,11 +53,12 @@ public class DEMFile extends ImgFile {
 	 * @param demPolygonMapUnits a bounding polygon which might be smaller than the area 
 	 * @param pathToHGT comma separated list of directories or zip files
 	 * @param pointDistances list of distances which determine the resolution
-	 * @param outsidePolygonHeight the height value that should be used for points outside of the bounding polygon 
+	 * @param outsidePolygonHeight the height value that should be used for points outside of the bounding polygon
 	 */
-	public void calc(Area area, java.awt.geom.Area demPolygonMapUnits, String pathToHGT, List<Integer> pointDistances, short outsidePolygonHeight) {
+	public void calc(Area area, java.awt.geom.Area demPolygonMapUnits, String pathToHGT, List<Integer> pointDistances, short outsidePolygonHeight, InterpolationMethod interpolationMethod) {
 		// HGT area is extended by EXTRA degrees in each direction
 		HGTConverter hgtConverter = new HGTConverter(pathToHGT, area, demPolygonMapUnits, EXTRA);
+		hgtConverter.setInterpolationMethod(interpolationMethod);
 		hgtConverter.setOutsidePolygonHeight(outsidePolygonHeight);
 
 		int top = area.getMaxLat() * 256;
