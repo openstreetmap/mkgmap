@@ -132,9 +132,13 @@ public class ImgFS implements FileSystem {
 	 * @throws FileNotFoundException When the file doesn't exist or can't be
 	 * read.
 	 */
-	public static FileSystem openFs(String name) throws IOException {
-		FileChannel chan = FileChannel.open(Paths.get(name), OPEN_CREATE_RW);
-		return openFs(name, chan);
+	public static FileSystem openFs(String name) throws FileNotFoundException {
+		try {
+			FileChannel chan = FileChannel.open(Paths.get(name), OPEN_CREATE_RW);
+			return openFs(name, chan);
+		} catch (IOException e) {
+			throw new FileNotFoundException("Failed to create or open file");
+		}
 	}
 
 	private static FileSystem openFs(String name, FileChannel chan) throws FileNotFoundException {
