@@ -69,8 +69,8 @@ public abstract class Element {
 					val = squashed;
 				}
 			}
+			addTag(key, val.intern());
 		}
-		addTag(key, val.intern());
 	}
 
 	/**

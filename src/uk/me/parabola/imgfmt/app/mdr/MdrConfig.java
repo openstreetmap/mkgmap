@@ -200,7 +200,7 @@ public class MdrConfig {
 				ok = false;
 			}
 			if (!ok || !GType.checkType(types[i].getFeatureKind(), types[i].getType())){
-				throw new SyntaxException("invalid type " + ranges[i] + " for " + FeatureKind.POINT + " in option " + ranges);
+				throw new SyntaxException("invalid type " + ranges[i] + " for " + FeatureKind.POINT + " in option " + Arrays.toString(ranges));
 			}
 		}
 		
