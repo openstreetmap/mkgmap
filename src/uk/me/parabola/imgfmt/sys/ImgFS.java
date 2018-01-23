@@ -18,10 +18,12 @@ package uk.me.parabola.imgfmt.sys;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.nio.file.OpenOption;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,6 +50,7 @@ public class ImgFS implements FileSystem {
 
 	// The directory is just like any other file, but with a name of 8+3 spaces
 	static final String DIRECTORY_FILE_NAME = "        .   ";
+	private static final OpenOption[] OPEN_CREATE_RW = {StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE};
 
 	// This is the read or write channel to the real file system.
 	private final FileChannel file;
@@ -95,9 +98,9 @@ public class ImgFS implements FileSystem {
 	public static FileSystem createFs(String filename, FileSystemParam params) throws FileNotWritableException {
 		params.setFilename(filename);
 		try {
-			RandomAccessFile rafile = new RandomAccessFile(filename, "rw");
-			return createFs(rafile.getChannel(), params);
-		} catch (FileNotFoundException e) {
+			FileChannel chan = FileChannel.open(Paths.get(filename), OPEN_CREATE_RW);
+			return createFs(chan, params);
+		} catch (IOException e) {
 			throw new FileNotWritableException("Could not create file: " + params.getFilename(), e);
 		}
 	}
@@ -129,9 +132,9 @@ public class ImgFS implements FileSystem {
 	 * @throws FileNotFoundException When the file doesn't exist or can't be
 	 * read.
 	 */
-	public static FileSystem openFs(String name) throws FileNotFoundException {
-		RandomAccessFile rafile = new RandomAccessFile(name, "r");
-		return openFs(name, rafile.getChannel());
+	public static FileSystem openFs(String name) throws IOException {
+		FileChannel chan = FileChannel.open(Paths.get(name), OPEN_CREATE_RW);
+		return openFs(name, chan);
 	}
 
 	private static FileSystem openFs(String name, FileChannel chan) throws FileNotFoundException {
