@@ -45,15 +45,13 @@ class Directory {
 	private ImgChannel chan;
 
 	private final BlockManager headerBlockManager;
-	private final int startEntry;
 	private long startPos;
 
 	// The list of files themselves.
-	private final Map<String, DirectoryEntry> entries = new LinkedHashMap<String, DirectoryEntry>();
+	private final Map<String, DirectoryEntry> entries = new LinkedHashMap<>();
 
-	Directory(BlockManager headerBlockManager, int startEntry) {
+	Directory(BlockManager headerBlockManager) {
 		this.headerBlockManager = headerBlockManager;
-		this.startEntry = startEntry;
 	}
 
 	/**
@@ -142,7 +140,6 @@ class Directory {
 
 		// Save the current position
 		long dirPosition = chan.position();
-		int blockSize = headerBlockManager.getBlockSize();
 
 		// Skip the header/directory entry for now
 		chan.position(dirPosition + DirectoryEntry.ENTRY_SIZE);
@@ -172,7 +169,7 @@ class Directory {
 	 * order as in the file.
 	 */
 	public List<DirectoryEntry> getEntries() {
-		return new ArrayList<DirectoryEntry>(entries.values());
+		return new ArrayList<>(entries.values());
 	}
 
 	/**

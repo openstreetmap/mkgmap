@@ -12,7 +12,7 @@
  */
 package func.read;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.Utils;
@@ -28,10 +28,11 @@ import static org.junit.Assert.*;
 public class ImgReadTest {
 
 	@Test
-	public void testNet() throws FileNotFoundException {
-		MapReader mr = new MapReader(Utils.joinPath(Args.TEST_RESOURCE_IMG, Args.DEF_MAP_FILENAME3));
-		List<RoadDef> roads = mr.getRoads();
-		
-		assertEquals("number of roads", 1365, roads.size());
+	public void testNet() throws IOException {
+		try (MapReader mr = new MapReader(Utils.joinPath(Args.TEST_RESOURCE_IMG, Args.DEF_MAP_FILENAME3))) {
+			List<RoadDef> roads = mr.getRoads();
+
+			assertEquals("number of roads", 1365, roads.size());
+		}
 	}
 }

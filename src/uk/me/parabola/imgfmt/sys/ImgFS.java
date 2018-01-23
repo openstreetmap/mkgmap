@@ -356,7 +356,7 @@ public class ImgFS implements FileSystem {
 		// to the header and directory, but to create one normally would involve
 		// it already existing, so it is created by hand.
 		try {
-			directory = new Directory(headerBlockManager, params.getDirectoryStartEntry());
+			directory = new Directory(headerBlockManager);
 
 			Dirent ent = directory.create(DIRECTORY_FILE_NAME, headerBlockManager);
 			ent.setSpecial(true);
@@ -404,7 +404,7 @@ public class ImgFS implements FileSystem {
 		BlockManager headerBlockManager = new BlockManager(fsparam.getBlockSize(), 0);
 		headerBlockManager.setMaxBlock(fsparam.getReservedDirectoryBlocks());
 
-		directory = new Directory(headerBlockManager, fsparam.getDirectoryStartEntry());
+		directory = new Directory(headerBlockManager);
 		directory.setStartPos(fsparam.getDirectoryStartEntry() * ENTRY_BLOCK_SIZE);
 
 		Dirent ent = directory.create(DIRECTORY_FILE_NAME, headerBlockManager);

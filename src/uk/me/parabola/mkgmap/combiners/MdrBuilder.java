@@ -114,6 +114,7 @@ public class MdrBuilder implements Combiner {
 			SRTFile srtFile = new SRTFile(srtChan);
 			srtFile.setSort(sort);
 			srtFile.write();
+			// Do not close srtFile here
 		} catch (FileExistsException e) {
 			throw new ExitException("Could not create SRT file within index file");
 		}

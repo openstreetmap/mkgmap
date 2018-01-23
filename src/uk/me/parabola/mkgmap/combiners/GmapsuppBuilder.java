@@ -212,6 +212,7 @@ public class GmapsuppBuilder implements Combiner {
 				SRTFile srtFile = new SRTFile(channel);
 				srtFile.setSort(sort);
 				srtFile.write();
+				// Do not close srtFile here
 			} catch (FileExistsException e) {
 				// well it shouldn't exist!
 				log.error("could not create SRT file as it exists already");
