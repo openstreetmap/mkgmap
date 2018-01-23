@@ -39,7 +39,7 @@ public class HGTConverter {
 	private int pointsDistanceLat;
 	private int pointsDistanceLon;
 	private boolean useBicubic;
-
+	private double[][] eleArray;  
 	private int statPoints;
 	private int statBicubic;
 	private int statBilinear;
@@ -92,7 +92,6 @@ public class HGTConverter {
 		return;
 	}
 	
-	
 	/**
 	 * Return elevation in meter for a point given in DEM units (32 bit res).
 	 * @param lat32
@@ -127,10 +126,10 @@ public class HGTConverter {
 		statPoints++;
 		if (useBicubic) {
 			// bicubic interpolation with 16 points
-			double[][] eleArray = fillArray(rdr, row, col, xLeft, yBottom);
+			eleArray = fillArray(rdr, row, col, xLeft, yBottom);
 			if (eleArray != null) {
-				Bicubic interpolator = new Bicubic(eleArray);
-				h = (short) Math.round(interpolator.eval(x1-xLeft, y1-yBottom));
+				double h1 = bicubicInterpolation(eleArray, x1 - xLeft, y1 - yBottom);
+				h = (short) Math.round(h1);
 				statBicubic++;
 			}
 		}
@@ -635,5 +634,30 @@ public class HGTConverter {
 			py -= pointsDistanceLat;
 		}
 		return realHeights;
+	}
+	
+	/**
+	 * Cubic interpolation for 4 points, taken from http://www.paulinternet.nl/?page=bicubic
+	 * @author Paul Breeuwsma
+	 */
+	private static double cubicInterpolation(double[] p, double qx) {
+		return p[1] + 0.5 * qx*(p[2] - p[0] + qx*(2.0*p[0] - 5.0*p[1] + 4.0*p[2] - p[3] + qx*(3.0*(p[1] - p[2]) + p[3] - p[0])));
+	}
+
+	/**
+	 * Bicubic interpolation for 4x4 points, taken from http://www.paulinternet.nl/?page=bicubic
+	 * @author Paul Breeuwsma
+	 * @param p 4x4 matrix -1,0,1,2 * -1,0,1,2 with given values  
+	 * @param qx value from 0 .. 1 gives relative x position in matrix 
+	 * @param qy value from 0 .. 1 gives relative y position in matrix
+	 */
+	private static double bicubicInterpolation(double[][] p, double qx, double qy) {
+		double[] arr = new double[4];
+
+			arr[0] = cubicInterpolation(p[0], qy);
+			arr[1] = cubicInterpolation(p[1], qy);
+			arr[2] = cubicInterpolation(p[2], qy);
+			arr[3] = cubicInterpolation(p[3], qy);
+			return cubicInterpolation(arr, qx);
 	}
 }
