@@ -29,5 +29,5 @@ public interface FileLink {
 	 * A buffering ImgWriter can supply methods to the FileNode to obtain its
 	 * size and access to its sync() routine.
 	 */
-	public void link(Sized sized, Closeable syncable);
+	public void link(Sized sized, Closeable closeable);
 }

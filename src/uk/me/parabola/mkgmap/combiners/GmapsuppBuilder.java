@@ -212,6 +212,7 @@ public class GmapsuppBuilder implements Combiner {
 				SRTFile srtFile = new SRTFile(channel);
 				srtFile.setSort(sort);
 				srtFile.write();
+				// Do not close srtFile here
 			} catch (FileExistsException e) {
 				// well it shouldn't exist!
 				log.error("could not create SRT file as it exists already");
@@ -429,8 +430,9 @@ class FileCopier {
 	 * This version of sync() is used for single files.
 	 */
 	public void sync(ImgChannel fout) throws IOException {
-		ImgChannel fin = new FileImgChannel(filename, "r");
-		copyFile(fin, fout);
+		try (ImgChannel fin = new FileImgChannel(filename, "r")) {
+			copyFile(fin, fout);
+		}
 	}
 
 	/**

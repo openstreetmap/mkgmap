@@ -18,10 +18,12 @@ package uk.me.parabola.imgfmt.sys;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.nio.file.OpenOption;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,6 +50,7 @@ public class ImgFS implements FileSystem {
 
 	// The directory is just like any other file, but with a name of 8+3 spaces
 	static final String DIRECTORY_FILE_NAME = "        .   ";
+	private static final OpenOption[] OPEN_CREATE_RW = {StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE};
 
 	// This is the read or write channel to the real file system.
 	private final FileChannel file;
@@ -95,9 +98,9 @@ public class ImgFS implements FileSystem {
 	public static FileSystem createFs(String filename, FileSystemParam params) throws FileNotWritableException {
 		params.setFilename(filename);
 		try {
-			RandomAccessFile rafile = new RandomAccessFile(filename, "rw");
-			return createFs(rafile.getChannel(), params);
-		} catch (FileNotFoundException e) {
+			FileChannel chan = FileChannel.open(Paths.get(filename), OPEN_CREATE_RW);
+			return createFs(chan, params);
+		} catch (IOException e) {
 			throw new FileNotWritableException("Could not create file: " + params.getFilename(), e);
 		}
 	}
@@ -130,8 +133,12 @@ public class ImgFS implements FileSystem {
 	 * read.
 	 */
 	public static FileSystem openFs(String name) throws FileNotFoundException {
-		RandomAccessFile rafile = new RandomAccessFile(name, "r");
-		return openFs(name, rafile.getChannel());
+		try {
+			FileChannel chan = FileChannel.open(Paths.get(name), OPEN_CREATE_RW);
+			return openFs(name, chan);
+		} catch (IOException e) {
+			throw new FileNotFoundException("Failed to create or open file");
+		}
 	}
 
 	private static FileSystem openFs(String name, FileChannel chan) throws FileNotFoundException {
@@ -349,7 +356,7 @@ public class ImgFS implements FileSystem {
 		// to the header and directory, but to create one normally would involve
 		// it already existing, so it is created by hand.
 		try {
-			directory = new Directory(headerBlockManager, params.getDirectoryStartEntry());
+			directory = new Directory(headerBlockManager);
 
 			Dirent ent = directory.create(DIRECTORY_FILE_NAME, headerBlockManager);
 			ent.setSpecial(true);
@@ -397,7 +404,7 @@ public class ImgFS implements FileSystem {
 		BlockManager headerBlockManager = new BlockManager(fsparam.getBlockSize(), 0);
 		headerBlockManager.setMaxBlock(fsparam.getReservedDirectoryBlocks());
 
-		directory = new Directory(headerBlockManager, fsparam.getDirectoryStartEntry());
+		directory = new Directory(headerBlockManager);
 		directory.setStartPos(fsparam.getDirectoryStartEntry() * ENTRY_BLOCK_SIZE);
 
 		Dirent ent = directory.create(DIRECTORY_FILE_NAME, headerBlockManager);

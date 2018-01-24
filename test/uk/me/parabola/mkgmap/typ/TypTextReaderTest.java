@@ -224,10 +224,8 @@ public class TypTextReaderTest {
 		ArrayImgWriter w = new ArrayImgWriter();
 		point.write(w, data.getEncoder());
 		System.out.println("size " + w.getSize());
-		try {
-			OutputStream os = new FileOutputStream("hello");
+		try (OutputStream os = new FileOutputStream("hello")) {
 			os.write(w.getBytes());
-			os.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -268,7 +266,7 @@ public class TypTextReaderTest {
 	 * Basic test, reading from a file using most features.
 	 */
 	@Test
-	public void testFromFile() throws IOException {
+	public void testFromFile() throws IOException, InterruptedException {
 		Reader r = new BufferedReader(new FileReader("test/resources/typ/test.txt"));
 		tr = new TypTextReader();
 		tr.read("test.typ", r);
@@ -277,13 +275,13 @@ public class TypTextReaderTest {
 		RandomAccessFile raf = new RandomAccessFile("ts__test.typ", "rw");
 		FileChannel channel = raf.getChannel();
 		channel.truncate(0);
-		FileImgChannel w = new FileImgChannel(channel);
-		try (TYPFile typ = new TYPFile(w)) {
+
+		try (FileImgChannel w = new FileImgChannel(channel); TYPFile typ = new TYPFile(w)) {
 			typ.setData(tr.getData());
 			typ.write();
+		} finally {
+			raf.close();
 		}
-		
-		
 	}
 
 	/**

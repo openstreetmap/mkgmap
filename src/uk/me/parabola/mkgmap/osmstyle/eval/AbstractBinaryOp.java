@@ -16,8 +16,6 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
-import static uk.me.parabola.mkgmap.osmstyle.eval.NodeType.*;
-
 /**
  * A base class that can be used for binary operations.
  * It has a second operand.

@@ -104,6 +104,10 @@ public class ExpressionArranger {
 		case OR:
 			arrangeOr(op);
 			break;
+
+		default:
+			// Should not happen
+			assert false;
 		}
 
 		return op;

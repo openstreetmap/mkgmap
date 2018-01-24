@@ -18,6 +18,7 @@ package uk.me.parabola.mkgmap.combiners;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -191,13 +192,12 @@ public class FileInfo {
 	 * @param info The information will be stored here.
 	 */
 	private static void typInfo(String filename, FileInfo info) {
-		ImgChannel chan = new FileImgChannel(filename, "r");
-		try {
-			BufferedImgFileReader fr = new BufferedImgFileReader(chan);
+		try (ImgChannel chan = new FileImgChannel(filename, "r"); BufferedImgFileReader fr = new BufferedImgFileReader(chan))
+		{
 			fr.position(0x15);
 			info.setCodePage(fr.getChar());
-		} finally {
-			Utils.closeFile(chan);
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -294,18 +294,17 @@ public class FileInfo {
 	 * @throws FileNotFoundException If the file is not found in the filesystem.
 	 */
 	private static void treInfo(FileSystem imgFs, DirectoryEntry ent, FileInfo info) throws FileNotFoundException {
-		TREFileReader treFile = null;
-		try {
-			ImgChannel treChan = imgFs.open(ent.getFullName(), "r");
-			treFile = new TREFileReader(treChan);
+		try (ImgChannel treChan = imgFs.open(ent.getFullName(), "r"); TREFileReader treFile = new TREFileReader(treChan) ) {
 
 			info.setBounds(treFile.getBounds());
 
 			info.setLicenceInfo(treFile.getMapInfo(info.getCodePage()));
 
 			info.setHexname(((TREHeader) treFile.getHeader()).getMapId());
-		} finally {
-			Utils.closeFile(treFile);
+		} catch (FileNotFoundException e) {
+			throw e;
+		} catch (IOException e) {
+			throw new FileNotFoundException();
 		}
 	}
 
@@ -327,11 +326,10 @@ public class FileInfo {
 	}
 
 	private static void lblInfo(ImgChannel chan, FileInfo info) {
-		LBLFileReader lblFile = new LBLFileReader(chan);
-
-		info.setCodePage(lblFile.getCodePage());
-		info.setSortOrderId(lblFile.getSortOrderId());
-		lblFile.close();
+		try (LBLFileReader lblFile = new LBLFileReader(chan)) {
+			info.setCodePage(lblFile.getCodePage());
+			info.setSortOrderId(lblFile.getSortOrderId());
+		}
 	}
 
 	private void setBounds(Area area) {

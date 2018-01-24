@@ -19,7 +19,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.nio.CharBuffer;
@@ -27,6 +26,7 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.nio.file.StandardOpenOption;
 
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.MapFailedException;
@@ -132,7 +132,11 @@ public class TypCompiler implements MapProcessor {
 		data.setSort(sort);
 		try {
 			Reader r = new BufferedReader(new InputStreamReader(new FileInputStream(filename), charset));
-			tr.read(filename, r);
+			try {
+				tr.read(filename, r);
+			} finally {
+				Utils.closeFile(r);
+			}
 		} catch (UnsupportedEncodingException e) {
 			// Not likely to happen as we should have already used this character set!
 			throw new MapFailedException("Unsupported character set", e);
@@ -145,16 +149,17 @@ public class TypCompiler implements MapProcessor {
 	 * Write the type file out from the compiled form to the given name.
 	 */
 	private void writeTyp(TypData data, File file) throws IOException {
-		RandomAccessFile raf = new RandomAccessFile(file, "rw");
-		FileChannel channel = raf.getChannel();
-		channel.truncate(0);
+		try (FileChannel channel = FileChannel.open(file.toPath(),
+				StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ))
+		{
+			channel.truncate(0);
 
-		FileImgChannel w = new FileImgChannel(channel);
-		TYPFile typ = new TYPFile(w);
-		typ.setData(data);
-
-		typ.write();
-		typ.close();
+			FileImgChannel w = new FileImgChannel(channel);
+			try (TYPFile typ = new TYPFile(w)) {
+				typ.setData(data);
+				typ.write();
+			}
+		}
 	}
 
 	/**
@@ -164,7 +169,7 @@ public class TypCompiler implements MapProcessor {
 	 *  in-file defaults to 'default.txt'
 	 *  out-file defaults to OUT.TYP
 	 */
-	public static void main(String[] args) throws IOException {
+	public static void main(String... args) {
 		String in = "default.txt";
 		if (args.length > 0)
 			in = args[0];
@@ -229,11 +234,8 @@ public class TypCompiler implements MapProcessor {
 		}
 
 		private void tryCharset(String file, String readingCharset) {
-			InputStream is = null;
 
-			try {
-				is = new FileInputStream(file);
-				BufferedReader br = new BufferedReader(new InputStreamReader(is, readingCharset));
+			try (InputStream is = new FileInputStream(file); BufferedReader br = new BufferedReader(new InputStreamReader(is, readingCharset))) {
 
 				String line;
 				while ((line = br.readLine()) != null) {
@@ -259,10 +261,7 @@ public class TypCompiler implements MapProcessor {
 							encoder.encode(cb);
 					}
 				}
-			} catch (UnsupportedEncodingException e) {
-				throw new TypLabelException(codePage);
-
-			} catch (CharacterCodingException e) {
+			} catch (UnsupportedEncodingException | CharacterCodingException e) {
 				throw new TypLabelException(codePage);
 
 			} catch (FileNotFoundException e) {
@@ -270,9 +269,6 @@ public class TypCompiler implements MapProcessor {
 
 			} catch (IOException e) {
 				throw new ExitException("Could not read file " + file);
-
-			} finally {
-				Utils.closeFile(is);
 			}
 		}
 	}
