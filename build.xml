@@ -243,6 +243,7 @@
 			<fileset dir="${resources}">
 				<include name="*.csv"/>
 				<include name="*.properties"/>
+				<include name="*known-hgt.bin"/>
 				<include name="*.xml"/>
 				<include name="**/*.trans"/>
 				<include name="styles/**"/>
@@ -370,6 +371,7 @@
 			</manifest>
 			<include name="**/*.class"/>
 			<include name="*.csv"/>
+			<include name="known-hgt.bin"/>
 			<include name="*.xml"/>
 			<include name="*.properties"/>
 			<include name="**/*.trans"/>
@@ -399,6 +401,7 @@
 		<copy todir="${dist}/examples">
 			<fileset dir="resources">
 				<include name="roadNameConfig.txt"/>
+				<include name="known-hgt.txt"/>
 				<include name="installer/**"/>
 				<include name="styles/default/**"/>
 				<include name="styles/noname/**"/>

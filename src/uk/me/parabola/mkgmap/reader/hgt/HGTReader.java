@@ -52,7 +52,6 @@ public class HGTReader {
 	private final static Map<String,Set<String>> missingMap = new HashMap<>();
 	private final static Set<String> badDir = new HashSet<>();
 	
-	
 	/**
 	 * Class to read a single HGT file. 
 	 * @param lat in degrees, -90 .. 90
@@ -67,15 +66,14 @@ public class HGTReader {
 		
  		String[] dirs = dirsWithHGT.split("[,]");
 		fileName = name;
-		
 		String fName = ".";
-		boolean knwonAsMissing = false;
+		boolean knownAsMissing = false;
 		synchronized (missingMap) {
 			Set<String> missingSet = missingMap.get(dirsWithHGT);
 			if (missingSet != null)
-				knwonAsMissing = missingSet.contains(name);
+				knownAsMissing = missingSet.contains(name);
 		}
-		if (!knwonAsMissing) {
+		if (!knownAsMissing) {
 			for (String dir : dirs) {
 				dir = dir.trim();
 				File f = new File (dir);
@@ -125,7 +123,14 @@ public class HGTReader {
 					}
 					missingSet.add(name);
 				}
-				log.warn("file " + name + " not found. Is expected to cover sea.");
+				HGTList hgtList = HGTList.get();
+				if (hgtList != null) {
+					if (hgtList.shouldExist(lat, lon))
+						System.err.println(this.getClass().getSimpleName() + ": file " + name + " not found but it should exist. Height values will be 0.");
+					return;
+				} else { 
+					log.warn("file " + name + " not found. Is expected to cover sea.");
+				}
 			}
 		}
 	}
@@ -251,4 +256,5 @@ public class HGTReader {
 
 		}
 	}
+	
 }

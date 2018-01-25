@@ -185,12 +185,20 @@ public class Logger {
 			arrayFormat(Level.WARNING, olist);
 	}
 
+	public void warnf(String fmt, Object... args) {
+		if (log.isLoggable(Level.WARNING))
+			printf(Level.WARNING, fmt, args);
+	}
+
 	public void error(Object o) {
 		log.severe(tagMessage(o == null? "null" : o.toString()));
 	}
 
 	public void error(Object ... olist) {
 			arrayFormat(Level.SEVERE, olist);
+	}
+	public void errorf(String fmt, Object... args) {
+		printf(Level.SEVERE, fmt, args);
 	}
 	
 	public void error(Object o, Throwable e) {
