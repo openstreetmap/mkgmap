@@ -59,8 +59,8 @@ public class DEMSection {
 		pointsDistanceLat = pointDist; 
 		pointsDistanceLon = pointDist;
 
-		// select bicubic or bilinear interpolation
-		hgtConverter.setBicubic(zoomLevel, pointDist);
+		// allow automatic selection of interpolation method for each zoom level
+		hgtConverter.startNewLevel(pointDist);
 
 		int []latInfo = getTileInfo(areaHeight, pointsDistanceLat);
 		int []lonInfo = getTileInfo(areaWidth, pointsDistanceLon);
@@ -109,9 +109,6 @@ public class DEMSection {
 		int minBaseHeight = Integer.MAX_VALUE;
 		int maxBaseHeight = Integer.MIN_VALUE;
 		int maxDeltaHeight = Integer.MIN_VALUE;
-		hgtConverter.setLatDist(pointsDistanceLat);
-		hgtConverter.setLonDist(pointsDistanceLon);
-		hgtConverter.clearStat();
 		for (int m = 0; m < tilesLat; m++) {
 			latOff = top - m * resLat;
 			

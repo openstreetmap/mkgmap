@@ -48,9 +48,13 @@ public class HGTConverter {
 	private int statRdrRes;
 	private InterpolationMethod interpolationMethod = InterpolationMethod.Bicubic;
 
-
 	public enum InterpolationMethod {
-		Bilinear, Bicubic, BicubicSpline
+		/** faster, smoothing, less precise */
+		Bilinear , 
+		/** slower, higher precision */
+		Bicubic, 
+		/** bicubic for high resolution, else bilinear */ 
+		Automatic
 	};
 	
 	/**
@@ -97,7 +101,16 @@ public class HGTConverter {
 		res = maxRes; // we use the highest available res
 		return;
 	}
-	
+
+	/**
+	 * Allows to change the interpolation method for complex interpolations.
+	 * @param interpolationMethod
+	 */
+	public void setInterpolationMethod(InterpolationMethod interpolationMethod) {
+		this.interpolationMethod = interpolationMethod;
+		useComplexInterpolation = (interpolationMethod != InterpolationMethod.Bilinear);
+	}
+
 	/**
 	 * Return elevation in meter for a point given in DEM units (32 bit res).
 	 * @param lat32
@@ -105,7 +118,6 @@ public class HGTConverter {
 	 * @return height in m or Short.MIN_VALUE if value is invalid 
 	 */
 	protected short getElevation(int lat32, int lon32) {
-		// TODO: maybe calculate the borders in 32 bit res ?
 		int row = (int) ((lat32 - minLat32) * FACTOR);
 		int col = (int) ((lon32 - minLon32) * FACTOR);
 
@@ -132,16 +144,11 @@ public class HGTConverter {
 		short h = HGTReader.UNDEF;
 
 		statPoints++;
-		if (useComplexInterpolation && !InterpolationMethod.Bilinear.equals(interpolationMethod)) {
-			// bicubic or bicubic spline interpolation with 16 points
+		if (useComplexInterpolation) {
+			// bicubic (Catmull-Rom) interpolation with 16 points
 			eleArray = fillArray(rdr, row, col, xLeft, yBottom);
 			if (eleArray != null) {
-				if (InterpolationMethod.Bicubic.equals(interpolationMethod)) {
-					h = (short) Math.round(bicubicInterpolation(eleArray, qx, qy));
-				} else {
-					Cubic interpolator = new Cubic(Cubic.BSPLINE, eleArray);
-					h = (short) Math.round(interpolator.eval(qx, qy));
-				}
+				h = (short) Math.round(bicubicInterpolation(eleArray, qx, qy));
 				statBicubic++;
 			}
 		}
@@ -174,8 +181,7 @@ public class HGTConverter {
 	 * Fill 16 values of HGT near required coordinates
 	 * can use HGTreaders near the current one
 	 */
-	private double[][] fillArray(HGTReader rdr, int row, int col, int xLeft, int yBottom)
-	{
+	private double[][] fillArray(HGTReader rdr, int row, int col, int xLeft, int yBottom) {
 		int res = rdr.getRes();
 		int minX = 0;
 		int minY = 0;
@@ -189,8 +195,7 @@ public class HGTConverter {
 				return null;
 			minX = 1;
 			inside = false;
-		}
-		else if (xLeft == res - 1) {
+		} else if (xLeft == res - 1) {
 			if (col >= readers[0].length)
 				return null;
 			maxX = 2;
@@ -201,8 +206,7 @@ public class HGTConverter {
 				return null;
 			minY = 1;
 			inside = false;
-		}
-		else if (yBottom == res - 1) {
+		} else if (yBottom == res - 1) {
 			if (row >= readers.length)
 				return null;
 			maxY = 2;
@@ -226,22 +230,21 @@ public class HGTConverter {
 
 		// fill data from adjacent readers, down and up
 		if (xLeft > 0 && xLeft < res - 1) {
-			if (yBottom == 0) {	// bottom edge
+			if (yBottom == 0) { // bottom edge
 				HGTReader rdrBB = prepReader(res, row - 1, col);
 				if (rdrBB == null)
 					return null;
-				for (int x = 0; x <= 3; x++ ) {
+				for (int x = 0; x <= 3; x++) {
 					h = rdrBB.ele(xLeft + x - 1, res - 1);
 					if (h == HGTReader.UNDEF)
 						return null;
 					eleArray[x][0] = h;
 				}
-			}
-			else if (yBottom == res - 1) {	// top edge
+			} else if (yBottom == res - 1) { // top edge
 				HGTReader rdrTT = prepReader(res, row + 1, col);
 				if (rdrTT == null)
 					return null;
-				for (int x = 0; x <= 3; x++ ) {
+				for (int x = 0; x <= 3; x++) {
 					h = rdrTT.ele(xLeft + x - 1, 1);
 					if (h == HGTReader.UNDEF)
 						return null;
@@ -252,22 +255,21 @@ public class HGTConverter {
 
 		// fill data from adjacent readers, left and right
 		if (yBottom > 0 && yBottom < res - 1) {
-			if (xLeft == 0) {	// left edgge
+			if (xLeft == 0) { // left edgge
 				HGTReader rdrLL = prepReader(res, row, col - 1);
 				if (rdrLL == null)
 					return null;
-				for (int y = 0; y <= 3; y++ ) {
+				for (int y = 0; y <= 3; y++) {
 					h = rdrLL.ele(res - 1, yBottom + y - 1);
 					if (h == HGTReader.UNDEF)
 						return null;
 					eleArray[0][y] = h;
 				}
-			}
-			else if (xLeft == res - 1) {	// right edge
+			} else if (xLeft == res - 1) { // right edge
 				HGTReader rdrRR = prepReader(res, row, col + 1);
 				if (rdrRR == null)
 					return null;
-				for (int y = 0; y <= 3; y++ ) {
+				for (int y = 0; y <= 3; y++) {
 					h = rdrRR.ele(1, yBottom + y - 1);
 					if (h == HGTReader.UNDEF)
 						return null;
@@ -278,11 +280,11 @@ public class HGTConverter {
 
 		// fill data from adjacent readers, corners
 		if (xLeft == 0) {
-			if (yBottom == 0) {	// left bottom corner
+			if (yBottom == 0) { // left bottom corner
 				HGTReader rdrLL = prepReader(res, row, col - 1);
 				if (rdrLL == null)
 					return null;
-				for (int y = 1; y <= 3; y++ ) {
+				for (int y = 1; y <= 3; y++) {
 					h = rdrLL.ele(res - 1, yBottom + y - 1);
 					if (h == HGTReader.UNDEF)
 						return null;
@@ -292,26 +294,25 @@ public class HGTConverter {
 				HGTReader rdrBB = prepReader(res, row - 1, col);
 				if (rdrBB == null)
 					return null;
-				for (int x = 1; x <= 3; x++ ) {
+				for (int x = 1; x <= 3; x++) {
 					h = rdrBB.ele(xLeft + x - 1, res - 1);
 					if (h == HGTReader.UNDEF)
 						return null;
 					eleArray[x][0] = h;
 				}
 
-				HGTReader rdrLB = prepReader(res, row - 1, col -1);
+				HGTReader rdrLB = prepReader(res, row - 1, col - 1);
 				if (rdrLB == null)
 					return null;
 				h = rdrLB.ele(res - 1, res - 1);
 				if (h == HGTReader.UNDEF)
 					return null;
 				eleArray[0][0] = h;
-			}
-			else if (yBottom == res - 1) {	// left top corner
+			} else if (yBottom == res - 1) { // left top corner
 				HGTReader rdrLL = prepReader(res, row, col - 1);
 				if (rdrLL == null)
 					return null;
-				for (int y = 0; y <= 2; y++ ) {
+				for (int y = 0; y <= 2; y++) {
 					h = rdrLL.ele(res - 1, yBottom + y - 1);
 					if (h == HGTReader.UNDEF)
 						return null;
@@ -321,7 +322,7 @@ public class HGTConverter {
 				HGTReader rdrTT = prepReader(res, row + 1, col);
 				if (rdrTT == null)
 					return null;
-				for (int x = 1; x <= 3; x++ ) {
+				for (int x = 1; x <= 3; x++) {
 					h = rdrTT.ele(xLeft + x - 1, 1);
 					if (h == HGTReader.UNDEF)
 						return null;
@@ -336,13 +337,12 @@ public class HGTConverter {
 					return null;
 				eleArray[0][3] = h;
 			}
-		}
-		else if (xLeft == res - 1) {
-			if (yBottom == 0) {	// right bottom corner
+		} else if (xLeft == res - 1) {
+			if (yBottom == 0) { // right bottom corner
 				HGTReader rdrRR = prepReader(res, row, col + 1);
 				if (rdrRR == null)
 					return null;
-				for (int y = 1; y <= 3; y++ ) {
+				for (int y = 1; y <= 3; y++) {
 					h = rdrRR.ele(1, yBottom + y - 1);
 					if (h == HGTReader.UNDEF)
 						return null;
@@ -352,7 +352,7 @@ public class HGTConverter {
 				HGTReader rdrBB = prepReader(res, row - 1, col);
 				if (rdrBB == null)
 					return null;
-				for (int x = 0; x <= 2; x++ ) {
+				for (int x = 0; x <= 2; x++) {
 					h = rdrBB.ele(xLeft + x - 1, res - 1);
 					if (h == HGTReader.UNDEF)
 						return null;
@@ -366,12 +366,11 @@ public class HGTConverter {
 				if (h == HGTReader.UNDEF)
 					return null;
 				eleArray[3][0] = h;
-			}
-			else if (yBottom == res - 1) {	// right top corner
+			} else if (yBottom == res - 1) { // right top corner
 				HGTReader rdrRR = prepReader(res, row, col + 1);
 				if (rdrRR == null)
 					return null;
-				for (int y = 0; y <= 2; y++ ) {
+				for (int y = 0; y <= 2; y++) {
 					h = rdrRR.ele(1, yBottom + y - 1);
 					if (h == HGTReader.UNDEF)
 						return null;
@@ -381,7 +380,7 @@ public class HGTConverter {
 				HGTReader rdrTT = prepReader(res, row + 1, col);
 				if (rdrTT == null)
 					return null;
-				for (int x = 0; x <= 2; x++ ) {
+				for (int x = 0; x <= 2; x++) {
 					h = rdrTT.ele(xLeft + x - 1, 1);
 					if (h == HGTReader.UNDEF)
 						return null;
@@ -515,14 +514,14 @@ public class HGTConverter {
 		return (short) Math.round((1.0D - qy) * hxb + qy * hxt);
 	}
 
-	public void stats() {
-		for (int i = 0; i < readers.length; i++) {
-			for (int j = 0; j < readers[i].length; j++) {
-				System.out.println(readers[i][j]);
-			}
-			
-		}
-	}
+//	public void stats() {
+//		for (int i = 0; i < readers.length; i++) {
+//			for (int j = 0; j < readers[i].length; j++) {
+//				System.out.println(readers[i][j]);
+//			}
+//			
+//		}
+//	}
 
 	public int getHighestRes() {
 		return res;
@@ -553,34 +552,27 @@ public class HGTConverter {
 		noHeights[0]= outsidePolygonHeight;
 	}
 
-	public void setLatDist(int pointsDistance) {
-		this.pointsDistanceLat = pointsDistance;
-	}
-	public void setLonDist(int pointsDistance) {
-		this.pointsDistanceLon = pointsDistance;
-	}
-
 	/**
-	 * Estimate if bicubic interpolation is useful 
-	 * @param zoomLevel number of current DEM layer
+	 * If interpolation method is automatic, decide which to use for a new zoom level.
 	 * @param pointDist distance between DEM points
 	 */
-	public void setBicubic(int zoomLevel, int pointDist) {
-		if (res > 0) {
-			//if (zoomLevel == 0) {
-			//	this.useBicubic = true; // always use bicubic for most detailed layer, for overview too
-			//	return;
-			//}
-			int distHGTx3 = (1 << 29)/(45 / 3 * res);	// 3 * HGT points distance in DEM units
-			if (distHGTx3 + 20 > pointDist) {		// account for rounding of pointDist and distHGTx3
-				this.useComplexInterpolation = true;			// DEM resolution is greater than 1/3 HGT resolution
-				return;
+	public void startNewLevel(int pointDist) {
+		clearStat();
+		pointsDistanceLat = pointDist;
+		pointsDistanceLon = pointDist;
+		if (InterpolationMethod.Automatic.equals(interpolationMethod)) {
+			if (res > 0) {
+				int distHGTx3 = (1 << 29)/(45 / 3 * res);	// 3 * HGT points distance in DEM units
+				if (distHGTx3 + 20 > pointDist) {		// account for rounding of pointDist and distHGTx3
+					this.useComplexInterpolation = true;			// DEM resolution is greater than 1/3 HGT resolution
+					return;
+				}
 			}
+			this.useComplexInterpolation = false;
 		}
-		this.useComplexInterpolation = false;
 	}
 
-	public void clearStat() {
+	private void clearStat() {
 		statPoints = 0;
 		statBicubic = 0;
 		statBilinear = 0;
@@ -589,10 +581,8 @@ public class HGTConverter {
 		statRdrRes = 0;
 	}
 	public void printStat() {
-		if (useComplexInterpolation) {
-			log.info("DEM points: " + statPoints + "; bicubic " + statBicubic + ", no HGT " + (statRdrNull + statRdrRes) +
+		log.info("DEM points: " + statPoints + "; bicubic " + statBicubic + ", no HGT " + (statRdrNull + statRdrRes) +
 				"; bilinear " + statBilinear + ", voids " + statVoid + "; distance " + pointsDistanceLat);
-		}
 	}
 
 	/**
@@ -605,7 +595,6 @@ public class HGTConverter {
 	 * a an array with one value for each point, in the order top -> down and left -> right.
 	 */
 	public short[] getHeights(int lat32, int lon32, int height, int width) {
-		// TODO Auto-generated method stub
 		short[] realHeights = noHeights;
 		
 		java.awt.geom.Area testArea = null;
@@ -650,6 +639,7 @@ public class HGTConverter {
 	
 	/**
 	 * Cubic interpolation for 4 points, taken from http://www.paulinternet.nl/?page=bicubic
+	 * Uses Catmull–Rom spline.
 	 * @author Paul Breeuwsma
 	 */
 	private static double cubicInterpolation(double[] p, double qx) {
@@ -673,7 +663,4 @@ public class HGTConverter {
 			return cubicInterpolation(arr, qx);
 	}
 
-	public void setInterpolationMethod(InterpolationMethod interpolationMethod) {
-		this.interpolationMethod = interpolationMethod;
-	}
 }

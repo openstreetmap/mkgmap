@@ -471,6 +471,14 @@ somewhere between 1648 and 5520, 3312 is often used.
 :	--dem-dists=3312,13248,26512,53024
 :	This was found in a Garmin Demo map for transalpin data created 2009.
 <p>
+;--dem-interpolation=auto|bicubic|bilinear
+:   Use this option to speciy the method that is used to interpolate data from 
+hgt raster to the DEM raster. The value bicubic gives the highest precision 
+but is slower, bilinear is faster but less precise, it tends to smooth the 
+profile and thus also reduces DEM size compared to bicubic. The value auto 
+means that bicubic is used where is seems appropriate according to hgt 
+resolution and dem-dist value, else bilinear is used. The default is auto.
+<p>
 ;--dem-poly=filename
 :   If given, the filename should point to a *.poly file in osmosis polygon 
 file format. The polygon described in the file is used to determine the area

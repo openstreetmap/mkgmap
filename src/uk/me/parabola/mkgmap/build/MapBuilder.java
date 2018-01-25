@@ -219,19 +219,20 @@ public class MapBuilder implements Configurable {
 		if (demPolygonFile != null) {
 			demPolygon = Java2DConverter.readPolyFile(demPolygonFile);
 		}
-		String ipm = props.getProperty("dem-interpolation", "bicubic");
+		String ipm = props.getProperty("dem-interpolation", "auto");
 		switch (ipm) {
+		case "auto": 
+			demInterpolationMethod = InterpolationMethod.Automatic;
+			break;
 		case "bicubic": 
 			demInterpolationMethod = InterpolationMethod.Bicubic;
-			break;
-		case "bicubic-spline": 
-			demInterpolationMethod = InterpolationMethod.BicubicSpline;
 			break;
 		case "bilinear":
 			demInterpolationMethod = InterpolationMethod.Bilinear;
 			break;
 		default:
-			throw new IllegalArgumentException("invalid argument for option dem-interpolation: '" + ipm + "' supported are 'bilinear', 'bicubic', or 'bicubic-spline'");
+			throw new IllegalArgumentException("invalid argument for option dem-interpolation: '" + ipm + 
+					"' supported are 'bilinear', 'bicubic', or 'auto'");
 		}
 	}
 

@@ -463,7 +463,16 @@ Hill Shading (DEM) options:
 	Example which should work with levels="0:24, 1:22, 2:20, 3:18":
 	--dem-dists=3312,13248,26512,53024
 	This was found in a Garmin Demo map for transalpin data created 2009.
- 
+
+--dem-interpolation=auto|bicubic|bilinear
+	Use this option to speciy the method that is used to interpolate 
+	data from hgt raster to the DEM raster. The value bicubic gives the 
+	highest precision but is slower, bilinear is faster but less precise,
+	it tends to smooth the profile and thus also reduces DEM size compared to 
+	bicubic. The value auto means that bicubic is used where is seems 
+	appropriate according to hgt resolution and dem-dist value, else bilinear
+	is used. If not given, the default is auto.
+
 --dem-poly=filename
 	If given, the filename should point to a *.poly file in osmosis polygon 
 	file format. The polygon described in the file is used to determine the area
