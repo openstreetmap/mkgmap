@@ -13,14 +13,11 @@
 package uk.me.parabola.mkgmap.reader.hgt;
 
 import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.BitSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -129,7 +126,7 @@ public class HGTList {
 		return (90 + lat) * 360 + lon + 180;
 	}
 	
-	public boolean shouldExist(int lat, int lon) {
+	public synchronized boolean shouldExist(int lat, int lon) {
 		if (knownHgt != null)
 			return knownHgt.get(getBitSetPos(lat, lon));
 		return false;
