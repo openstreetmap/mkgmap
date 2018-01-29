@@ -18,6 +18,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -60,18 +61,18 @@ public class HGTReader {
 	 * Supported are also zip files containing *.hgt files and directories containing *.hgt.zip.
 	 */
 	public HGTReader(int lat, int lon, String dirsWithHGT) {
-		String name = String.format("%s%02d%s%03d.hgt",
+		String baseName = String.format("%s%02d%s%03d",
 				lat < 0 ? "S" : "N", lat < 0 ? -lat : lat, 
 						lon < 0 ? "W" : "E", lon < 0 ? -lon : lon);
 		
  		String[] dirs = dirsWithHGT.split("[,]");
-		fileName = name;
+		fileName = baseName + ".hgt";
 		String fName = ".";
 		boolean knownAsMissing = false;
 		synchronized (missingMap) {
 			Set<String> missingSet = missingMap.get(dirsWithHGT);
 			if (missingSet != null)
-				knownAsMissing = missingSet.contains(name);
+				knownAsMissing = missingSet.contains(fileName);
 		}
 		if (!knownAsMissing) {
 			for (String dir : dirs) {
@@ -85,7 +86,7 @@ public class HGTReader {
 					continue;
 				}
 				if (f.isDirectory()) {
-					fName = Utils.joinPath(dir, name);
+					fName = Utils.joinPath(dir, fileName);
 					try (FileInputStream fis = new FileInputStream(fName)) {
 						res = calcRes(fis.getChannel().size(), fName);
 						if (res >= 0) {
@@ -97,14 +98,20 @@ public class HGTReader {
 						log.error("failed to get size for file", fName);
 					}
 					fName += ".zip";
-					checkZip(fName, name); // try to find *.hgt.zip in dir that contains *.hgt
+					checkZip(fName, fileName); // try to find *.hgt.zip in dir that contains *.hgt
+					if (res > 0) {
+						path = fName;
+						return;
+					}
+					fName = Utils.joinPath(dir, baseName) + ".zip";
+					checkZip(fName, fileName); // try to find *.hgt.zip in dir that contains *.hgt
 					if (res > 0) {
 						path = fName;
 						return;
 					}
 				} else {
 					if (dir.endsWith(".zip")) {
-						checkZip(dir, name); // try to find *.hgt in zip file
+						checkZip(dir, fileName); // try to find *.hgt in zip file
 					}
 				}
 				if (res > 0) {
@@ -121,18 +128,40 @@ public class HGTReader {
 						missingSet = new HashSet<>();
 						missingMap.put(dirsWithHGT, missingSet);
 					}
-					missingSet.add(name);
+					missingSet.add(fileName);
 				}
 				HGTList hgtList = HGTList.get();
 				if (hgtList != null) {
 					if (hgtList.shouldExist(lat, lon))
-						System.err.println(this.getClass().getSimpleName() + ": file " + name + " not found but it should exist. Height values will be 0.");
+						System.err.println(this.getClass().getSimpleName() + ": file " + fileName + " not found but it should exist. Height values will be 0.");
 					return;
 				} else { 
-					log.warn("file " + name + " not found. Is expected to cover sea.");
+					log.warn("file " + fileName + " not found. Is expected to cover sea.");
 				}
 			}
 		}
+	}
+	
+	/**
+	 * try to find the needed file. Different hgt providers use slightly different methods to
+	 * pack their data. 
+	 * @param zipFile
+	 * @param name
+	 * @return
+	 */
+	private ZipEntry findZipEntry (ZipFile zipFile, String name) {
+		ZipEntry entry = zipFile.getEntry(name);
+		if (entry == null) {
+			// no direct hit, try to recurse through all files
+			Enumeration<? extends ZipEntry> entries = zipFile.entries();
+			while (entries.hasMoreElements()) {
+				entry = entries.nextElement();
+				if (!entry.isDirectory() && entry.getName().toUpperCase().endsWith(name.toUpperCase())) {
+					break;
+				}
+			}
+		}
+		return entry;
 	}
 	
 	/**
@@ -142,7 +171,7 @@ public class HGTReader {
 	 */
 	private void checkZip(String fName, String name) {
 		try(ZipFile zipFile = new ZipFile(fName)){
-			ZipEntry entry = zipFile.getEntry(name);
+			ZipEntry entry = findZipEntry(zipFile, name);
 			if (entry != null){
 				res = calcRes(entry.getSize(), entry.getName());
 			}
@@ -160,7 +189,7 @@ public class HGTReader {
 	 */
 	private void extractFromZip(String fName, String name) throws IOException {
 		try (ZipFile zipFile = new ZipFile(fName)) {
-			ZipEntry entry = zipFile.getEntry(name);
+			ZipEntry entry = findZipEntry(zipFile, name);
 			if (entry != null) {
 				InputStream is = zipFile.getInputStream(entry);
 				log.info("extracting data for " + entry.getName() + " from " + zipFile.getName());
@@ -171,6 +200,8 @@ public class HGTReader {
 					buffer.put(ioBuffer, 0, len);
 					len = is.read(ioBuffer);
 				}
+			} else {
+				throw new FileNotFoundException(name);
 			}
 			read = true;
 		} 
