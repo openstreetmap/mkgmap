@@ -342,9 +342,10 @@ Style options:
 
 --levels=levels code
 	Change the way that the levels on the map correspond to the zoom
-	levels in the device. See customisation help. The default is:
+	levels in the device. See customisation help. The hard coded default is:
 	"0:24, 1:22, 2:20, 3:18, 4:16", although each style can have
-	its own default. Up to 8 levels may be specified.
+	its own default. The default style for example overwrites it with
+	"0:24, 1:22, 2:20, 3:18". Up to 8 levels may be specified.
 
 --name-tag-list
 	Get the tag that will be used to supply the name.  Useful for
