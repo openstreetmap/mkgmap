@@ -21,7 +21,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import uk.me.parabola.imgfmt.MapFailedException;
+import uk.me.parabola.imgfmt.Sized;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.imgfmt.sys.FileLink;
 import uk.me.parabola.log.Logger;
 
 /**
@@ -30,7 +32,7 @@ import uk.me.parabola.log.Logger;
  *
  * @author Steve Ratcliffe
  */
-public class BufferedImgFileWriter implements ImgFileWriter {
+public class BufferedImgFileWriter implements ImgFileWriter, Sized {
 	private static final Logger log = Logger.getLogger(BufferedImgFileWriter.class);
 
 	private static final int KBYTE = 1024;
@@ -47,6 +49,7 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 	// position must be set to a low value after the full file is written. This
 	// always happens because we go back and write the header after all is
 	// written.
+	// Always use getSize() which takes care of things.
 	private int maxSize;
 
 	// The maximum allowed file size.
@@ -55,6 +58,9 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 	public BufferedImgFileWriter(ImgChannel chan) {
 		this.chan = chan;
 		buf.order(ByteOrder.LITTLE_ENDIAN);
+		if (chan instanceof FileLink) {
+			((FileLink) chan).link(this, this);
+		}
 	}
 
 	/**
@@ -63,7 +69,7 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 	 * little to do.
 	 */
 	public void sync() throws IOException {
-		buf.limit(maxSize);
+		buf.limit((int) getSize());
 		buf.position(0);
 		log.debug("syncing to pos", chan.position(), ", size", buf.limit());
 		chan.write(buf);
@@ -92,10 +98,10 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 	}
 
 	/**
-	 * Called when the stream is closed.  Any resources can be freed.
+	 * Called when the stream is closed.
 	 */
 	public void close() throws IOException {
-		chan.close();
+		sync();
 	}
 
 	/**
@@ -223,7 +229,7 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 	 * @return The size of the file, if it is available.
 	 */
 	public long getSize() {
-		return maxSize;
+		return Math.max(maxSize, position());
 	}
 
 	public ByteBuffer getBuffer() {

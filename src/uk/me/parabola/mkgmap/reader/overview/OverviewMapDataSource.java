@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.mkgmap.reader.overview;
 
+import java.awt.geom.Path2D;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,7 @@ import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
+import uk.me.parabola.util.Java2DConverter;
 
 /**
  * Class for creating an overview map.  Nothing is actually read in from a file,
@@ -45,8 +47,14 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 	private static final Logger log = Logger.getLogger(OverviewMapDataSource.class);
 	
 	private final List<String> copyrights = new ArrayList<String>();
-	LevelInfo[] levels = null;	
+	LevelInfo[] levels = null;
+	private Path2D tileAreaPath = new Path2D.Double();
+
 	
+	public Path2D getTileAreaPath() {
+		return tileAreaPath;
+	}
+
 	/**
 	 * This is a fake source of data and is not read from a file, so always
 	 * return false here.
@@ -150,6 +158,10 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 	 */
 	public void addShape(MapShape shape) {
 		mapper.addShape(shape);
+		if (shape.getType() == 0x4a) {
+			tileAreaPath.append(Java2DConverter.createPath2D(shape.getPoints()),false);
+			
+		}
 	}
 
 	public void addRoad(MapRoad road) {

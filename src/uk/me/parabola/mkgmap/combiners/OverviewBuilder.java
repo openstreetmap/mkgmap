@@ -41,6 +41,7 @@ import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.mkgmap.srt.SrtTextReader;
+import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * Build the overview map.  This is a low resolution map that covers the whole
@@ -63,8 +64,9 @@ public class OverviewBuilder implements Combiner {
 	private List<String[]> licenseInfos = new ArrayList<String[]>();
 	private LevelInfo[] wantedLevels;
 	private Area bounds;
-
-
+	private boolean hasBackground;
+	private EnhancedProperties demProps = new EnhancedProperties();
+	
 	public OverviewBuilder() {
 		this.overviewSource = new OverviewMapDataSource();
 	}
@@ -73,7 +75,14 @@ public class OverviewBuilder implements Combiner {
 		areaName = args.get("area-name", "Overview Map");
 		overviewMapname = args.get("overview-mapname", "osmmap");
 		overviewMapnumber = args.get("overview-mapnumber", "63240000");
+		
 		outputDir = args.getOutputDir();
+		String demDist = args.getProperties().getProperty("overview-dem-dist");
+		String hgtPath = args.getProperties().getProperty("dem");
+		if (hgtPath != null && demDist != null && "0".equals(demDist.trim()) == false) {
+			demProps = new EnhancedProperties(args.getProperties());
+			demProps.setProperty("dem-dists", demDist);
+		}				
 	}
 
 	public void onMapEnd(FileInfo finfo) {
@@ -88,7 +97,9 @@ public class OverviewBuilder implements Combiner {
 	}
 
 	public void onFinish() {
-		overviewSource.addBackground();
+		if (!hasBackground) {
+			overviewSource.addBackground();
+		}
 		calcLevels();
 		writeOverviewMap();
 		bounds = overviewSource.getBounds();
@@ -105,7 +116,7 @@ public class OverviewBuilder implements Combiner {
 		int maxRes = 16; // we can write a 0x4a polygon for planet in res 16
 		if (wantedLevels != null)
 			maxRes = wantedLevels[wantedLevels.length-1].getBits();
-		int maxSize = 0xffff << (24 - maxRes); 
+		int maxSize = 0xffff << (24 - maxRes);
 		for (MapShape s : shapes){
 			if (s.getType() != 0x4a)
 				continue;
@@ -153,11 +164,11 @@ public class OverviewBuilder implements Combiner {
 	private void writeOverviewMap() {
 		if (overviewSource.mapLevels() == null)
 			return;
+		
 		MapBuilder mb = new MapBuilder();
 		mb.setEnableLineCleanFilters(false);
 
 		FileSystemParam params = new FileSystemParam();
-		params.setBlockSize(512);
 		params.setMapDescription(areaName);
 		mb.setCopyrights(creMsgList(copyrightMsgs));
 		mb.setMapInfo(creMsgList(licenseInfos));
@@ -169,6 +180,10 @@ public class OverviewBuilder implements Combiner {
 			}
 			Sort sort = SrtTextReader.sortForCodepage(codepage);
 			Map map = Map.createMap(overviewMapname, outputDir, params, overviewMapnumber, sort);
+			if (!demProps.isEmpty()) {
+				map.config(demProps);
+				mb.config(demProps);
+			}
 			
 			if (encodingType != null){
 				map.getLblFile().setEncoder(encodingType, codepage);
@@ -345,8 +360,7 @@ public class OverviewBuilder implements Combiner {
 				if (log.isDebugEnabled())
 					log.debug("got polygon", shape);
 				if (shape.getType() == 0x4b){
-					// ignore existing background polygons as we will add our own
-					continue;
+					hasBackground = true;
 				}
 				MapShape ms = new MapShape();
 
@@ -379,7 +393,6 @@ public class OverviewBuilder implements Combiner {
 	private void addMapCoverageArea(FileInfo finfo) {
 		Area bounds = finfo.getBounds();
 		List<Coord> points = bounds.toCoords();
-		
 		for (Coord co: points){
 			overviewSource.addToBounds(co);
 		}
@@ -389,7 +402,7 @@ public class OverviewBuilder implements Combiner {
 		bg.setPoints(points);
 		bg.setMinResolution(0);
 		bg.setName(finfo.getDescription() + '\u001d' + finfo.getMapname());
-
+		
 		overviewSource.addShape(bg); 
 	}
 

@@ -1,4 +1,3 @@
-= List of options = 
 Note that option order is significant: An option only 
 applies to subsequent input files. So if you are using splitter, you probably 
 want to put most of your options before '-c template.args'.
@@ -26,6 +25,10 @@ placed in "/Garmin" in a microSD card (such as by mounting the
 device in USB mass storage mode).  It can be used on ready
 compiled img files, if the input files are not already compiled
 then they are compiled first and then the gmapsupp is created.
+
+;--gmapi
+: 	Create a directory in the "gmapi" format required by Mac applications. Can 
+also be used for Windows programs.
 
 ;-c filename
 ;--read-config=filename
@@ -141,7 +144,7 @@ So for example if the street is "Aleksandra Gryglewskiego" then you will be able
 search for it as both "Aleksandra" and "Gryglewskiego".  It will also increase the
 size of the index.  Useful in countries where searching for the first word in name
 is not the right thing to do. Words following an opening bracket '(' are ignored. 
-See also option road-name-config.  
+:	See also option road-name-config.  
 <p>
 ;--road-name-config=file
 :	This option handles the problem that some countries have road names which 
@@ -289,7 +292,8 @@ number is 63240000.
 :   Like levels, specifies additional levels that are to be written to the
 overview map. Counting of the levels should continue. Up to 8 additional 
 levels may be specified, but the lowest usable resolution with MapSource 
-seems to be 11. The hard coded default is empty.      
+seems to be 11. The hard coded default is empty.
+:	See also option --overview-dem-dist.      
 <p>
 ;--remove-ovm-work-files
 :   If overview-levels is used, mkgmap creates one additional file 
@@ -430,7 +434,7 @@ Default is enabled, use --no-merge-lines to disable.
 :   Removes all polygons smaller than NUM from the map.
 This reduces map size and speeds up redrawing of maps. 
 Recommended value is 8 to 15, default is 8.
-See also polygon-size-limits.
+:	See also polygon-size-limits.
 <p>
 ;--polygon-size-limits=limits code
 :   Allows you to specify different min-size-polygon values for each resolution.
@@ -441,6 +445,54 @@ one. For the given sample, resolutions 19 to 24 will use value 12,
 resolution 17 and 18 will use 10, and so on.
 Value 0 means to skip the size filter. 
 Note that in resolution 24 the filter is not used.  
+<p>
+
+=== Hill Shading (DEM) options ===
+;--dem=path[,path]
+:   The option expects a comma separated list of paths to directories or zip 
+files containing *.hgt files (SRTM). Directories are searched for *.hgt files 
+and also for *.hgt.zip and *.zip files where * means a name like N53E009. 
+Typical hgt files contain 
+either 1'' or 3'' data. 3'' files have 2 * 1201 * 1201 = 2.884.802 bytes, 1'' 
+files have 2 * 3601 * 3601 = 25.934.402 bytes. Other files are supported as 
+long as the formular sqrt(size/2) gives an integer value. The list is searched 
+in the given order, so if you want to use 1'' files make sure that they are 
+found first. There are different sources for *.hgt files, some have so called 
+voids which are areas without data. Those should be avoided.
+<p>
+;--dem-dists=number[,number]
+:   If given, the option specifies the resolution(s) or zoom level for the DEM 
+data. If not given, mkgmap tries to determine a reasonable value based on the 
+resolution found in the *.hgt files. For PC programs like MapSource or 
+Basecamp you only need one zoom level, for gps devies you need one for each 
+resolution given with the --levels option. The actual values are given as 
+distance between two DEM points. Higher disances mean lower resolution and 
+thus fewer bytes in the map. Reasonable values for the highest resolution are 
+somewhere between 1648 and 5520, 3312 is often used.
+:	Example which should work with levels="0:24, 1:22, 2:20, 3:18":
+:	--dem-dists=3312,13248,26512,53024
+:	This was found in a Garmin Demo map for transalpin data created 2009.
+<p>
+;--dem-interpolation=auto|bicubic|bilinear
+:   Use this option to speciy the method that is used to interpolate data from 
+hgt raster to the DEM raster. The value bicubic gives the highest precision 
+but is slower, bilinear is faster but less precise, it tends to smooth the 
+profile and thus also reduces DEM size compared to bicubic. The value auto 
+means that bicubic is used where is seems appropriate according to hgt 
+resolution and dem-dist value, else bilinear is used. The default is auto.
+<p>
+;--dem-poly=filename
+:   If given, the filename should point to a *.poly file in osmosis polygon 
+file format. The polygon described in the file is used to determine the area
+for which DEM data should be added to the map. If not given, the DEM data will
+cover the full tile area.
+<p>   
+;--overview-dem-dist=number
+:   If given, the option specifies the resolution(s) for the DEM data in the
+overview map. If not given or 0, mkgmap will not add DEM to the overview map.
+Reasonable values depend on the size of the area and the lowest resolution
+used for the single tiles, good compromises are somewhere between 55000 
+and 276160.  
 <p>
 === Miscellaneous options ===
 
@@ -736,7 +788,7 @@ This happens before the style rules are processed.
 This allows to use any routable Garmin type (except 0x08 and 0x09)
 for that part so that the Garmin device tells the name of
 this part as hint which destination to follow.
-See also --process-exits.
+:	See also --process-exits.
 <p>
 ;--process-exits
 :     Usual Garmin devices do not tell the name of the exit on motorways 
@@ -772,9 +824,14 @@ compared with these patterns and those that match are deleted.
 an overview map.
 <p>
 ;--show-profiles=1
-: 	Sets a flag in tdb file which marks set mapset as having contour 
-lines and allows showing profile in MapSource. Default is 0 
-which means disabled. 
+: 	Sets a flag in tdb file. The meaning depends on the availability of DEM 
+data (see "Hill Shading (DEM) options"). 
+: 	Without DEM data the flag enables profile calculation in MapSource or 
+Basecamp based on information from contour lines. 
+: 	If DEM data is available the profile is calculated with that 
+information and the flag only changes the status line to show the height when 
+you hover over an area with valid DEM data. 
+: 	The default is show-profiles=0.
 <p>
 ;--draw-priority=25
 : 	When two maps cover the same area, this option controls what

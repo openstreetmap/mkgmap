@@ -68,12 +68,17 @@ public class TestUtils {
 	 * Used to clean up before/after a test.
 	 */
 	public static void deleteOutputFiles() {
+		List<String> failList = new ArrayList<>();
 		for (String fname : files) {
 			File f = new File(fname);
 
-			if (f.exists())
-				assertTrue("delete existing file: " + f.getName(), f.delete());
+			if (f.exists()) {
+				if (!f.delete())
+					failList.add(f.getName());
+			}
 		}
+
+		assertEquals("Files not deleted", Collections.emptyList(), failList);
 	}
 
 	public static void closeFiles() {

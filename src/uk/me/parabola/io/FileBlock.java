@@ -16,6 +16,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
 
@@ -49,9 +50,24 @@ public abstract class FileBlock {
 	/**
 	 * Write to an output stream.
 	 *
+	 * This version can write to a .img file.
+	 */
+	public void writeTo(ImgFileWriter w, int codePage) throws IOException {
+		byte[] b = writeToCommon(codePage);
+		w.put(b);
+	}
+
+	/**
+	 * Write to an output stream.
+	 *
 	 * This will be to the actual TDB file.
 	 */
 	public void writeTo(OutputStream os, int codePage) throws IOException {
+		byte[] b = writeToCommon(codePage);
+		os.write(b);
+	}
+
+	private byte[] writeToCommon(int codePage) throws IOException {
 		StructuredOutputStream output = getStructuredOutput(codePage);
 		writeBody(output);
 
@@ -61,7 +77,7 @@ public abstract class FileBlock {
 		int blockLength = b.length - 3;
 		b[1] = (byte) (blockLength & 0xff);
 		b[2] = (byte) ((blockLength >> 8) & 0xff);
-		os.write(b);
+		return b;
 	}
 
 	/**

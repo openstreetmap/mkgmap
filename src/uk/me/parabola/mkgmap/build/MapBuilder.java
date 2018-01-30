@@ -13,6 +13,8 @@
 
 package uk.me.parabola.mkgmap.build;
 
+import java.awt.geom.Path2D;
+import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -30,10 +32,13 @@ import java.util.Set;
 import java.util.function.UnaryOperator;
 
 import uk.me.parabola.imgfmt.ExitException;
+import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.dem.DEMFile;
 import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Country;
 import uk.me.parabola.imgfmt.app.lbl.ExitFacility;
@@ -91,10 +96,13 @@ import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.ZipCodeInfo;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
+import uk.me.parabola.mkgmap.reader.hgt.HGTConverter;
+import uk.me.parabola.mkgmap.reader.hgt.HGTConverter.InterpolationMethod;
+import uk.me.parabola.mkgmap.reader.hgt.HGTReader;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.util.Configurable;
 import uk.me.parabola.util.EnhancedProperties;
-
+import uk.me.parabola.util.Java2DConverter;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
 /**
@@ -155,6 +163,12 @@ public class MapBuilder implements Configurable {
 	private String licenseFileName;
 
 	private boolean orderByDecreasingArea;
+	private String pathToHGT;
+	private List<Integer> demDists;
+	private short demOutsidePolygonHeight;
+	private java.awt.geom.Area demPolygon;
+	private HGTConverter.InterpolationMethod demInterpolationMethod;
+	
 
 	public MapBuilder() {
 		regionName = null;
@@ -198,6 +212,42 @@ public class MapBuilder implements Configurable {
 		if ("right".equals(driveOn))
 			driveOnLeft = false;
 		orderByDecreasingArea = props.getProperty("order-by-decreasing-area", false);
+		pathToHGT = props.getProperty("dem", null);
+		demDists = parseDemDists(props.getProperty("dem-dists", "-1"));
+		demOutsidePolygonHeight = (short) props.getProperty("dem-outside-polygon", HGTReader.UNDEF);
+		String demPolygonFile = props.getProperty("dem-poly", null);
+		if (demPolygonFile != null) {
+			demPolygon = Java2DConverter.readPolyFile(demPolygonFile);
+		}
+		String ipm = props.getProperty("dem-interpolation", "auto");
+		switch (ipm) {
+		case "auto": 
+			demInterpolationMethod = InterpolationMethod.Automatic;
+			break;
+		case "bicubic": 
+			demInterpolationMethod = InterpolationMethod.Bicubic;
+			break;
+		case "bilinear":
+			demInterpolationMethod = InterpolationMethod.Bilinear;
+			break;
+		default:
+			throw new IllegalArgumentException("invalid argument for option dem-interpolation: '" + ipm + 
+					"' supported are 'bilinear', 'bicubic', or 'auto'");
+		}
+	}
+
+	private List<Integer> parseDemDists(String demDists) {
+		List<Integer> dists = new ArrayList<>();
+		if (demDists == null)
+			dists.add(-1);
+		else {
+			String[] vals = demDists.split(",");
+			for( String val : vals) {
+				int dist = Integer.parseInt(val.trim());
+				dists.add(dist);
+			}
+		}
+		return dists;
 	}
 
 	/**
@@ -213,6 +263,7 @@ public class MapBuilder implements Configurable {
 		TREFile treFile = map.getTreFile();
 		lblFile = map.getLblFile();
 		NETFile netFile = map.getNetFile();
+		DEMFile demFile = map.getDemFile();
 
 		if(routeCenterBoundaryType != 0 &&
 		   netFile != null &&
@@ -266,6 +317,33 @@ public class MapBuilder implements Configurable {
 				nodFile.writePost();
 			}
 			netFile.writePost(rgnFile.getWriter());
+		}
+		if (demFile != null) {
+			try{
+				long t1 = System.currentTimeMillis();
+				java.awt.geom.Area  demArea = null;
+				if (demPolygon != null) {
+					Area bbox = src.getBounds();
+					// the rectangle is a bit larger to avoid problems at tile boundaries
+					Rectangle2D r = new Rectangle2D.Double(bbox.getMinLong() - 2, bbox.getMinLat() - 2,
+							bbox.getWidth() + 4, bbox.getHeight() + 4);
+					demArea = new java.awt.geom.Area(r);
+					demArea.intersect(demPolygon);
+				} 
+				if (demArea == null && src instanceof OverviewMapDataSource) {
+					Path2D demPoly = ((OverviewMapDataSource) src).getTileAreaPath();
+					if (demPoly != null) {
+						demArea = new java.awt.geom.Area(demPoly);
+					}
+				}
+				demFile.calc(src.getBounds(), demArea, pathToHGT, demDists, demOutsidePolygonHeight, demInterpolationMethod);
+				long t2 = System.currentTimeMillis();
+				log.info("DEM file calculation for", map.getFilename(), "took", (t2 - t1), "ms");
+				demFile.write();
+			} catch (MapFailedException e) {
+				log.error("exception while creating DEM file", e.getMessage());
+				throw new MapFailedException("DEM"); //TODO: better remove DEM file?
+			}
 		}
 		warnAbout3ByteImgRefs();
 	}
@@ -728,7 +806,6 @@ public class MapBuilder implements Configurable {
 					lastdiv.setLast(true);
 				}
 			}
-
 			srcList = nextList;
 		}
 	}

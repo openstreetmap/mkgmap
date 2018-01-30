@@ -234,10 +234,14 @@ public class TdbFile {
 		if (b2 < 0)
 			return -1;
 
-		return ((b2 & 0xff) << 8) | (b1 & 0xff);
+		return (b2 & 0xff) << 8 | b1 & 0xff;
 	}
 
 	public int getTdbVersion() {
 		return headerBlock.getTdbVersion();
+	}
+
+	public void setHasDem() {
+		headerBlock.setHasDem(true);
 	}
 }

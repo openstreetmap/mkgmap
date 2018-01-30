@@ -40,6 +40,7 @@ public class DetailMapBlock extends OverviewMapBlock {
 	private int lblDataSize;
 	private int netDataSize;
 	private int nodDataSize;
+	private int demDataSize;
 
 	public DetailMapBlock(int tdbVersion) {
 		super(BLOCK_ID);
@@ -84,9 +85,11 @@ public class DetailMapBlock extends OverviewMapBlock {
 		int n = 3;
 		if (tdbVersion >= TdbFile.TDB_V407) {
 			if (netDataSize > 0)
-				n++;
+				n = 4;
 			if (nodDataSize > 0)
-				n++;
+				n = 5;
+			if (demDataSize > 0)
+				n = 6;
 		}
 		
 		os.write2(n+1);
@@ -99,6 +102,7 @@ public class DetailMapBlock extends OverviewMapBlock {
 		if (tdbVersion >= TdbFile.TDB_V407) {
 			if (n > 3) os.write4(netDataSize);
 			if (n > 4) os.write4(nodDataSize);
+			if (n > 5) os.write4(demDataSize);
 //01 c3 00 ff
 			os.write4(0xff00c301);
 			os.write(0);
@@ -111,6 +115,7 @@ public class DetailMapBlock extends OverviewMapBlock {
 			os.writeString(mn + ".LBL");
 			if (n > 3) os.writeString(mn + ".NET");
 			if (n > 4) os.writeString(mn + ".NOD");
+			if (n > 5) os.writeString(mn + ".DEM");
 		} else {
 			os.write(1);
 		}
@@ -144,6 +149,10 @@ public class DetailMapBlock extends OverviewMapBlock {
 		this.nodDataSize = nodDataSize;
 	}
 
+	public void setDemDataSize(int demDataSize) {
+		this.demDataSize = demDataSize;
+	}
+
 	public String toString() {
 		return super.toString()
 				+ ", rgn size="
@@ -154,4 +163,5 @@ public class DetailMapBlock extends OverviewMapBlock {
 				+ lblDataSize
 				;
 	}
+
 }

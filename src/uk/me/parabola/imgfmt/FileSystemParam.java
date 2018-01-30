@@ -23,7 +23,7 @@ public class FileSystemParam {
 	private String mapDescription = "Open Street Map";
 	private int blockSize = 512;
 	private int directoryStartEntry = 2; // Always in terms of entries of 512 bytes
-	private int reservedDirectoryBlocks = 202;
+	private int reservedDirectoryBlocks;
 	private boolean gmapsupp;
 	private boolean hideGmapsuppOnPC;
 	private int productVersion = -1; // means unset 

@@ -20,7 +20,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import uk.me.parabola.imgfmt.ExitException;
-import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.mkgmap.CommandArgs;
 
 /**
@@ -40,9 +39,7 @@ class TypSaver implements MapProcessor {
 		int familyId = args.get("family-id", CommandArgs.DEFAULT_FAMILYID);
 		int productId = args.get("product-id", CommandArgs.DEFAULT_PRODUCTID);
 
-		FileInputStream in = null;
-		try {
-			in = new FileInputStream(filename);
+		try (FileInputStream in = new FileInputStream(filename)) {
 			byte[] buf = new byte[256];
 			int n = in.read(buf);
 
@@ -63,9 +60,8 @@ class TypSaver implements MapProcessor {
 
 		} catch (IOException e) {
 			throw new ExitException("TYP file cannot be opened or read: " + filename);
-		} finally {
-			Utils.closeFile(in);
 		}
+
 		return outfilename;
 	}
 
@@ -80,16 +76,12 @@ class TypSaver implements MapProcessor {
 	 * less than the buffer size.
 	 */
 	private void writeAlteredTyp(String outFilename, FileInputStream in, byte[] buf, int n) {
-		FileOutputStream out = null;
-		try {
-			out = new FileOutputStream(outFilename);
+		try (FileOutputStream out = new FileOutputStream(outFilename)) {
 			do {
 				out.write(buf, 0, n);
 			} while ((n = in.read(buf)) > 0);
 		} catch (IOException e) {
 			throw new ExitException("Could not write temporary TYP file: " + outFilename);
-		} finally {
-			Utils.closeFile(out);
 		}
 	}
 

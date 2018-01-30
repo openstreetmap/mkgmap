@@ -21,8 +21,8 @@ import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.dem.DEMFile;
 import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
 import uk.me.parabola.imgfmt.app.net.NETFile;
@@ -37,7 +37,6 @@ import uk.me.parabola.imgfmt.app.trergn.RGNFile;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.app.trergn.TREFile;
 import uk.me.parabola.imgfmt.app.trergn.Zoom;
-import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.log.Logger;
@@ -62,6 +61,7 @@ public class Map implements InternalFiles, Configurable {
 	private static final Logger log = Logger.getLogger(Map.class);
 	private String filename;
 	private String mapName;
+	private int mapId;
 	private FileSystem fileSystem;
 
 	private TREFile treFile;
@@ -69,6 +69,7 @@ public class Map implements InternalFiles, Configurable {
 	private LBLFile lblFile;
 	private NETFile netFile;
 	private NODFile nodFile;
+	private DEMFile demFile;
 
 	// Use createMap() or loadMap() instead of creating a map directly.
 	private Map() {
@@ -109,6 +110,7 @@ public class Map implements InternalFiles, Configurable {
 		} catch (NumberFormatException e) {
 			mapid = 0;
 		}
+		m.mapId = mapid;
 		m.treFile.setMapId(mapid);
 		m.fileSystem = fs;
 
@@ -124,9 +126,16 @@ public class Map implements InternalFiles, Configurable {
 					addNod();
 				} else if (props.containsKey("net")) {
 					addNet();
-				}
+				} 
 			} catch (FileExistsException e) {
 				log.warn("Could not add NET and/or NOD sections");
+			}
+			if (props.containsKey("dem")) {
+				try {
+					addDem();
+				} catch (FileExistsException e) {
+					log.warn("Could not add DEM section");
+				}
 			}
 		}
 		treFile.config(props);
@@ -140,6 +149,11 @@ public class Map implements InternalFiles, Configurable {
 		nodFile = new NODFile(fileSystem.create(mapName + ".NOD"), true);
 	}
 
+	private void addDem() throws FileExistsException {
+		demFile = new DEMFile(fileSystem.create(mapId + ".DEM"), true);
+	}
+
+	
 	/**
 	 * Set the area that the map covers.
 	 * @param area The outer bounds of the map.
@@ -267,44 +281,6 @@ public class Map implements InternalFiles, Configurable {
 	 * Some history: 
 	 */
 	public void close() {
-		ImgFile[] files = {
-				rgnFile, treFile, lblFile,
-				netFile, nodFile
-		};
-
-		int headerSlotsRequired = 0;
-
-		FileSystemParam param = fileSystem.fsparam();
-		int blockSize = param.getBlockSize();
-
-		for (ImgFile f : files) {
-			if (f == null)
-				continue;
-
-			long len = f.getSize();
-			log.debug("img file len=", len);
-
-			// Blocks required for this file
-			int nBlocks = (int) ((len + blockSize - 1) / blockSize);
-
-			// Now we calculate how many directory blocks we need, you have
-			// to round up as files do not share directory blocks.
-			headerSlotsRequired += (nBlocks + DirectoryEntry.SLOTS_PER_ENTRY - 1)/DirectoryEntry.SLOTS_PER_ENTRY;
-		}
-
-		log.debug("header slots required", headerSlotsRequired);
-
-		// A header slot is always 512 bytes, so we need to calculate the
-		// number of blocks if the block-size is different.
-		// There are 2 slots for the header itself.
-		int blocksRequired = 2 + headerSlotsRequired * 512 / blockSize;
-
-		param.setReservedDirectoryBlocks(blocksRequired);
-		fileSystem.fsparam(param);
-
-		for (ImgFile f : files)
-			Utils.closeFile(f);
-
 		fileSystem.close();
 	}
 
@@ -330,5 +306,9 @@ public class Map implements InternalFiles, Configurable {
 
 	public NODFile getNodFile() {
 		return nodFile;
+	}
+
+	public DEMFile getDemFile() {
+		return demFile;
 	}
 }

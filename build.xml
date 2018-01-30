@@ -243,6 +243,7 @@
 			<fileset dir="${resources}">
 				<include name="*.csv"/>
 				<include name="*.properties"/>
+				<include name="*known-hgt.bin"/>
 				<include name="*.xml"/>
 				<include name="**/*.trans"/>
 				<include name="styles/**"/>
@@ -323,6 +324,24 @@
 		<get src="http://www.mkgmap.org.uk/testinput/img/63240003.img"
 			dest="test/resources/in/img/63240003.img" usetimestamp="true"
 			ignoreerrors="true"/>
+		<get src="http://www.mkgmap.org.uk/testinput/hgt/N00W090.hgt.zip"
+			dest="test/resources/in/hgt/N00W090.hgt.zip" usetimestamp="true"
+			ignoreerrors="true"/>
+		<get src="http://www.mkgmap.org.uk/testinput/hgt/N00W091.hgt.zip"
+			dest="test/resources/in/hgt/N00W091.hgt.zip" usetimestamp="true"
+			ignoreerrors="true"/>
+		<get src="http://www.mkgmap.org.uk/testinput/hgt/S01W090.hgt.zip"
+			dest="test/resources/in/hgt/S01W090.hgt.zip" usetimestamp="true"
+			ignoreerrors="true"/>
+		<get src="http://www.mkgmap.org.uk/testinput/hgt/S01W091.hgt.zip"
+			dest="test/resources/in/hgt/S01W091.hgt.zip" usetimestamp="true"
+			ignoreerrors="true"/>
+		<get src="http://www.mkgmap.org.uk/testinput/hgt/S02W090.hgt.zip"
+			dest="test/resources/in/hgt/S02W090.hgt.zip" usetimestamp="true"
+			ignoreerrors="true"/>
+		<get src="http://www.mkgmap.org.uk/testinput/hgt/S02W091.hgt.zip"
+			dest="test/resources/in/hgt/S02W091.hgt.zip" usetimestamp="true"
+			ignoreerrors="true"/>
 	</target>
 
 	<target name="dist" depends="build, check-version, version-file"
@@ -352,6 +371,7 @@
 			</manifest>
 			<include name="**/*.class"/>
 			<include name="*.csv"/>
+			<include name="known-hgt.bin"/>
 			<include name="*.xml"/>
 			<include name="*.properties"/>
 			<include name="**/*.trans"/>
@@ -381,6 +401,7 @@
 		<copy todir="${dist}/examples">
 			<fileset dir="resources">
 				<include name="roadNameConfig.txt"/>
+				<include name="known-hgt.txt"/>
 				<include name="installer/**"/>
 				<include name="styles/default/**"/>
 				<include name="styles/noname/**"/>

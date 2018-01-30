@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -43,7 +42,7 @@ public class NsisBuilder implements Combiner {
 	private boolean hasIndex;
 	private boolean hasTyp;
 
-	private final List<String> mapList = new ArrayList<String>();
+	private final List<String> mapList = new ArrayList<>();
 	private String typName;
 
 	public void init(CommandArgs args) {
@@ -78,7 +77,9 @@ public class NsisBuilder implements Combiner {
 		case MDR_KIND:
 			hasIndex = true;
 			break;
+		case APP_KIND:
 		case GMAPSUPP_KIND:
+		case UNKNOWN_KIND:
 			break;
 		}
 	}
@@ -94,40 +95,35 @@ public class NsisBuilder implements Combiner {
 		try {
 			inStream = new FileInputStream("resources/installer_template.nsi");
 		} catch (Exception ex) {
-			inStream = null;
+			inStream = this.getClass().getResourceAsStream("/installer/installer_template.nsi");
+			if (inStream == null) {
+				System.err.println("Could not find the installer template.");
+				return;
+			}
 		}
 
-		if(inStream == null)	// If not loaded from disk use from jar file
-			inStream = this.getClass().getResourceAsStream("/installer/installer_template.nsi");
-		
-		if (inStream == null) {
-			System.err.println("Could not find the installer template.");
-			return;
-		}
-		Writer w = null;
-		try {
-			BufferedReader br = new BufferedReader(new InputStreamReader(inStream));
-			w = new FileWriter(Utils.joinPath(outputDir, nsisFilename));
-			PrintWriter pw = new PrintWriter(w);
-			
-		    String strLine;
-		    while ((strLine = br.readLine()) != null)   {
-		    	if (strLine.contains("INSERT_DEFINES_HERE"))
-		    		writeDefines(pw);
-		    	else if (strLine.contains("INSERT_REGBIN_HERE"))
-		    		writeRegBin(pw);
-		    	else if (strLine.contains("INSERT_ADDED_FILES_HERE"))
-		    		writeAddedFiles(pw);
-		    	else if (strLine.contains("INSERT_REMOVED_FILES_HERE"))
-		    		writeRemovedFiles(pw);
-		    	else 
-		    		pw.format(Locale.ROOT, strLine + "\n");
-		    }
+		try (BufferedReader br = new BufferedReader(new InputStreamReader(inStream))) {
+			try (PrintWriter pw = new PrintWriter(new FileWriter(Utils.joinPath(outputDir, nsisFilename)))) {
+				String strLine;
+				while ((strLine = br.readLine()) != null)   {
+					if (strLine.contains("INSERT_DEFINES_HERE"))
+						writeDefines(pw);
+					else if (strLine.contains("INSERT_REGBIN_HERE"))
+						writeRegBin(pw);
+					else if (strLine.contains("INSERT_ADDED_FILES_HERE"))
+						writeAddedFiles(pw);
+					else if (strLine.contains("INSERT_REMOVED_FILES_HERE"))
+						writeRemovedFiles(pw);
+					else
+						pw.format(Locale.ROOT, "%s\n", strLine);
+				}
+			}
+
 		} catch (IOException e) {
 			System.err.println("Could not write NSIS file");
 		} finally {
-			Utils.closeFile(w);
-		}			
+			Utils.closeFile(inStream);
+		}
 	}
 	
 	private void writeDefines(PrintWriter pw) {
@@ -188,32 +184,27 @@ public class NsisBuilder implements Combiner {
 		try {
 			inStream = new FileInputStream("resources/license_template.txt");
 		} catch (Exception ex) {
-			inStream = null;
+			inStream = this.getClass().getResourceAsStream("/installer/license_template.txt");
+			if (inStream == null) {
+				System.err.println("Could not find the license template.");
+				return;
+			}
 		}
 
-		if(inStream == null)	// If not loaded from disk use from jar file
-			inStream = this.getClass().getResourceAsStream("/installer/license_template.txt");
-		
-		if (inStream == null) {
-			System.err.println("Could not find the license template.");
-			return;
-		}
-		Writer w = null;
-		try {
-			BufferedReader br = new BufferedReader(new InputStreamReader(inStream));
-			w = new FileWriter(Utils.joinPath(outputDir, licenseFilename));
-			PrintWriter pw = new PrintWriter(w);
-			
-		    String strLine;
-		    while ((strLine = br.readLine()) != null)   {
-		    	pw.format(Locale.ROOT, strLine + "\n");
-		    }
-	
-			pw.format(Locale.ROOT, "Map created with mkgmap-r" + Version.VERSION +"\n");
+		try (BufferedReader br = new BufferedReader(new InputStreamReader(inStream))) {
+			try (PrintWriter pw = new PrintWriter(new FileWriter(Utils.joinPath(outputDir, licenseFilename)))) {
+				String strLine;
+				while ((strLine = br.readLine()) != null)   {
+					pw.format(Locale.ROOT, "%s\n", strLine);
+				}
+
+				pw.format(Locale.ROOT, "Map created with mkgmap-r%s\n", Version.VERSION);
+			}
+
 		} catch (IOException e) {
 			System.err.println("Could not write license file");
 		} finally {
-			Utils.closeFile(w);
+			Utils.closeFile(inStream);
 		}
 	}
 }

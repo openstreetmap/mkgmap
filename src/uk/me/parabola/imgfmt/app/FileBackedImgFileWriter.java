@@ -21,8 +21,9 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
 import uk.me.parabola.imgfmt.MapFailedException;
-import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.Sized;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.imgfmt.sys.FileLink;
 
 /**
  * Write img file data to a temporary file. On a call to sync() the data
@@ -30,11 +31,12 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
  *
  * @author Steve Ratcliffe
  */
-public class FileBackedImgFileWriter implements ImgFileWriter{
+public class FileBackedImgFileWriter implements ImgFileWriter, Sized {
 	private final ImgChannel outputChan;
 	private final File tmpFile;
 	private final BufferedOutputStream file;
 	private final FileChannel tmpChannel;
+	private long finalSize;
 
 	public FileBackedImgFileWriter(ImgChannel chan, File outputDir) {
 		this.outputChan = chan;
@@ -49,6 +51,10 @@ public class FileBackedImgFileWriter implements ImgFileWriter{
 		} catch (IOException e) {
 			throw new MapFailedException("Could not create mdr temporary file");
 		}
+
+		if (chan instanceof FileLink) {
+			((FileLink) chan).link(this, this);
+		}
 	}
 
 	/**
@@ -57,16 +63,12 @@ public class FileBackedImgFileWriter implements ImgFileWriter{
 	 * @throws IOException If there is an error writing.
 	 */
 	public void sync() throws IOException {
+		finalSize = getSize();
 		file.close();
 
-		FileInputStream is = null;
-		try {
-			is = new FileInputStream(tmpFile);
-			FileChannel channel = is.getChannel();
+		try (FileInputStream is = new FileInputStream(tmpFile); FileChannel channel = is.getChannel()) {
 			channel.transferTo(0, channel.size(), outputChan);
-			channel.close();
 		} finally {
-			Utils.closeFile(is);
 			if (!tmpFile.delete())
 				System.err.println("Could not delete mdr img temporary file");
 		}
@@ -261,6 +263,9 @@ public class FileBackedImgFileWriter implements ImgFileWriter{
 	 * @return The file size in bytes.
 	 */
 	public long getSize() {
+		if (finalSize > 0)
+			return finalSize;
+
 		try {
 			file.flush();
 			return tmpChannel.size();
@@ -276,6 +281,6 @@ public class FileBackedImgFileWriter implements ImgFileWriter{
 	 * @throws IOException if an I/O error occurs
 	 */
 	public void close() throws IOException {
-		outputChan.close();
+		sync();
 	}
 }

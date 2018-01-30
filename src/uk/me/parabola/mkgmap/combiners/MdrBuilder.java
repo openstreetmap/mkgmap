@@ -12,13 +12,10 @@
  */
 package uk.me.parabola.mkgmap.combiners;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -47,7 +44,6 @@ import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
-import uk.me.parabola.imgfmt.sys.FileImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.srt.SrtTextReader;
@@ -61,8 +57,8 @@ import uk.me.parabola.mkgmap.srt.SrtTextReader;
 public class MdrBuilder implements Combiner {
 	private MDRFile mdrFile;
 
-	// Push things onto this stack to have them closed in the reverse order.
-	private final Deque<Closeable> toClose = new ArrayDeque<>();
+	// The mdr.img file
+	private FileSystem imgfs;
 
 	// We write to a temporary file name, and then rename once all is OK.
 	private File tmpName;
@@ -81,22 +77,19 @@ public class MdrBuilder implements Combiner {
 
 		outputName = Utils.joinPath(outputDir, name + "_mdr.img");
 
-		FileSystem fs;
 		ImgChannel mdrChan;
 
 		try {
 			// Create the .img file system/archive
 			FileSystemParam params = new FileSystemParam();
-			params.setBlockSize(args.get("block-size", 16384));
 
 			tmpName = File.createTempFile("mdr", null, new File(outputDir));
 			tmpName.deleteOnExit();
 
-			fs = ImgFS.createFs(tmpName.getPath(), params);
-			toClose.push(fs);
+			imgfs = ImgFS.createFs(tmpName.getPath(), params);
+
 			// Create the MDR file within the .img
-			mdrChan = fs.create(name.toUpperCase(Locale.ENGLISH) + ".MDR");
-			toClose.push(mdrChan);
+			mdrChan = imgfs.create(name.toUpperCase(Locale.ENGLISH) + ".MDR");
 		} catch (IOException e) {
 			throw new ExitException("Could not create global index file");
 		}
@@ -115,39 +108,33 @@ public class MdrBuilder implements Combiner {
 
 		// Wrap the MDR channel with the MDRFile object
 		mdrFile = new MDRFile(mdrChan, config);
-		toClose.push(mdrFile);
 
 		try {
-			ImgChannel srtChan = fs.create(name.toUpperCase(Locale.ENGLISH) + ".SRT");
+			ImgChannel srtChan = imgfs.create(name.toUpperCase(Locale.ENGLISH) + ".SRT");
 			SRTFile srtFile = new SRTFile(srtChan);
 			srtFile.setSort(sort);
 			srtFile.write();
-			srtFile.close();
-			//toClose.push(srtFile);
+			// Do not close srtFile here
 		} catch (FileExistsException e) {
 			throw new ExitException("Could not create SRT file within index file");
 		}
 	}
 
-	void initForDevice(Sort sort, String outputDir, MdrConfig baseConfig) {
+	/**
+	 * Create an mdr file, in the format used in a gmapsupp.
+	 *
+	 * @param chan Reference to an open file within the gmapsupp file.
+	 */
+	void initForDevice(ImgChannel chan, Sort sort, MdrConfig baseConfig) {
 		// Set the options that we are using for the mdr.
 		MdrConfig config = new MdrConfig(baseConfig);
 		config.setHeaderLen(568);
 		config.setWritable(true);
 		config.setForDevice(true);
 		config.setSort(sort);
-		
 
 		// Wrap the MDR channel with the MDRFile object
-		try {
-			tmpName = File.createTempFile("mdr", null, new File(outputDir));
-			tmpName.deleteOnExit();
-			ImgChannel channel = new FileImgChannel(tmpName.getPath(), "rw");
-			mdrFile = new MDRFile(channel, config);
-			toClose.push(mdrFile);
-		} catch (IOException e) {
-			throw new ExitException("Could not create temporary index file");
-		}
+		mdrFile = new MDRFile(chan, config);
 	}
 
 	/**
@@ -336,13 +323,17 @@ public class MdrBuilder implements Combiner {
 		}
 	}
 
+	/**
+	 * Called after all maps are processed.
+	 *
+	 * We are building a standalone mdr file, so that is
+	 */
 	public void onFinish() {
 		// Write out the mdr file
 		mdrFile.write();
 
-		// Close everything
-		for (Closeable file : toClose)
-			Utils.closeFile(file);
+		// Close the mdr.img file, thus causing it to be written out fully.
+		imgfs.close();
 
 		// Rename from the temporary file to the proper name. On windows the target file must
 		// not exist for rename to work, so we are forced to remove it first.
@@ -353,13 +344,15 @@ public class MdrBuilder implements Combiner {
 			throw new MapFailedException("Could not create mdr.img file");
 	}
 
+	/**
+	 * Called after all maps processed when making a gmapsupp.img
+	 *
+	 * Here by 'for device' we mean in the format required for uploading to a device, so that is
+	 * the gmapsupp.img file.
+	 */
 	void onFinishForDevice() {
 		// Write out the mdr file
 		mdrFile.write();
-
-		// Close everything
-		for (Closeable file : toClose)
-			Utils.closeFile(file);
 	}
 
 	public String getFilename() {
@@ -368,10 +361,6 @@ public class MdrBuilder implements Combiner {
 
 	public int getSize() {
 		return (int) tmpName.length();
-	}
-
-	public String getFileName() {
-		return tmpName.getPath();
 	}
 
 	/**
