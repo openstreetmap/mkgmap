@@ -12,6 +12,8 @@ import java.util.Map;
  */
 public abstract class Relation extends Element {
 	private final List<Map.Entry<String,Element>> elements = new ArrayList<Map.Entry<String,Element>>();
+	// if set, one or more tags were ignored because they are not used in the style or in mkgmap 
+	private boolean tagsIncomplete;
 
 	/**
 	 * Add a (role, Element) pair to this Relation.
@@ -40,6 +42,21 @@ public abstract class Relation extends Element {
 	
 	public String toString() {
 		return "RELATION: " + getId();
+	}
+
+	/**
+	 * Used in MultipolygonRelation.
+	 * @param tagsIncomplete
+	 */
+	public void setTagsIncomplete(boolean tagsIncomplete) {
+		this.tagsIncomplete = tagsIncomplete;
+	}
+	
+	/**
+	 * @return true if any tag was removed by the loader
+	 */
+	public boolean getTagsIncomplete() {
+		return tagsIncomplete;
 	}
 	
 }

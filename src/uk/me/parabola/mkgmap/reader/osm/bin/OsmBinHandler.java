@@ -196,15 +196,7 @@ public class OsmBinHandler extends OsmHandler {
 					else
 						rel.addTagFromRawOSM(key, val);
 				}
-
-				if (tagsIncomplete) {
-					String relType = rel.getTag("type");
-					if ("multipolygon".equals(relType) || "boundary".equals(relType)) {
-						// mark the multipolygons if there are some tags that are not loaded
-						rel.addTag(TAGS_INCOMPLETE_TAG, "true");
-					}
-				}
-				
+				rel.setTagsIncomplete(tagsIncomplete);
 				long lastMid = 0;
 
 				for (int j = 0; j < binRel.getMemidsCount(); j++) {

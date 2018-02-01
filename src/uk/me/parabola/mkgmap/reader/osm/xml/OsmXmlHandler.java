@@ -233,15 +233,6 @@ public class OsmXmlHandler extends OsmHandler {
 			} else if (mode == MODE_RELATION) {
 				if (qName.equals("relation")) {
 					mode = 0;
-					
-					// remove the mkgmap:tagsincomplete tags which is used in multipolygons only
-					if (currentRelation.getTag(TAGS_INCOMPLETE_TAG) != null) {
-						String type = currentRelation.getTag("type");
-						if ("multipolygon".equals(type) == false && "boundary".equals(type) == false) {
-							currentRelation.deleteTag(TAGS_INCOMPLETE_TAG);
-						}
-					}
-					
 					saver.addRelation(currentRelation);
 				}
 			}
@@ -344,7 +335,7 @@ public class OsmXmlHandler extends OsmHandler {
 			else
 				key = keepTag(key, val);
 			if (key == null) {
-				currentRelation.addTag(TAGS_INCOMPLETE_TAG, "true");
+				currentRelation.setTagsIncomplete(true);
 			} else {
 				currentRelation.addTagFromRawOSM(key, val);
 			}
