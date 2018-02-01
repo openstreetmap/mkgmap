@@ -126,7 +126,14 @@ public class RuleFileReader {
 
 			ActionList actionList = actionReader.readActions();
 			checkIfStack(actionList);
-			
+
+			if (performChecks && this.kind == FeatureKind.RELATION) {
+				String actionsString = actionList.getList().toString();
+				if (actionsString.contains("set mkgmap:stylefilter") || actionsString.contains("add mkgmap:stylefilter")) {
+					log.error("Style file", name, "should not set or add the special tag mkgmap:stylefilter:", actionsString);
+				}
+			}
+
 			List<GType> types = new ArrayList<>();
 			while (scanner.checkToken("[")) {
 				GType type = typeReader.readType(scanner, performChecks, overlays);
@@ -144,6 +151,7 @@ public class RuleFileReader {
 			if (types.size() >= 2 && actionList.isModifyingTags()) {
 				throw new SyntaxException(scanner, "Combination of multiple type definitions with tag modifying action is not yet supported.");
 			}
+
 			for (int i = 0; i < types.size(); i++) {
 				GType type = types.get(i);
 				if (i + 1 < types.size()) {
