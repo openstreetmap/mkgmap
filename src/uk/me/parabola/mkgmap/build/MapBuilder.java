@@ -327,8 +327,9 @@ public class MapBuilder implements Configurable {
 					// the rectangle is a bit larger to avoid problems at tile boundaries
 					Rectangle2D r = new Rectangle2D.Double(bbox.getMinLong() - 2, bbox.getMinLat() - 2,
 							bbox.getWidth() + 4, bbox.getHeight() + 4);
-					demArea = new java.awt.geom.Area(r);
-					demArea.intersect(demPolygon);
+					if (demPolygon.intersects(r) && !demPolygon.contains(r)){
+						demArea = demPolygon;
+					}					
 				} 
 				if (demArea == null && src instanceof OverviewMapDataSource) {
 					Path2D demPoly = ((OverviewMapDataSource) src).getTileAreaPath();
