@@ -439,15 +439,22 @@ Optimization options:
 	Note that in resolution 24 the filter is not used.  
 
 Hill Shading (DEM) options:
+	Hill Shading is rendered by PC programs (MapSource or BaseCamp) or GPS devices 
+when the map includes a Digital Elevation Model (DEM). Use the following options 
+to add a DEM to the map and control its characteristics. DEM creation requires 
+files containing height information for the area covered by the map, the so 
+called hgt files, which typically cover 1 degree latitude * 1 degree longitude 
+and are named by the coordinates of their bottom left corner (eg. N53E009). They 
+contain height information in a grid of points. Typical hgt files contain either 
+1'' or 3'' data. 3'' files have 1201 * 1201 points, which gives 
+2 * 1201 * 1201 = 2.884.802 bytes. 1'' files have 3601 * 3601 points, which gives 
+2 * 3601 * 3601 = 25.934.402 bytes. Other files are supported as long as the 
+formular sqrt(size/2) gives an integer value.
 
 --dem=path[,path]
 	The option expects a comma separated list of paths to directories or zip 
-	files containing *.hgt files (SRTM). Directories are searched for *.hgt 
-	files and also for *.hgt.zip and *.zip files where * means a name like 
-	N53E009. Typical hgt files contain either 1'' or 3'' data. 
-	3'' files have 2 * 1201 * 1201 = 2.884.802 bytes, 1'' files have 
-	2 * 3601 * 3601 = 25.934.402 bytes. Other files are supported as long as the
-	formular sqrt(size/2) gives an integer value.  
+	files containing *.hgt files. Directories are searched for *.hgt files and 
+	also for *.hgt.zip and *.zip files. 
 	The list is searched in the given order, so if you want to use 1'' files 
 	make sure that they are found first. There are different sources for *.hgt 
 	files, some have so called voids which are areas without data.
@@ -456,18 +463,21 @@ Hill Shading (DEM) options:
 --dem-dists=number[,number]
 	If given, the option specifies the resolution(s) or zoom level for the DEM 
 	data. If not given, mkgmap tries to determine a reasonable value based on 
-	the resolution found in the *.hgt files. For PC programs like MapSource or 
-	Basecamp you only need one zoom level, for gps devies you need one for each 
+	the resolution found in the *.hgt files. For desktop programs like MapSource or 
+	Basecamp you only need one zoom level, for GPS devices you need one for each 
 	resolution given with the --levels option. The actual values are given as 
-	distance between two DEM points. Higher disances mean lower resolution and 
-	thus fewer bytes in the map. Reasonable values for the highest resolution 
-	are somewhere between 1648 and 5520, 3312 is often used.
+	distance between two DEM points and should be a multiple or submultiple of
+	the distance between two points in the hgt file, that is 3314 for 1'' and 9942
+	for 3''. Higher distances mean lower resolution and thus fewer bytes in the 
+	map. Reasonable values for the highest resolution should not be much smaller 
+	than 50% hgt resolution, that is somewhere between 1648 and 5520 for 1'' hgt 
+	input files (3312 is often used), and 5520 to 9942 for 3'' hgt input files.
 	Example which should work with levels="0:24, 1:22, 2:20, 3:18":
 	--dem-dists=3312,13248,26512,53024
 	This was found in a Garmin Demo map for transalpin data created 2009.
 
 --dem-interpolation=auto|bicubic|bilinear
-	Use this option to speciy the method that is used to interpolate 
+	Use this option to specify the method that is used to interpolate 
 	data from hgt raster to the DEM raster. The value bicubic gives the 
 	highest precision but is slower, bilinear is faster but less precise,
 	it tends to smooth the profile and thus also reduces DEM size compared to 
