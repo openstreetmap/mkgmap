@@ -23,7 +23,7 @@ highway=* & (toll=yes|toll=true) { set mkgmap:toll=yes }
 highway=* & mkgmap:mp_created=true {add area=yes}
 
 # Hide proposed ways
-(highway=proposed | highway=proposal | highway=planned | highway ~ '.*proposed.*') {delete highway;delete junction}
+(highway=proposed | highway=proposal | highway=planned | highway ~ '.*proposed.*') {delete highway delete junction}
 # Hide removed ways
 (highway=razed | highway=dismantled) {deletealltags}
 # Hide abandoned ways. Abandoned highways have some evidence of their former existence but are no longer used. These
@@ -31,7 +31,7 @@ highway=* & mkgmap:mp_created=true {add area=yes}
 # https://wiki.openstreetmap.org/wiki/Key:abandoned:
 ((abandoned:highway=* & highway!=*) | highway=abandoned) {deletealltags}
 # Hide other non-existent ways
-(highway=unbuilt | highway=neverbuilt | highway=rejected | highway ~ 'x-.*') {delete highway;delete junction}
+(highway=unbuilt | highway=neverbuilt | highway=rejected | highway ~ 'x-.*') {delete highway delete junction}
 # Remove highway tag from ways which are not suitable for routing
 highway=traffic_signals | highway=junction | highway=island | highway=centre_line | highway=traffic_island | highway=stopline {delete highway} 
 highway=piste | highway=ski {delete highway}
@@ -39,13 +39,13 @@ highway=no | highway=none {delete highway}
  
 # Hide unaccessible tunnels
 highway=* & tunnel=yes & (access=private|access=no)
-& foot!=* & bicycle!=* {delete highway;delete junction}
+& foot!=* & bicycle!=* {delete highway delete junction}
 # Disable dead-end-checks for unaccessible oneways
 highway=* & oneway=yes & (access=private|access=no)
 {add mkgmap:dead-end-check=false}
 # Validation-like checks (uncomment to enable)
 #highway=motorway_link & oneway!=yes & oneway!=no { echo "motorway_link lacks oneway" }
-highway=motorway|highway=motorway_link { add oneway=yes; add mkgmap:numbers=false }
+highway=motorway|highway=motorway_link { add oneway=yes add mkgmap:numbers=false }
 
 # start of rules for process-exits and process-destination options
 # which may add info to a part of these highway=*_link roads:
@@ -62,7 +62,7 @@ mkgmap:exit_hint=true
          'Exit ${mkgmap:exit_hint_ref} ${mkgmap:exit_hint_exit_to}' | 
          'Exit ${mkgmap:exit_hint_exit_to}' |
          'Exit ${mkgmap:exit_hint_name}' |
-         'Exit ${mkgmap:exit_hint_ref}';
+         'Exit ${mkgmap:exit_hint_ref}'
        }
   
 # use destination hint and/or exit hint to build name              
@@ -97,22 +97,22 @@ highway=* & mkgmap:unpaved!=1 & smoothness ~ '.*(bad|horrible|impassable)'  { ad
 # Good ways without relation
 highway=* & mkgmap:fast_road!=* & (int_ref=* | network=e-road | network=AH | network=TAH | network=US:I | network=US:US) {add mkgmap:fast_road=yes}
 # Not best for car routing
-highway=* & (access=hov | hov=designated | oneway=reversible) {set mkgmap:road-class=-2; set mkgmap:road-speed=-2; delete mkgmap:fast_road}
+highway=* & (access=hov | hov=designated | oneway=reversible) {set mkgmap:road-class=-2 set mkgmap:road-speed=-2 delete mkgmap:fast_road}
 
 # Convert generic path to most specific
 highway=footway & snowplowing!=no
 & (bicycle=yes|bicycle=designated|bicycle=permissive|bicycle=official)
-{set highway=cycleway; set bicycle=yes; set foot=yes}
+{set highway=cycleway set bicycle=yes set foot=yes}
 highway=path & snowplowing!=no
 & (bicycle=designated|bicycle=permissive|bicycle=official)
-{set highway=cycleway; set bicycle=yes}
+{set highway=cycleway set bicycle=yes}
 highway=path & (horse=designated|horse=permissive|horse=official)
-{set highway=bridleway; set horse=yes}
+{set highway=bridleway set horse=yes}
 
 leisure=track & area!=yes
-{add highway=footway; name '${name} (${sport})' | '${name}'}
+{add highway=footway name '${name} (${sport})' | '${name}'}
 (man_made=pier | man_made=piste:halfpipe) & area!=yes
-{add highway=footway; name '${ref} ${name}' | '${ref}' | '${name}' }
+{add highway=footway name '${ref} ${name}' | '${ref}' | '${name}' }
 
 # Roundabouts
 junction=roundabout & (highway=trunk | highway=trunk_link) [0x0c road_class=4 road_speed=2 resolution 24 continue]
@@ -139,7 +139,7 @@ junction=roundabout & highway=* [0x0c road_class=0 road_speed=1 resolution 22]
 # Ways that may or may not be useable
 
 # Treat ways under construction almost as highway=path, see also extra rule in inc/access
-highway=construction { add mkgmap:dead-end-check = false; }
+highway=construction { add mkgmap:dead-end-check = false }
 [0x16 road_class=0 road_speed=0 resolution 23]
 
 # Lower the road speed of ways under some construction.
@@ -240,9 +240,9 @@ mkgmap:synthesised=yes & mkgmap:bicycle=yes { set mkgmap:highest-resolution-only
 mkgmap:bicycle=yes & (mkgmap:foot=no & mkgmap:car=no & mkgmap:street!=* | mkgmap:synthesised=yes) {set mkgmap:numbers=false}
 
 # Display highway shield for mayor roads if they have a ref and make them searchable by their name
-(highway=motorway | highway=trunk) & ref=* { name '${ref|highway-symbol:hbox}'; addlabel '${name}' }
-highway=primary & ref=* { name  '${ref|highway-symbol:box}'; addlabel '${name}' }
-(highway=secondary | highway=tertiary) & ref=* { name '${ref|highway-symbol:oval}'; addlabel '${name}' }
+(highway=motorway | highway=trunk) & ref=* { name '${ref|highway-symbol:hbox}' addlabel '${name}' }
+highway=primary & ref=* { name  '${ref|highway-symbol:box}' addlabel '${name}' }
+(highway=secondary | highway=tertiary) & ref=* { name '${ref|highway-symbol:oval}' addlabel '${name}' }
 
 name=* { name '${name}' }
 highway=* & ref=* & highway!=motorway & highway!=trunk & highway!=primary & highway!=secondary & highway!=tertiary { addlabel '${ref}' }

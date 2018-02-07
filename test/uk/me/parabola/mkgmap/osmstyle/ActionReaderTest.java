@@ -32,6 +32,7 @@ import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
+import org.hamcrest.core.StringContains;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -253,6 +254,47 @@ public class ActionReaderTest {
 		Rule rule = new ActionRule(null, actions);
 		rule.resolveType(el, TypeResult.NULL_RESULT);
 		assertEquals("second alternative", "default value", el.getTag("fred"));
+	}
+
+	@Test
+	public void testMultipleNoSeparators() {
+		List<Action> actions = readActionsFromString("{" +
+				"set park='${notset}' | yes " +
+				"add fred=other " +
+				"set pooh=bear}");
+
+		assertEquals("number of actions", 3, actions.size());
+
+		Element el = stdElementRun(actions);
+
+		assertEquals("park set to yes", "yes", el.getTag("park"));
+		assertEquals("fred set", "other", el.getTag("fred"));
+		assertEquals("pooh set", "bear", el.getTag("pooh"));
+	}
+
+	@Test(expected = SyntaxException.class)
+	public void testErrorShortSet() {
+		readActionsFromString("{set park= }");
+	}
+
+	@Test(expected = SyntaxException.class)
+	public void testMangledSet() {
+		readActionsFromString("{set park=yes some other junk }");
+	}
+
+	@Test(expected = SyntaxException.class)
+	public void testErrorMangledList() {
+		readActionsFromString("{set park='${notset}' | }");
+	}
+
+	@Test
+	public void testErrorExtraQuotedWord() {
+		try {
+			readActionsFromString("{set park=yes 'some' other junk }");
+			assert false;  // should not get here
+		} catch (SyntaxException e) {
+			assertThat(e.getMessage(), new StringContains("quoted word found where command expected"));
+		}
 	}
 
 	private Element stdElementRun(List<Action> actions) {

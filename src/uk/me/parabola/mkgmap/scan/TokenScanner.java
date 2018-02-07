@@ -356,7 +356,9 @@ public class TokenScanner {
 	}
 
 	/**
-	 * Check the value of the next token without consuming it.
+	 * Check the value of the next non-space token without consuming it.
+	 *
+	 * Any white space will be consumed
 	 *
 	 * @param val String value to compare against.
 	 * @return True if the next token has the same value as the argument.
