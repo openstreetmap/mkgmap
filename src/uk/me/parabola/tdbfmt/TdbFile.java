@@ -240,8 +240,4 @@ public class TdbFile {
 	public int getTdbVersion() {
 		return headerBlock.getTdbVersion();
 	}
-
-	public void setHasDem() {
-		headerBlock.setHasDem(true);
-	}
 }

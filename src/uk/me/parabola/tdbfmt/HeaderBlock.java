@@ -55,8 +55,6 @@ class HeaderBlock extends FileBlock {
 
 	private int codePage;
 
-	private boolean hasDem;
-
 	HeaderBlock(int tdbVersion) {
 		super(BLOCK_ID);
 		this.tdbVersion = tdbVersion;
@@ -108,7 +106,7 @@ class HeaderBlock extends FileBlock {
 				os.write(1);    // map has profile information
 			else
 				os.write(0);
-			os.write(hasDem ? 1: 0);    // map has DEM sub files
+			os.write(0);
 		}
 	}
 
@@ -156,9 +154,5 @@ class HeaderBlock extends FileBlock {
 
 	public void setEnableProfile(byte enableProfile) {
 		this.enableProfile = enableProfile;		
-	}
-
-	public void setHasDem(boolean hasDem) {
-		this.hasDem = hasDem;
 	}
 }
