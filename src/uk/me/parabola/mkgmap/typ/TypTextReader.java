@@ -65,6 +65,9 @@ public class TypTextReader {
 					break;
 				}
 			} else {
+				if (currentSection == null)
+					throw new SyntaxException(scanner, "Missing section start");
+
 				// Line inside a section
 				String name = tok.getValue();
 
@@ -73,9 +76,6 @@ public class TypTextReader {
 					throw new SyntaxException(scanner, "Expecting '=' or ':' instead of " + sep);
 
 				String value = scanner.readLine();
-
-				if (currentSection == null)
-					throw new SyntaxException(scanner, "Missing section start");
 
 				currentSection.processLine(scanner, name, value);
 			}

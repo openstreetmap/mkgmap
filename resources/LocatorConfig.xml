@@ -818,7 +818,7 @@
 		<variant>PH</variant>
 		<variant>PHL</variant>
 	</country>
-	<country name="Pitcairn" abr="PCN" driveOnLeft="true">
+	<country name="Pitcairn Islands" abr="PCN" driveOnLeft="true">
 		<variant>PN</variant>
 		<variant>PCN</variant>
 	</country>
@@ -1063,7 +1063,7 @@
 		<variant>TK</variant>
 		<variant>TKL</variant>
 	</country>
-	<country name="Tonga" abr="TON">
+	<country name="Tonga" abr="TON" driveOnLeft="true">
 		<variant>TO</variant>
 		<variant>TON</variant>
 	</country>

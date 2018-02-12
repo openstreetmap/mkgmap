@@ -57,7 +57,7 @@ route=road & network=e-road {
 	apply {
 		add ref='${ref}';
 		add int_ref='${int_ref}';
-		add network='e-road'
+		add network='e-road';
         add mkgmap:fast_road=yes;
 	}
 }

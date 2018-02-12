@@ -115,6 +115,7 @@ public class MultiPolygonRelation extends Relation {
 
 		setId(other.getId());
 		copyTags(other);
+		this.setTagsIncomplete(other.getTagsIncomplete());
 
 		if (log.isDebugEnabled()) {
 			log.debug("Construct multipolygon", toBrowseURL(), toTagString());
@@ -1308,9 +1309,7 @@ public class MultiPolygonRelation extends Relation {
 	 */
 	protected boolean hasStyleRelevantTags(Element element) {
 		if (element instanceof MultiPolygonRelation) {
-			// in case it is a multipolygon the TAGS_INCOMPLETE_TAG declares
-			// that the mp has additional tags removed by the file loader
-			if (element.tagIsLikeYes(OsmHandler.TAGS_INCOMPLETE_TAG)) {
+			if (((MultiPolygonRelation) element).getTagsIncomplete()) {
 				return true;
 			}
 		}

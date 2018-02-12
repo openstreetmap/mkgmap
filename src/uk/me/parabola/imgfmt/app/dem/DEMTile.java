@@ -379,10 +379,19 @@ public class DEMTile {
 		return heights[col + row * width];
 	}
 
-	public void writeHeader(ImgFileWriter writer, DEMSection section) {
+	/**
+	 * Write tile header with the given field sizes 
+	 * @param writer
+	 * @param recordDesc gives the field sizes
+	 */
+	public void writeHeader(ImgFileWriter writer, int recordDesc) {
 		if (maxDeltaHeight == 0)
 			offset = 0;
-		switch (section.getOffsetSize()) {
+		int offsetSize = (recordDesc & 0x3) + 1;
+		int baseSize = ((recordDesc & 0x4) >> 2) + 1;
+		int deltaSize = ((recordDesc & 0x8) >> 3) + 1;
+		boolean hasExtra = (recordDesc & 0x10) != 0;
+		switch (offsetSize) {
 		case 1:
 			writer.put1(offset);
 			break;
@@ -395,15 +404,14 @@ public class DEMTile {
 		default:
 			writer.putInt(offset);
 		}
-		if (section.getBaseSize() == 1)
+		if (baseSize == 1)
 			writer.put((byte) baseHeight);
 		else 
 			writer.putChar((char) baseHeight);
-		writer.putN(section.getDifferenceSize(), maxDeltaHeight);
-		if (section.hasExtra())
+		writer.putN(deltaSize, maxDeltaHeight);
+		if (hasExtra)
 			writer.put(encodingType);
 	}
-
 
 	public void writeBitStreamData(ImgFileWriter writer) {
 		if (bits != null) {

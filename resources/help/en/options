@@ -30,21 +30,23 @@ filename
 
 -c filename
 --read-config=filename
-	The given file is opened and each line is an option setting of
-	the form option=value, any option that could be used on the command
-	line can be used, however you omit the leading '--'.  The short
-	option names with a single '-' cannot be used, simply use the
-	long name instead.
+	Each line of the named file contains a command option in the form
+	option=value or option:value.  The options are included as arguments of
+	the executed command as if they had been specified on the command line.
+	Lines beginning with a # character are ignored and can be used as
+	comments.  Any command line option can be specified, however the
+	leading '--' must be omitted.  The short option names with a single
+	'-' cannot be used, simply use the long name instead. 
 
---output-dir=filename
+--output-dir=directory
 	The directory in which all output files are written. It defaults
 	to the current working directory, i.e. the directory the command is
 	executed from.
 
 -n name
 --mapname=name
-	Set the name of the map. Garmin maps are named by 8 digit
-	numbersList.  The default is 63240001.  It is best to use a different
+	Set the name of the map. Garmin maps are identified by an 8 digit
+	number.  The default is 63240001.  It is best to use a different
 	name if you are going to be making a map for others to use so
 	that it is unique and does not clash with others.
 
@@ -78,7 +80,7 @@ Label options:
 
 --unicode
 	This is equivalent to --code-page=65001. Note that  
-	some devices don't support unicode maps produced by mkgmap.
+	some devices don't support Unicode maps produced by mkgmap.
 
 --code-page=number
 	This option enables the use of international characters. Only 8 bit
@@ -88,10 +90,6 @@ Label options:
 	It is entirely dependent on the device firmware which code pages are
 	supported.
 	
---charset=name
-	This option is obsolete. Change the character set with the --code-page
-	option.
-
 --lower-case
 	Allow labels to contain lower case letters.  Note that most or all
 	Garmin devices are not able to display lower case letters at an angle
@@ -106,15 +104,15 @@ Address search options:
 
 	If instead the --tdbfile option is given then the index consists
 	of two files named osmmap.mdx and osmmap_mdr.img which can be used
-	with MapSource. (For compatibility, you do not need the tdbfile
+	with MapSource.  The --overview-mapname option can be used to change
+	these names.  (For compatibility, you do not need the tdbfile
 	option if gmapsupp is not given).
 
 	If both the --gmapsupp and --tdbfile options are given alongside
 	the --index option, then both indexes will be created. Note that
 	this will require roughly twice as much memory.
 
-	The --overview-mapname option can be used to change these names.  If
-	the mapset is sent to the device from MapSource, it will enable
+	If the map is sent to the device by MapSource, it will enable
 	find by name and address search on the GPS.
 	
 	The address fields are assigned by special mkgmap address
@@ -140,19 +138,19 @@ Address search options:
 	is not the right thing to do. Words following an opening bracket '(' are ignored. 
 	See also option road-name-config.  
 
---road-name-config=file
+--road-name-config=filename
 	This option handles the problem that some countries have road names which 
 	often start or end with very similar words, e.g. in France the first word
 	is very often 'Rue', often followed by a preposition like 'de la' or 'des'.
 	This leads to rather long road names like 'Rue de la Concorde' where only
 	the word 'Concorde' is really interesting. In the USA, you often have names
 	like 'West Main Street' where only the word 'Main' is important.  
-	Garmin software has some tricks to handle this problem. It allows to use
-	special characters in the road labels which mark the beginning and end of 
-	the important part. In combinarion with option split-name-index
+	Garmin software has some tricks to handle this problem. It allows the use
+	of special characters in the road labels to mark the beginning and end of 
+	the important part. In combination with option split-name-index
 	only the words in the important part are indexed.
-	 
-	There are two different visiual effects of this option:
+
+	There are two different effects of this option:
 	- On the PC, when zooming out, the name 'Rue de la Concorde' is only
 		rendered as 'Concorde'.
 	- The index for road names only contains the important part of the name.
@@ -165,39 +163,39 @@ Address search options:
 	The option specifies the path to a file which gives the details. See 
 	comments in the sample roadNameConfig.txt for further details.
  
---mdr7-excl 
-	This option allows to specify words which should not be in the road index.
+--mdr7-excl=name[,name...]
+	This option allows you to specify words which should not be in the road index.
 	It was added before option road-name-config and is probably no longer needed.
 	Example usage: --x-mdr7-excl="Road, Street, Straße, Weg"
  
---mdr7-del
+--mdr7-del=name[,name...]
 	Use this option if your style adds strings to the labels of roads which you
 	want to see in the map but which should not appear in the result list
 	of a road name / address search. The list is used like this:
-	For each road label mkgmap searches the last blank. If one is found, it checks
+	For each road label, mkgmap searches for the last blank. If one is found, it checks
 	if the word after it appears in the given list. If so, the word is removed
 	and the search is repeated. The remaining string is used to create the index.
 	Example: Assume your style adds surface attributes like 'pav.' or 'unp.' to a road
-	label. You can use --mdr7-del="pav.,unp." to remove these apendixes from the index.
+	label. You can use --mdr7-del="pav.,unp." to remove these appendixes from the index.
 	  
---poi-excl-index
+--poi-excl-index=poi[-poi][,poi[-poi]...]
 	By default, mkgmap indexes the following POI types with a non-empty label:
 	- 0x00 .. 0x0f (cities, sub type 0, type <= 0xf)
 	- 0x2axx..0x30xx (Food & Drink, Lodging, ...)
 	- 0x28xx (no category ?)
 	- 0x64xx .. 0x66xx (attractions)   
 	This option allows to exclude POI types from the index. 
-	The exclueded types are not indexed, but may still be searchable on a device 
+	The excluded types are not indexed but may still be searchable on a device, 
 	as some devices seem to ignore most of the index, e.g. an Oregon 600 with 
 	firmware 5.00 only seems to use it for city search.
-	If you device finds a POI name like 'Planet' when you search for 'Net'
+	If your device finds a POI name like 'Planet' when you search for 'Net',
 	it doesn't use the index because the index created by mkgmap cannot help for 
 	that search. 
 	So, this option may help when you care about the size of the index or the
 	memory that is needed to calculate it.    
 	The option expects a comma separated list of types or type ranges. A range is 
 	given with from-type-to-type, e.g. 0x6400-0x6405. First and last type are both 
-	excluded.A range can span multiple types, e.g. 0x6400-0x661f.  
+	excluded.  A range can span multiple types, e.g. 0x6400-0x661f.  
 	Examples for usage: 
 	- Assume your style adds a POI with type 0x2800 for each addr:housenumber.
 		It is not useful to index those numbers, so you can use 
@@ -278,8 +276,8 @@ If --tdbfile is enabled, this gives the name of the overview
 	number used in the overview map and tdb file.  The default
 	number is 63240000.
 
---overview-levels
-	like levels, specifies additional levels that are to be written to the
+--overview-levels=level:resolution[,level:resolution...]
+	Like levels, specifies additional levels that are to be written to the
 	overview map. Counting of the levels should continue. Up to 8 additional 
 	levels may be specified, but the lowest usable resolution with MapSource 
 	seems to be 11. The hard coded default is empty.
@@ -293,7 +291,7 @@ If --tdbfile is enabled, this gives the name of the overview
 	after the overview map was created. The default is to keep the files.  
 
 Style options:
---style-file=file
+--style-file=filename
 	Specify an external file to obtain the style from.  "file" can
 	be a directory containing files such as info, lines, options
 	(see resources/styles/default for an example).  The directory
@@ -316,7 +314,7 @@ Style options:
 	directory or zip file containing multiple styles. If --style-file 
 	is not used, it selects one of the built-in styles. 
 
---style-option
+--style-option=tag[=value][;tag[=value]...]
 	Provide a semicolon separated list of tags which can be used in the style.
 	The intended use is to make a single style more flexible, e.g.
 	you may want to use a slightly different set of rules for a map of
@@ -338,52 +336,50 @@ Style options:
 	available within that file. If it is also preceded by the style
 	option it will only check that style.
 
---levels=levels code
+--levels=level:resolution[,level:resolution...]
 	Change the way that the levels on the map correspond to the zoom
-	levels in the device. See customisation help. The default is:
+	levels in the device. See customisation help. The hard coded default is:
 	"0:24, 1:22, 2:20, 3:18, 4:16", although each style can have
-	its own default. Up to 8 levels may be specified.
+	its own default. The default style for example overwrites it with
+	"0:24, 1:22, 2:20, 3:18". Up to 8 levels may be specified.
 
---name-tag-list
-	Get the tag that will be used to supply the name.  Useful for
-	language variations.  You can supply a list and the first one
-	will be used.  e.g. --name-tag-list=name:en,int_name,name
-
---map-features=file
-	This option is ignored; use the --style-file option instead.
+--name-tag-list=tag[,tag...]
+	Specify the tag that will be used to supply the name.  Useful for
+	language variations.  You can supply a list of tags and the first one
+	found will be used.  e.g. --name-tag-list=name:en,int_name,name
 
 Product description options:
 
---family-id
+--family-id=integer
 	This is an integer that identifies a family of products.
 	Range: [1..9999]
 	Mkgmap default: 6324
 
---family-name
+--family-name=name
 	If you build several maps, this option describes the
 	family name of all of your maps. Garmin will display this
 	in the map selection screen.
 	Example: --family-name="OpenStreetmap mkgmap XL 2019"
 
---product-id
+--product-id=integer
 	This is an integer that identifies a product within a family.
 	It is often just 1, which is the default.
 
---product-version
+--product-version=integer
 	The version of the product. Default value is 100 which means version 1.00.
 
---series-name
+--series-name=name
 	This name will be displayed in MapSource in the map selection
 	drop-down. The default is "OSM map".
 
---area-name
+--area-name=name
 	Area name is displayed on Garmin units (or at least on eTrex) as the second 
 	part of the mapname in the list of the individual maps.
 
---copyright-message=note
+--copyright-message=text
 	Specify a copyright message for files that do not contain one.
 
---copyright-file=file
+--copyright-file=filename
 	Specify copyright messages from a file.
 	Note that the first copyright message is not displayed on a device, but is 
 	shown in BaseCamp. The copyright file must include at least two lines and
@@ -391,7 +387,7 @@ Product description options:
 	$MKGMAP_VERSION$, $JAVA_VERSION$, $YEAR$, $LONG_DATE$, $SHORT_DATE$ and $TIME$.
 	Time and date substitutions use the local date and time formats.
 
---license-file=file
+--license-file=filename
 	Specify a file which content will be added as license.
 	The license file must be UTF-8 encoded.
 	The following symbols will be substituted by mkgmap:
@@ -410,14 +406,14 @@ Optimization options:
 	(Default is 2.6, which should lead to invisible changes)
 
 --reduce-point-density-polygon=NUM
-	Allows to set the maximal allowed error distance for the DP algorithm
+	Allows you to set the maximal allowed error distance for the DP algorithm
 	to be applied against polygons. Recommended setting is 8.
 
 --merge-lines
 	Try to merge lines. This helps the simplify filter to straighten out
 	longer chunks at lower zoom levels. Decreases file size more.
 	Increases paint speed at low zoom levels.
-  Default is enabled, use --no-merge-lines to disable.
+	Default is enabled, use --no-merge-lines to disable.
 	
 --min-size-polygon=NUM
 	Removes all polygons smaller than NUM from the map.
@@ -425,46 +421,61 @@ Optimization options:
 	Recommended value is 8 to 15, default is 8.
 	See also polygon-size-limits.
 
---polygon-size-limits=limits code
-	Allows to specify different min-size-polygon values for each resolution.
+--polygon-size-limits=resolution:value[,resolution:value...]
+	Allows you to specify different min-size-polygon values for each resolution.
 	Sample:  
 	--polygon-size-limits="24:12, 18:10, 16:8, 14:4, 12:2, 11:0"
 	If a resolution is not given, mkgmap uses the value for the next higher 
 	one. For the given sample, resolutions 19 to 24 will use value 12,
 	resolution 17 and 18 will use 10, and so on.
-	Value 0 means to skip the size filter. 
+	Value 0 means to not apply the size filter. 
 	Note that in resolution 24 the filter is not used.  
+	The following options are equivalent:
+		--min-size-polygon=12
+		--polygon-size-limits=24:12
+		--polygon-size-limits=24:0,23:12
+		--polygon-size-limits=24:0,23:12,22:12,21:12,16:12
 
 Hill Shading (DEM) options:
+	Hill Shading is rendered by PC programs (MapSource or BaseCamp) or GPS devices 
+when the map includes a Digital Elevation Model (DEM). Use the following options 
+to add a DEM to the map and control its characteristics. DEM creation requires 
+files containing height information for the area covered by the map, the so 
+called hgt files, which typically cover 1 degree latitude * 1 degree longitude 
+and are named by the coordinates of their bottom left corner (eg. N53E009). They 
+contain height information in a grid of points. Typical hgt files contain either 
+1'' or 3'' data. 3'' files have 1201 * 1201 points, which gives 
+2 * 1201 * 1201 = 2.884.802 bytes. 1'' files have 3601 * 3601 points, which gives 
+2 * 3601 * 3601 = 25.934.402 bytes. Other files are supported as long as the 
+formular sqrt(size/2) gives an integer value.
 
---dem=path[,path]
+--dem=path[,path...]
 	The option expects a comma separated list of paths to directories or zip 
-	files containing *.hgt files (SRTM). Directories are searched for *.hgt 
-	files and also for *.hgt.zip and *.zip files where * means a name like 
-	N53E009. Typical hgt files contain either 1'' or 3'' data. 
-	3'' files have 2 * 1201 * 1201 = 2.884.802 bytes, 1'' files have 
-	2 * 3601 * 3601 = 25.934.402 bytes. Other files are supported as long as the
-	formular sqrt(size/2) gives an integer value.  
+	files containing *.hgt files. Directories are searched for *.hgt files and 
+	also for *.hgt.zip and *.zip files. 
 	The list is searched in the given order, so if you want to use 1'' files 
 	make sure that they are found first. There are different sources for *.hgt 
 	files, some have so called voids which are areas without data.
 	Those should be avoided.  
  
---dem-dists=number[,number]
+--dem-dists=number[,number...]
 	If given, the option specifies the resolution(s) or zoom level for the DEM 
 	data. If not given, mkgmap tries to determine a reasonable value based on 
-	the resolution found in the *.hgt files. For PC programs like MapSource or 
-	Basecamp you only need one zoom level, for gps devies you need one for each 
+	the resolution found in the *.hgt files. For desktop programs like MapSource or 
+	Basecamp you only need one zoom level, for GPS devices you need one for each 
 	resolution given with the --levels option. The actual values are given as 
-	distance between two DEM points. Higher disances mean lower resolution and 
-	thus fewer bytes in the map. Reasonable values for the highest resolution 
-	are somewhere between 1648 and 5520, 3312 is often used.
+	distance between two DEM points and should be a multiple or submultiple of
+	the distance between two points in the hgt file, that is 3314 for 1'' and 9942
+	for 3''. Higher distances mean lower resolution and thus fewer bytes in the 
+	map. Reasonable values for the highest resolution should not be much smaller 
+	than 50% hgt resolution, that is somewhere between 1648 and 5520 for 1'' hgt 
+	input files (3312 is often used), and 5520 to 9942 for 3'' hgt input files.
 	Example which should work with levels="0:24, 1:22, 2:20, 3:18":
 	--dem-dists=3312,13248,26512,53024
 	This was found in a Garmin Demo map for transalpin data created 2009.
 
 --dem-interpolation=auto|bicubic|bilinear
-	Use this option to speciy the method that is used to interpolate 
+	Use this option to specify the method that is used to interpolate 
 	data from hgt raster to the DEM raster. The value bicubic gives the 
 	highest precision but is slower, bilinear is faster but less precise,
 	it tends to smooth the profile and thus also reduces DEM size compared to 
@@ -478,7 +489,7 @@ Hill Shading (DEM) options:
 	for which DEM data should be added to the map. If not given, the DEM data 
 	will cover the full tile area.
   
---overview-dem-dist=number
+--overview-dem-dist=integer
 	If given, the option specifies the resolution(s) for the DEM data in the
 	overview map. If not given or 0, mkgmap will not add DEM to the 
 	overview map. Reasonable values depend on the size of the area and the 
@@ -487,7 +498,7 @@ Hill Shading (DEM) options:
 
 Miscellaneous options:
 
---max-jobs[=number]
+--max-jobs[=integer]
 	When number is specified, allow that number of maps to be
 	processed concurrently. If number is not specified, the limit
 	is set equal to the number of CPU cores. If this option is not
@@ -498,16 +509,20 @@ Miscellaneous options:
 	Don't quit whole application if an exception occurs while
 	processing a map - continue to process the other maps.
 
---block-size=number
+--block-size=integer
 	Changes the block size that is used in the generated map. This
 	option is not usually needed, but sometimes an error message
 	will ask you to try a value for this option.
 
 --net
-	Obsolete, use --route instead.
+	Tells mkgmap to write NET data, which is needed for address search  
+	and routing. Use this option if you want full address search, but do
+	not need a map that supports routing.
 
 --route
-	Create maps that support routing.
+	Tells mkgmap to write NET and NOD data, which are needed in maps 
+	that support routing. If you specify this option, you do not need
+	to specify --net.
 
 --drive-on=left|right|detect|detect,left|detect,right
 	Explicitly specify which side of the road vehicles are
@@ -521,11 +536,6 @@ Miscellaneous options:
 	Use the --bounds option to make sure that the detection 
 	finds the correct country. 
 	
---drive-on-left
---drive-on-right
-	Deprecated: Use drive-on instead.
-	The options are translated to drive-on=left|right. 
-
 --check-roundabouts
 	Check that roundabouts have the expected direction (clockwise
 	when vehicles drive on the left). Roundabouts that are complete
@@ -546,17 +556,6 @@ Miscellaneous options:
 	number of legitimate roads that are flagged as flare road
 	problems. Default value is 0 (disabled) because it's not a
 	completely reliable heuristic.
-
---ignore-maxspeeds
-	Now ignored, former usage:
-	When reading OSM files, ignore any "maxspeed" tags.
-
---ignore-builtin-relations
-	Now ignored, former usage:
-	When reading OSM files, skip the built-in processing of
-	relations. This speeds up the processing non-routable map
-	layers that do not contain multipolygons. This implies
-	--ignore-turn-restrictions.
 
 --ignore-turn-restrictions
 	When reading OSM files, ignore any "restriction" relations.
@@ -597,7 +596,7 @@ Miscellaneous options:
 	different vehicles are different kinds of bicycles, e.g. a way
 	with mkgmap:car=yes and mkgmap:bicycle=no may be a road that is 
 	good for racing bikes, but not for other cyclists.
-	This allows to optimise sharp angles at junctions of those roads. 
+	This allows the optimisation of sharp angles at junctions of those roads. 
 	Don't use with the default style as that is a general style!
 	
 --report-similar-arcs
@@ -613,15 +612,6 @@ Miscellaneous options:
 	that join together but go nowhere, 2 = individual one-way roads
 	that go nowhere.
 
---road-name-pois[=GarminCode]
-	Now ignored, former usage:
-	Generate a POI for each named road. By default, the POIs'
-	Garmin type code is 0x640a. If desired, a different type code
-	can be specified with this option.  This is a workaround for not
-	being able to search for roads.
-	0x2f15: a blue dot in the middle of the road, and if you select,
-	or 'hover' over it, the street name appears.
-	
 --add-pois-to-lines
 	Generate POIs for lines. For each line (must not be closed) POIs are
 	created at several points of the line. Each POI is tagged with the
@@ -649,12 +639,11 @@ Miscellaneous options:
 	       * the node with role=label
 	       * the centre point of the biggest area
 
---pois-to-areas-placement[=taglist]
-	A semicolon separated list of tag=value definitions. A POI is placed at the first
-	node of the polygon tagged with the first tag/value pair. If none of the nodes are
-	tagged with the first tag-value pair the first node tagged with the second tag-value
-	pair is used and so on. If none of the tag-value pairs matches or the taglist is empty 
-	the centre of the polygon is used.
+--pois-to-areas-placement=tag=value[;tag=value...]
+	A POI is placed at the first node of the polygon tagged with the first tag/value
+	pair. If none of the nodes are tagged with the first tag-value pair the first node
+	tagged with the second tag-value pair is used and so on. If none of the tag-value pairs
+	matches or the taglist is empty, 	the centre of the polygon is used.
 	It is possible to define wildcards for tag values like entrance=*.
 	Default: entrance=main;entrance=yes;building=entrance
 
@@ -666,7 +655,7 @@ Miscellaneous options:
 	This option can be combined with the generate-sea options multipolygon, polygons 
 	and land-tag. The coastlinefile option is ignored if precomp-sea is set.      
 
---coastlinefile=filename[,filename]
+--coastlinefile=filename[,filename...]
 	Defines a comma separated list of files that contain coastline 
 	data. The coastline data from the input files is removed if 
 	this option is set. Files must have OSM or PBF fileformat.	
@@ -730,27 +719,15 @@ Miscellaneous options:
 --make-poi-index
 	Generate a POI index in each map tile. Probably not used by modern devices,
 	but still supported.
-	
+
 --nsis
 	Write a .nsi file that can be used with the Nullsoft Scriptable Install System
 	(NSIS) to create a Windows Mapsource Installer.
-
---make-all-cycleways
-	Deprecated, use --make-opposite-cycleways instead. Former meaning: 
-	Turn on all of the options that make cycleways.
 
 --make-opposite-cycleways
 	Some one-way streets allow bicycle traffic in the reverse
 	direction and this option makes a way with the same points as
 	the original that allows bicycle traffic (in both directions).
-
---make-cycleways
-	Now ignored, former meaning:
-	Some streets have a separate cycleway track/lane just for
-	bicycle traffic and this option makes a way with the same
-	points as the original that allows bicycle traffic. Also,
-	bicycle traffic is prohibited from using the original way
-	(unless that way's bicycle access has been defined).
 
 --link-pois-to-ways
 	This option may copy some specific attributes of a POI 
@@ -801,7 +778,7 @@ Miscellaneous options:
 	hint where to leave the major road.
 	The first part must have type 0x08 or 0x09 so that Garmin uses the hint. 
 	
---delete-tags-file=FILENAME
+--delete-tags-file=filename
 	Names a file that should contain one or more lines of the form
 	TAG=VALUE or TAG=*. Blank lines and lines that start with
 	a # or ; are ignored. All tag/value pairs in the OSM input are
@@ -825,20 +802,21 @@ Miscellaneous options:
 	an area with valid DEM data.
 	The default is show-profiles=0.
 
---draw-priority=25
-	When two maps cover the same area, this option controls what
-	order they are drawn in and therefore which map is on top of
-	which.  Higher priorities are drawn "on top" of lower
-	priorities.
-
 --transparent
-	Make the map transparent, so that if two maps are loaded that
-	cover the same area, you can see through this map and see the
-	lower map too.  Useful for contour line maps among other
-	things.
+	Makes the map transparent, so that if two maps covering the same area are
+	loaded, you can see through this map to see details from the other map too.
+	Typically used for maps containing just contour lines. See --draw-priority
+	as well.
+
+--draw-priority=integer
+	When two maps cover the same area and both are enabled in the device, this
+	option controls the order in which they are drawn in and therefore which map
+	is on top.  Higher priorities are drawn "on top" of lower priorities.
+	The map drawn on top must be transparent for the one underneath to be seen.
+	The default value is 25.
 
 --custom
-	Write a different TRE header. With this option mkgmap writes the bytes
+	Write a different TRE header. With this option, mkgmap writes the bytes
 	0x170401 instead of the default 0x110301 at offset 43. Useful for marine 
 	maps.
 	
@@ -858,7 +836,55 @@ Miscellaneous options:
 	Makes some operations more verbose. Mostly used with --list-styles.
 
 --order-by-decreasing-area
-	Puts polygons/areas into the mapfile in decreasing size so that
+	Puts polygons/areas into the map in decreasing size order, so that
 	smaller features are rendered over larger ones (assuming _drawOrder
 	is equal). The tag mkgmap:drawLevel can be used to override the
 	natural area of a polygon, so forcing changes to the rendering order. 
+
+Deprecated and Obsolete Options
+
+--drive-on-left
+--drive-on-right
+	Deprecated; use drive-on instead.
+	The options are translated to drive-on=left|right. 
+
+--make-all-cycleways
+	Deprecated, use --make-opposite-cycleways instead. Former meaning: 
+	Turn on all of the options that make cycleways.
+
+--charset=name
+	Obsolete; use --code-page instead.
+	option.
+
+--map-features=filename
+	Obsolete; use --style-file instead.
+
+--ignore-maxspeeds
+	Obsolete; former usage:
+	When reading OSM files, ignore any "maxspeed" tags.
+
+--ignore-builtin-relations
+	Obsolete; former usage:
+	When reading OSM files, skip the built-in processing of
+	relations. This speeds up the processing non-routable map
+	layers that do not contain multipolygons. This implies
+	--ignore-turn-restrictions.
+
+--road-name-pois[=GarminCode]
+	Obsolete; former usage:
+	Generate a POI for each named road. By default, the POIs'
+	Garmin type code is 0x640a. If desired, a different type code
+	can be specified with this option.  This is a workaround for not
+	being able to search for roads.
+	0x2f15: a blue dot in the middle of the road, and if you select,
+	or 'hover' over it, the street name appears.
+
+--make-cycleways
+	Obsolete; former meaning:
+	Some streets have a separate cycleway track/lane just for
+	bicycle traffic and this option makes a way with the same
+	points as the original that allows bicycle traffic. Also,
+	bicycle traffic is prohibited from using the original way
+	(unless that way's bicycle access has been defined).
+
+

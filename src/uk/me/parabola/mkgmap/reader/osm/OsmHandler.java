@@ -48,12 +48,6 @@ public abstract class OsmHandler {
 	private long lastNodeRef;
 	private boolean missingNodeRef;
 
-	/** 
-	 * Tag that is set to <code>true</code> if one or more tags are not loaded. 
-	 * Only used for multipolygons yet. 
-	 */
-	public static final String TAGS_INCOMPLETE_TAG = "mkgmap:tagsincomplete";
-	
 	/**
 	 * Set a set of tags with values that are to be deleted on input.
 	 * For each key there is a set of values.  If the value set is empty then

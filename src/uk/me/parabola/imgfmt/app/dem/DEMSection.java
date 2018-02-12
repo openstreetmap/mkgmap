@@ -32,10 +32,7 @@ public class DEMSection {
 	private final short flags1 = 0;
 	private final int tilesLat;
 	private final int tilesLon;
-	private int offsetSize;
-	private int baseSize;
-	private int differenceSize;
-	private boolean hasExtra;
+	private int recordDesc;
 	private int tileDescSize;
 	private int dataOffset;
 	private int dataOffset2;
@@ -109,6 +106,7 @@ public class DEMSection {
 		int minBaseHeight = Integer.MAX_VALUE;
 		int maxBaseHeight = Integer.MIN_VALUE;
 		int maxDeltaHeight = Integer.MIN_VALUE;
+		boolean hasExtra = false;
 		for (int m = 0; m < tilesLat; m++) {
 			latOff = top - m * resLat;
 			
@@ -154,12 +152,13 @@ public class DEMSection {
 			minHeight = 0;
 			maxHeight = 0;
 		}
-		differenceSize = (maxDeltaHeight > 255) ? 2 : 1;
+		int differenceSize = (maxDeltaHeight > 255) ? 2 : 1;
+		int baseSize;
 		if (-128 < minBaseHeight && maxBaseHeight < 128)
 			baseSize = 1;
 		else
 			baseSize = 2;
-		
+		int offsetSize;
 		if (dataLen < 256)
 			offsetSize = 1;
 		else if (dataLen < 256 * 256)
@@ -168,7 +167,15 @@ public class DEMSection {
 			offsetSize = 3;
 		else 
 			offsetSize = 4;
+		
 		tileDescSize = offsetSize + baseSize + differenceSize + (hasExtra ? 1:0);
+		recordDesc = offsetSize -1; // 0..3
+		if (baseSize > 1)
+			recordDesc |= (1 << 2);
+		if (differenceSize > 1)
+			recordDesc |= (1 << 3);
+		if (hasExtra)
+			recordDesc |=  (1 << 4); 
 		
 	}
 
@@ -183,13 +190,6 @@ public class DEMSection {
 		writer.putInt(tilesLon - 1);	//0x14
 		writer.putInt(tilesLat - 1);	//0x18
 		
-		int recordDesc = offsetSize -1; // 0..3
-		if (baseSize > 1)
-			recordDesc |= (1 << 2);
-		if (differenceSize > 1)
-			recordDesc |= (1 << 3);
-		if (hasExtra)
-			recordDesc |=  (1 << 4); 
 		writer.put2(recordDesc);	//0x1c
 		writer.put2(tileDescSize);	//0x1e
 		writer.putInt(dataOffset);	//0x20
@@ -210,41 +210,13 @@ public class DEMSection {
 		int off = 0;
 		for (DEMTile tile : tiles) {
 			tile.setOffset(off);
-			tile.writeHeader(writer, this);
+			tile.writeHeader(writer, recordDesc);
 			off += tile.getBitStreamLen();
 		}
 		dataOffset2 = writer.position();
 		for (DEMTile tile : tiles) {
 			tile.writeBitStreamData(writer);
 		}
-	}
-
-	public int getOffsetSize() {
-		return offsetSize;
-	}
-
-	public void setOffsetSize(byte offsetSize) {
-		this.offsetSize = offsetSize;
-	}
-
-	public int getBaseSize() {
-		return baseSize;
-	}
-
-	public void setBaseSize(byte baseSize) {
-		this.baseSize = baseSize;
-	}
-
-	public int getDifferenceSize() {
-		return differenceSize;
-	}
-
-	public void setDifferenceSize(byte differenceSize) {
-		this.differenceSize = differenceSize;
-	}
-
-	public boolean hasExtra() {
-		return hasExtra;
 	}
 }
 

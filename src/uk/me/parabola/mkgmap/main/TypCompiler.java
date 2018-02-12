@@ -246,10 +246,11 @@ public class TypCompiler implements MapProcessor {
 					if (line.charAt(0) == 0xfeff)
 						return;
 
-					if (line.startsWith("CodePage")) {
+					if (line.startsWith("CodePage=")) {
 						String[] split = line.split("=");
 						try {
-							setCodePage("cp" + Integer.decode(split[1].trim()));
+							if (split.length > 1)
+								setCodePage("cp" + Integer.decode(split[1].trim()));
 						} catch (NumberFormatException e) {
 							setCodePage("cp1252");
 						}

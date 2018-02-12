@@ -18,6 +18,7 @@ package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import java.util.ArrayList;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -34,6 +35,8 @@ import static uk.me.parabola.imgfmt.app.net.AccessTagsAndBits.*;
  * @author Steve Ratcliffe
  */
 public class ActionReader {
+	Set<String> VALID_ACCESS = new HashSet<>(Arrays.asList("yes", "no", "true", "false", "1", "0"));
+
 	private final TokenScanner scanner;
 
 	private final Set<String> usedTags = new HashSet<>();
@@ -54,6 +57,9 @@ public class ActionReader {
 			Token tok = scanner.nextToken();
 			if (tok.isValue(";"))
 				continue;
+
+			if (tok.isValue("'") || tok.isValue("\""))
+				throw new SyntaxException(scanner, "quoted word found where command expected");
 
 			String cmd = tok.getValue();
 			if ("set".equals(cmd)) {
@@ -131,14 +137,14 @@ public class ActionReader {
 	 * A name command has a number of alternatives separated by '|' characters.
 	 */
 	private Action readValueBuilder(ValueBuildedAction action) {
-		while (inActionCmd()) {
-			if (scanner.checkToken("|")) {
-				scanner.nextToken();
-				continue;
-			}
+		do {
+			if (!inActionCmd())
+				throw new SyntaxException(scanner, "unexpected end of add/set list");
+
 			String val = scanner.nextWord();
 			action.add(val);
-		}
+		} while (hasMoreWords());
+
 		usedTags.addAll(action.getUsedTags());
 		return action;
 	}
@@ -162,7 +168,9 @@ public class ActionReader {
 		scanner.nextToken();
 
 		AddTagAction action = null;
-		while (inActionCmd()) {
+		do {
+			if (!inActionCmd())
+				throw new SyntaxException(scanner, "unexpected end of add/set list");
 
 			String val = scanner.nextWord();
 			if (action == null)
@@ -177,11 +185,9 @@ public class ActionReader {
 			} else {
 				changeableTags.add(key + "=" + val);
 			}
-			if (scanner.checkToken("|"))
-				scanner.nextToken();
-		}
-		if (action != null)
-			usedTags.addAll(action.getUsedTags());
+		} while (hasMoreWords());
+
+		usedTags.addAll(action.getUsedTags());
 		return action;
 	}
 
@@ -199,9 +205,14 @@ public class ActionReader {
 	 */
 	private AddAccessAction readAccessValue(boolean modify, Set<String> changeableTags) {
 		AddAccessAction action = null;
-		while (inActionCmd()) {
+		do {
+			if (!inActionCmd())
+				throw new SyntaxException(scanner, "unexpected end of access list");
 
 			String val = scanner.nextWord();
+			if (!VALID_ACCESS.contains(val) && !val.contains("$"))
+				throw new SyntaxException(scanner, "expected yes/no for set/addaccess, got '" + val + "'");
+
 			if (action == null)
 				action = new AddAccessAction(val, modify);
 			else
@@ -210,17 +221,15 @@ public class ActionReader {
 			// If the value contains a variable, then we do not know what the
 			// value will be.  Otherwise save the full tag=value
 			if (val.contains("$")) {
-				for (String accessTag : ACCESS_TAGS.keySet())
-					changeableTags.add(accessTag);
+				changeableTags.addAll(ACCESS_TAGS.keySet());
 			} else {
 				for (String accessTag : ACCESS_TAGS.keySet())
 					changeableTags.add(accessTag + "=" + val);
 			}
-			if (scanner.checkToken("|"))
-				scanner.nextToken();
-		}
-		if (action != null)
-			usedTags.addAll(action.getUsedTags());
+
+		} while (hasMoreWords());
+
+		usedTags.addAll(action.getUsedTags());
 		return action;
 	}
 	
@@ -231,6 +240,17 @@ public class ActionReader {
 
 	private boolean inAction() {
 		return !scanner.isEndOfFile() && !scanner.checkToken("}");
+	}
+
+	private boolean hasMoreWords() {
+		if (scanner.checkToken("|")) {
+			scanner.nextToken();
+
+			if (!inActionCmd())
+				throw new SyntaxException(scanner, "unexpected end of list");
+			return true;
+		}
+		return false;
 	}
 
 	public Set<String> getUsedTags() {
