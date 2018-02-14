@@ -294,6 +294,9 @@ public class ImgFS implements FileSystem {
 			log.infof("bs=%d, whole size=%d, hb=%d, fb=%d, blocks=%d\n", blockSize, size,
 					headerBlocks, fileBlocks, totalBlocks);
 
+			if (headerBlocks > SLOTS_PER_ENTRY)
+				continue;
+
 			if (totalBlocks > 0xfffe)
 				continue;
 
