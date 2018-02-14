@@ -300,7 +300,6 @@ public class MapBuilder implements Configurable {
 
 		rgnFile.write();
 		treFile.write(rgnFile.haveExtendedTypes());
-		treFile.writePost();
 		lblFile.write();
 		lblFile.writePost();
 
@@ -320,6 +319,7 @@ public class MapBuilder implements Configurable {
 			}
 			netFile.writePost(rgnFile.getWriter());
 		}
+		warnAbout3ByteImgRefs();
 		if (demFile != null) {
 			try{
 				long t1 = System.currentTimeMillis();
@@ -341,7 +341,8 @@ public class MapBuilder implements Configurable {
 				}
 				if (demSetExtra)
 					demFile.setExtra();
-				demFile.calc(src.getBounds(), demArea, pathToHGT, demDists, demOutsidePolygonHeight, demInterpolationMethod);
+				Area treArea = demFile.calc(src.getBounds(), demArea, pathToHGT, demDists, demOutsidePolygonHeight, demInterpolationMethod);
+				map.setBounds(treArea);
 				long t2 = System.currentTimeMillis();
 				log.info("DEM file calculation for", map.getFilename(), "took", (t2 - t1), "ms");
 				demFile.write();
@@ -350,7 +351,7 @@ public class MapBuilder implements Configurable {
 				throw new MapFailedException("DEM"); //TODO: better remove DEM file?
 			}
 		}
-		warnAbout3ByteImgRefs();
+		treFile.writePost();
 	}
 
 	private void warnAbout3ByteImgRefs() {

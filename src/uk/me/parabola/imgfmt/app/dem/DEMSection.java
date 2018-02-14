@@ -74,8 +74,8 @@ public class DEMSection {
 		// allow automatic selection of interpolation method for each zoom level
 		hgtConverter.startNewLevel(pointDist);
 
-		int []latInfo = getTileInfo(areaHeight, pointsDistanceLat);
-		int []lonInfo = getTileInfo(areaWidth, pointsDistanceLon);
+		int[] latInfo = getTileInfo(areaHeight, pointsDistanceLat);
+		int[] lonInfo = getTileInfo(areaWidth, pointsDistanceLon);
 		// store the values written to the header
 		tilesLat = latInfo[0];
 		tilesLon = lonInfo[0];
@@ -93,6 +93,7 @@ public class DEMSection {
 	 */
 	private int[] getTileInfo(int demPoints, int demDist) {
 		int resolution = STD_DIM * demDist;
+		demPoints += demDist;
 		int nFull = demPoints / resolution;
 		int rest = demPoints - nFull * resolution;
 		int num = nFull;
@@ -142,8 +143,7 @@ public class DEMSection {
 				tiles.add(tile);
 				if (tile.getEncodingType() != 0)
 					hasExtra = true;
-				int bsLen = tile.getBitStreamLen();
-				if (bsLen > 0) {
+				if (tile.hasValidHeights()) {
 					if (tile.getBaseHeight() < minBaseHeight)
 						minBaseHeight = tile.getBaseHeight();
 					if (tile.getBaseHeight() > maxBaseHeight)
@@ -152,8 +152,8 @@ public class DEMSection {
 						maxHeight = tile.getMaxHeight();
 					if (tile.getMaxDeltaHeight() > maxDeltaHeight)
 						maxDeltaHeight = tile.getMaxDeltaHeight();
-					dataLen += bsLen;
 				}
+				dataLen += tile.getBitStreamLen();
 			}
 			if (lastLevel) {
 				hgtConverter.freeMem();
