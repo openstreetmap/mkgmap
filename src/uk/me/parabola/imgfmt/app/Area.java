@@ -97,14 +97,23 @@ public class Area {
 		return new Coord((minLat + maxLat)/2, (minLong + maxLong)/2);// high prec not needed
 	}
 
-	public String toString() {
-		return String.format(Locale.ROOT, "(%d, %d) to (%d, %d) (%.8f, %.8f) to (%.8f, %.8f)", 
+	public String debugString() {
+		return String.format(Locale.ROOT, "(%d, %d) to (%d, %d) (%.6f, %.6f) to (%.6f, %.6f)", 
 				minLat, minLong,
 				maxLat, maxLong,
 				Utils.toDegrees(minLat), Utils.toDegrees(minLong),
 				Utils.toDegrees(maxLat), Utils.toDegrees(maxLong)); 	
 	}
 	
+	public String toString() {
+		return "("
+				+ Utils.toDegrees(minLat) + ','
+				+ Utils.toDegrees(minLong) + ") to ("
+				+ Utils.toDegrees(maxLat) + ','
+				+ Utils.toDegrees(maxLong) + ')'
+				;
+	}
+
 	public String toHexString() {
 		return "(0x"
 				+ Integer.toHexString(minLat) + ",0x"
