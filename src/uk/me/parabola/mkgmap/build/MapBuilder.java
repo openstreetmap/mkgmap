@@ -236,6 +236,7 @@ public class MapBuilder implements Configurable {
 					"' supported are 'bilinear', 'bicubic', or 'auto'");
 		}
 		demSetExtra = props.getProperty("dem-set-extra", false);
+		
 	}
 
 	private List<Integer> parseDemDists(String demDists) {
@@ -984,7 +985,9 @@ public class MapBuilder implements Configurable {
 	private void processInfo(Map map, LoadableMapDataSource src) {
 		// The bounds of the map.
 		map.setBounds(src.getBounds());
-
+		if (map.getDemFile() != null)
+			poiDisplayFlags |= 1;
+			
 		if(poiDisplayFlags != 0)					// POI requested alternate address notation
 			map.addPoiDisplayFlags(poiDisplayFlags);
 
