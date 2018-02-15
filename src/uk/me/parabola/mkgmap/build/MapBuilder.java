@@ -168,7 +168,6 @@ public class MapBuilder implements Configurable {
 	private List<Integer> demDists;
 	private short demOutsidePolygonHeight;
 	private java.awt.geom.Area demPolygon;
-	private boolean demSetExtra;
 	private HGTConverter.InterpolationMethod demInterpolationMethod;
 	
 
@@ -236,8 +235,6 @@ public class MapBuilder implements Configurable {
 			throw new IllegalArgumentException("invalid argument for option dem-interpolation: '" + ipm + 
 					"' supported are 'bilinear', 'bicubic', or 'auto'");
 		}
-		demSetExtra = props.getProperty("dem-set-extra", false);
-		
 	}
 
 	private List<Integer> parseDemDists(String demDists) {
@@ -341,8 +338,6 @@ public class MapBuilder implements Configurable {
 						demArea = new java.awt.geom.Area(demPoly);
 					}
 				}
-				if (demSetExtra)
-					demFile.setExtra();
 				Area treArea = demFile.calc(src.getBounds(), demArea, pathToHGT, demDists, demOutsidePolygonHeight, demInterpolationMethod);
 				map.setBounds(treArea);
 				long t2 = System.currentTimeMillis();

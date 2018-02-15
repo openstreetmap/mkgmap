@@ -15,6 +15,7 @@ package uk.me.parabola.imgfmt.app.dem;
 import java.util.ArrayList;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.reader.hgt.HGTConverter;
@@ -55,13 +56,11 @@ public class DEMSection {
 	 * @param hgtConverter the hgt converter
 	 * @param pointDist distance in DEM units between to height samples  
 	 * @param lastLevel: set to true to signal that readers are no longer needed for further levels 
-	 * @param extra TODO: remove
 	 */
 	public DEMSection(int zoomLevel, int areaTop, int areaLeft, int areaHeight, int areaWidth,
-			HGTConverter hgtConverter, int pointDist, boolean lastLevel, boolean extra) {
+			HGTConverter hgtConverter, int pointDist, boolean lastLevel) {
 		this.zoomLevel = zoomLevel;
 		this.lastLevel = lastLevel;
-		this.hasExtra = extra;
 		
 		this.top = areaTop;
 		this.left = areaLeft;
@@ -93,7 +92,7 @@ public class DEMSection {
 	 */
 	private int[] getTileInfo(int demPoints, int demDist) {
 		int resolution = STD_DIM * demDist;
-		demPoints += demDist;
+		demPoints += demDist; // probably not needed, but Garmin seems to prefer large overlaps
 		int nFull = demPoints / resolution;
 		int rest = demPoints - nFull * resolution;
 		int num = nFull;
@@ -168,27 +167,15 @@ public class DEMSection {
 			minHeight = 0;
 			maxHeight = 0;
 		}
-		int differenceSize = (maxDeltaHeight > 255) ? 2 : 1;
-		int baseSize;
-		if (-128 < minBaseHeight && maxBaseHeight < 128)
-			baseSize = 1;
-		else
-			baseSize = 2;
-		int offsetSize;
-		if (dataLen < 256)
-			offsetSize = 1;
-		else if (dataLen < 256 * 256)
-			offsetSize = 2;
-		else if (dataLen < 256 * 256 * 256)
-			offsetSize = 3;
-		else 
-			offsetSize = 4;
+		int deltaSize = (maxDeltaHeight <= 255) ? 1 : 2;
+		int baseSize = (-128 < minBaseHeight && maxBaseHeight < 128) ? 1 : 2;
+		int offsetSize = Utils.numberToPointerSize(dataLen);
 		
-		tileDescSize = offsetSize + baseSize + differenceSize + (hasExtra ? 1:0);
+		tileDescSize = offsetSize + baseSize + deltaSize + (hasExtra ? 1:0);
 		recordDesc = offsetSize -1; // 0..3
 		if (baseSize > 1)
 			recordDesc |= (1 << 2);
-		if (differenceSize > 1)
+		if (deltaSize > 1)
 			recordDesc |= (1 << 3);
 		if (hasExtra)
 			recordDesc |=  (1 << 4); 

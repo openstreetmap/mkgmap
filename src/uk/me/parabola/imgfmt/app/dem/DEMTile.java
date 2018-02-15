@@ -851,7 +851,6 @@ public class DEMTile {
 
 	@Override
 	public String toString() {
-		// TODO Auto-generated method stub
 		return tileNumberLat + " " + tileNumberLon + " w=" + width + " h=" + height;
 	}
 

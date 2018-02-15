@@ -40,7 +40,6 @@ public class DEMFile extends ImgFile {
 	protected final static double FACTOR = 45.0d / (1 << 29);
 
 	private final DEMHeader demHeader = new DEMHeader();
-	private boolean setExtra;
 
 	public DEMFile(ImgChannel chan, boolean write) {
 		setHeader(demHeader);
@@ -110,7 +109,7 @@ public class DEMFile extends ImgFile {
 			}
 
 			DEMSection section = new DEMSection(zoom++, xTop, xLeft, xTop - bottom, right - xLeft, hgtConverter,
-					distance, pointDist == lastDist, setExtra);
+					distance, pointDist == lastDist);
 			demHeader.addSection(section);
 		}
 		return treArea;
@@ -167,12 +166,5 @@ public class DEMFile extends ImgFile {
 			((BufferedImgFileWriter) w).setMaxSize(0xfffffff); 
 		}
 		getHeader().writeHeader(getWriter());
-	}
-
-	/**
-	 * Experimental code to find reason for crash in MapSource. TODO: remove
-	 */
-	public void setExtra() {
-		setExtra = true;
 	}
 }
