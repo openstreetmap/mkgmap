@@ -627,6 +627,11 @@ public class HGTConverter {
 						needHeight = false;
 					}
 				}
+				// check for 180° problems 
+				if (lon32 > 0 && px <= 0)
+					needHeight = false;
+				if (lon32 < 0 && px >= 0)
+					needHeight = false;
 				realHeights[count++] = needHeight ? getElevation(py, px) : outsidePolygonHeight;
 				// left to right
 				px += pointsDistanceLon;
