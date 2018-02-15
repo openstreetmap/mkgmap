@@ -15,6 +15,7 @@ package uk.me.parabola.imgfmt.app.dem;
 
 import java.util.List;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
@@ -131,6 +132,11 @@ public class DEMFile extends ImgFile {
 			--treRight;
 		treBottom -= alignment;
 		treRight += alignment;
+		
+		treRight = Math.min(treRight, Utils.MAX_LON_MAP_UNITS);
+		treLeft =  Math.max(treLeft, Utils.MIN_LON_MAP_UNITS);
+		treTop = Math.min(treTop, Utils.MAX_LAT_MAP_UNITS);
+		treBottom = Math.max(treBottom, Utils.MIN_LAT_MAP_UNITS);
 		Area treArea = new Area(treBottom, treLeft, treTop, treRight);
 		return treArea;
 	}

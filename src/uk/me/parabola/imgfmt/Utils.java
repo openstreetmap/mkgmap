@@ -35,6 +35,11 @@ import uk.me.parabola.imgfmt.app.Coord;
  * @author Steve Ratcliffe
  */
 public class Utils {
+	public static final int MIN_LAT_MAP_UNITS = toMapUnit(-90);
+	public static final int MAX_LAT_MAP_UNITS = toMapUnit(90);
+	public static final int MIN_LON_MAP_UNITS = toMapUnit(-180);
+	public static final int MAX_LON_MAP_UNITS = toMapUnit(180); 
+
 	/**
 	 * Routine to convert a string to bytes and pad with a character up
 	 * to a given length.
