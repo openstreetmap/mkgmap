@@ -17,9 +17,12 @@
 package uk.me.parabola.tdbfmt;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import uk.me.parabola.io.StructuredInputStream;
 import uk.me.parabola.io.StructuredOutputStream;
+import uk.me.parabola.mkgmap.combiners.SubFileInfo;
 
 /**
  * Details of a single .img file that is part of the map set.  There will be
@@ -32,19 +35,12 @@ public class DetailMapBlock extends OverviewMapBlock {
 
 	private int tdbVersion;
 
-	private String innername;
-
-	// Sizes of the regions.  It is possible that rgn and tre are reversed?
-	private int rgnDataSize;
-	private int treDataSize;
-	private int lblDataSize;
-	private int netDataSize;
-	private int nodDataSize;
-	private int demDataSize;
+	// Sizes of the regions.
+	private List<SubFileInfo> subFiles;
 
 	public DetailMapBlock(int tdbVersion) {
 		super(BLOCK_ID);
-		assert tdbVersion > 0;
+
 		this.tdbVersion = tdbVersion;
 	}
 
@@ -56,21 +52,27 @@ public class DetailMapBlock extends OverviewMapBlock {
 	public DetailMapBlock(StructuredInputStream ds) throws IOException {
 		super(ds);
 
-		// First there are a couple of fields that we ignore.
-		int junk = ds.read2();
-		assert junk == 4;
-
-		junk = ds.read2();
-		assert junk == 3;
+		ds.read2(); // expected value : n + 1
+		int n = ds.read2();
 
 		// Sizes of the data
-		rgnDataSize = ds.read4();
-		treDataSize = ds.read4();
-		lblDataSize = ds.read4();
+		int[] sizes = new int[n];
+		for (int i = 0; i < n; i++) {
+			sizes[i] = ds.read4();
+		}
 
-		// Another ignored field
-		junk = ds.read();
-		assert junk == 1;
+		// some more ignored fields
+		ds.read(); 
+		ds.read();
+		ds.read();
+		ds.read4();
+
+		subFiles = new ArrayList<>();
+		for (int i = 0; i < n; i++) {
+			String name = ds.readString();
+			SubFileInfo si = new SubFileInfo(name, sizes[i]);
+			subFiles.add(si);
+		}
 	}
 
 	/**
@@ -82,86 +84,29 @@ public class DetailMapBlock extends OverviewMapBlock {
 	public void writeBody(StructuredOutputStream os) throws IOException {
 		super.writeBody(os);
 
-		int n = 3;
-		if (tdbVersion >= TdbFile.TDB_V407) {
-			if (netDataSize > 0)
-				n = 4;
-			if (nodDataSize > 0)
-				n = 5;
-			if (demDataSize > 0)
-				n = 6;
-		}
-		
+		// We do not support writing a version less than v4.07
+		assert tdbVersion >= TdbFile.TDB_V407;
+
+		int n = subFiles.size();
 		os.write2(n+1);
 		os.write2(n);
 
-		os.write4(treDataSize);
-		os.write4(rgnDataSize);
-		os.write4(lblDataSize);
-		
-		if (tdbVersion >= TdbFile.TDB_V407) {
-			if (n > 3) os.write4(netDataSize);
-			if (n > 4) os.write4(nodDataSize);
-			if (n > 5) os.write4(demDataSize);
-//01 c3 00 ff
-			os.write4(0xff00c301);
-			os.write(0);
-			os.write(0);
-			os.write(0);
+		for (SubFileInfo si : subFiles) {
+			os.write4((int) si.getSize());
+		}
 
-			String mn = getInnername();
-			os.writeString(mn + ".TRE");
-			os.writeString(mn + ".RGN");
-			os.writeString(mn + ".LBL");
-			if (n > 3) os.writeString(mn + ".NET");
-			if (n > 4) os.writeString(mn + ".NOD");
-			if (n > 5) os.writeString(mn + ".DEM");
-		} else {
-			os.write(1);
+//01 c3 00 ff
+		os.write4(0xff00c301);
+		os.write(0);
+		os.write(0);
+		os.write(0);
+
+		for (SubFileInfo si : subFiles) {
+			os.writeString(si.getName());
 		}
 	}
 
-	private String getInnername() {
-		return innername;
+	public void setSubFiles(List<SubFileInfo> subFiles) {
+		this.subFiles = subFiles;
 	}
-
-	public void setInnername(String innername) {
-		this.innername = innername;
-	}
-
-	public void setRgnDataSize(int rgnDataSize) {
-		this.rgnDataSize = rgnDataSize;
-	}
-
-	public void setTreDataSize(int treDataSize) {
-		this.treDataSize = treDataSize;
-	}
-
-	public void setLblDataSize(int lblDataSize) {
-		this.lblDataSize = lblDataSize;
-	}
-
-	public void setNetDataSize(int netDataSize) {
-		this.netDataSize = netDataSize;
-	}
-
-	public void setNodDataSize(int nodDataSize) {
-		this.nodDataSize = nodDataSize;
-	}
-
-	public void setDemDataSize(int demDataSize) {
-		this.demDataSize = demDataSize;
-	}
-
-	public String toString() {
-		return super.toString()
-				+ ", rgn size="
-				+ rgnDataSize
-				+ ", tre size="
-				+ treDataSize
-				+ ", lbl size"
-				+ lblDataSize
-				;
-	}
-
 }

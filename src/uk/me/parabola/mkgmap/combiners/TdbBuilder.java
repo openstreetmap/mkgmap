@@ -120,18 +120,10 @@ public class TdbBuilder implements Combiner {
 		String mapdesc = finfo.getDescription();
 
 		detail.setMapName(mapname);
-		detail.setInnername(finfo.getInnername());
 
 		String desc = mapdesc + " (" + mapname + ')';
 		detail.setDescription(desc);
-		detail.setLblDataSize(finfo.getLblsize());
-		detail.setTreDataSize(finfo.getTresize());
-		detail.setRgnDataSize(finfo.getRgnsize());
-		detail.setNetDataSize(finfo.getNetsize());
-		detail.setNodDataSize(finfo.getNodsize());
-		detail.setDemDataSize(finfo.getDemsize());
-		if (finfo.getDemsize() > 0)
-			tdb.setHasDem();
+		detail.setSubFiles(finfo.subFiles());
 
 		log.info("overview-mapname", overviewMapname);
 		log.info("overview-mapnumber", parent);

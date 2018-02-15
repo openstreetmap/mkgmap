@@ -60,7 +60,7 @@ public class DEMHeader extends CommonHeader {
 		writer.putInt(0); // unknown
 		writer.put2(60); // size of zoom level record
 		writer.putInt(offset); // offset to first DemSection header (they appear at the end of the file!)
-		writer.putInt(1); // unknown, also 0 spotted
+		writer.putInt(1); // unknown, 0 and 1 spotted
 		
 	}
 

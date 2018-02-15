@@ -13,7 +13,6 @@
 package uk.me.parabola.imgfmt.app.dem;
 
 import java.io.ByteArrayOutputStream;
-import java.util.Arrays;
 
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -43,6 +42,7 @@ public class DEMTile {
 	private final int baseHeight;		// base or minimum height in this tile 
 	private final int maxDeltaHeight;	// delta between max height and base height
 	private final byte encodingType;  	// determines how the highest values are displayed 
+	private final boolean hasData;		// not all voids
 
 	private int bitPos;
 	private byte currByte;
@@ -94,18 +94,18 @@ public class DEMTile {
 		}
 		if (min == Integer.MAX_VALUE) {
 			// all values are invalid 
+			hasData = false;
 			encodingType = 2;
 			min = 0;
-			max = 1;
-			// seems we still need a bit stream in this case
-			realHeights = new short[width * height];
-			Arrays.fill(realHeights, HGTReader.UNDEF);
+			max = 0;
 		} else if (countInvalid > 0) {
 			// some values are invalid
+			hasData = true;
 			encodingType = 2; // don't display highest value 
 			max++;
 		} else {
 			// all height values are valid
+			hasData = true;
 			encodingType = 0;
 		}
 
@@ -117,12 +117,16 @@ public class DEMTile {
 		createBitStream(realHeights);
 	}
 	
+	public boolean hasValidHeights() {
+		return hasData;
+	}
+
 	public int getBaseHeight() {
 		return baseHeight;
 	}
 
 	public int getMaxHeight() {
-		return baseHeight + maxDeltaHeight; // TODO: does it depend on value in encodingType?
+		return baseHeight + maxDeltaHeight - (encodingType == 0 ? 0 : 1); 
 	}
 	
 	private void createBitStream(short[] realHeights) {

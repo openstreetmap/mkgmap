@@ -54,7 +54,8 @@ public class TREHeader extends CommonHeader {
 	private static final char EXT_TYPE_OVERVIEWS_REC_LEN = 4;
 	static final int SUBDIV_REC_SIZE = 14;
 	static final int SUBDIV_REC_SIZE2 = 16;
-
+	
+	public static final int POI_FLAG_DETAIL = 0x1; 
 	public static final int POI_FLAG_TRANSPARENT = 0x2;
 	public static final int POI_FLAG_STREET_BEFORE_HOUSENUMBER = 0x4;
 	public static final int POI_FLAG_POSTALCODE_BEFORE_CITY = 0x8;

@@ -40,13 +40,28 @@ public class DEMSection {
 	private final int pointsDistanceLon;
 	private final int top;
 	private final int left;
+	private boolean hasExtra;
 	private int minHeight = Integer.MAX_VALUE;
 	private int maxHeight = Integer.MIN_VALUE;
 	private List<DEMTile> tiles = new ArrayList<>();
-	
-	public DEMSection(int zoomLevel, int areaTop, int areaLeft, int areaHeight, int areaWidth, HGTConverter hgtConverter, int pointDist, boolean lastLevel) {
+
+	/**
+	 * Calculate the DEM data for the given position and resolution.
+	 * @param zoomLevel the zoom level
+	 * @param areaTop latitude of upper left corner in DEM units
+	 * @param areaLeft longitude of upper left corner in DEM units
+	 * @param areaHeight height in DEM units
+	 * @param areaWidth width in DEM units
+	 * @param hgtConverter the hgt converter
+	 * @param pointDist distance in DEM units between to height samples  
+	 * @param lastLevel: set to true to signal that readers are no longer needed for further levels 
+	 * @param extra TODO: remove
+	 */
+	public DEMSection(int zoomLevel, int areaTop, int areaLeft, int areaHeight, int areaWidth,
+			HGTConverter hgtConverter, int pointDist, boolean lastLevel, boolean extra) {
 		this.zoomLevel = zoomLevel;
 		this.lastLevel = lastLevel;
+		this.hasExtra = extra;
 		
 		this.top = areaTop;
 		this.left = areaLeft;
@@ -59,8 +74,8 @@ public class DEMSection {
 		// allow automatic selection of interpolation method for each zoom level
 		hgtConverter.startNewLevel(pointDist);
 
-		int []latInfo = getTileInfo(areaHeight, pointsDistanceLat);
-		int []lonInfo = getTileInfo(areaWidth, pointsDistanceLon);
+		int[] latInfo = getTileInfo(areaHeight, pointsDistanceLat);
+		int[] lonInfo = getTileInfo(areaWidth, pointsDistanceLon);
 		// store the values written to the header
 		tilesLat = latInfo[0];
 		tilesLon = lonInfo[0];
@@ -68,7 +83,6 @@ public class DEMSection {
 		nonStdWidth = lonInfo[1];
 		log.info("calculating zoom level:",zoomLevel,", dist:",pointDist,tilesLon,"x",tilesLat,"std tiles, nonstd x/y",nonStdWidth,"/",nonStdHeight);
 		calcTiles(hgtConverter);
-		hgtConverter = null;
 	}
 
 	/**
@@ -79,6 +93,7 @@ public class DEMSection {
 	 */
 	private int[] getTileInfo(int demPoints, int demDist) {
 		int resolution = STD_DIM * demDist;
+		demPoints += demDist;
 		int nFull = demPoints / resolution;
 		int rest = demPoints - nFull * resolution;
 		int num = nFull;
@@ -97,6 +112,8 @@ public class DEMSection {
 		int[] res = {num, nonstd};
 		return res;
 	}
+	
+	
 	private void calcTiles(HGTConverter hgtConverter) {
 		int resLon = pointsPerLon * pointsDistanceLon;
 		int resLat = pointsPerLat * pointsDistanceLat;
@@ -106,7 +123,7 @@ public class DEMSection {
 		int minBaseHeight = Integer.MAX_VALUE;
 		int maxBaseHeight = Integer.MIN_VALUE;
 		int maxDeltaHeight = Integer.MIN_VALUE;
-		boolean hasExtra = false;
+	
 		for (int m = 0; m < tilesLat; m++) {
 			latOff = top - m * resLat;
 			
@@ -126,8 +143,7 @@ public class DEMSection {
 				tiles.add(tile);
 				if (tile.getEncodingType() != 0)
 					hasExtra = true;
-				int bsLen = tile.getBitStreamLen();
-				if (bsLen > 0) {
+				if (tile.hasValidHeights()) {
 					if (tile.getBaseHeight() < minBaseHeight)
 						minBaseHeight = tile.getBaseHeight();
 					if (tile.getBaseHeight() > maxBaseHeight)
@@ -136,8 +152,8 @@ public class DEMSection {
 						maxHeight = tile.getMaxHeight();
 					if (tile.getMaxDeltaHeight() > maxDeltaHeight)
 						maxDeltaHeight = tile.getMaxDeltaHeight();
-					dataLen += bsLen;
 				}
+				dataLen += tile.getBitStreamLen();
 			}
 			if (lastLevel) {
 				hgtConverter.freeMem();

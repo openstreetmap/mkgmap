@@ -18,6 +18,7 @@ package uk.me.parabola.imgfmt.app;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Utils;
@@ -96,6 +97,14 @@ public class Area {
 		return new Coord((minLat + maxLat)/2, (minLong + maxLong)/2);// high prec not needed
 	}
 
+	public String debugString() {
+		return String.format(Locale.ROOT, "(%d, %d) to (%d, %d) (%.6f, %.6f) to (%.6f, %.6f)", 
+				minLat, minLong,
+				maxLat, maxLong,
+				Utils.toDegrees(minLat), Utils.toDegrees(minLong),
+				Utils.toDegrees(maxLat), Utils.toDegrees(maxLong)); 	
+	}
+	
 	public String toString() {
 		return "("
 				+ Utils.toDegrees(minLat) + ','
@@ -103,6 +112,14 @@ public class Area {
 				+ Utils.toDegrees(maxLat) + ','
 				+ Utils.toDegrees(maxLong) + ')'
 				;
+	}
+
+	public String toHexString() {
+		return "(0x"
+				+ Integer.toHexString(minLat) + ",0x"
+				+ Integer.toHexString(minLong) + ") to (0x"
+				+ Integer.toHexString(maxLat) + ",0x"
+				+ Integer.toHexString(maxLong) + ')'; 
 	}
 
 	/**

@@ -66,6 +66,7 @@ import uk.me.parabola.imgfmt.app.trergn.RGNFile;
 import uk.me.parabola.imgfmt.app.trergn.RGNHeader;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.app.trergn.TREFile;
+import uk.me.parabola.imgfmt.app.trergn.TREHeader;
 import uk.me.parabola.imgfmt.app.trergn.Zoom;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Version;
@@ -167,6 +168,7 @@ public class MapBuilder implements Configurable {
 	private List<Integer> demDists;
 	private short demOutsidePolygonHeight;
 	private java.awt.geom.Area demPolygon;
+	private boolean demSetExtra;
 	private HGTConverter.InterpolationMethod demInterpolationMethod;
 	
 
@@ -234,6 +236,8 @@ public class MapBuilder implements Configurable {
 			throw new IllegalArgumentException("invalid argument for option dem-interpolation: '" + ipm + 
 					"' supported are 'bilinear', 'bicubic', or 'auto'");
 		}
+		demSetExtra = props.getProperty("dem-set-extra", false);
+		
 	}
 
 	private List<Integer> parseDemDists(String demDists) {
@@ -298,7 +302,6 @@ public class MapBuilder implements Configurable {
 
 		rgnFile.write();
 		treFile.write(rgnFile.haveExtendedTypes());
-		treFile.writePost();
 		lblFile.write();
 		lblFile.writePost();
 
@@ -318,6 +321,7 @@ public class MapBuilder implements Configurable {
 			}
 			netFile.writePost(rgnFile.getWriter());
 		}
+		warnAbout3ByteImgRefs();
 		if (demFile != null) {
 			try{
 				long t1 = System.currentTimeMillis();
@@ -337,7 +341,10 @@ public class MapBuilder implements Configurable {
 						demArea = new java.awt.geom.Area(demPoly);
 					}
 				}
-				demFile.calc(src.getBounds(), demArea, pathToHGT, demDists, demOutsidePolygonHeight, demInterpolationMethod);
+				if (demSetExtra)
+					demFile.setExtra();
+				Area treArea = demFile.calc(src.getBounds(), demArea, pathToHGT, demDists, demOutsidePolygonHeight, demInterpolationMethod);
+				map.setBounds(treArea);
 				long t2 = System.currentTimeMillis();
 				log.info("DEM file calculation for", map.getFilename(), "took", (t2 - t1), "ms");
 				demFile.write();
@@ -346,7 +353,7 @@ public class MapBuilder implements Configurable {
 				throw new MapFailedException("DEM"); //TODO: better remove DEM file?
 			}
 		}
-		warnAbout3ByteImgRefs();
+		treFile.writePost();
 	}
 
 	private void warnAbout3ByteImgRefs() {
@@ -979,7 +986,9 @@ public class MapBuilder implements Configurable {
 	private void processInfo(Map map, LoadableMapDataSource src) {
 		// The bounds of the map.
 		map.setBounds(src.getBounds());
-
+		if (src instanceof OverviewMapDataSource == false)
+			poiDisplayFlags |= TREHeader.POI_FLAG_DETAIL;
+			
 		if(poiDisplayFlags != 0)					// POI requested alternate address notation
 			map.addPoiDisplayFlags(poiDisplayFlags);
 
