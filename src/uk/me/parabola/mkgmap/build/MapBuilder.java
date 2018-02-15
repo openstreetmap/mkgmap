@@ -66,6 +66,7 @@ import uk.me.parabola.imgfmt.app.trergn.RGNFile;
 import uk.me.parabola.imgfmt.app.trergn.RGNHeader;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.app.trergn.TREFile;
+import uk.me.parabola.imgfmt.app.trergn.TREHeader;
 import uk.me.parabola.imgfmt.app.trergn.Zoom;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Version;
@@ -985,8 +986,8 @@ public class MapBuilder implements Configurable {
 	private void processInfo(Map map, LoadableMapDataSource src) {
 		// The bounds of the map.
 		map.setBounds(src.getBounds());
-		if (map.getDemFile() != null)
-			poiDisplayFlags |= 1;
+		if (src instanceof OverviewMapDataSource == false)
+			poiDisplayFlags |= TREHeader.POI_FLAG_DETAIL;
 			
 		if(poiDisplayFlags != 0)					// POI requested alternate address notation
 			map.addPoiDisplayFlags(poiDisplayFlags);
