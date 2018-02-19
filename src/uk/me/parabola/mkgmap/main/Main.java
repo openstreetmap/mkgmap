@@ -19,6 +19,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.lang.OutOfMemoryError;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryPoolMXBean;
+import java.lang.management.MemoryType;
+import java.lang.management.MemoryUsage;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -85,7 +92,7 @@ public class Main implements ArgumentProcessor {
 	private final List<FilenameTask> futures = new LinkedList<>();
 	private ExecutorService threadPool;
 	// default number of threads
-	private int maxJobs = 1;
+	private int maxJobs = 0;
 
 	private boolean createTdbFiles = false;
 	private boolean tdbBuilderAdded = false;
@@ -117,7 +124,7 @@ public class Main implements ArgumentProcessor {
 	 * @param args The command line arguments.
 	 */
 	private static int mainStart(String... args) {
-		long start = System.currentTimeMillis();
+		Instant start = Instant.now();
 		System.out.println("Time started: " + new Date());
 		// We need at least one argument.
 		if (args.length < 1) {
@@ -134,6 +141,13 @@ public class Main implements ArgumentProcessor {
 			CommandArgsReader commandArgs = new CommandArgsReader(mm);
 			commandArgs.setValidOptions(getValidOptions(System.err));
 			commandArgs.readArgs(args);
+		} catch (OutOfMemoryError e) {
+			++numExitExceptions;
+			System.err.println(e);
+			if (mm.maxJobs > 1)
+				System.err.println("Try using the mkgmap --max-jobs option with a value less than " + mm.maxJobs  + " to reduce the memory requirement, or use the Java -Xmx option to increase the available heap memory.");
+			else
+				System.err.println("Try using the Java -Xmx option to increase the available heap memory.");
 		} catch (MapFailedException e) {
 			// one of the combiners failed
 			e.printStackTrace();
@@ -152,7 +166,20 @@ public class Main implements ArgumentProcessor {
 		System.out.println("Number of ExitExceptions: " + numExitExceptions);
 		
 		System.out.println("Time finished: " + new Date());
-		System.out.println("Total time taken: " + (System.currentTimeMillis() - start) + "ms");
+		Duration duration = Duration.between(start, Instant.now());
+		long seconds = duration.getSeconds();
+		if (seconds > 0) {
+			long hours = seconds / 3600;
+			seconds -= hours * 3600;
+			long minutes = seconds / 60;
+			seconds -= minutes * 60;
+			System.out.println("Total time taken: " + 
+								(hours > 0 ? hours + (hours > 1 ? " hours " : " hour ") : "") +
+								(minutes > 0 ? minutes + (minutes > 1 ? " minutes " : " minute ") : "") +
+								(seconds > 0 ? seconds + (seconds > 1 ? " seconds" : " second") : ""));
+		}
+		else
+			System.out.println("Total time taken: " + duration.getNano() / 1000000 + " ms");
 		if (numExitExceptions > 0 || mm.getProgramRC() != 0){
 			return 1;
 		}
@@ -317,11 +344,14 @@ public class Main implements ArgumentProcessor {
 		case "max-jobs":
 			if (val.isEmpty())
 				maxJobs = Runtime.getRuntime().availableProcessors();
-			else
+			else {
 				maxJobs = Integer.parseInt(val);
-			if (maxJobs < 1) {
-				log.warn("max-jobs has to be at least 1");
-				maxJobs = 1;
+				if (maxJobs < 1) {
+					log.warn("max-jobs has to be at least 1");
+					maxJobs = 1;
+				}
+				if (maxJobs > Runtime.getRuntime().availableProcessors())
+					log.warn("It is recommended that max-jobs be no greater that the number of processor cores");
 			}
 			break;
 		case "version":
@@ -461,9 +491,38 @@ public class Main implements ArgumentProcessor {
 		fileOptions(args);
 
 		log.info("Start tile processors");
+		int threadCount = maxJobs;
+		int taskCount = futures.size();
+		Runtime runtime = Runtime.getRuntime();
 		if (threadPool == null) {
-			log.info("Creating thread pool with " + maxJobs + " threads");
-			threadPool = Executors.newFixedThreadPool(maxJobs);
+			if (threadCount == 0) {
+				threadCount = 1;
+				if (taskCount > 2) {
+					//run one task to see how much memory it uses
+					log.info("Max Memory: " + runtime.maxMemory());
+					futures.get(0).run();
+					long maxMemory = 0;
+					for (MemoryPoolMXBean mxBean : ManagementFactory.getMemoryPoolMXBeans())
+					{
+						if (mxBean.getType() == MemoryType.HEAP) {
+							MemoryUsage memoryUsage = mxBean.getPeakUsage();
+							log.info("Max: " + memoryUsage.getMax());
+							log.info("Used: " + memoryUsage.getUsed());
+							if (memoryUsage.getMax() > maxMemory) {
+								maxMemory = memoryUsage.getMax();
+								threadCount = (int)(memoryUsage.getMax() / memoryUsage.getUsed());
+							}
+						}
+					}
+					threadCount = Math.max(threadCount, 1);
+					threadCount = Math.min(threadCount, runtime.availableProcessors());
+					System.out.println("Setting max-jobs to " + threadCount);
+					futures.remove(0);
+				}
+			}
+
+			log.info("Creating thread pool with " + threadCount + " threads");
+			threadPool = Executors.newFixedThreadPool(threadCount);
 		}
 
 		// process all input files
@@ -503,8 +562,8 @@ public class Main implements ArgumentProcessor {
 						else
 							throw e;
 					}
-				} catch (ExitException ee) {
-					throw ee;
+				} catch (OutOfMemoryError | ExitException e) {
+					throw e;
 				} catch (MapFailedException mfe) {
 //					System.err.println(mfe.getMessage()); // already printed via log
 					numMapFailedExceptions++;
@@ -518,6 +577,9 @@ public class Main implements ArgumentProcessor {
 			}
 		}
 		System.out.println("Number of MapFailedExceptions: " + numMapFailedExceptions);
+		if ((taskCount > threadCount + 1) && (maxJobs == 0) && (threadCount < runtime.availableProcessors())) {
+			System.out.println("To reduce the run time, consider increasing the amnount of memory available for use by mkgmap by using the Java -Xmx flag to set the memory to more than " + 100* (1 + ((runtime.maxMemory() * runtime.availableProcessors()) / (threadCount * 1024 * 1024 * 100))) + " MB, providing this is less than the amount of physical memory installed.");
+		}
 
 		if (combiners.isEmpty())
 			return;

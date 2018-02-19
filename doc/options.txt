@@ -41,7 +41,7 @@ leading '--' must be omitted.  The short option names with a single
 '-' cannot be used, simply use the long name instead. 
 <p>
 ;--output-dir=directory
-:     The directory in which all output files are written. It defaults
+:	Specify the directory in which all output files are written. It defaults
 to the current working directory, i.e. the directory the command is
 executed from.
 <p>
@@ -53,7 +53,7 @@ name if you are going to be making a map for others to use so
 that it is unique and does not clash with others.
 <p>
 ;--description=text
-: 	Sets the descriptive text for the map. This may be displayed in
+: 	Set the descriptive text for the map. This may be displayed in
 QLandkarte, MapSource or on a GPS, where it is normally shown
 below the family name. Example: --description="Germany, Denmark"
 Please note: if you use splitter.jar to build a template.args file
@@ -63,40 +63,37 @@ tile. Make sure to set the description for the gmapsupp.img after
 "-c template.args".
 <p>
 ;--country-name=name
-: 	Sets the map's country name. The default is "COUNTRY".
+: 	Set the map's country name. The default is "COUNTRY".
 <p>
 ;--country-abbr=abbreviation
-: 	Sets the map's abbreviated country name. The default is "ABC".
+: 	Set the map's abbreviated country name. The default is "ABC".
 <p>
 ;--region-name=name
-: 	Sets the map's region name. By default, the map has no region name.
+: 	Set the map's region name. By default, the map has no region name.
 <p>
 ;--region-abbr=abbreviation
-: 	Sets the map's abbreviated region name. By default, the map has
+: 	Set the map's abbreviated region name. By default, the map has
 no abbreviated region name.
 <p>
 === Label options ===
 
+;--code-page=number
+:     Specify which international character set is to be used. Only 8 bit
+character sets are supported so you have to specify which code page you
+want to use.
+It is entirely dependent on the device firmware which code pages are
+supported.
+<p>
 ;--latin1
 : 	This is equivalent to --code-page=1252.
 <p>
 ;--unicode
 : 	This is equivalent to --code-page=65001. Note that some devices don't support 
 Unicode maps produced by mkgmap.
-
-<p>
-;--code-page=number
-:     This option enables the use of international characters. Only 8 bit
-character sets are supported and so you have to specify which code page
-you want to use.
-<p>
-It is entirely dependent on the device firmware which code pages are
-supported.
 <p>
 ;--lower-case
-: 	Allow labels to contain lower case letters.  Note that most or all
-Garmin devices are not able to display lower case letters at an angle
-so this option is not generally useful.
+: 	Allow labels to contain lower case letters.  Note that many
+Garmin devices are not able to display lower case letters at an angle.
 <p>
 === Address search options ===
 ;--index
@@ -135,15 +132,17 @@ same code page and sorting options (e.g. --code-page, --latin1) must
 be used as were used to compile the individual map tiles.
 
 ;--split-name-index
-:     An option to enable indexing each part of a street name separately.
-So for example if the street is "Aleksandra Gryglewskiego" then you will be able to
+:     Index each part of a street name separately.
+For example, if the street is "Aleksandra Gryglewskiego" then you will be able to
 search for it as both "Aleksandra" and "Gryglewskiego".  It will also increase the
 size of the index.  Useful in countries where searching for the first word in name
 is not the right thing to do. Words following an opening bracket '(' are ignored. 
 :	See also option road-name-config.  
 <p>
 ;--road-name-config=filename
-:	This option handles the problem that some countries have road names which 
+:	Provide the name of a file containing commonly used road name prefixes
+and suffixes.
+This option handles the problem that some countries have road names which 
 often start or end with very similar words, e.g. in France the first word
 is very often 'Rue', often followed by a preposition like 'de la' or 'des'.
 This leads to rather long road names like 'Rue de la Concorde' where only
@@ -154,21 +153,20 @@ of special characters in the road labels to mark the beginning and end of
 the important part. In combinarion with option split-name-index
 only the words in the important part are indexed.
 <p>
-:There are two different effects of this option:
+:There are two effects of this option:
 ::	- On the PC, when zooming out, the name 'Rue de la Concorde' is only
 rendered as 'Concorde'.
 ::	- The index for road names only contains the important part of the name.
 You can search for road name Conc to find road names like 'Rue de la Concorde'.
-One problem: Search for 'Rue' will not list 'Rue de la Concorde' 
-or 'Rue du Moulin'. It may list 'Rueben Brookins Road' if that is in the map.
+However, a search for 'Rue' will not list 'Rue de la Concorde' or
+'Rue du Moulin'. It may list 'Rueben Brookins Road' if that is in the map.
 Only MapSource shows a corresponding hint.
 <p>
 ::	Another effect is that the index is smaller. 
-:	The option specifies the path to a file which gives the details. See 
-comments in the sample roadNameConfig.txt for further details.
+:	See comments in the sample roadNameConfig.txt for further details.
 <p>
 ;--mdr7-excl=name[,name...]
-:	This option allows you to specify words which should not be in the road index.
+:	Specify words which should be omitted from the road index.
 It was added before option road-name-config and is probably no longer needed.
 :	Example usage: --x-mdr7-excl="Road, Street, Straße, Weg"
 <p>
@@ -180,7 +178,7 @@ For each road label, mkgmap searches for the last blank. If one is found, it che
 if the word after it appears in the given list. If so, the word is removed
 and the search is repeated. The remaining string is used to create the index.
 :	Example: Assume your style adds surface attributes like 'pav.' or 'unp.' to a road
-label. You can use --mdr7-del="pav.,unp." to remove these appendixes from the index.
+label. You can use --mdr7-del="pav.,unp." to remove these suffixes from the index.
 <p>
 ;--poi-excl-index=poi[-poi][,poi[-poi]...]
 :	By default, mkgmap indexes the following POI types with a non-empty label:
@@ -188,7 +186,7 @@ label. You can use --mdr7-del="pav.,unp." to remove these appendixes from the in
 ::	- 0x2axx..0x30xx (Food & Drink, Lodging, ...)
 ::	- 0x28xx (no category ?)
 ::	- 0x64xx .. 0x66xx (attractions)   
-:	This option allows to exclude POI types from the index. 
+:	This option allows the exclusion of POI types from the index. 
 The excluded types are not indexed, but may still be searchable on a device 
 as some devices seem to ignore most of the index, e.g. an Oregon 600 with 
 firmware 5.00 only seems to use it for city search.
@@ -209,7 +207,7 @@ to exclude this.
 to reduce the index size.
 <p>
 ;--bounds=directory|zipfile
-:     A directory or a zip file containing the preprocessed bounds files. 
+:     Specify a directory or zip file containing the preprocessed bounds files. 
 Bounds files in a zip file must be located in the zip file's root directory.
 <p>
 The preprocessed boundaries are used to add special tags to all elements 
@@ -507,11 +505,15 @@ and 276160.
 === Miscellaneous options ===
 
 ;--max-jobs[=integer]
-: 	When number is specified, allow that number of maps to be
-processed concurrently. If number is not specified, the limit
-is set equal to the number of CPU cores. If this option is not
-given at all, the limit is 1 (i.e., the maps are processed
-sequentially).
+: 	Specify the number of threads to be used for concurrent processing.
+Increasing max-jobs will reduce the execution time, providing sufficient
+memory is available and the value is not greater than the number of cores
+in the CPU. If no value is specified, the limit is set to the number of CPU
+cores. The default is for the limit to be automatically set to a reasonable
+value based on the amount of memory allocated to the Java runtime and the
+amount used in processing the first tile. To optimise mkgmap to use all
+available CPU cores, you may need to use the Java -Xmx option to increase
+the amount of available heap storage.
 <p>
 ;--keep-going
 : 	Don't quit whole application if an exception occurs while
@@ -553,9 +555,8 @@ that the roundabouts do not fork or overlap other roundabouts
 and that no more than one connecting highway joins at each node.
 <p>
 ;--check-roundabout-flares
-: 	Sanity check roundabout flare roads - warn if they don't point
-in the correct direction or if they are not one-way or if they
-extend too far.
+: 	Check that roundabout flare roads point in the correct
+direction, are one-way and don't extend too far.
 <p>
 ;--max-flare-length-ratio=NUM
 : 	When checking flare roads, ignore roads whose length is
@@ -774,8 +775,7 @@ a # or ; are ignored. All tag/value pairs in the OSM input are
 compared with these patterns and those that match are deleted.
 <p>
 ;--ignore-fixme-values
-: 	Tells mkgmap to ignore all tags for which the value matches the pattern
-"(?i)fix[ _]?+me".	
+: 	Ignore all tags for which the value matches the pattern "(?i)fix[ _]?+me".	
 <p>
 ;--tdbfile
 : 	Write files that are essential to running with MapSource, a .tdb file and
@@ -792,7 +792,7 @@ you hover over an area with valid DEM data.
 : 	The default is show-profiles=0.
 <p>
 ;--transparent
-: 	Makes the map transparent, so that if two maps covering the same area are
+: 	Make the map transparent, so that if two maps covering the same area are
 loaded, you can see through this map to see details from the other map too.
 Typically used for maps containing just contour lines. See --draw-priority
 as well.
