@@ -508,7 +508,7 @@ public class Main implements ArgumentProcessor {
 							MemoryUsage memoryUsage = mxBean.getPeakUsage();
 							log.info("Max: " + memoryUsage.getMax());
 							log.info("Used: " + memoryUsage.getUsed());
-							if (memoryUsage.getMax() > maxMemory) {
+							if (memoryUsage.getMax() > maxMemory && memoryUsage.getUsed() != 0) {
 								maxMemory = memoryUsage.getMax();
 								threadCount = (int)(memoryUsage.getMax() / memoryUsage.getUsed());
 							}
