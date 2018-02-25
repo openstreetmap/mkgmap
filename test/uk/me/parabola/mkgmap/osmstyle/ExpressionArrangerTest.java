@@ -18,6 +18,7 @@ import java.util.Iterator;
 
 import uk.me.parabola.mkgmap.osmstyle.eval.ExpressionReader;
 import uk.me.parabola.mkgmap.osmstyle.eval.LinkedOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.NodeType;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
@@ -183,6 +184,16 @@ public class ExpressionArrangerTest {
 		assertEquals(EQUALS, op.getType());
 	}
 
+	@Test
+	public void testExitsAndFunction() {
+		Op op = createOp("$a=* & is_closed()=true {name 'n466'} [0x2]");
+		System.out.println(fmtExpr(op));
+		op = arranger.arrange(op);
+		System.out.println(fmtExpr(op));
+		assertTrue(isSolved(op));
+		assertTrue(op.getFirst().getType() != NodeType.FUNCTION);
+	}
+	
 	private Op createOp(String s) {
 		TokenScanner scanner = new TokenScanner("test.file", new StringReader(s));
 		ExpressionReader er = new ExpressionReader(scanner, FeatureKind.POLYLINE);

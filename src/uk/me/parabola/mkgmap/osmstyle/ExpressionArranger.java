@@ -377,6 +377,10 @@ public class ExpressionArranger {
 	private int selectivity(Op op) {
 		switch (op.getType()) {
 		case EQUALS:
+			// Non-indexable functions must go to the back.
+			if (!isIndexable(op))
+				return 1000;
+
 			return 0;
 		case EXISTS:
 			return 100;
