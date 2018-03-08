@@ -12,8 +12,6 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
-//import java.io.File;
-//import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,7 +28,6 @@ import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.RestrictionRelation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
-//import uk.me.parabola.splitter.O5mMapWriter;
 import uk.me.parabola.util.GpxCreator;
 
 /**
@@ -56,22 +53,22 @@ public class WrongAngleFixer {
 	static private final double MAX_DIFF_ANGLE_STRAIGHT_LINE = 3;
 	
 	private final Area bbox;
-	private final String gpxPath = null;
+	private final static String DEBUG_PATH = null;
 	static final int MODE_ROADS = 0;
 	static final int MODE_LINES = 1;
 	private int mode = MODE_ROADS;
 	
 	public WrongAngleFixer(Area bbox) {
 		this.bbox = bbox;
-		if (gpxPath != null && bbox != null){
-			if (bbox.getWidth() * bbox.getHeight() < 100000){
+		if (DEBUG_PATH != null && bbox != null){
+			if ((long) bbox.getWidth() * (long) bbox.getHeight() < 100000) {
 				List<Coord> grid = new ArrayList<>();
 				for (int lat = bbox.getMinLat(); lat < bbox.getMaxLat(); lat++){
 					for (int lon = bbox.getMinLong(); lon < bbox.getMaxLong(); lon++){
 						grid.add(new Coord(lat,lon));
 					}
 				}
-				GpxCreator.createGpx("e:/ld/grid", bbox.toCoords(), grid);
+				GpxCreator.createGpx(Utils.joinPath(DEBUG_PATH, "grid"), bbox.toCoords(), grid);
 			}
 		}
 	}
@@ -372,7 +369,7 @@ public class WrongAngleFixer {
 					if (coa.isOK(replacements) == false) {
 						boolean changed = coa.tryChange(replacements, tryMerge);
 						if (changed){
-							if (gpxPath != null)
+							if (DEBUG_PATH != null)
 								changedPlaces.add(coa.center);
 							continue;
 						}
@@ -520,9 +517,8 @@ public class WrongAngleFixer {
 						points.set(i, getReplacement(p, null, replacements));
 					}
 				}
-				if (hasReplacedPoints && gpxPath != null) {
-					GpxCreator.createGpx(gpxPath + way.getId()
-							+ "_mod_non_routable", points);
+				if (hasReplacedPoints && DEBUG_PATH != null) {
+					GpxCreator.createGpx(Utils.joinPath(DEBUG_PATH, way.getId() + "_mod_non_routable"), points);
 				}
 			}
 		
@@ -536,8 +532,8 @@ public class WrongAngleFixer {
 			}
 		}
 		
-		if (gpxPath != null) {
-			GpxCreator.createGpx(gpxPath + "solved_badAngles", bbox.toCoords(),
+		if (DEBUG_PATH != null) {
+			GpxCreator.createGpx(Utils.joinPath(DEBUG_PATH, "solved_badAngles"), bbox.toCoords(),
 					new ArrayList<>(changedPlaces));
 		}
 		if (anotherPassRequired)
@@ -633,7 +629,7 @@ public class WrongAngleFixer {
 				}
 				if (log.isDebugEnabled())
 					log.debug("removing obsolete point on almost straight segment in way ",way.toBrowseURL(),"at",cm.toOSMURL());
-				if (gpxPath != null){
+				if (DEBUG_PATH != null){
 					obsoletePoints.add(cm);
 					removedInWay.add(cm);
 				}
@@ -647,15 +643,15 @@ public class WrongAngleFixer {
 				points.addAll(modifiedPoints);
 				if (mode == MODE_ROADS)
 					modifiedRoads.put(way.getId(), cw);
-				if (gpxPath != null){
+				if (DEBUG_PATH != null){
 					if (draw || cw.isRoundabout()) {
-						GpxCreator.createGpx(gpxPath+way.getId()+"_dpmod", points,removedInWay);
+						GpxCreator.createGpx(Utils.joinPath(DEBUG_PATH, way.getId() + "_dpmod"), points, removedInWay);
 					}
 				}
 			}
 		}
-		if (gpxPath != null){
-			GpxCreator.createGpx(gpxPath + "obsolete", bbox.toCoords(),
+		if (DEBUG_PATH != null){
+			GpxCreator.createGpx(Utils.joinPath(DEBUG_PATH, "obsolete"), bbox.toCoords(),
 					new ArrayList<>(obsoletePoints));
 			
 		}
@@ -667,7 +663,7 @@ public class WrongAngleFixer {
 	 * @param roads 
 	 */
 	private void printBadAngles(String name, List<ConvertedWay> roads){
-		if (gpxPath ==  null)
+		if (DEBUG_PATH ==  null)
 			return;
 		List<ConvertedWay> badWays = new ArrayList<>();
 		Way lastWay = null;
@@ -725,8 +721,7 @@ public class WrongAngleFixer {
 			if (hasBadAngles)
 				badWays.add(cw);
 		}
-		GpxCreator.createGpx(gpxPath + name, bbox.toCoords(),
-				new ArrayList<>(badAngles));
+		GpxCreator.createGpx(Utils.joinPath(DEBUG_PATH, name), bbox.toCoords(), new ArrayList<>(badAngles));
 		writeOSM(name, badWays);
 	}
 	
@@ -1232,13 +1227,12 @@ public class WrongAngleFixer {
 			return err;
 		}
 
-		// TODO: remove this debugging aid
 		@SuppressWarnings("unused")
 		private void createGPX(String gpxName, Map<Coord, Coord> replacements) {
-			if (gpxName == null || gpxPath == null)
+			if (gpxName == null || DEBUG_PATH == null)
 				return;
 			if (gpxName.isEmpty())
-				gpxName = gpxPath + id + "_no_info";
+				gpxName = Utils.joinPath(DEBUG_PATH, id + "_no_info");
 			// print lines after change
 			Coord c = getReplacement(center, null, replacements);
 			List<Coord> alternatives = c.getAlternativePositions();
@@ -1263,78 +1257,10 @@ public class WrongAngleFixer {
 	
 	
 	private void writeOSM(String name, List<ConvertedWay> convertedWays){
-		//TODO: comment or remove
-		/*
-		if (gpxPath == null)
-			return;
-		File outDir = new File(gpxPath + "/.");
-		if (outDir.getParentFile() != null) {
-			outDir.getParentFile().mkdirs();
-		} 		
-		Map<String,byte[]> dummyMap = new HashMap<>();
-		for (int pass = 1; pass <= 2; pass ++){
-			IdentityHashMap<Coord, Integer> allPoints = new IdentityHashMap<>();
-			uk.me.parabola.splitter.Area bounds = new uk.me.parabola.splitter.Area(
-					bbox.getMinLat(),bbox.getMinLong(),bbox.getMaxLat(),bbox.getMaxLong());
-
-			
-			O5mMapWriter writer = new O5mMapWriter(bounds, outDir, 0, 0, dummyMap, dummyMap);
-			writer.initForWrite();
-			Integer nodeId;
-			try {
-
-				for (ConvertedWay cw: convertedWays){
-					if (cw == null)
-						continue;
-					for (Coord p: cw.getPoints()){
-						nodeId = allPoints.get(p);
-						if (nodeId == null){
-							nodeId = allPoints.size();
-							allPoints.put(p, nodeId);
-							uk.me.parabola.splitter.Node nodeOut = new  uk.me.parabola.splitter.Node();				
-							if (pass == 1)
-								nodeOut.set(nodeId+1000000000L, p.getLatDegrees(), p.getLonDegrees()); // high prec
-							else 
-								nodeOut.set(nodeId+1000000000L, Utils.toDegrees(p.getLatitude()), Utils.toDegrees(p.getLongitude()));
-							if (p instanceof CoordPOI){
-								for (Map.Entry<String, String> tagEntry : ((CoordPOI) p).getNode().getTagEntryIterator()) {
-									nodeOut.addTag(tagEntry.getKey(), tagEntry.getValue());
-								}
-							}
-							writer.write(nodeOut);
-						}
-					}
-				}
-				for (int w = 0; w < convertedWays.size(); w++){
-					ConvertedWay cw = convertedWays.get(w);
-					if (cw == null)
-						continue;
-					Way way = cw.getWay();
-					uk.me.parabola.splitter.Way wayOut = new uk.me.parabola.splitter.Way();
-					for (Coord p: way.getPoints()){
-						nodeId = allPoints.get(p);
-						assert nodeId != null;
-						wayOut.addRef(nodeId+1000000000L);
-					}
-					for (Map.Entry<String, String> tagEntry : way.getTagEntryIterator()) {
-						wayOut.addTag(tagEntry.getKey(), tagEntry.getValue());
-					}
-					
-					wayOut.setId(way.getId());
-					
-					writer.write(wayOut);
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			writer.finishWrite();
-			File f = new File(outDir.getAbsoluteFile() , "00000000.o5m");
-			File ren = new File(outDir.getAbsoluteFile() , name+((pass==1) ? "_hp":"_mu") + ".o5m");
-			if (ren.exists())
-				ren.delete();
-			f.renameTo(ren);
+		if (DEBUG_PATH != null) {
+			//TODO: comment before release
+//			uk.me.parabola.mkgmap.osmstyle.optional.DebugWriter.writeOSM(bbox, DEBUG_PATH, name, convertedWays);
 		}
-		*/
 	}
 	
 	 
