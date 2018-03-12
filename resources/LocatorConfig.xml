@@ -156,6 +156,9 @@
 		<variant>IO</variant>
 		<variant>IOT</variant>
 	</country>
+	<country name="British Sovereign Base Areas" abr="SBA" driveOnLeft="true">
+		<variant>SBA</variant>
+	</country>
 	<country name="Brunei Darussalam" abr="BRN"  driveOnLeft="true">
 		<variant>BN</variant>
 		<variant>BRN</variant>
