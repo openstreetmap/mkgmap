@@ -40,7 +40,7 @@ public class Coord implements Comparable<Coord> {
 	private final static short ON_BOUNDARY_MASK = 0x0001; // bit in flags is true if point lies on a boundary
 	private final static short PRESERVED_MASK = 0x0002; // bit in flags is true if point should not be filtered out
 	private final static short REPLACED_MASK = 0x0004;  // bit in flags is true if point was replaced 
-	private final static short TREAT_AS_NODE_MASK = 0x0008; // bit in flags is true if point should be treated as a node 
+	private final static short ADDED_BY_CLIPPER_MASK = 0x0008; // bit in flags is true if point was added by clipper 
 	private final static short FIXME_NODE_MASK = 0x0010; // bit in flags is true if a node with this coords has a fixme tag
 	private final static short REMOVE_MASK = 0x0020; // bit in flags is true if this point should be removed
 	private final static short VIA_NODE_MASK = 0x0040; // bit in flags is true if a node with this coords is the via node of a RestrictionRelation
@@ -217,23 +217,21 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	/** 
-	 * Should this Coord be treated like a Garmin node in short arc removal?
-	 * The value has no meaning outside of short arc removal.
-	 * @return true if this coord should be treated like a Garmin node, else false
+	 * @return true if this coord was added by a clipper
 	 */
-	public boolean isTreatAsNode() {
-		return (flags & TREAT_AS_NODE_MASK) != 0;
+	public boolean isAddedByClipper() {
+		return (flags & ADDED_BY_CLIPPER_MASK) != 0;
 	}
 
 	/**
 	 * Mark the Coord to be treated like a Node in short arc removal 
 	 * @param treatAsNode true or false
 	 */
-	public void setTreatAsNode(boolean treatAsNode) {
-		if (treatAsNode) 
-			this.flags |= TREAT_AS_NODE_MASK;
+	public void setAddedByClipper(boolean b) {
+		if (b) 
+			this.flags |= ADDED_BY_CLIPPER_MASK;
 		else 
-			this.flags &= ~TREAT_AS_NODE_MASK; 
+			this.flags &= ~ADDED_BY_CLIPPER_MASK; 
 	} 
 	
 	/**
