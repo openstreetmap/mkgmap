@@ -130,7 +130,7 @@ public class WrongAngleFixer {
 					coordMap.put(Utils.coord2Long(co), co);
 				else {
 					if (!co.isAddedByClipper() && repl.isAddedByClipper()) {
-						log.error("check replaced original boundary node at",co);
+						log.debug("check replaced original boundary node at",co);
 					}
 					points.set(i, repl);
 				}
@@ -1045,7 +1045,7 @@ public class WrongAngleFixer {
 					double modifiedSumErr = calcSumOfErrors(replacements);
 					if (modifiedSumErr < initialSumErr){
 						if (specialChange)
-							log.error("pass",pass,"special repl",this);
+							log.debug("pass",pass,"special repl",this);
 						return true;
 					}
 					// revert changes
@@ -1137,7 +1137,7 @@ public class WrongAngleFixer {
 				}
 			}
 			int hwc = c.getHighwayCount() + n.getHighwayCount() - 1;
-			for (int i = 0; i < hwc; i++)
+			for (int i = mergePoint.getHighwayCount(); i < hwc; i++)
 				mergePoint.incHighwayCount();
 			if (c != mergePoint)
 				replaceCoord(c, mergePoint, replacements);
@@ -1155,7 +1155,7 @@ public class WrongAngleFixer {
 		 * with the connection to an other centre. 
 		 * @param bearing bearing of the connection to the other centre
 		 * @param other the other centre
-		 * @param replacements 
+		 * @param replacements s
 		 * @return true if a nearly straight line exists
 		 */
 		private boolean checkNearlyStraight(double bearing, CenterOfAngle other,
