@@ -92,8 +92,8 @@ public class DebugWriter {
 						wayOut.addTag(tagEntry.getKey(), tagEntry.getValue());
 					}
 					
-					wayOut.setId(way.getId());
-					
+					wayOut.addTag("aaa-osm-id", Long.toString(way.getId()));
+					wayOut.setId(w); 					
 					writer.write(wayOut);
 				}
 			} catch (IOException e) {
