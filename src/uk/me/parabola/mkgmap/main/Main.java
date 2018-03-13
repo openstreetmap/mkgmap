@@ -517,7 +517,6 @@ public class Main implements ArgumentProcessor {
 					threadCount = Math.max(threadCount, 1);
 					threadCount = Math.min(threadCount, runtime.availableProcessors());
 					System.out.println("Setting max-jobs to " + threadCount);
-					futures.remove(0);
 				}
 			}
 
