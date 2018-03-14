@@ -1066,9 +1066,8 @@ public class WrongAngleFixer {
 			
 			double dist = currentCenter.distance(worstNP);
 			double maxDist = calcMaxErrorDistance(currentCenter) * 2;
-			boolean forceMerge = dist < maxDist || currentCenter.equals(worstNP);
-			if (forceMerge || this.neighbours.size() == 3 && worstNeighbour.neighbours.size() == 3)
-				return tryMerge(forceMerge, initialMaxError, worstNeighbour, replacements);
+			if (dist < maxDist || this.neighbours.size() == 3 && worstNeighbour.neighbours.size() == 3)
+				return tryMerge(initialMaxError, worstNeighbour, replacements);
 			return false;
 		}
 
@@ -1076,23 +1075,23 @@ public class WrongAngleFixer {
 		 * Calculate error when two centres are merged. If they are not equal 
 		 * and the error is too big, nothing is changed and false is returned. 
 		 * 
-		 * @param forceMerge true: skip straight line check
 		 * @param initialMaxError max. bearing error of this centre
 		 * @param neighbour neighbour to merge 
 		 * @param replacements
 		 * @return true if merge is okay
 		 */
-		private boolean tryMerge(boolean forceMerge, double initialMaxError, CenterOfAngle neighbour, Map<Coord, Coord> replacements) {
+		private boolean tryMerge(double initialMaxError, CenterOfAngle neighbour, Map<Coord, Coord> replacements) {
 			if (badMergeCandidates != null && badMergeCandidates.contains(neighbour )
 					|| neighbour.badMergeCandidates != null && neighbour.badMergeCandidates.contains(this)) {
 				return false; // not allowed to merge
 			}
 			Coord c = getCurrentLocation(replacements);
 			Coord n = neighbour.getCurrentLocation(replacements);
+			
 			// check special cases: don't merge if
 			// 1) both points are via nodes 
 			// 2) both nodes are boundary nodes with non-equal coords
-			// 3) on point is via node and the other is a boundary node, the result could be that the restriction is ignored 
+			// 3) one point is via node and the other is a boundary node, the result could be that the restriction is ignored.
 			if (c.getOnBoundary()){
 				if (n.isViaNodeOfRestriction() || n.getOnBoundary() && c.equals(n) == false)
 					return false; 
@@ -1114,6 +1113,7 @@ public class WrongAngleFixer {
 			else 
 				mergePoint = c.makeBetweenPoint(n, 0.5);
 			double err = 0;
+			
 			if (c.equals(n) == false){
 				err = calcMergeErr(neighbour, mergePoint, replacements);
 				if (err == Double.MAX_VALUE && initialMaxError == Double.MAX_VALUE){
@@ -1125,8 +1125,6 @@ public class WrongAngleFixer {
 						return false; // improvement too small
 					}
 				}
-			}
-			if (!forceMerge){
 				// merge only if the merged line is part of a (nearly) straight line going through both centres,
 				if (!checkNearlyStraight(c.bearingTo(n), neighbour, replacements)
 						|| !neighbour.checkNearlyStraight(n.bearingTo(c), this, replacements)) {
