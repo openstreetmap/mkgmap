@@ -139,10 +139,6 @@ public class MapRoad extends MapLine {
 		roadDef.doFlareCheck(fc);
 	}
 
-	public void setLinkRoad(boolean lr) {
-		roadDef.setLinkRoad(lr);
-	}
-
 	public boolean hasSegmentsFollowing() {
 		return segmentsFollowing;
 	}

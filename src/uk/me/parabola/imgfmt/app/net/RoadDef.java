@@ -121,7 +121,6 @@ public class RoadDef {
 	private boolean paved = true;
 	private boolean ferry;
 	private boolean roundabout;
-	private boolean linkRoad;
 	private boolean synthesised;
 	private boolean flareCheck;
 	private Set<String> messageIssued;
@@ -795,14 +794,6 @@ public class RoadDef {
 
 	public boolean isRoundabout() {
 		return roundabout;
-	}
-
-	public void setLinkRoad(boolean lr) {
-		linkRoad = lr;
-	}
-
-	public boolean isLinkRoad() {
-		return linkRoad;
 	}
 
 	public void setSynthesised(boolean s) {

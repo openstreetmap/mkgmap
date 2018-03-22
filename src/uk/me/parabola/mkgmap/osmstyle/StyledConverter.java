@@ -1530,7 +1530,6 @@ public class StyledConverter implements OsmConverter {
 
 	private void addRoadWithoutLoops(ConvertedWay cw) {
 		Way way = cw.getWay();
-		GType gt = cw.getGType();
 		List<Integer> nodeIndices = new ArrayList<>();
 		List<Coord> points = way.getPoints();
 		if (points.size() < 2){
@@ -1704,8 +1703,6 @@ public class StyledConverter implements OsmConverter {
 			doFlareCheck = true;
 		}
 		road.doFlareCheck(doFlareCheck);
-
-		road.setLinkRoad(gt.getType() == 0x08 || gt.getType() == 0x09);
 
 		// set road parameters 
 
