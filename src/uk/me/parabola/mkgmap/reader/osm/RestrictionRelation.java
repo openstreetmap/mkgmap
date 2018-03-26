@@ -587,6 +587,10 @@ public class RestrictionRelation extends Relation {
 		return valid;
 	}
 
+	public void setInvalid() {
+		valid = false;
+	}
+	
 	public List<Coord> getViaCoords() {
 		assert evalWasCalled;
 		return viaPoints;

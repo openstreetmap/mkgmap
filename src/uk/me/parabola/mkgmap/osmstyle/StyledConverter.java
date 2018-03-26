@@ -576,6 +576,7 @@ public class StyledConverter implements OsmConverter {
 				if (log.isLoggable(logLevel)){
 					log.log(logLevel, "restriction",rr.toBrowseURL()," is ignored because referenced way",way.toBrowseURL(),reason);
 				}
+				rr.setInvalid();
 				restrictions.remove(rr);
 			}
 		}
