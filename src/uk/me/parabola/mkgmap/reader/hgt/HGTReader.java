@@ -157,9 +157,10 @@ public class HGTReader {
 			while (entries.hasMoreElements()) {
 				entry = entries.nextElement();
 				if (!entry.isDirectory() && entry.getName().toUpperCase().endsWith(name.toUpperCase())) {
-					break;
+					return entry;
 				}
 			}
+			return null;
 		}
 		return entry;
 	}
