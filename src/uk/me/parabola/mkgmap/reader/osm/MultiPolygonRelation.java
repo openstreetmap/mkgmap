@@ -1098,7 +1098,12 @@ public class MultiPolygonRelation extends Relation {
 				addTag(tags.getKey(), tags.getValue());
 			}
 		}
-		
+		String mpAreaSizeStr = null;
+		if (isAreaSizeCalculated()) {
+			// assign the area size of the whole multipolygon to all outer polygons
+			mpAreaSizeStr = new DecimalFormat("0.0####################", 
+					DecimalFormatSymbols.getInstance(Locale.US)).format(mpAreaSize);
+		}
 		// Go through all original outer ways, create a copy, tag them
 		// with the mp tags and mark them only to be used for polyline processing
 		// This enables the style file to decide if the polygon information or
@@ -1108,6 +1113,10 @@ public class MultiPolygonRelation extends Relation {
 			lineTagWay.setFakeId();
 			lineTagWay.addTag(STYLE_FILTER_TAG, STYLE_FILTER_LINE);
 			lineTagWay.addTag(MP_CREATED_TAG, "true");
+			if (mpAreaSizeStr != null) {
+				// assign the area size of the whole multipolygon to all outer polygons
+				lineTagWay.addTag("mkgmap:cache_area_size", mpAreaSizeStr);
+			}
 			for (Entry<String,String> tag : outerTags.entrySet()) {
 				lineTagWay.addTag(tag.getKey(), tag.getValue());
 				
@@ -1116,7 +1125,7 @@ public class MultiPolygonRelation extends Relation {
 					removeTagsInOrgWays(orgOuterWay, tag.getKey());
 				}
 			}
-			
+	
 			if (log.isDebugEnabled())
 				log.debug("Add line way", lineTagWay.getId(), lineTagWay.toTagString());
 			tileWayMap.put(lineTagWay.getId(), lineTagWay);
@@ -1147,7 +1156,6 @@ public class MultiPolygonRelation extends Relation {
 		for (Way w : mpPolygons.values()) {
 			w.deleteTag("mkgmap:mp_role");
 		}
-		
 		// copy all polygons created by the multipolygon algorithm to the global way map
 		tileWayMap.putAll(mpPolygons);
 		
