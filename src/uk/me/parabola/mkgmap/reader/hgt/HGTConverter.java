@@ -196,7 +196,7 @@ public class HGTConverter {
 			minX = 1;
 			inside = false;
 		} else if (xLeft == res - 1) {
-			if (col >= readers[0].length)
+			if (col + 1 >= readers[0].length)
 				return null;
 			maxX = 2;
 			inside = false;
@@ -207,7 +207,7 @@ public class HGTConverter {
 			minY = 1;
 			inside = false;
 		} else if (yBottom == res - 1) {
-			if (row >= readers.length)
+			if (row + 1 >= readers.length)
 				return null;
 			maxY = 2;
 			inside = false;
@@ -405,6 +405,14 @@ public class HGTConverter {
 	 * 
 	 */
 	private HGTReader prepReader(int res, int row, int col) {
+		if (row >= readers.length) {
+			log.error("invalid array index for row", row);
+			return null;
+		}
+		if (col >= readers[row].length) {
+			log.error("invalid array index for col", row);
+			return null;
+		}
 		HGTReader rdr = readers[row][col];
 
 		if (rdr == null) {
