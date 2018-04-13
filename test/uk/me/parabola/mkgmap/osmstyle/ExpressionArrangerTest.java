@@ -28,6 +28,7 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import static uk.me.parabola.mkgmap.osmstyle.ExpressionArranger.fmtExpr;
 import static uk.me.parabola.mkgmap.osmstyle.ExpressionArranger.isSolved;
+import static uk.me.parabola.mkgmap.osmstyle.eval.NodeType.AND;
 import static uk.me.parabola.mkgmap.osmstyle.eval.NodeType.EQUALS;
 
 
@@ -193,7 +194,18 @@ public class ExpressionArrangerTest {
 		assertTrue(isSolved(op));
 		assertTrue(op.getFirst().getType() != NodeType.FUNCTION);
 	}
-	
+
+	@Test
+	public void testEqualTagValue() {
+		Op op = createOp("c!=d & a=$b");
+		op = arranger.arrange(op);
+		Iterator<Op> it = arranger.prepareForSave(op);
+		op = it.next();
+		assertEquals(AND, op.getType());
+		assertEquals("$a=* & $a=$b & $c!=d", op.toString());
+		System.out.println(op.toString());
+	}
+
 	private Op createOp(String s) {
 		TokenScanner scanner = new TokenScanner("test.file", new StringReader(s));
 		ExpressionReader er = new ExpressionReader(scanner, FeatureKind.POLYLINE);

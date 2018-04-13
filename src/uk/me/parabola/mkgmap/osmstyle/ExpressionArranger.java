@@ -399,13 +399,16 @@ public class ExpressionArranger {
 			return 501;
 
 		// Everything else is 200+, put regex behind as they are probably a bit slower.
-		case REGEX:
-			return 201;
-		default:
-			// Non-indexable functions must go to the back.
-			if (!isIndexable(op))
-				return 1000;
+		case GT:
+		case GTE:
+		case LT:
+		case LTE:
 			return 200;
+		case REGEX:
+			return 210;
+
+		default:
+			return 1000;
 		}
 	}
 
@@ -429,6 +432,8 @@ public class ExpressionArranger {
 			if (first.isType(EQUALS)) {
 				keystring = first.getFirst().getKeyValue() + "=" + first.getSecond().getKeyValue();
 			} else if (first.isType(EXISTS)) {
+				if (!isIndexable(first))
+					throw new SyntaxException(scanner, "Expression cannot be indexed");
 				keystring = first.getFirst().getKeyValue() + "=*";
 			} else if (first.isType(NOT_EXISTS)) {
 				throw new SyntaxException(scanner, "Cannot start rule with tag!=*");
@@ -485,13 +490,12 @@ public class ExpressionArranger {
 	 *
 	 * This is done if the first term is not by itself indexable, but could be made so by pre-pending an EXISTS clause.
 	 */
-	private Op prepareWithExists(Op op) {
+	private static Op prepareWithExists(Op op) {
 		Op first = op;
 		if (first.isType(AND))
 			first = first.getFirst();
 
-		if (NEED_EXISTS.contains(first.getType()) && isIndexable(first)
-				|| first.isType(EQUALS) && first.getSecond().isType(FUNCTION))
+		if (NEED_EXISTS.contains(first.getType()) || first.isType(EQUALS) && first.getSecond().isType(FUNCTION))
 			return combineWithExists((BinaryOp) op);
 		else
 			return op;
@@ -502,7 +506,7 @@ public class ExpressionArranger {
 	 *
 	 * This is done if the first term is not by itself indexable, but could be made so by pre-pending an EXISTS clause.
 	 */
-	private AndOp combineWithExists(BinaryOp op) {
+	private static AndOp combineWithExists(BinaryOp op) {
 		Op first = op;
 		if (first.isType(AND))
 			first = first.getFirst();
@@ -515,26 +519,28 @@ public class ExpressionArranger {
 
 	/**
 	 * True if this expression is 'solved'.  This means that the first term is indexable or it is indexable itself.
+	 *
+	 * This is only used in the tests.
 	 */
 	public static boolean isSolved(Op op) {
 		switch (op.getType()) {
 		case NOT:
 			return false;
 		case AND:
-			return isIndexable(op.getFirst());
+			return isAndIndexable(prepareWithExists(op.getFirst()));
 		case OR:
 			Op or = op;
 			boolean valid = true;
 			do {
-				if (!isAndIndexable(or.getFirst()))
+				if (!isAndIndexable(prepareWithExists(or.getFirst())))
 					valid = false;
 				or = or.getSecond();
 			} while (or.isType(OR));
-			if (!isAndIndexable(or))
+			if (!isAndIndexable(prepareWithExists(or)))
 				valid = false;
 			return valid;
 		default:
-			return isIndexable(op);
+			return isIndexable(prepareWithExists(op));
 		}
 	}
 
@@ -553,11 +559,7 @@ public class ExpressionArranger {
 	 * True if this operation can be indexed.  It is a plain equality or Exists operation.
 	 */
 	private static boolean isIndexable(Op op) {
-		return op.isType(EQUALS)
-				&& ((ValueOp) op.getFirst()).isIndexable() && op.getSecond().isType(VALUE)
-				|| NEED_EXISTS.contains(op.getType()) && ((ValueOp) op.getFirst()).isIndexable()
-					&& (op.getSecond().isType(VALUE) || op.getSecond().isType(FUNCTION))
-				|| op.isType(EXISTS) && ((ValueOp) op.getFirst()).isIndexable();
+		return (op.isType(EQUALS) || op.isType(EXISTS)) && ((ValueOp) op.getFirst()).isIndexable();
 	}
 
 	/**
