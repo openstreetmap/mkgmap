@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
@@ -95,7 +96,6 @@ public class RulesTest {
 	private static boolean debug;
 	private static boolean saveErrors;
 	private static boolean stopOnFail;
-	private static boolean doLengths = false;
 
 
 	private final String[] values = {
@@ -129,7 +129,7 @@ public class RulesTest {
 			} else if (s.startsWith("--stop")) {
 				stopOnFail = true;
 			} else if (s.startsWith("--use-len")) {
-				doLengths = true;
+				System.out.println("The --use-length option is no longer needed");
 			} else if (s.startsWith("--seed")) {
 				seed = Long.parseLong(args[++i]);
 			} else if (s.startsWith("--rand")) {
@@ -141,17 +141,14 @@ public class RulesTest {
 						"--arrange-test use the ExpressionArranger instead of style tester\n" +
 						"--max-errors   stop after this many errors\n" +
 						"--max-rules    run this number of random rules\n" +
-						"--use-lengths  add some length() terms, you will see errors\n" +
 						"--errors       only show errors\n" +
-						"--stop-on-fail stop on test failures (not syntax errors)\n" +
-						"--seed N       set the random number seed\n" +
-						"--rand         set the random seed to the current time\n" +
+						"--stop-on-fail stop on test failures\n" +
+						"--seed N       set the random number seed to reproduce a previous run\n" +
+						"--rand         set the random seed to the current time, so a different set of rules" +
+						"               are generated.\n" +
 						"--save-errors  save errors as style tester files\n" +
 						"\n" +
-						"You see errors when including length() terms, because this program cannot\n" +
-						"tell if they should work.  It makes a best attempt.  You should make sure that\n" +
-						"all failues are really correct\n\n" +
-						"If there are any non-syntax failures, then that is always a bug.\n")
+						"Any error displayed is a bug in mkgmap.\n")
 				;
 				System.exit(2);
 			}
@@ -266,9 +263,6 @@ public class RulesTest {
 		boolean[] orig = evalWays(op);
 		Op result = arranger.arrange(op);
 
-		if (!isSolved(result))
-			throw new SyntaxException("Could not solve rule expression: best attempt was " + fmtExpr(result));
-
 		boolean[] after = evalWays(result);
 		boolean ok = Arrays.equals(after, orig);
 		if (ok) {
@@ -330,8 +324,8 @@ public class RulesTest {
 			} else {
 				System.out.println("ERROR: Failed with exception: " + rule);
 				System.out.println("  exception: " + ne);
-				checkStopOnFail();
 			}
+			checkStopOnFail();
 			System.out.println("  Message: " + ne.getMessage());
 
 			// On error save the test file.
@@ -347,7 +341,6 @@ public class RulesTest {
 			executor.shutdownNow();
 			System.exit(1);
 		}
-
 	}
 
 	private void saveFile(String fromName, String rule, int id) {
@@ -523,7 +516,7 @@ public class RulesTest {
 	}
 
 	private Op genNameOp(NodeType type) {
-		if (doLengths && type == GTE && rand.nextInt(4) == 0) {
+		if (type == GTE && rand.nextInt(4) == 0) {
 			return FunctionFactory.createFunction("length");
 		}
 
