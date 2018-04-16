@@ -106,8 +106,7 @@ public class ExpressionArranger {
 			break;
 
 		default:
-			// Should not happen
-			assert false;
+			break;
 		}
 
 		return op;
@@ -375,13 +374,16 @@ public class ExpressionArranger {
 	 * common tag, it would be better to push it behind other tags.
 	 */
 	private int selectivity(Op op) {
+		// Operations that involve a non-indexable function must always go to the back.
+		if (op.getFirst().isType(FUNCTION)) {
+			if (!((ValueOp) op.getFirst()).isIndexable())
+				return 1000;
+		}
+
 		switch (op.getType()) {
 		case EQUALS:
-			// Non-indexable functions must go to the back.
-			if (!isIndexable(op))
-				return 1000;
-
 			return 0;
+
 		case EXISTS:
 			return 100;
 

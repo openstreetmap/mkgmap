@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.EnumSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
@@ -70,8 +69,6 @@ import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-import static uk.me.parabola.mkgmap.osmstyle.ExpressionArranger.fmtExpr;
-import static uk.me.parabola.mkgmap.osmstyle.ExpressionArranger.isSolved;
 import static uk.me.parabola.mkgmap.osmstyle.eval.NodeType.*;
 
 public class RulesTest {

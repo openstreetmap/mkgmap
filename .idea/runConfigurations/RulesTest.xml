@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="RulesTest" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="main.RulesTest" />
+    <module name="mkgmap" />
+    <option name="PROGRAM_PARAMETERS" value="--max-rules 10000 --errors --stop-on-fail --arr" />
+    <option name="VM_PARAMETERS" value="-ea -Xmx1000m" />
+    <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
+    <method />
+  </configuration>
+</component>

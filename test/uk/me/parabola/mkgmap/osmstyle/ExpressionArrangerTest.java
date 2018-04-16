@@ -196,6 +196,16 @@ public class ExpressionArrangerTest {
 	}
 
 	@Test
+	public void testExistsAndFunctionWithOr() {
+		Op op = createOp("area_size() < 25000 & (fixme = * | FIXME=*) [0x2]");
+		System.out.println(fmtExpr(op));
+		op = arranger.arrange(op);
+		System.out.println(fmtExpr(op));
+		assertTrue(isSolved(op));
+		assertTrue(op.getFirst().getType() != NodeType.FUNCTION);
+	}
+
+	@Test
 	public void testEqualTagValue() {
 		Op op = createOp("c!=d & a=$b");
 		op = arranger.arrange(op);
