@@ -61,11 +61,11 @@ public abstract class CommonHeader {
 
 		writer.position(0);
 
-		writer.putChar((char) headerLength);
+		writer.put2u(headerLength);
 		writer.put(Utils.toBytes(type, TYPE_LEN, (byte) 0));
 
-		writer.put((byte) 1);  // unknown
-		writer.put((byte) 0);  // not locked
+		writer.put1u(1);  // unknown
+		writer.put1u(0);  // not locked
 
 		byte[] date = Utils.makeCreationTime(new Date());
 		writer.put(date);
@@ -79,7 +79,7 @@ public abstract class CommonHeader {
 	 */
 	public final void readHeader(ImgFileReader reader) throws ReadFailedException {
 		reader.position(0);
-		headerLength = reader.getChar();
+		headerLength = reader.get2u();
 		byte[] bytes = reader.get(TYPE_LEN);
 		try {
 			type = new String(bytes, "ascii");

@@ -49,40 +49,40 @@ public class PlacesHeader {
 	private final Section highway = new Section(zip, HIGHWAY_REC_LEN);
 	private final Section exitFacility = new Section(highway, EXIT_REC_LEN);
 	private final Section highwayData = new Section(exitFacility, HIGHWAYDATA_REC_LEN);
-	private byte POIGlobalFlags ;
+	private int POIGlobalFlags ;
 
-	void setPOIGlobalFlags(byte flags) {
+	void setPOIGlobalFlags(int flags) {
 		this.POIGlobalFlags = flags;
 	}
 
-	byte getPOIGlobalFlags() {
+	int getPOIGlobalFlags() {
 		return POIGlobalFlags;
 	}
 
 	void writeFileHeader(ImgFileWriter writer) {
-		writer.putInt(country.getPosition());
-		writer.putInt(country.getSize());
-		writer.putChar(country.getItemSize());
-		writer.putInt(0);
+		writer.put4(country.getPosition());
+		writer.put4(country.getSize());
+		writer.put2u(country.getItemSize());
+		writer.put4(0);
 
-		writer.putInt(region.getPosition());
-		writer.putInt(region.getSize());
-		writer.putChar(region.getItemSize());
-		writer.putInt(0);
+		writer.put4(region.getPosition());
+		writer.put4(region.getSize());
+		writer.put2u(region.getItemSize());
+		writer.put4(0);
 
-		writer.putInt(city.getPosition());
-		writer.putInt(city.getSize());
-		writer.putChar(city.getItemSize());
-		writer.putInt(0);
+		writer.put4(city.getPosition());
+		writer.put4(city.getSize());
+		writer.put2u(city.getItemSize());
+		writer.put4(0);
 
-		writer.putInt(poiIndex.getPosition());
-		writer.putInt(poiIndex.getSize());
-		writer.putChar(poiIndex.getItemSize());
-		writer.putInt(0);
+		writer.put4(poiIndex.getPosition());
+		writer.put4(poiIndex.getSize());
+		writer.put2u(poiIndex.getItemSize());
+		writer.put4(0);
 
-		writer.putInt(poiProperties.getPosition());
-		writer.putInt(poiProperties.getSize());
-		writer.put((byte) 0); // offset multiplier
+		writer.put4(poiProperties.getPosition());
+		writer.put4(poiProperties.getSize());
+		writer.put1u(0); // offset multiplier
 
 		// mb 5/9/2009 - discovered that Garmin maps can contain more
 		// than 8 bits of POI global flags - have seen the 9th bit set
@@ -91,72 +91,72 @@ public class PlacesHeader {
 		// of further bytes to read << 1) - therefore, this group
 		// should probably be: 16 bits of POI global flags followed by
 		// 16 zero bits rather than 8 bits of flags and 24 zero bits
-		writer.put(POIGlobalFlags); // properties global mask
-		writer.putChar((char) 0);
-		writer.put((byte) 0);
+		writer.put1u(POIGlobalFlags); // properties global mask
+		writer.put2u(0);
+		writer.put1u(0);
 
-		writer.putInt(poiTypeIndex.getPosition());
-		writer.putInt(poiTypeIndex.getSize());
-		writer.putChar(poiTypeIndex.getItemSize());
-		writer.putInt(0);
+		writer.put4(poiTypeIndex.getPosition());
+		writer.put4(poiTypeIndex.getSize());
+		writer.put2u(poiTypeIndex.getItemSize());
+		writer.put4(0);
 
-		writer.putInt(zip.getPosition());
-		writer.putInt(zip.getSize());
-		writer.putChar(zip.getItemSize());
-		writer.putInt(0);
+		writer.put4(zip.getPosition());
+		writer.put4(zip.getSize());
+		writer.put2u(zip.getItemSize());
+		writer.put4(0);
 
-		writer.putInt(highway.getPosition());
-		writer.putInt(highway.getSize());
-		writer.putChar(highway.getItemSize());
-		writer.putInt(0);
+		writer.put4(highway.getPosition());
+		writer.put4(highway.getSize());
+		writer.put2u(highway.getItemSize());
+		writer.put4(0);
 
-		writer.putInt(exitFacility.getPosition());
-		writer.putInt(exitFacility.getSize());
-		writer.putChar(exitFacility.getItemSize());
-		writer.putInt(0);
+		writer.put4(exitFacility.getPosition());
+		writer.put4(exitFacility.getSize());
+		writer.put2u(exitFacility.getItemSize());
+		writer.put4(0);
 
-		writer.putInt(highwayData.getPosition());
-		writer.putInt(highwayData.getSize());
-		writer.putChar(highwayData.getItemSize());
-		writer.putInt(0);
+		writer.put4(highwayData.getPosition());
+		writer.put4(highwayData.getSize());
+		writer.put2u(highwayData.getItemSize());
+		writer.put4(0);
 	}
 
 	void readFileHeader(ImgFileReader reader) {
 		reader.position(0x1f);
 
 		country.readSectionInfo(reader, true);
-		reader.getInt();
+		reader.get4();
 
 		region.readSectionInfo(reader, true);
-		reader.getInt();
+		reader.get4();
 
 		city.readSectionInfo(reader, true);
-		reader.getInt();
+		reader.get4();
 
 		poiIndex.readSectionInfo(reader, true);
-		reader.getInt();
+		reader.get4();
 
 		poiProperties.readSectionInfo(reader, false);
 		reader.get(); // offset multiplier
 
-		POIGlobalFlags = reader.get();
-		reader.getChar();
+		POIGlobalFlags = reader.get1u();
+		reader.get2u();
 		reader.get();
 
 		poiTypeIndex.readSectionInfo(reader, true);
-		reader.getInt();
+		reader.get4();
 
 		zip.readSectionInfo(reader, true);
-		reader.getInt();
+		reader.get4();
 
 		highway.readSectionInfo(reader, true);
-		reader.getInt();
+		reader.get4();
 
 		exitFacility.readSectionInfo(reader, true);
-		reader.getInt();
+		reader.get4();
 
 		highwayData.readSectionInfo(reader, true);
-		reader.getInt();
+		reader.get4();
 	}
 
 	int getLastPos() {

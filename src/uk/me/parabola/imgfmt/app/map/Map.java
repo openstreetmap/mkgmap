@@ -258,7 +258,7 @@ public class Map implements InternalFiles, Configurable {
 	 * @param flags The POI flags.
 	 */
 	public void addPoiDisplayFlags(int flags) {
-		treFile.addPoiDisplayFlags((byte) flags);
+		treFile.addPoiDisplayFlags(flags);
 	}
 
 	public void addMapObject(MapObject item) {

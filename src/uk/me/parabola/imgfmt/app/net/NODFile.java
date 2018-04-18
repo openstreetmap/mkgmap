@@ -164,7 +164,7 @@ public class NODFile extends ImgFile {
 		pos = (pos + 0x200) & ~0x1ff; // align on 0x200  
 		int numBytesToWrite = pos - section.getPosition();
 		for (int i = 0; i < numBytesToWrite; i++)
-			getWriter().put((byte)0); 
+			getWriter().put1u(0);
 		section.setPosition(pos);
 		ImgFileWriter writer = new SectionWriter(getWriter(), section);
 		

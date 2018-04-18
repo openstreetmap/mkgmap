@@ -43,8 +43,8 @@ public class RoadIndex {
 	void write(ImgFileWriter writer) {
 		int roadnum = linkedRoad.getNumber();
 		assert roadnum < 256;
-		writer.put((byte) roadnum);
-		char subdivnum = (char) getSubdiv().getNumber();
-		writer.putChar(subdivnum);
+		writer.put1u(roadnum);
+		int subdivnum = getSubdiv().getNumber();
+		writer.put2u(subdivnum);
 	}
 }

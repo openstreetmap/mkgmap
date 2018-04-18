@@ -33,9 +33,9 @@ public abstract class Overview implements Comparable<Overview> {
 	public static final int SHAPE_KIND = 3;
 
 	private final int kind; // The kind of overview; point, line etc.
-	private final char extType;
-	private final char type;
-	private final char subType;
+	private final int extType;
+	private final int type;
+	private final int subType;
 	private final int minResolution;
 	private final int size;
 
@@ -44,9 +44,9 @@ public abstract class Overview implements Comparable<Overview> {
 	protected Overview(int kind, int fullType, int minres) {
 		this.kind = kind;
 
-		this.extType = (char)((fullType >> 16) & 0xff);
-		this.type = (char) (fullType >> 8 & 0xff);
-		this.subType = (char) (fullType & 0xff);
+		this.extType =  fullType >> 16;
+		this.type =    (fullType >> 8) & 0xff;
+		this.subType =  fullType       & 0xff;
 		this.minResolution = minres;
 
 		if (kind == POINT_KIND)
@@ -57,15 +57,15 @@ public abstract class Overview implements Comparable<Overview> {
 
 	public void write(ImgFileWriter file) {
 		if (extType == 0) {
-			file.put((byte) (type & 0xff));
-			file.put((byte) maxLevel);
+			file.put1u(type);
+			file.put1u(maxLevel);
 			if (size > 2)
-				file.put((byte) (subType & 0xff));
+				file.put1u(subType);
 		} else {
-			file.put((byte) type);
-			file.put((byte) maxLevel);
-			file.put((byte) subType);
-			file.put((byte) 0);
+			file.put1u(type);
+			file.put1u(maxLevel);
+			file.put1u(subType);
+			file.put1u(0);
 		}
 	}
 

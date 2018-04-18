@@ -1136,7 +1136,7 @@ public class MapBuilder implements Configurable {
 					if(pointIndex > 255) {
 						System.err.println("Can't set city point index for " + name + " (too many indexed points in division)\n");
 					} else {
-						c.setPointIndex((byte)pointIndex);
+						c.setPointIndex(pointIndex);
 						c.setSubdivision(div);
 					}
 				}

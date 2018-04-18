@@ -85,9 +85,9 @@ public class Mdr1 extends MdrSection implements HasHeaderFlags {
 	public void writeSectData(ImgFileWriter writer) {
 		boolean revIndex = (getExtraValue() & 1) != 0;
 		for (Mdr1Record rec : maps) {
-			writer.putInt(rec.getMapNumber());
+			writer.put4(rec.getMapNumber());
 			if (revIndex)
-				writer.putInt(rec.getIndexOffset());
+				writer.put4(rec.getIndexOffset());
 		}
 	}
 

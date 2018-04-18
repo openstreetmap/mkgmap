@@ -84,7 +84,7 @@ public class SRTFile extends ImgFile {
 	private void writeDescription(ImgFileWriter writer) {
 		writer.position(header.getHeaderLength() + SRTHeader.HEADER2_LEN);
 		writer.put(description.getBytes(Charset.forName("ascii")));
-		writer.put((byte) 0);
+		writer.put1u( 0);
 		header.endDescription(writer.position());
 	}
 
@@ -95,7 +95,7 @@ public class SRTFile extends ImgFile {
 	 */
 	private void writeSrt4Chars(ImgFileWriter writer) {
 		for (int i = 1; i < 256; i++) {
-			writer.put(sort.getFlags(i));
+			writer.put1u(sort.getFlags(i));
 			writeWeights(writer, i);
 		}
 		header.endCharTable(writer.position());
@@ -109,15 +109,15 @@ public class SRTFile extends ImgFile {
 			assert primary <= 0xffff;
 			assert secondary <= 0xff;
 			assert tertiary <= 0xff;
-			writer.putChar((char) primary);
-			writer.put((byte) secondary);
-			writer.put((byte) tertiary);
+			writer.put2u(primary);
+			writer.put1u(secondary);
+			writer.put1u(tertiary);
 		} else {
 			assert primary <= 0xff;
 			assert secondary <= 0xf;
 			assert tertiary <= 0xf;
-			writer.put((byte) primary);
-			writer.put((byte) ((tertiary << 4) | (secondary & 0xf)));
+			writer.put1u(primary);
+			writer.put1u((tertiary << 4) | (secondary & 0xf));
 		}
 	}
 
@@ -133,12 +133,12 @@ public class SRTFile extends ImgFile {
 		for (int j = 1; j <= size; j++) {
 			CodePosition b = sort.getExpansion(j);
 			if (isMulti) {
-				writer.putChar(b.getPrimary());
-				writer.put(b.getSecondary());
-				writer.put(b.getTertiary());
+				writer.put2u(b.getPrimary());
+				writer.put1u(b.getSecondary());
+				writer.put1u(b.getTertiary());
 			} else {
-				writer.put((byte) b.getPrimary());
-				writer.put((byte) ((b.getTertiary() << 4) | (b.getSecondary() & 0xf)));
+				writer.put1u(b.getPrimary());
+				writer.put1u((b.getTertiary() << 4) | (b.getSecondary() & 0xf));
 			}
 		}
 
@@ -148,7 +148,7 @@ public class SRTFile extends ImgFile {
 	private void writeSrt7(SectionWriter writer) {
 		assert sort.isMulti();
 		for (int i = 1; i <= sort.getMaxPage(); i++) {
-			writer.putInt(srt8Starts.get(i));
+			writer.put4(srt8Starts.get(i));
 		}
 		header.endSrt7(writer.position());
 	}
@@ -162,7 +162,7 @@ public class SRTFile extends ImgFile {
 				srt8Starts.set(p, offset);
 				for (int j = 0; j < 256; j++) {
 					int ch = p * 256 + j;
-					writer.put(sort.getFlags(ch));
+					writer.put1u(sort.getFlags(ch));
 					writeWeights(writer, ch);
 					offset += 5;
 				}

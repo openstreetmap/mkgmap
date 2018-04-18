@@ -85,15 +85,15 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 		int size26 = has26? sizes.getSize(26): 0;
 		int size17 = Utils.numberToPointerSize(max17);
 		for (Mdr29Record record : index) {
-			writer.putN(size24, record.getMdr24());
+			writer.putNu(size24, record.getMdr24());
 			if (hasString)
 				putStringOffset(writer, record.getStrOffset());
-			writer.putN(size22, record.getMdr22());
-			writer.putN(size25, record.getMdr25());
+			writer.putNu(size22, record.getMdr22());
+			writer.putNu(size25, record.getMdr25());
 			if (has26)
-				writer.putN(size26, record.getMdr26());
+				writer.putNu(size26, record.getMdr26());
 			if (has17)
-				writer.putN(size17, record.getMdr17());
+				writer.putNu(size17, record.getMdr17());
 		}
 	}
 

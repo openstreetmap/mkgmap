@@ -55,12 +55,12 @@ public class DEMHeader extends CommonHeader {
 		}
 		writer.position(pos);
 		
-		writer.putInt(0); // 0: elevation in metres, 1: foot
-		writer.put2(zoomLevels.size());
-		writer.putInt(0); // unknown
-		writer.put2(60); // size of zoom level record
-		writer.putInt(offset); // offset to first DemSection header (they appear at the end of the file!)
-		writer.putInt(1); // unknown, 0 and 1 spotted
+		writer.put4(0); // 0: elevation in metres, 1: foot
+		writer.put2u(zoomLevels.size());
+		writer.put4(0); // unknown
+		writer.put2u(60); // size of zoom level record
+		writer.put4(offset); // offset to first DemSection header (they appear at the end of the file!)
+		writer.put4(1); // unknown, 0 and 1 spotted
 		
 	}
 

@@ -42,9 +42,9 @@ public class Mdr8 extends MdrSection implements HasHeaderFlags {
 		int size = associatedSize();
 		for (Mdr8Record s : index) {
 			for (int i = 0; i< STRING_WIDTH; i++) {
-				writer.put((byte) s.getPrefix()[i]);
+				writer.put1u(s.getPrefix()[i]);
 			}
-			writer.putN(size, s.getRecordNumber());
+			writer.putNu(size, s.getRecordNumber());
 		}
 	}
 

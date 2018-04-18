@@ -80,7 +80,7 @@ public class Mdr10 extends MdrMapSection {
 				Mdr11Record mdr11ref = t.getMdr11ref();
 				addIndexPointer(mdr11ref.getMapIndex(), count);
 				
-				writer.put((byte) t.getSubtype());
+				writer.put1u(t.getSubtype());
 				int offset = mdr11ref.getRecordNumber();
 
 				// Top bit actually represents a non-repeated name.  ie if

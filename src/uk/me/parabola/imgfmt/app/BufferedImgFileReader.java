@@ -48,6 +48,8 @@ public class BufferedImgFileReader implements ImgFileReader {
 
 	public BufferedImgFileReader(ImgChannel chan) {
 		this.chan = chan;
+//		buf.order(ByteOrder.LITTLE_ENDIAN);
+// could use getShort/getChar/getInt if sure buffer loaded		
 	}
 
 	/**
@@ -80,7 +82,7 @@ public class BufferedImgFileReader implements ImgFileReader {
 
 	/**
 	 * Read in a single byte from the current position.
-	 *
+	 * Should not be used for reading numbers, use get1s/u instead.
 	 * @return The byte that was read.
 	 */
 	public byte get() throws ReadFailedException {
@@ -90,9 +92,51 @@ public class BufferedImgFileReader implements ImgFileReader {
 		int pos = (int) (position - bufStart);
 		if (pos >= bufSize)
 			return 0; // XXX do something else
+// doing following makes test/func/files/GmapsuppTest.java test fail 		
+//			throw new MapFailedException("buffered input unavailable");
 
 		position++;
 		return buf.get(pos);
+	}
+
+	/**
+	 * Read in a single byte from the current position.
+	 * @return int sign-extended value that was read.
+	 */
+	public int get1s() throws ReadFailedException {
+		return (int)get();
+	}
+
+	/**
+	 * Read in two bytes.  Done in the correct byte order.
+	 * @return int sign-extended value that was read.
+	 */
+	public int get2s() throws ReadFailedException {
+		byte b1 = get();
+		byte b2 = get();
+		return (b1 & 0xff)
+				| (b2 << 8)
+				;
+	}
+
+	/**
+	 * Read a three byte signed quantity.
+	 * @return int sign-extended value that was read.
+	 * @throws ReadFailedException
+	 */
+	public int get3s() throws ReadFailedException {
+		// Slow but sure implementation
+		byte b1 = get();
+		byte b2 = get();
+		byte b3 = get();
+		return (b1 & 0xff)
+				| ((b2 & 0xff) << 8)
+				| (b3 << 16)
+				;
+	}
+
+	public int get1u() throws ReadFailedException {
+		return get() & 0xff;
 	}
 
 	/**
@@ -100,11 +144,12 @@ public class BufferedImgFileReader implements ImgFileReader {
 	 *
 	 * @return The 2 byte integer that was read.
 	 */
-	public char getChar() throws ReadFailedException {
-		// Slow but sure implementation
+	public int get2u() throws ReadFailedException {
 		byte b1 = get();
 		byte b2 = get();
-		return (char) (((b2 & 0xff) << 8) + (b1 & 0xff));
+		return (b1 & 0xff)
+				| ((b2 & 0xff) << 8)
+				;
 	}
 
 	/**
@@ -112,29 +157,35 @@ public class BufferedImgFileReader implements ImgFileReader {
 	 * @return The read value.
 	 * @throws ReadFailedException
 	 */
-	public int get3() throws ReadFailedException {
+	public int get3u() throws ReadFailedException {
 		// Slow but sure implementation
 		byte b1 = get();
 		byte b2 = get();
 		byte b3 = get();
-
 		return (b1 & 0xff)
 				| ((b2 & 0xff) << 8)
-				| (b3 << 16)
+				| ((b3 & 0xff) << 16)
 				;
 	}
 
-	public int getu3() throws ReadFailedException {
-		return get3() & 0xffffff;
+
+	public int getNu(int nBytes) throws ReadFailedException {
+		switch (nBytes) {
+		case 1: return get1u();
+		case 2: return get2u();
+		case 3: return get3u();
+		case 4: return get4();
+		default: // this is a programming error so exit
+			throw new MapFailedException("bad integer size " + nBytes);
+		}
 	}
 
 	/**
-	 * Read in a 4 byte value.
+	 * Read in a 4 byte signed value.
 	 *
 	 * @return A 4 byte integer.
 	 */
-	public int getInt() throws ReadFailedException {
-		// Slow but sure implementation
+	public int get4() throws ReadFailedException {
 		byte b1 = get();
 		byte b2 = get();
 		byte b3 = get();
@@ -142,21 +193,9 @@ public class BufferedImgFileReader implements ImgFileReader {
 		return (b1 & 0xff)
 				| ((b2 & 0xff) << 8)
 				| ((b3 & 0xff) << 16)
-				| ((b4 & 0xff) << 24)
+				|  (b4 << 24)
 				;
 	}
-
-	public int getUint(int n) throws ReadFailedException {
-		switch (n) {
-		case 1: return get() & 0xff;
-		case 2: return getChar();
-		case 3: return getu3();
-		case 4: return getInt();
-		default: // this is a programming error so exit
-			throw new MapFailedException("bad integer size " + n);
-		}
-	}
-
 	/**
 	 * Read in an arbitrary length sequence of bytes.
 	 *

@@ -36,7 +36,7 @@ public class TypPolygon extends TypElement {
 		if (fontStyle != 0 || dayFontColour != null)
 			scheme |= F_EXTENDED;
 
-		writer.put((byte) scheme);
+		writer.put1u(scheme);
 
 		colourInfo.write(writer);
 		if (xpm.hasImage())

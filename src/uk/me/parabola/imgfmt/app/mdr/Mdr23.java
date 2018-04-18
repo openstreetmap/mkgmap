@@ -77,9 +77,9 @@ public class Mdr23 extends MdrSection {
 				lastName = name;
 			}
 
-			writer.putChar((char) reg.getRegionIndex());
-			writer.putChar((char) reg.getCountryIndex());
-			writer.put3(reg.getLblOffset() | flag);
+			writer.put2u(reg.getRegionIndex());
+			writer.put2u(reg.getCountryIndex());
+			writer.put3u(reg.getLblOffset() | flag);
 		}
 	}
 

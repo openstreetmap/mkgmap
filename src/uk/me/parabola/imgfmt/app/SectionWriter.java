@@ -62,28 +62,36 @@ public class SectionWriter implements ImgFileWriter {
 		writer.put(b);
 	}
 
-	public void putChar(char c) {
-		writer.putChar(c);
+	public void put1s(int val) {
+		writer.put1s(val);
 	}
 
-	public void put1(int val) {
-		writer.put1(val);
-	};
-
-	public void put2(int val) {
-		writer.put2(val);
-	};
-
-	public void put3(int val) {
-		writer.put3(val);
+	public void put2s(int val) {
+		writer.put2s(val);
 	}
 
-	public void putN(int nBytes, int val) {
-		writer.putN(nBytes, val);
+	public void put3s(int val) {
+		writer.put3s(val);
 	}
 
-	public void putInt(int val) {
-		writer.putInt(val);
+	public void put1u(int val) {
+		writer.put1u(val);
+	}
+
+	public void put2u(int val) {
+		writer.put2u(val);
+	}
+
+	public void put3u(int val) {
+		writer.put3u(val);
+	}
+
+	public void putNu(int nBytes, int val) {
+		writer.putNu(nBytes, val);
+	}
+
+	public void put4(int val) {
+		writer.put4(val);
 	}
 
 	public void put(byte[] val) {

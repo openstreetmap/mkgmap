@@ -21,8 +21,8 @@ public class DrawOrder implements Writeable {
 	}
 
 	public void write(ImgFileWriter writer) {
-		writer.put(type);
-		writer.putInt(subTypes);
+		writer.put1u(type);
+		writer.put4(subTypes);
 	}
 
 	public void addSubtype(int subtype) {

@@ -53,7 +53,7 @@ public class RouteRestriction {
 
 	private final RouteNode viaNode; 
 	// offset in Table C
-	private byte offsetSize;
+	private int offsetSize;
 	private int offsetC;
 
 	// last restriction in a node
@@ -147,13 +147,13 @@ public class RouteRestriction {
 	 * 
 	 */
 	public void write(ImgFileWriter writer, int tableOffset) {
-		writer.put(RESTRICTION_TYPE); 
+		writer.put1u(RESTRICTION_TYPE);
 
 		writer.put(flags);
-		writer.put((byte)0); // meaning ?
+		writer.put1u(0); // meaning ?
 
 		if(exceptMask != 0)
-			writer.put(exceptMask);
+			writer.put1u(exceptMask);
 
 		int numArcs = arcs.size();
 		int[] offsets = new int[numArcs+1];
@@ -180,10 +180,10 @@ public class RouteRestriction {
 		}
 
 		for (int offset : offsets)
-			writer.putChar((char) offset);
+			writer.put2u(offset);
 
 		for (RouteArc arc: arcs)
-			writer.put(arc.getIndexA());
+			writer.put1u(arc.getIndexA());
 	}
 
 	/**
@@ -196,12 +196,12 @@ public class RouteRestriction {
 			assert offset < 0x80;
 			if (last)
 				offset |= 0x80;
-			writer.put((byte) offset);
+			writer.put1u(offset);
 		} else {
 			assert offset < 0x8000;
 			if (last)
 				offset |= 0x8000;
-			writer.putChar((char) offset);
+			writer.put2u(offset);
 		}
 	}
 
@@ -224,7 +224,7 @@ public class RouteRestriction {
 		return offsetC;
 	}
 
-	public void setOffsetSize(byte size) {
+	public void setOffsetSize(int size) {
 		offsetSize = size;
 	}
 

@@ -124,7 +124,7 @@ public class RouteCenter {
 
 			writer.position(pos);
 			log.debug("rewrite taba offset", writer.position(), bo);
-			writer.put(bo);
+			writer.put1u(bo);
 
 			// fill in arc pointers
 			node.writeSecond(writer);
@@ -133,11 +133,11 @@ public class RouteCenter {
 		writer.position(tablesOffset);
 
 		// Write the tables header
-		writer.put(tabC.getFormat());
-		writer.put3(centralPoint.getLongitude());
-		writer.put3(centralPoint.getLatitude());
-		writer.put(tabA.getNumberOfItems());
-		writer.put(tabB.getNumberOfItems());
+		writer.put1u(tabC.getFormat());
+		writer.put3s(centralPoint.getLongitude());
+		writer.put3s(centralPoint.getLatitude());
+		writer.put1u(tabA.getNumberOfItems());
+		writer.put1u(tabB.getNumberOfItems());
 
 		tabA.write(writer);
 		tabB.write(writer);

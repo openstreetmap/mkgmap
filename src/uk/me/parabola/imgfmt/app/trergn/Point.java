@@ -49,16 +49,16 @@ public class Point extends MapObject {
 	public void write(ImgFileWriter file) {
 		boolean hasSubtype = false;
 		int type = getType();
-		byte subtype = 0;
+		int subtype = 0;
 		if (type > 0xff) {
 			if((type & 0xff) != 0) {
 			    hasSubtype = true;
-			    subtype = (byte) type;
+			    subtype = type & 0xff;
 			}
 			type >>= 8;
 		}
 
-		file.put((byte) type);
+		file.put1u(type);
 
 		int off = getLabel().getOffset();
 		if (poi != null) {
@@ -68,11 +68,11 @@ public class Point extends MapObject {
 		if (hasSubtype)
 			off |= 0x800000;
 
-		file.put3(off);
-		file.putChar((char) getDeltaLong());
-		file.putChar((char) getDeltaLat());
+		file.put3u(off);
+		file.put2s(getDeltaLong());
+		file.put2s(getDeltaLat());
 		if (hasSubtype)
-			file.put(subtype);
+			file.put1u(subtype);
 	}
 
 	/*

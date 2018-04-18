@@ -108,7 +108,7 @@ public class PlacesFile {
 		placeHeader.endPOIIndex(writer.position());
 
 		int poistart = writer.position();
-		byte poiglobalflags = placeHeader.getPOIGlobalFlags();
+		int poiglobalflags = placeHeader.getPOIGlobalFlags();
 		for (POIRecord p : pois)
 			p.write(writer, poiglobalflags,
 				writer.position() - poistart, cityList.size(), postalCodes.size(), highways.size(), exitFacilities.size());
@@ -117,8 +117,8 @@ public class PlacesFile {
 		int numPoiIndexEntries = 0;
 		for (int i = 0; i < 256; ++i) {
 			if(poiIndex[i] != null) {
-				writer.put((byte)i);
-				writer.put3(numPoiIndexEntries + 1);
+				writer.put1u(i);
+				writer.put3u(numPoiIndexEntries + 1);
 				numPoiIndexEntries += poiIndex[i].size();
 			}
 		}
@@ -305,7 +305,7 @@ public class PlacesFile {
 		if (t < MIN_INDEXED_POI_TYPE || t > MAX_INDEXED_POI_TYPE) 
 			return;
 		
-		POIIndex pi = new POIIndex(name, (byte)index, group, (byte)type);
+		POIIndex pi = new POIIndex(name, index, group, type);
 		if(poiIndex[t] == null)
 			poiIndex[t] = new ArrayList<POIIndex>();
 		poiIndex[t].add(pi);
@@ -319,7 +319,7 @@ public class PlacesFile {
 
 		poisClosed = true;
 
-		byte poiFlags = 0;
+		int poiFlags = 0;
 		for (POIRecord p : pois) {
 			poiFlags |= p.getPOIFlags();
 		}

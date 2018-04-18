@@ -159,6 +159,8 @@ public class MapDetails implements MapCollector, MapDataSource {
 	 * @return An area covering all the points in the map.
 	 */
 	public Area getBounds() {
+		if (minLatHp == Integer.MAX_VALUE) // nothing called addToBounds
+			return new Area(1, 1, -1, -1); // return invalid bbox that doesn't break signed 3 byte IO in img file
 		int minLat = minLatHp >> Coord.DELTA_SHIFT;
 		int maxLat = maxLatHp >> Coord.DELTA_SHIFT;
 		int minLon = minLonHp >> Coord.DELTA_SHIFT;

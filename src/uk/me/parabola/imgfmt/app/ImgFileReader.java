@@ -40,49 +40,58 @@ public interface ImgFileReader extends Closeable {
 	 * Set the position of the file.
 	 * @param pos The new position in the file.
 	 */
-	void position(long pos);
+	public void position(long pos);
 
 	/**
 	 * Read in a single byte.
+	 * Should not be used for reading numbers, use get1s/u instead.
 	 * @return The byte that was read.
 	 */
 	public byte get() throws ReadFailedException;
 
 	/**
-	 * Read in two bytes.  Done in the correct byte order.
-	 * @return The 2 byte integer that was read.
+	 * Read in a single byte.
+	 * @return int sign-extended value that was read.
 	 */
-	public char getChar() throws ReadFailedException;
+	public int get1s() throws ReadFailedException;
 
 	/**
-	 * Get a 3byte signed quantity.
-	 *
-	 * @return The value read.
-	 * @throws ReadFailedException When the file cannot be read.
+	 * Read in two bytes in little endian byte order.
+	 * @return int sign-extended value that was read.
 	 */
-	public int get3() throws ReadFailedException;
+	public int get2s() throws ReadFailedException;
 
 	/**
-	 * Get a 3byte unsigned quantity.
-	 *
-	 * @return The value read.
-	 * @throws ReadFailedException When the file cannot be read.
+	 * Read in three bytes in little endian byte order.
+	 * @return int sign-extended value that was read.
 	 */
-	public int getu3() throws ReadFailedException;
+	public int get3s() throws ReadFailedException;
 
-	/**
-	 * Read in a 4 byte value.
-	 * @return A 4 byte integer.
-	 */
-	public int getInt() throws ReadFailedException;
+// don't think needed:
+//	public int getNs(int nBytes) throws ReadFailedException;
+
+	public int get1u() throws ReadFailedException;
+
+	public int get2u() throws ReadFailedException;
+
+	public int get3u() throws ReadFailedException;
+
+//	public default long get4u() throws ReadFailedException {
+//		return get4() & 0xffff_ffffL;
+//	}
 
 	/**
 	 * Read a variable sized integer.  The size is given.
-	 * @param n The size of the integer to read. Must be 1 to 4.
-	 * @return The integer which will not be sign extended if it is less
-	 * than 4 bytes long.
+	 * @param nBytes The size of the integer to read. Must be 1 to 4.
+	 * @return The integer which will not be sign extended.
 	 */
-	public int getUint(int n) throws ReadFailedException;
+	public int getNu(int nBytes) throws ReadFailedException;
+
+	/**
+	 * Read in a 4 byte signed value.
+	 * @return A 4 byte integer.
+	 */
+	public int get4() throws ReadFailedException;
 
 	/**
 	 * Read in an arbitrary length sequence of bytes.

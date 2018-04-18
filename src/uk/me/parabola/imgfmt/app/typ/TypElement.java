@@ -159,9 +159,9 @@ public abstract class TypElement implements Comparable<TypElement> {
 
 		// write out the length, I'm assuming that it will be 1 or 2 bytes
 		if (len > 0xff)
-			writer.putChar((char) len);
+			writer.put2u(len);
 		else
-			writer.put((byte) len);
+			writer.put1u(len);
 
 		// Prepare and write buffer
 		out.flip();
@@ -181,7 +181,7 @@ public abstract class TypElement implements Comparable<TypElement> {
 		if (nightFontColour != null)
 			fontExt |= 0x10;
 
-		writer.put(fontExt);
+		writer.put1u(fontExt);
 
 		if (dayFontColour != null)
 			dayFontColour.write(writer, (byte) 0x10);
@@ -199,8 +199,8 @@ public abstract class TypElement implements Comparable<TypElement> {
 	protected void writeImage(ImgFileWriter writer, Xpm xpm) {
 		ColourInfo colourInfo = xpm.getColourInfo();
 
-		writer.put((byte) colourInfo.getNumberOfSColoursForCM());
-		writer.put((byte) colourInfo.getColourMode());
+		writer.put1u(colourInfo.getNumberOfSColoursForCM());
+		writer.put1u(colourInfo.getColourMode());
 
 		colourInfo.write(writer);
 		xpm.writeImage(writer);

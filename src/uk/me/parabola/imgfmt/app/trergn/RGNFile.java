@@ -149,7 +149,7 @@ public class RGNFile extends ImgFile {
 			if (off > 0xffff)
 				throw new IllegalStateException("IndPoint offset too large: " + off);
 
-			getWriter().putChar((char) off);
+			getWriter().put2u((int) off);
 			position(currPos);
 		}
 	}
@@ -164,7 +164,7 @@ public class RGNFile extends ImgFile {
 
 			if (log.isDebugEnabled())
 				log.debug("setting polyline offset to", off);
-			getWriter().putChar((char) off);
+			getWriter().put2u((int) off);
 
 			position(currPos);
 		}
@@ -181,7 +181,7 @@ public class RGNFile extends ImgFile {
 			if (log.isDebugEnabled())
 				log.debug("setting polygon offset to ", off, " @", polygonPtrOff);
 			position(polygonPtrOff);
-			getWriter().putChar((char) off);
+			getWriter().put2u((int) off);
 			position(currPos);
 		}
 	}
@@ -203,8 +203,8 @@ public class RGNFile extends ImgFile {
 	}
 
 	public boolean haveExtendedTypes() {
-		return (extTypePointsData != null ||
+		return extTypePointsData != null ||
 				extTypeLinesData != null ||
-				extTypeAreasData != null);
+				extTypeAreasData != null;
 	}
 }

@@ -53,51 +53,68 @@ public interface ImgFileWriter extends Closeable {
 
 	/**
 	 * Write out a single byte.
+	 * %%% temporary
 	 * @param b The byte to write.
 	 */
 	public void put(byte b);
 
 	/**
-	 * Write out two bytes.  Done in the correct byte order.
-	 * @param c The value to write.
+	 * Write out int in range -128..127 as single byte.
+	 * @param val The byte to write.
 	 */
-	public void putChar(char c);
+	public void put1s(int val);
+
+	/**
+	 * Write out int in range -32768..32767 as two bytes in little endian byte order.
+	 * @param val The value to write.
+	 */
+	public void put2s(int val);
+
+	/**
+	 * Write out int in range -0x800000..0x7fffff in little endian byte order.
+	 * @param int The value to write.
+	 */
+	public void put3s(int val);
+
+// don't think needed:
+//	public void putNs(int nBytes, int val);
 
 	/**
 	 * Write out int in range 0..255 as single byte.
-	 * Use instead of put() for unsigned for clarity.
 	 * @param val The value to write.
 	 */
-	public void put1(int val);
+	public void put1u(int val);
 
 	/**
-	 * Write out int in range 0..65535 as two bytes in correct byte order.
-	 * Use instead of putChar() for unsigned for clarity.
+	 * Write out int in range 0..65535 as two bytes in little endian byte order.
 	 * @param val The value to write.
 	 */
-	public void put2(int val);
+	public void put2u(int val);
 
 	/**
-	 * Write out three bytes.  Done in the correct byte order.
-	 *
-	 * @param val The value to write, only the bottom three bytes will be
-	 * written.
+	 * Write out int in range 0..0xffffff as three bytes in little endian byte order.
+	 * @param val The value to write.
 	 */
-	public void put3(int val);
+	public void put3u(int val);
 	
 	/**
-	 * Write out 1-4 bytes.  Done in the correct byte order.
+	 * Write out int as 1-4 bytes in little endian byte order.
+	 * verifies that fits OK as unsigned.
 	 *
 	 * @param nBytes The number of bytes to write.
 	 * @param val The value to write.
 	 */
-	public void putN(int nBytes, int val);
-
+	public void putNu(int nBytes, int val);
+    
 	/**
-	 * Write out 4 byte value.
+	 * Write out 4 byte value in.
 	 * @param val The value to write.
 	 */
-	public void putInt(int val);
+	public void put4(int val);
+
+// 	public default void put4u(long val) {
+//		put4((int) val);
+//	}
 
 	/**
 	 * Write out an arbitrary length sequence of bytes.

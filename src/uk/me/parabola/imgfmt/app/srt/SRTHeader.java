@@ -60,9 +60,9 @@ public class SRTHeader extends CommonHeader {
 	}
 
 	protected void readFileHeader(ImgFileReader reader) throws ReadFailedException {
-		reader.getChar(); // expected: 1
-		header2.setPosition(reader.getInt());
-		header2.setSize(reader.getChar());
+		reader.get2u(); // expected: 1
+		header2.setPosition(reader.get4());
+		header2.setSize(reader.get2u());
 	}
 
 	/**
@@ -71,18 +71,18 @@ public class SRTHeader extends CommonHeader {
 	 */
 	protected void writeFileHeader(ImgFileWriter writer) {
 		if (getHeaderLength() <= 29) {
-			writer.putChar((char) 1);
+			writer.put2u(1);
 
-			writer.putInt(header2.getPosition());
-			writer.putChar((char) header2.getSize());
+			writer.put4(header2.getPosition());
+			writer.put2u(header2.getSize());
 		} else {
 			// this appears in unicode maps dated 2016 and 2017
-			writer.putChar((char) 0);
-			writer.putInt(header2.getPosition());
-			writer.putChar((char) header2.getSize());
-			writer.putChar((char) 1);
-			writer.putInt(header2.getPosition());
-			writer.putChar((char) header2.getSize());
+			writer.put2u(0);
+			writer.put4(header2.getPosition());
+			writer.put2u(header2.getSize());
+			writer.put2u(1);
+			writer.put4(header2.getPosition());
+			writer.put2u(header2.getSize());
 			
 			// older maps contain this variant (note the different order)
 //			writer.putChar((char) 1);
@@ -122,40 +122,40 @@ public class SRTHeader extends CommonHeader {
 	 */
 	protected void writeHeader3(ImgFileWriter writer) {
 		if (sort.isMulti()) {
-			writer.putChar((char) HEADER3_MULTI_LEN);
+			writer.put2u(HEADER3_MULTI_LEN);
 		} else {
-			writer.putChar((char) HEADER3_LEN);
+			writer.put2u(HEADER3_LEN);
 		}
 
-		writer.putChar((char) sort.getId1());
-		writer.putChar((char) sort.getId2());
-		writer.putChar((char) sort.getCodepage());
+		writer.put2u(sort.getId1());
+		writer.put2u(sort.getId2());
+		writer.put2u(sort.getCodepage());
 		if (sort.isMulti())
-			writer.putInt(0x6f02);
+			writer.put4(0x6f02);
 		else
-			writer.putInt(0x2002);
+			writer.put4(0x2002);
 
 		chartab.writeSectionInfo(writer, true, true);
-		writer.putChar((char) 0);
+		writer.put2u(0);
 
 		expansions.writeSectionInfo(writer, true, true);
-		writer.putChar((char) 0);
+		writer.put2u(0);
 
 		// SRT6 A repeat pointer to the single byte character table
-		writer.putInt(chartab.getPosition());
-		writer.putInt(0);
+		writer.put4(chartab.getPosition());
+		writer.put4(0);
 
 		if (sort.isMulti()) {
-			writer.putInt(1);
-			writer.putInt(sort.getMaxPage());  // max block in srt7
+			writer.put4(1);
+			writer.put4(sort.getMaxPage());  // max block in srt7
 
 			srt7.writeSectionInfo(writer, true);
-			writer.putChar((char) 0);
-			writer.putInt(0);
+			writer.put2u(0);
+			writer.put4(0);
 			srt8.writeSectionInfo(writer, true);
 
-			writer.putChar((char) 0);
-			writer.putInt(0);
+			writer.put2u(0);
+			writer.put4(0);
 		}
 	}
 

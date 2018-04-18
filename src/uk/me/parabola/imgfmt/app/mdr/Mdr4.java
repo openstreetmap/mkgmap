@@ -40,9 +40,9 @@ public class Mdr4 extends MdrSection implements HasHeaderFlags {
 		Collections.sort(list);
 
 		for (Mdr4Record r : list) {
-			writer.put((byte) r.getType());
-			writer.put((byte) r.getUnknown());
-			writer.put((byte) r.getSubtype());
+			writer.put1u(r.getType());
+			writer.put1u(r.getUnknown());
+			writer.put1u(r.getSubtype());
 		}
 	}
 

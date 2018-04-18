@@ -42,12 +42,12 @@ public class TypPoint extends TypElement {
 		if (fontStyle != 0 || dayFontColour != null || nightFontColour != null)
 			flags |= F_EXTENDED_FONT;
 
-		writer.put(flags);
+		writer.put1u(flags);
 
 		// Width and height is the same for day and night images, so it is written once only.
 		ColourInfo colourInfo = xpm.getColourInfo();
-		writer.put((byte) colourInfo.getWidth());
-		writer.put((byte) colourInfo.getHeight());
+		writer.put1u(colourInfo.getWidth());
+		writer.put1u(colourInfo.getHeight());
 
 		// Day or only image
 		writeImage(writer, xpm);

@@ -100,8 +100,8 @@ public class RGNFileReader extends ImgReader {
 		while (position() < end) {
 			Point p = new Point(sd);
 
-			byte t = reader.get();
-			int val = reader.getu3();
+			int t = reader.get1u();
+			int val = reader.get3u();
 			boolean hasSubtype = false;
 			if ((val & 0x800000) != 0)
 				hasSubtype = true;
@@ -124,15 +124,15 @@ public class RGNFileReader extends ImgReader {
 			}
 			p.setLabel(l);
 
-			p.setDeltaLong((short)reader.getChar());
-			p.setDeltaLat((short)reader.getChar());
+			p.setDeltaLong(reader.get2s());
+			p.setDeltaLat(reader.get2s());
 
 			if (hasSubtype) {
-				byte st = reader.get();
-				p.setType(((t & 0xff) << 8) | (st & 0xff));
+				int st = reader.get1u();
+				p.setType((t << 8) | st);
 				//p.setHasSubtype(true);
 			} else {
-				p.setType(t & 0xff);
+				p.setType(t);
 			}
 
 			p.setNumber(number++);
@@ -151,15 +151,15 @@ public class RGNFileReader extends ImgReader {
 		while (position() < end) {
 			Point p = new Point(sd);
 
-			int type = reader.get() << 8;
+			int type = reader.get1u() << 8;
 			byte b = reader.get();
 			type |= 0x10000  +  (b & 0x1f);
 			p.setType(type);
-			p.setDeltaLong((short)reader.getChar());
-			p.setDeltaLat((short)reader.getChar());
+			p.setDeltaLong(reader.get2s());
+			p.setDeltaLat(reader.get2s());
 			Label l;
 			if ((b & 0x20) != 0 ){
-				int labelOffset = reader.getu3();
+				int labelOffset = reader.get3u();
 				boolean hasPoi = (labelOffset & 0x400000) != 0;
 				if (hasPoi) {
 					POIRecord record = lblFile.fetchPoi(labelOffset);
@@ -269,7 +269,7 @@ public class RGNFileReader extends ImgReader {
 			line.setType(type & 0x3f);
 			line.setDirection((type & 0x40) != 0);
 		}
-		int labelOffset = reader.getu3();
+		int labelOffset = reader.get3u();
 		// Extra bit (for bit stream)
 		boolean extra = (labelOffset & 0x400000) != 0;
 		Label label;
@@ -285,13 +285,13 @@ public class RGNFileReader extends ImgReader {
 		line.setLabel(label);
 
 
-		line.setDeltaLong((short)reader.getChar());
-		line.setDeltaLat((short)reader.getChar());
+		line.setDeltaLong(reader.get2s());
+		line.setDeltaLat(reader.get2s());
 		int len;
 		if ((type & 0x80) == 0)
-			len = reader.get() & 0xff;
+			len = reader.get1u();
 		else
-			len = reader.getChar();
+			len = reader.get2u();
 
 		int base = reader.get();
 
@@ -309,15 +309,15 @@ public class RGNFileReader extends ImgReader {
 	 * @param line The line or shape that is to be populated.
 	 */
 	private void readLineCommonExtType(ImgFileReader reader, Subdivision div, Polyline line) {
-		int type = reader.get();
-		type = (type & 0xff) << 8;
-		byte b1 = reader.get();
+		int type = reader.get1u();
+		type <<= 8;
+		int b1 = reader.get1u();
 		boolean hasExtraBytes = (b1 & 0x80) != 0;
 		boolean hasLabel = (b1 & 0x20) != 0;
 		type |= 0x10000  + (b1 & 0x1f);
 		line.setType(type);
-		line.setDeltaLong((short)reader.getChar());
-		line.setDeltaLat((short)reader.getChar());
+		line.setDeltaLong(reader.get2s());
+		line.setDeltaLat(reader.get2s());
 		b1 = reader.get();
 		int len;
 		// one byte or two byte length field?
@@ -326,13 +326,13 @@ public class RGNFileReader extends ImgReader {
 			assert len < 0x7f;
 		}
 		else {
-			byte b2 = reader.get();
-			len = (((b2 & 0xff) << 8) + (b1 & 0xff)) >> 2;
+			int b2 = reader.get1u();
+			len = ((b2 << 8) + b1) >> 2;
 			assert len >= 0x7f;
 		}
 		--len; // the encoded value includes the base field 
 		assert len > 0;
-		int base = reader.get();
+		int base = reader.get1u();
 		byte[] bitstream = reader.get(len);
 		BitReader br = new BitReader(bitstream);
 	
@@ -340,7 +340,7 @@ public class RGNFileReader extends ImgReader {
 		readBitStream(br, div, line, false, len, base);
 	
 		if (hasLabel){
-			int labelOffset = reader.getu3();
+			int labelOffset = reader.get3u();
 			Label label;			
 			if ((labelOffset & 0x800000) == 0) {
 				label = lblFile.fetchLabel(labelOffset & 0x7fffff);
@@ -546,17 +546,17 @@ public class RGNFileReader extends ImgReader {
 			pointOffset = 0;
 
 			if (sd.needsIndPointPtr()) {
-				indPointOffset = reader.getChar();
+				indPointOffset = reader.get2u();
 				headerLen += 2;
 			}
 			
 			if (sd.needsPolylinePtr()) {
-				lineOffset = reader.getChar();
+				lineOffset = reader.get2u();
 				headerLen += 2;
 			}
 
 			if (sd.needsPolygonPtr()) {
-				polygonOffset = reader.getChar();
+				polygonOffset = reader.get2u();
 				headerLen += 2;
 			}
 

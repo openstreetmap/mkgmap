@@ -19,7 +19,7 @@ package uk.me.parabola.imgfmt.app.mdr;
  * @author Steve Ratcliffe
  */
 public abstract class RecordBase {
-	private short mapIndex;
+	private int mapIndex;
 
 	public int getMapIndex() {
 		return mapIndex;
@@ -27,6 +27,6 @@ public abstract class RecordBase {
 
 	public void setMapIndex(int mapIndex) {
 		assert mapIndex > 0;
-		this.mapIndex = (short) mapIndex;
+		this.mapIndex = mapIndex;
 	}
 }

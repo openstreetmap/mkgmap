@@ -27,11 +27,11 @@ import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 public class POIIndex {
 
 	private final String name;
-	private final byte poiIndex;
+	private final int poiIndex;
 	private final Subdivision group;
-	private final byte subType;
+	private final int subType;
 
-	public POIIndex(String name, byte poiIndex, Subdivision group, byte subType) {
+	public POIIndex(String name, int poiIndex, Subdivision group, int subType) {
 		this.name = name;
 		this.poiIndex = poiIndex;
 		this.group = group;
@@ -39,9 +39,9 @@ public class POIIndex {
 	}
 
 	void write(ImgFileWriter writer) {
-		writer.put(poiIndex);
-		writer.putChar((char)group.getNumber());
-		writer.put(subType);
+		writer.put1u(poiIndex);
+		writer.put2u(group.getNumber());
+		writer.put1u(subType);
 	}
 
 	public String getName() {

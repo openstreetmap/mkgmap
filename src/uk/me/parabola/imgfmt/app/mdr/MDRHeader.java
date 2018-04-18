@@ -57,10 +57,10 @@ public class MDRHeader extends CommonHeader {
 	 * Write out the application header.
 	 */
 	protected void writeFileHeader(ImgFileWriter writer) {
-		writer.putChar((char) sort.getCodepage());
-		writer.putChar((char) sort.getId1());
-		writer.putChar((char) sort.getId2());
-		writer.putChar((char) 14);
+		writer.put2u(sort.getCodepage());
+		writer.put2u(sort.getId1());
+		writer.put2u(sort.getId2());
+		writer.put2u(14);
 
 		sections[1].writeSectionInfo(writer, true, true);
 		sections[2].writeSectionInfo(writer, true, true);
@@ -77,7 +77,7 @@ public class MDRHeader extends CommonHeader {
 		sections[13].writeSectionInfo(writer, true, true);
 		sections[14].writeSectionInfo(writer, true, true);
 		sections[15].writeSectionInfo(writer);
-		writer.put((byte) 0);
+		writer.put1u(0);
 
 		sections[16].writeSectionInfo(writer, true, true);
 		sections[17].writeSectionInfo(writer, false, true);

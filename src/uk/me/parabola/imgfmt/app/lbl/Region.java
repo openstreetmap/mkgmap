@@ -25,7 +25,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  * @author Steve Ratcliffe
  */
 public class Region {
-	private char index;
+	private int index;
 
 	private final Country country;
 	private Label label;
@@ -35,11 +35,11 @@ public class Region {
 	}
 
 	public void write(ImgFileWriter writer) {
-		writer.putChar(country.getIndex());
-		writer.put3(label.getOffset());
+		writer.put2u(country.getIndex());
+		writer.put3u(label.getOffset());
 	}
 
-	public char getIndex() {
+	public int getIndex() {
 		assert index > 0 : "Index not yet set";
 		return index;
 	}
@@ -49,7 +49,7 @@ public class Region {
 	}
 
 	public void setIndex(int index) {
-		this.index = (char)index;
+		this.index = index;
 	}
 
 	public void setLabel(Label label) {

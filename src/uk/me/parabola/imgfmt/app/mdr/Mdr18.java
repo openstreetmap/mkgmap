@@ -34,8 +34,8 @@ public class Mdr18 extends MdrSection implements HasHeaderFlags {
 	public void writeSectData(ImgFileWriter writer) {
 		int poiSize = getSizes().getSize(19);
 		for (Mdr18Record pt : poiTypes) {
-			writer.putChar((char) (pt.getType() | 0x4000));
-			writer.putN(poiSize, pt.getRecord());
+			writer.put2u(pt.getType() | 0x4000);
+			writer.putNu(poiSize, pt.getRecord());
 		}
 	}
 

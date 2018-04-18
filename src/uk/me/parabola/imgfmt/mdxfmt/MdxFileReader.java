@@ -41,19 +41,19 @@ public class MdxFileReader {
 	private void readMaps() {
 		for (int i = 0; i < numberOfMaps; i++) {
 			MapInfo info = new MapInfo();
-			info.setHexMapname(reader.getInt());
-			info.setProductId(reader.getChar());
-			info.setFamilyId(reader.getChar());
-			info.setMapname(reader.getInt());
+			info.setHexMapname(reader.get4());
+			info.setProductId((char) reader.get2u());
+			info.setFamilyId((char) reader.get2u());
+			info.setMapname(reader.get4());
 			maps.add(info);
 		}
 	}
 
 	private void readHeader() {
-		reader.getInt();
-		reader.getChar();
-		reader.getInt();
-		numberOfMaps = reader.getInt();
+		reader.get4();
+		reader.get2u();
+		reader.get4();
+		numberOfMaps = reader.get4();
 	}
 
 	public List<MapInfo> getMaps() {

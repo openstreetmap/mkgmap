@@ -42,7 +42,7 @@ public class City {
 	// The location of the city.  These could both be zero if we are using a
 	// label instead.
 	private Subdivision subdivision;
-	private byte pointIndex;
+	private int pointIndex;
 
 
 	// You can have either a label or a subdivision and point.  This will be
@@ -63,21 +63,21 @@ public class City {
 		//writer.put3()
 		if (pointRef) {
 		    //		    System.err.println("City point = " + (int)pointIndex + " div = " + subdivision.getNumber());
-			writer.put(pointIndex);
-			writer.putChar((char)subdivision.getNumber());
+			writer.put1u(pointIndex);
+			writer.put2u(subdivision.getNumber());
 		} else {
-			writer.put3(label.getOffset());
+			writer.put3u(label.getOffset());
 		}
 
-		char info;
+		int info;
 		if(region != null)
-		    info = (char) (region.getIndex() & 0x3fff);
+		    info = region.getIndex() & 0x3fff;
 		else
-		    info = (char) (REGION_IS_COUNTRY | (country.getIndex() & 0x3fff));
+		    info = REGION_IS_COUNTRY | (country.getIndex() & 0x3fff);
 		if (pointRef)
 			info |= POINT_REF;
 
-		writer.putChar(info);
+		writer.put2u(info);
 	}
 
 	public int getIndex() {
@@ -95,7 +95,7 @@ public class City {
 		this.label = label;
 	}
 
-	public void setPointIndex(byte pointIndex) {
+	public void setPointIndex(int pointIndex) {
 		pointRef = true;
 		this.pointIndex = pointIndex;
 	}

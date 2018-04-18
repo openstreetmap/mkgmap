@@ -91,13 +91,13 @@ public class NETFileReader extends ImgFile {
 			RoadDef road = new RoadDef(++record, off, null);
 			readLabels(reader, road);
 			byte netFlags = reader.get();
-			/*int len =*/ reader.getu3();
+			/*int len =*/ reader.get3u();
 
 			int[] counts = new int[24];
 			int level = 0;
 			while (level < 24) {
 				int n = reader.get();
-				counts[level++] = (n & 0x7f);
+				counts[level++] = n & 0x7f;
 				if ((n & 0x80) != 0)
 					break;
 			}
@@ -106,12 +106,12 @@ public class NETFileReader extends ImgFile {
 				int c = counts[i];
 				for (int j = 0; j < c; j++) {
 					/*byte b =*/ reader.get();
-					/*char sub =*/ reader.getChar();
+					/*char sub =*/ reader.get2u();
 				}
 			}
 
 			if ((netFlags & RoadDef.NET_FLAG_ADDRINFO) != 0) {
-				char flags2 = reader.getChar();
+				int flags2 = reader.get2u();
 
 				int zipFlag = (flags2 >> 10) & 0x3;
 				int cityFlag = (flags2 >> 12) & 0x3;
@@ -130,10 +130,10 @@ public class NETFileReader extends ImgFile {
 			}
 
 			if ((netFlags & RoadDef.NET_FLAG_NODINFO) != 0) {
-				int nodFlags = reader.get();
+				int nodFlags = reader.get1u();
 				int nbytes = nodFlags & 0x3;
 				if (nbytes > 0) {
-					/*int nod = */reader.getUint(nbytes+1);
+					/*int nod = */reader.getNu(nbytes+1);
 				}
 			}
 
@@ -153,16 +153,16 @@ public class NETFileReader extends ImgFile {
 		indexes.clear();
 		if (flag == 2) {
 			// fetch city/zip index
-			int ind = reader.getUint(size);
+			int ind = reader.getNu(size);
 			if (ind != 0)
 				indexes.add(ind-1);
 		} else if (flag == 3) {
 			// there is no item
 		} else if (flag == 0) {
-			int n = reader.get() & 0xff;
+			int n = reader.get1u();
 			parseList(reader, n, size, indexes);
 		} else if (flag == 1) {
-			int n = reader.getChar();
+			int n = reader.get2u();
 			parseList(reader, n, size, indexes);
 		} else {
 			assert false : "flag is " + flag;
@@ -174,13 +174,13 @@ public class NETFileReader extends ImgFile {
 		long endPos = reader.position() + n;
 		int node = 0; // not yet used
 		while (reader.position() < endPos) {
-			int initFlag = reader.get() & 0xff;
-			int skip = (initFlag & 0x1f);
+			int initFlag = reader.get1u();
+			int skip = initFlag & 0x1f;
 			initFlag >>= 5;
 			if (initFlag == 7) {
 				// Need to read another byte
-				initFlag = reader.get() & 0xff;
-				skip |= ((initFlag & 0x1f) << 5);
+				initFlag = reader.get1u();
+				skip |= (initFlag & 0x1f) << 5;
 				initFlag >>= 5;
 			}
 			node += skip + 1;
@@ -210,7 +210,7 @@ public class NETFileReader extends ImgFile {
 			assert false : "ERRROR overflow";
 			return 0;
 		}
-		int cnum = reader.getUint(size);
+		int cnum = reader.getNu(size);
 		return cnum;
 	}
 
@@ -222,9 +222,9 @@ public class NETFileReader extends ImgFile {
 	private void fetchNumber(ImgFileReader reader, int numberFlag) {
 		int n = 0;
 		if (numberFlag == 0) {
-			n = reader.get();
+			n = reader.get1u();
 		} else if (numberFlag == 1) {
-			n = reader.getChar();
+			n = reader.get2u();
 		} else if (numberFlag == 3) {
 			// There is no block
 			return;
@@ -238,7 +238,7 @@ public class NETFileReader extends ImgFile {
 
 	private void readLabels(ImgFileReader reader, RoadDef road) {
 		for (int i = 0; i < 4; i++) {
-			int lab = reader.getu3();
+			int lab = reader.get3u();
 			Label label = labels.fetchLabel(lab & 0x7fffff);
 			road.addLabel(label);
 			if ((lab & 0x800000) != 0)
@@ -257,7 +257,7 @@ public class NETFileReader extends ImgFile {
 		int start = netHeader.getRoadDefinitionsStart();
 		for (int off : offsets) {
 			reader.position(start + off);
-			int labelOffset = reader.getu3();
+			int labelOffset = reader.get3u();
 			// TODO what if top bit is not set?, there can be more than one name and we will miss them
 			offsetLabelMap.put(off, labelOffset & 0x7fffff);
 		}
@@ -277,7 +277,7 @@ public class NETFileReader extends ImgFile {
 
 		Set<Integer> allOffsets = new HashSet<>();
 		while (reader.position() < end) {
-			int net1 = reader.getu3();
+			int net1 = reader.get3u();
 
 			// The offset is stored in the bottom 22 bits. The top 2 bits are an index into the list
 			// of lbl pointers in the net1 entry. 

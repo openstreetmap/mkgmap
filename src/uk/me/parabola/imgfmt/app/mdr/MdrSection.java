@@ -49,11 +49,11 @@ public abstract class MdrSection extends ConfigBase {
 	}
 
 	protected void putMapIndex(ImgFileWriter writer, int mapIndex) {
-		writer.putN(sizes.getMapSize(), mapIndex);
+		writer.putNu(sizes.getMapSize(), mapIndex);
 	}
 
 	protected void putStringOffset(ImgFileWriter writer, int strOff) {
-		writer.putN(sizes.getStrOffSize(), strOff);
+		writer.putNu(sizes.getStrOffSize(), strOff);
 	}
 
 	/**

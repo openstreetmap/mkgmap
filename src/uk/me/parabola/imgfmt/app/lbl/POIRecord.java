@@ -28,13 +28,13 @@ import uk.me.parabola.imgfmt.app.Label;
  */
 public class POIRecord {
 
-	static final byte HAS_STREET_NUM = 0x01;
-	static final byte HAS_STREET     = 0x02;
-	static final byte HAS_CITY       = 0x04;
-	static final byte HAS_ZIP        = 0x08;
-	static final byte HAS_PHONE      = 0x10;
-	static final byte HAS_EXIT       = 0x20;
-	static final byte HAS_TIDE_PREDICTION = 0x40;
+	static final int HAS_STREET_NUM = 0x01;
+	static final int HAS_STREET     = 0x02;
+	static final int HAS_CITY       = 0x04;
+	static final int HAS_ZIP        = 0x08;
+	static final int HAS_PHONE      = 0x10;
+	static final int HAS_EXIT       = 0x20;
+	static final int HAS_TIDE_PREDICTION = 0x40;
 
 	/* Not used yet
 	private static final AddrAbbr ABBR_HASH = new AddrAbbr(' ', "#");
@@ -105,45 +105,42 @@ public class POIRecord {
 		this.exit = exit;
 	}
 
-	void write(ImgFileWriter writer, byte POIGlobalFlags, int realofs,
+	void write(ImgFileWriter writer, int POIGlobalFlags, int realofs,
 		   long numCities, long numZips, long numHighways, long numExitFacilities) {
 		assert offset == realofs : "offset = " + offset + " realofs = " + realofs;
 		int ptr = poiName.getOffset();
 		if (POIGlobalFlags != getPOIFlags())
 			ptr |= 0x800000;
-		writer.put3(ptr);
+		writer.put3u(ptr);
 
 		if (POIGlobalFlags != getPOIFlags())
-			writer.put(getWrittenPOIFlags(POIGlobalFlags));
+			writer.put1u(getWrittenPOIFlags(POIGlobalFlags));
 
 		if (streetNumberName != null)
 		{
 			int labOff = streetNumberName.getOffset();
-			writer.put((byte)((labOff & 0x7F0000) >> 16));
-			writer.putChar((char)(labOff & 0xFFFF));
+			// !!! seems to write as hybrid endian
+			writer.put1u(labOff >> 16);
+			writer.put2u(labOff & 0xFFFF);
 		}
 		else if (simpleStreetNumber.isUsed())
 			simpleStreetNumber.write(writer);
 
 		if (streetName != null)
-			writer.put3(streetName.getOffset());
+			writer.put3u(streetName.getOffset());
 
 		if (city != null)
-		{
-			char cityIndex = (char) city.getIndex();
-			writer.putN(Utils.numberToPointerSize((int)numCities), cityIndex);
-		}
+			writer.putNu(Utils.numberToPointerSize((int)numCities), city.getIndex());
 
-		if (zip != null) {
-			char zipIndex = (char) zip.getIndex();
-			writer.putN(Utils.numberToPointerSize((int)numZips), zipIndex);
-		}
+		if (zip != null)
+			writer.putNu(Utils.numberToPointerSize((int)numZips), zip.getIndex());
 
 		if (complexPhoneNumber != null)
 		{
 			int labOff = complexPhoneNumber.getOffset();
-			writer.put((byte)((labOff & 0x7F0000) >> 16));
-			writer.putChar((char)(labOff & 0xFFFF));
+			// !!! seems to write as hybrid endian
+			writer.put1u(labOff >> 16);
+			writer.put2u(labOff & 0xFFFF);
 		}
 		else if (simplePhoneNumber.isUsed())
 			simplePhoneNumber.write(writer);
@@ -163,20 +160,20 @@ public class POIRecord {
 				ef = facilites.get(0);
 			if(ef != null)
 				val |= 0x800000; // exit facilities defined
-			writer.put3(val);
+			writer.put3u(val);
 
-			char highwayIndex = (char)exit.getHighway().getIndex();
-			writer.putN(Utils.numberToPointerSize((int)numHighways), highwayIndex);
+			int highwayIndex = exit.getHighway().getIndex();
+			writer.putNu(Utils.numberToPointerSize((int)numHighways), highwayIndex);
 
 			if(ef != null) {
-				char exitFacilityIndex = (char)ef.getIndex();
-				writer.putN(Utils.numberToPointerSize((int)numExitFacilities), exitFacilityIndex);
+				int exitFacilityIndex = ef.getIndex();
+				writer.putNu(Utils.numberToPointerSize((int)numExitFacilities), exitFacilityIndex);
 			}
 		}
 	}
 
-	byte getPOIFlags() {
-		byte b = 0;
+	int getPOIFlags() {
+		int b = 0;
 		if (streetName != null)
 			b |= HAS_STREET;
 		if (simpleStreetNumber.isUsed() || streetNumberName != null)
@@ -192,7 +189,7 @@ public class POIRecord {
 		return b;
 	}
 	
-	byte getWrittenPOIFlags(byte POIGlobalFlags) 
+	int getWrittenPOIFlags(int POIGlobalFlags)
 	{
 		int flag = 0;
 		int j = 0;
@@ -218,15 +215,15 @@ public class POIRecord {
 
 		flag |= 0x80; // gpsmapedit asserts for this bit set
 	    
-		return (byte) flag;
+		return flag;
 	}
 
 	/**
 	 * Sets the start offset of this POIRecord
 	 *
-	 * \return Number of bytes needed by this entry
+	 * @return Number of bytes needed by this entry
 	 */
-	int calcOffset(int ofs, byte POIGlobalFlags, long numCities, long numZips, long numHighways, long numExitFacilities) {
+	int calcOffset(int ofs, int POIGlobalFlags, long numCities, long numZips, long numHighways, long numExitFacilities) {
 		offset = ofs;
 		int size = 3;
 		if (exit != null) {
@@ -340,8 +337,9 @@ public class POIRecord {
 
 		public void write(ImgFileWriter writer)
 		{
-			for(int i = 0; i < encodedSize; i++)
-				writer.put(encodedNumber[i]);
+//			for(int i = 0; i < encodedSize; i++)
+//				writer.put1u(encodedNumber[i]);
+			writer.put(encodedNumber, 0, encodedSize);
 		}
 
 		public boolean isUsed()

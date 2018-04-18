@@ -222,8 +222,8 @@ public class RoadDef {
 		if (numbers != null && numbers.getSwapped()) {
 			netFlags |= 0x20; // swapped default; left=even, right=odd
 		}
-		writer.put((byte) netFlags);
-		writer.put3(roadLength);
+		writer.put1u(netFlags);
+		writer.put3u(roadLength);
 
 		int maxlevel = writeLevelCount(writer);
 
@@ -234,9 +234,9 @@ public class RoadDef {
 			if (nodeCount + 2 != nnodes){
 				log.error("internal error? The nodeCount doesn't match value calculated by RoadNetWork:",this);
 			}
-			writer.put((byte) (nodeCount & 0xff)); // lo bits of node count
+			writer.put1u(nodeCount); // lo bits of node count
 
-			int code = ((nodeCount >> 8) & 0x3); // top bits of node count
+			int code = (nodeCount >> 8) & 0x3; // top bits of node count
 			int len, flag;
 			
 			ByteArrayOutputStream zipBuf = null, cityBuf = null;
@@ -263,32 +263,32 @@ public class RoadDef {
 				flag = 3;
 			code |= flag << 6;
 			
-			writer.put((byte)code);
+			writer.put1u(code);
 //			System.out.printf("%d %d %d\n", (code >> 2 & 0x3), (code >> 4 & 0x3), (code >> 6 & 0x3));  
 			
 			if (zipBuf != null){
 				len = zipBuf.size();
-				writer.putN(Utils.numberToPointerSize(len), len);
+				writer.putNu(Utils.numberToPointerSize(len), len);
 				writer.put(zipBuf.toByteArray());
 			} else {
 				if(zip != null) {
-					char zipIndex = (char)zip.getIndex();
-					writer.putN(Utils.numberToPointerSize(numZips), zipIndex);
+					int zipIndex = zip.getIndex();
+					writer.putNu(Utils.numberToPointerSize(numZips), zipIndex);
 				}
 			}
 			if (cityBuf != null){
 				len = cityBuf.size();
-				writer.putN(Utils.numberToPointerSize(len), len);
+				writer.putNu(Utils.numberToPointerSize(len), len);
 				writer.put(cityBuf.toByteArray());
 			} else {
 				if(city != null) {
-					char cityIndex = (char)city.getIndex();
-					writer.putN(Utils.numberToPointerSize(numCities), cityIndex);
+					int cityIndex = city.getIndex();
+					writer.putNu(Utils.numberToPointerSize(numCities), cityIndex);
 				}
 			}
 			if (numbers != null) {
 				BitWriter bw = numbers.fetchBitStream();
-				writer.putN(Utils.numberToPointerSize(bw.getLength()), bw.getLength());
+				writer.putNu(Utils.numberToPointerSize(bw.getLength()), bw.getLength());
 				writer.put(bw.getBytes(), 0, bw.getLength());
 			}
 		}
@@ -297,11 +297,11 @@ public class RoadDef {
 			// This is the offset of an entry in NOD2
 			int val = offsetNod2;
 			if (val < 0x7fff) {
-				writer.put((byte) 1);
-				writer.putChar((char) val);
+				writer.put1u(1);
+				writer.put2u(val);
 			} else {
-				writer.put((byte) 2);
-				writer.put3(val);
+				writer.put1u(2);
+				writer.put3u(val);
 			}
 		}
 	}
@@ -312,14 +312,14 @@ public class RoadDef {
 			int ptr = l.getOffset();
 			if (i == (numlabels-1))
 				ptr |= 0x800000;
-			writer.put3(ptr);
+			writer.put3u(ptr);
 		}
 	}
 
 	public void putSortedRoadEntry(ImgFileWriter writer, Label label) {
 		for(int i = 0; i < labels.length && labels[i] != null; ++i) {
 			if(labels[i].equals(label)) {
-				writer.put3((i << 22) | offsetNet1);
+				writer.put3u((i << 22) | offsetNet1);
 				return;
 			}
 		}
@@ -333,7 +333,7 @@ public class RoadDef {
 			assert b < 0x80 : "too many polylines at level " + i;
 			if (i == maxlevel)
 				b |= 0x80;
-			writer.put((byte) b);
+			writer.put1u(b);
 		}
 		return maxlevel;
 	}
@@ -478,7 +478,7 @@ public class RoadDef {
 
 		for (Offset off : rgnOffsets) {
 			rgn.position(off.getPosition());
-			rgn.put3(offsetNet1 | off.getFlags());
+			rgn.put3u(offsetNet1 | off.getFlags());
 		}
 	}
 
@@ -560,8 +560,8 @@ public class RoadDef {
 
 		offsetNod2 = writer.position();
 
-		writer.put((byte) nod2Flags);
-		writer.put3(node.getOffsetNod1()); // offset in nod1
+		writer.put1u(nod2Flags);
+		writer.put3u(node.getOffsetNod1()); // offset in nod1
 
 		// this is related to the number of nodes, but there
 		// is more to it...
@@ -572,7 +572,7 @@ public class RoadDef {
 		int nbits = nnodes;
 		if (!startsWithNode)
 			nbits++;
-		writer.putChar((char) nbits);
+		writer.put2u(nbits);
 		boolean[] bits = new boolean[nbits];
 		
 		if (hasHouseNumbers()){
@@ -592,7 +592,7 @@ public class RoadDef {
             for (int j = 0; j < 8 && j < bits.length - i; j++)
 				if (bits[i+j])
 					b |= 1 << j;
-			writer.put((byte) b);
+			writer.put1u(b);
 		}
 	}
 

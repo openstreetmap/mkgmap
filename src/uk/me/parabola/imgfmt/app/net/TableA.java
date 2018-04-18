@@ -100,7 +100,7 @@ public class TableA {
 	 * Retrieve an arc's index.
 	 * Order in table A: roundabouts, unpaved, ferry, paved 
 	 */
-	public byte getIndex(RouteArc arc) {
+	public int getIndex(RouteArc arc) {
 		frozen = true;			// don't allow any more arcs to be added
 		int i;
 		RoadDef rd = arc.getRoadDef();
@@ -125,7 +125,7 @@ public class TableA {
 			i = roundaboutArcs.size() + unpavedArcs.get(rd);
 		}
 		assert i < 0x100 : "Table A index too large: " + rd;
-		return (byte) i;
+		return i;
 	}
 
 	/**
@@ -159,9 +159,9 @@ public class TableA {
 	 * be fit for writing, so at this point we check
 	 * it isn't too large.
 	 */
-	public byte getNumberOfItems() {
+	public int getNumberOfItems() {
 		assert size() < 0x100 : "Table A too large";
-		return (byte)size();
+		return size();
 	}
 
 	/**
@@ -174,7 +174,7 @@ public class TableA {
 		log.debug("tab a offset", offset, "tab a size", size);
 	
 		for (int i = 0; i < size; i++)
-			writer.put((byte) 0);
+			writer.put1u(0);
 	}
 
 	/**
@@ -208,8 +208,8 @@ public class TableA {
 		final int ACCESS_TOP_BITS = 0xc000;
 		pos |= (access & ACCESS_TOP_BITS) << 8;
 		access &= ~ACCESS_TOP_BITS;
-		writer.put3(pos);
-		writer.put((byte) rd.getTabAInfo());
-		writer.put((byte) access);
+		writer.put3u(pos);
+		writer.put1u(rd.getTabAInfo());
+		writer.put1u(access);
 	}
 }

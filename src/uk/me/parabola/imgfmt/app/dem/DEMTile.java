@@ -41,7 +41,7 @@ public class DEMTile {
 	private int offset;					// offset from section.dataOffset2
 	private final int baseHeight;		// base or minimum height in this tile 
 	private final int maxDeltaHeight;	// delta between max height and base height
-	private final byte encodingType;  	// determines how the highest values are displayed 
+	private final int encodingType;  	// determines how the highest values are displayed 
 	private final boolean hasData;		// not all voids
 
 	private int bitPos;
@@ -395,26 +395,14 @@ public class DEMTile {
 		int baseSize = ((recordDesc & 0x4) >> 2) + 1;
 		int deltaSize = ((recordDesc & 0x8) >> 3) + 1;
 		boolean hasExtra = (recordDesc & 0x10) != 0;
-		switch (offsetSize) {
-		case 1:
-			writer.put1(offset);
-			break;
-		case 2:
-			writer.put2(offset);
-			break;
-		case 3:
-			writer.put3(offset);
-			break;
-		default:
-			writer.putInt(offset);
-		}
+		writer.putNu(offsetSize, offset);
 		if (baseSize == 1)
-			writer.put((byte) baseHeight);
+			writer.put1s(baseHeight);
 		else 
-			writer.putChar((char) baseHeight);
-		writer.putN(deltaSize, maxDeltaHeight);
+			writer.put2s(baseHeight);
+		writer.putNu(deltaSize, maxDeltaHeight);
 		if (hasExtra)
-			writer.put(encodingType);
+			writer.put1u(encodingType);
 	}
 
 	public void writeBitStreamData(ImgFileWriter writer) {

@@ -42,22 +42,22 @@ public class Mdr1SubHeader {
 	}
 
 	protected void writeFileHeader(ImgFileWriter writer) {
-		writer.putChar((char) HEADER_SIZE);
+		writer.put2u(HEADER_SIZE);
 		for (int n = 1; n <= MAX_SECTION; n++) {
 			Section section = sections[n];
 
 			// The second subsection does not have a length, because it always
 			// has the same length as subsection 1.
 			if (n == 2)
-				writer.putInt(section.getPosition());
+				writer.put4(section.getPosition());
 			else {
 				//section.writeSectionInfo(writer);
-				writer.putInt(section.getPosition());
+				writer.put4(section.getPosition());
 				int size = section.getSize();
 				if (size == 0)
-					writer.putInt(0);
+					writer.put4(0);
 				else
-					writer.putInt(size / section.getItemSize());
+					writer.put4(size / section.getItemSize());
 			}
 		}
 	}

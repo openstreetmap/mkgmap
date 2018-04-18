@@ -37,8 +37,8 @@ public class NETHeader extends CommonHeader {
 	private final Section segmentedRoads = new Section(roadDefinitions);
 	private final Section sortedRoads = new Section(segmentedRoads, SORTED_ROAD_RECSIZE);
 
-	private byte roadShift;
-	private byte segmentShift;
+	private int roadShift;
+	private int segmentShift;
 
 	public NETHeader() {
 		super(HEADER_LEN, "GARMIN NET");
@@ -53,14 +53,14 @@ public class NETHeader extends CommonHeader {
 	 */
 	protected void readFileHeader(ImgFileReader reader) throws ReadFailedException {
 		roadDefinitions.readSectionInfo(reader, false);
-		roadShift = reader.get();
+		roadShift = reader.get1u();
 
 		segmentedRoads.readSectionInfo(reader, false);
-		segmentShift = reader.get();
+		segmentShift = reader.get1u();
 
 		sortedRoads.readSectionInfo(reader, true);
 
-		reader.getInt();
+		reader.get4();
 		reader.get();
 		reader.get();
 	}
@@ -74,17 +74,17 @@ public class NETHeader extends CommonHeader {
 	protected void writeFileHeader(ImgFileWriter writer) {
 		roadDefinitions.writeSectionInfo(writer);
 
-		writer.put(roadShift); // offset multiplier
+		writer.put1u(roadShift); // offset multiplier
 
 		segmentedRoads.writeSectionInfo(writer);
 
-		writer.put(segmentShift); // offset multiplier
+		writer.put1u(segmentShift); // offset multiplier
 
 		sortedRoads.writeSectionInfo(writer);
 
-		writer.putInt(0);
-		writer.put((byte) 1);
-		writer.put((byte) 0);
+		writer.put4(0);
+		writer.put1u(1);
+		writer.put1u(0);
 	}
 
 	ImgFileWriter makeRoadWriter(ImgFileWriter writer) {
@@ -110,6 +110,6 @@ public class NETHeader extends CommonHeader {
 	}
 
 	public int getRoadShift() {
-		return roadShift & 0xff;
+		return roadShift;
 	}
 }

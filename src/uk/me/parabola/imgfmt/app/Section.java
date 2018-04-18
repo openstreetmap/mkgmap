@@ -23,7 +23,7 @@ import java.io.IOException;
  * total size of the section.
  */
 public class Section {
-	private char itemSize;
+	private int itemSize;
 	private int size;
 	private int position;
 	private Section link;
@@ -32,11 +32,11 @@ public class Section {
 	public Section() {
 	}
 
-	public Section(char itemSize) {
+	public Section(int itemSize) {
 		this.itemSize = itemSize;
 	}
 
-	public Section(Section link, char itemSize) {
+	public Section(Section link, int itemSize) {
 		this.itemSize = itemSize;
 		this.link = link;
 	}
@@ -49,11 +49,11 @@ public class Section {
 		size += itemSize;
 	}
 
-	public char getItemSize() {
+	public int getItemSize() {
 		return itemSize;
 	}
 
-	public void setItemSize(char itemSize) {
+	public void setItemSize(int itemSize) {
 		this.itemSize = itemSize;
 	}
 
@@ -105,7 +105,7 @@ public class Section {
 		if (itemSize == 0)
 			return 0;
 		
-		return size/ (int) itemSize;
+		return size/itemSize;
 	}
 
 	protected int getExtraValue() {
@@ -117,10 +117,10 @@ public class Section {
 	}
 
 	public void readSectionInfo(ImgFileReader reader, boolean withItemSize) {
-		setPosition(reader.getInt());
-		setSize(reader.getInt());
+		setPosition(reader.get4());
+		setSize(reader.get4());
 		if (withItemSize)
-			setItemSize(reader.getChar());
+			setItemSize(reader.get2u());
 	}
 
 	public SectionWriter makeSectionWriter(ImgFileWriter writer) {
@@ -137,19 +137,19 @@ public class Section {
 	}
 
 	public void writeSectionInfo(ImgFileWriter writer, boolean withItemSize, boolean withExtraValue) {
-		writer.putInt(getPosition());
-		writer.putInt(getSize());
+		writer.put4(getPosition());
+		writer.put4(getSize());
 		if (withItemSize || getItemSize() > 0)
-			writer.putChar(getItemSize());
+			writer.put2u(getItemSize());
 		if (withExtraValue)
-			writer.putInt(getExtraValue());
+			writer.put4(getExtraValue());
 	}
 
 	public static void close(ImgFileWriter writer) {
 		assert writer instanceof SectionWriter;
 		try {
 			writer.close();
-		} catch (IOException e) {
+		} catch (IOException ignore) {
 			// ignore as this is only for section writers.
 		}
 	}

@@ -43,18 +43,18 @@ public class TableC {
 	public void write(ImgFileWriter writer, int tablesOffset) {
 		if (!restrictions.isEmpty()) {
 			if (size < 0x100)
-				writer.put((byte) size);
+				writer.put1u(size);
 			else
-				writer.putChar((char) size);
+				writer.put2u(size);
 			for (RouteRestriction restr : restrictions)
 				restr.write(writer, tablesOffset);
 		}
 		if(tabA.numRoundaboutArcs() > 0)
-			writer.put((byte)tabA.numRoundaboutArcs());
+			writer.put1u(tabA.numRoundaboutArcs());
 		if(tabA.numUnpavedArcs() > 0)
-			writer.put((byte)tabA.numUnpavedArcs());
+			writer.put1u(tabA.numUnpavedArcs());
 		if(tabA.numFerryArcs() > 0)
-			writer.put((byte)tabA.numFerryArcs());
+			writer.put1u(tabA.numFerryArcs());
 	}
 
 	/**
@@ -74,7 +74,7 @@ public class TableC {
 	/**
 	 * The size of restriction indices in the nodes area.
 	 */
-	private byte getOffsetSize() {
+	private int getOffsetSize() {
 		if (size < 0x80)
 			return 1; // allows 7 bit index (8th bit is flag)
 		else if (size < 0x8000)
@@ -85,12 +85,12 @@ public class TableC {
 	}
 
 	public void propagateSizeBytes() {
-		byte b = getOffsetSize();
+		int b = getOffsetSize();
 		for (RouteRestriction restr : restrictions)
 			restr.setOffsetSize(b);
 	}
 
-	public byte getFormat() {
+	public int getFormat() {
 		// Table C format bitmask
 		// 0x01 = 1-255 bytes of restrictions
 		// 0x02 = 256-65535 bytes of restrictions
@@ -108,6 +108,6 @@ public class TableC {
 			format |= 0x08;
 		if(tabA.numFerryArcs() > 0)
 			format |= 0x10;
-		return (byte)format;
+		return format;
 	}
 }

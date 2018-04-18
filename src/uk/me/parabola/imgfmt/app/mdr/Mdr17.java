@@ -64,7 +64,7 @@ public class Mdr17 extends MdrSection {
 			len <<= 1;
 			count++;
 		}
-		writer.putN(count, len);
+		writer.putNu(count, len);
 
 		// Calculate the header. This code is unlikely to survive the finding of another example!
 		// Have no idea what the real thinking behind this is.
@@ -73,7 +73,7 @@ public class Mdr17 extends MdrSection {
 		header += (prefixLength + 1) * (prefixLength + 1);
 		header += (index.getItemSize() - prefixLength - 1) * 0xa;
 
-		writer.putChar((char) header);
+		writer.put2u(header);
 		index.writeSectData(writer);
 	}
 

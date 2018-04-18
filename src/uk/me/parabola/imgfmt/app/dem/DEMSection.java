@@ -23,7 +23,7 @@ import uk.me.parabola.mkgmap.reader.hgt.HGTConverter;
 public class DEMSection {
 	private static final Logger log = Logger.getLogger(DEMSection.class);
 	private static final int STD_DIM = 64; 
-	private byte unknown1 = 0;
+	private int unknown1 = 0;
 	private final int zoomLevel;
 	private final boolean lastLevel;
 	private final int pointsPerLat = STD_DIM;
@@ -183,28 +183,26 @@ public class DEMSection {
 	}
 
 	public void writeHeader(ImgFileWriter writer) {
-		writer.put(unknown1);	//0x00 
-		writer.put1(zoomLevel);	//0x01 
-		writer.putInt(pointsPerLat);	//0x02
-		writer.putInt(pointsPerLon);	//0x06 
-		writer.putInt(nonStdHeight - 1);	//0x0A
-		writer.putInt(nonStdWidth - 1);	//0x0E 
-		writer.put2(flags1);	//0x12
-		writer.putInt(tilesLon - 1);	//0x14
-		writer.putInt(tilesLat - 1);	//0x18
+		writer.put1u(unknown1);	//0x00 
+		writer.put1u(zoomLevel);	//0x01 
+		writer.put4(pointsPerLat);	//0x02
+		writer.put4(pointsPerLon);	//0x06 
+		writer.put4(nonStdHeight - 1);	//0x0A
+		writer.put4(nonStdWidth - 1);	//0x0E 
+		writer.put2u(flags1);	//0x12
+		writer.put4(tilesLon - 1);	//0x14
+		writer.put4(tilesLat - 1);	//0x18
 		
-		writer.put2(recordDesc);	//0x1c
-		writer.put2(tileDescSize);	//0x1e
-		writer.putInt(dataOffset);	//0x20
-		writer.putInt(dataOffset2);	//0x24
-		writer.putInt(left);	//0x28 
-		writer.putInt(top);	//0x2c 
-		writer.putInt(pointsDistanceLat);	//0x30
-		writer.putInt(pointsDistanceLon);	//0x34
-		assert minHeight >= Short.MIN_VALUE && minHeight <= Short.MAX_VALUE; 
-		writer.putChar((char) minHeight);	//0x38
-		assert maxHeight >= Short.MIN_VALUE && maxHeight <= Short.MAX_VALUE; 
-		writer.putChar((char) maxHeight);	//0x3a
+		writer.put2u(recordDesc);	//0x1c
+		writer.put2u(tileDescSize);	//0x1e
+		writer.put4(dataOffset);	//0x20
+		writer.put4(dataOffset2);	//0x24
+		writer.put4(left);	//0x28 
+		writer.put4(top);	//0x2c 
+		writer.put4(pointsDistanceLat);	//0x30
+		writer.put4(pointsDistanceLon);	//0x34
+		writer.put2s(minHeight);	//0x38
+		writer.put2s(maxHeight);	//0x3a
 	}
 
 	public void writeRest(ImgFileWriter writer) {

@@ -357,17 +357,17 @@ public class Mdr7 extends MdrMapSection {
 			if (rr != 3)
 				lab |= 0x800000;
 			
-			writer.put3(lab);
+			writer.put3u(lab);
 			if (hasStrings)
 				putStringOffset(writer, s.getStringOffset());
 
 			if (hasNameOffset)
-				writer.put(s.getOutNameOffset());
+				writer.put1u(s.getOutNameOffset());
 			if (partialInfoSize > 0) {
 				int trailingFlags = ((rr & 1) == 0) ? 1 : 0;
 				// trailingFlags |= s.getB() << 1;
 				// trailingFlags |= s.getS() << (1 + partialBShift);
-				writer.putN(partialInfoSize, trailingFlags);
+				writer.putNu(partialInfoSize, trailingFlags);
 			}
 			last = s;
 		}

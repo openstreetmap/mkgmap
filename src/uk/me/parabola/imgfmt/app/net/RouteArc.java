@@ -52,12 +52,12 @@ public class RouteArc {
 	private final RouteNode dest;
 
 	// The index in Table A describing this arc.
-	private byte indexA;
+	private int indexA;
 	// The index in Table B that this arc goes via, if external.
-	private byte indexB;
+	private int indexB;
 	
-	private byte flagA;
-	private byte flagB;
+	private int flagA;
+	private int flagB;
 
 	private final boolean haveCurve;
 	private final int length;
@@ -192,7 +192,7 @@ public class RouteArc {
 	/**
 	 * Set this arc's index into Table A.
 	 */
-	public void setIndexA(byte indexA) {
+	public void setIndexA(int indexA) {
 		this.indexA = indexA;
 	}
 
@@ -201,14 +201,14 @@ public class RouteArc {
 	 *
 	 * Required for writing restrictions (Table C).
 	 */
-	public byte getIndexA() {
+	public int getIndexA() {
 		return indexA;
 	}
 
 	/**
 	 * Set this arc's index into Table B. Applies to external arcs only.
 	 */
-	public void setIndexB(byte indexB) {
+	public void setIndexB(int indexB) {
 		assert !isInternal() : "Trying to set index on internal arc.";
 		this.indexB = indexB;
 	}
@@ -219,7 +219,7 @@ public class RouteArc {
 	 * Required for writing restrictions (Table C).
 	 */
 	public int getIndexB() {
-		return indexB & 0xff;
+		return indexB; // ??? & 0xff;
 	}
 	 
 	public int getArcDestClass(){
@@ -258,23 +258,23 @@ public class RouteArc {
 		// determine how to write length and curve bit
 		int[] lendat = encodeLength();
 
-		writer.put(flagA);
+		writer.put1u(flagA);
 		if (isInternal()) {
 			// space for 14 bit node offset, written in writeSecond.
-			writer.put(flagB);
-			writer.put((byte) 0);
+			writer.put1u(flagB);
+			writer.put1u(0);
 		} else {
 			if(indexB < 0 || indexB >= 0x3f) {
-				writer.put((byte) (flagB | 0x3f));
-				writer.put(indexB);
+				writer.put1u(flagB | 0x3f);
+				writer.put1u(indexB);
 			}
 			else
-				writer.put((byte) (flagB | indexB));
+				writer.put1u(flagB | indexB);
 		}
 		
 		 // only write out the local net index if it is the first arc or else if newDir is set.
 		if (first || lastArc.indexA != this.indexA)
-			writer.put(indexA);
+			writer.put1u(indexA);
 
 		if(log.isDebugEnabled())
 			log.debug("writing length", length);
@@ -285,7 +285,7 @@ public class RouteArc {
 			if (useCompactDirs){
 				// determine if we have to write direction info
 				if (compactedDir != null)
-					writer.put(compactedDir);
+					writer.put(compactedDir); // composite byte = dont check
 			} else 
 				writer.put(directionFromDegrees(initialHeading));
 		} else {
@@ -294,7 +294,7 @@ public class RouteArc {
 		if (haveCurve) {
 			int[] curvedat = encodeCurve();
 			for (int aCurvedat : curvedat)
-				writer.put((byte) aCurvedat);
+			    writer.put((byte) aCurvedat);
 		}
 	}
 
@@ -308,7 +308,7 @@ public class RouteArc {
 			return;
 
 		writer.position(offset + 1);
-		char val = (char) (flagB << 8);
+		int val = flagB << 8;
 		int diff = dest.getOffsetNod1() - source.getOffsetNod1();
 		assert diff < 0x2000 && diff >= -0x2000
 			: "relative pointer too large for 14 bits (source offset = " + source.getOffsetNod1() + ", dest offset = " + dest.getOffsetNod1() + ")";
@@ -317,8 +317,8 @@ public class RouteArc {
 		// We write this big endian
 		if(log.isDebugEnabled())
 			log.debug("val is", Integer.toHexString((int)val));
-		writer.put((byte) (val >> 8));
-		writer.put((byte) val);
+		writer.put1u(val >> 8);
+		writer.put1u(val & 0xff);
 	}
 
 	/*

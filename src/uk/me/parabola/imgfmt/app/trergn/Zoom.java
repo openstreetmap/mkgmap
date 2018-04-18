@@ -76,9 +76,9 @@ public class Zoom {
 	}
 
 	public void write(ImgFileWriter file) {
-		file.put((byte) ((level & 0xf) | (inherited ? 0x80 : 0)));
-		file.put((byte) resolution);
-		file.putChar((char) subdivs.size());
+		file.put1u((level & 0xf) | (inherited ? 0x80 : 0));
+		file.put1u(resolution);
+		file.put2u(subdivs.size());
 	}
 
 	public String toString() {

@@ -33,9 +33,9 @@ public class Highway {
 
 	class ExitPoint implements Comparable<ExitPoint> {
 		final String name;
-		final byte index;
+		final int index;
 		final Subdivision div;
-		public ExitPoint(String name, byte index, Subdivision div) {
+		public ExitPoint(String name, int index, Subdivision div) {
 			this.name = name;
 			this.index = index;
 			this.div = div;
@@ -63,19 +63,19 @@ public class Highway {
 
 	void write(ImgFileWriter writer, boolean extraData) {
 		if(extraData) {
-			writer.put((byte)0);
-			writer.putChar(region == null? 0 : region.getIndex());
+			writer.put1u(0);
+			writer.put2u(region == null? 0 : region.getIndex());
 			Collections.sort(exits);
 			for(ExitPoint ep : exits) {
-			    writer.put(ep.index);
-			    writer.putChar((char)ep.div.getNumber());
+				writer.put1u(ep.index);
+				writer.put2u(ep.div.getNumber());
 			}
 		}
 		else {
 			assert extraDataOffset != 0;
-			writer.put3(label.getOffset());
-			writer.putChar((char)extraDataOffset);
-			writer.put((byte)0); // unknown (setting any of 0x3f stops exits being found)
+			writer.put3u(label.getOffset());
+			writer.put2u(extraDataOffset);
+			writer.put1u(0); // unknown (setting any of 0x3f stops exits being found)
 		}
 	}
 
@@ -96,6 +96,6 @@ public class Highway {
 	}
 
 	public void addExitPoint(String name, int index, Subdivision div) {
-		exits.add(new ExitPoint(name, (byte)index, div));
+		exits.add(new ExitPoint(name, index, div));
 	}
 }

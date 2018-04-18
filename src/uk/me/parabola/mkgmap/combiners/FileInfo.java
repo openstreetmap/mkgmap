@@ -195,7 +195,7 @@ public class FileInfo {
 		try (ImgChannel chan = new FileImgChannel(filename, "r"); BufferedImgFileReader fr = new BufferedImgFileReader(chan))
 		{
 			fr.position(0x15);
-			info.setCodePage(fr.getChar());
+			info.setCodePage(fr.get2u());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

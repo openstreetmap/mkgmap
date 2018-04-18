@@ -31,7 +31,7 @@ public class Zip {
 	private Label label;
 
 	public void write(ImgFileWriter writer) {
-		writer.put3(label.getOffset());
+		writer.put3u(label.getOffset());
 	}
 
 	public Label getLabel() {

@@ -69,7 +69,7 @@ public class Mdr19 extends MdrSection implements HasHeaderFlags {
 				index |= flag;
 				lastName = name;
 			}
-			writer.putN(n, index);
+			writer.putNu(n, index);
 
 			int type = MdrUtils.fullTypeToNaturalType(p.getType());
 			if (type != lastType) {
@@ -84,7 +84,7 @@ public class Mdr19 extends MdrSection implements HasHeaderFlags {
 
 		Mdr18Record m18 = new Mdr18Record();
 		m18.setRecord(record);
-		m18.setType(~0);
+		m18.setType(0xffff);
 		poiTypes.add(m18);
 	}
 

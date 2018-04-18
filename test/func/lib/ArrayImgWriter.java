@@ -41,44 +41,66 @@ public class ArrayImgWriter implements ImgFileWriter {
 		out.write(b);
 	}
 
-	public void putChar(char c) {
-		out.write(c & 0xff);
-		out.write((c >> 8) & 0xff);
+	public void put1s(int val) {
+		assert val >= -128 && val <= 127 : val;
+		out.write(val);
 	}
 
-	public void put1(int val) {
-		out.write(val & 0xff);
+	public void put2s(int val) {
+		assert val >= -32768 && val <= 32767 : val;
+		out.write(val);
+		out.write(val >> 8);
 	}
 
-	public void put2(int val) {
-		out.write(val & 0xff);
-		out.write((val >> 8) & 0xff);
+	public void put3s(int val) {
+		assert val >= -0x800000 && val <= 0x7fffff : val;
+		out.write(val);
+		out.write(val >> 8);
+		out.write(val >> 16);
 	}
 
-	public void put3(int val) {
-		out.write(val & 0xff);
-		out.write((val >> 8) & 0xff);
-		out.write((val >> 16) & 0xff);
+	public void put1u(int val) {
+		assert val >= 0 && val <= 255 : val;
+		out.write(val);
 	}
 
-	public void putN(int nBytes, int val) {
-		out.write(val & 0xff);
-		if (nBytes <= 1)
+	public void put2u(int val) {
+		assert val >= 0 && val <= 65535 : val;
+		out.write(val);
+		out.write(val >> 8);
+	}
+
+	public void put3u(int val) {
+		assert val >= 0 && val <= 0xffffff : val;
+		out.write(val);
+		out.write(val >> 8);
+		out.write(val >> 16);
+	}
+
+	public void putNu(int nBytes, int val) {
+		out.write(val);
+		if (nBytes <= 1) {
+			assert val >= 0 && val <= 255 : val;
 			return;
-		out.write((val >> 8) & 0xff);
-		if (nBytes <= 2)
+		}
+		out.write(val >> 8);
+		if (nBytes <= 2) {
+			assert val >= 0 && val <= 65535 : val;
 			return;
-		out.write((val >> 16) & 0xff);
-		if (nBytes <= 3)
+		}
+		out.write(val >> 16);
+		if (nBytes <= 3) {
+			assert val >= 0 && val <= 0xffffff : val;
 			return;
-		out.write((val >> 24) & 0xff);
+		}
+		out.write(val >> 24);
 	}
 
-	public void putInt(int val) {
-		out.write(val & 0xff);
-		out.write((val >> 8) & 0xff);
-		out.write((val >> 16) & 0xff);
-		out.write((val >> 24) & 0xff);
+	public void put4(int val) {
+		out.write(val);
+		out.write(val >> 8);
+		out.write(val >> 16);
+		out.write(val >> 24);
 	}
 
 	public void put(byte[] val) {

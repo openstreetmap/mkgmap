@@ -82,9 +82,9 @@ public class Mdr11 extends MdrMapSection {
 			poi.setRecordNumber(count++);
 
 			putMapIndex(writer, poi.getMapIndex());
-			writer.put((byte) poi.getPointIndex());
-			writer.putChar((char) poi.getSubdiv());
-			writer.put3(poi.getLblOffset());
+			writer.put1u(poi.getPointIndex());
+			writer.put2u(poi.getSubdiv());
+			writer.put3u(poi.getLblOffset());
 			if (poi.isCity())
 				putRegionIndex(writer, poi.getRegionIndex());
 			else

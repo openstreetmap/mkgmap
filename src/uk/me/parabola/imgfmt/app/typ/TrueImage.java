@@ -51,9 +51,9 @@ public class TrueImage implements Image {
 
 		// For mode 16, the transparent pixel precedes the pixmap data.
 		if (mode == 16) {
-			writer.put((byte) (transparentPixel>>8));
-			writer.put((byte) (transparentPixel>>16));
-			writer.put((byte) (transparentPixel>>24));
+			writer.put1u(transparentPixel>>8);
+			writer.put1u(transparentPixel>>16);
+			writer.put1u(transparentPixel>>24);
 		}
 
 		boolean hasAlpha = mode == 32;

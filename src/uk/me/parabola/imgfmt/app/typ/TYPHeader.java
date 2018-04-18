@@ -37,14 +37,14 @@ public class TYPHeader extends CommonHeader {
 	private final Section lineData = new Section(pointData);
 	private final Section polygonData = new Section(lineData);
 
-	private final Section pointIndex = new Section(polygonData, (char) 2);
-	private final Section lineIndex = new Section(pointIndex, (char) 2);
-	private final Section polygonIndex = new Section(lineIndex, (char) 2);
+	private final Section pointIndex = new Section(polygonData, 2);
+	private final Section lineIndex = new Section(pointIndex, 2);
+	private final Section polygonIndex = new Section(lineIndex, 2);
 
-	private final Section shapeStacking = new Section(polygonIndex, (char) 5);
+	private final Section shapeStacking = new Section(polygonIndex, 5);
 
 	private final Section iconData = new Section(polygonIndex);
-	private final Section iconIndex = new Section(iconData, (char) 3);
+	private final Section iconIndex = new Section(iconData, 3);
 
 	private final Section labels = new Section(iconIndex);
 	private final Section stringIndex = new Section(labels);
@@ -64,34 +64,34 @@ public class TYPHeader extends CommonHeader {
 	protected void readFileHeader(ImgFileReader reader) {
 		// Reset position for the real header reading code.
 		reader.position(COMMON_HEADER_LEN);
-		codePage = reader.getChar();	// 1252
-		pointData.setPosition(reader.getInt());
-		pointData.setSize(reader.getInt());
+		codePage = (char) reader.get2u();	// 1252
+		pointData.setPosition(reader.get4());
+		pointData.setSize(reader.get4());
 
-		lineData.setPosition(reader.getInt());
-		lineData.setSize(reader.getInt());
+		lineData.setPosition(reader.get4());
+		lineData.setSize(reader.get4());
 
-		polygonData.setPosition(reader.getInt());
-		polygonData.setSize(reader.getInt());
+		polygonData.setPosition(reader.get4());
+		polygonData.setSize(reader.get4());
 
-		familyId = reader.getChar();
-		productId = reader.getChar();
+		familyId = (char) reader.get2u();
+		productId = (char) reader.get2u();
 
-		pointIndex.setPosition(reader.getInt());
-		pointIndex.setItemSize(reader.getChar());
-		pointIndex.setSize(reader.getInt());
+		pointIndex.setPosition(reader.get4());
+		pointIndex.setItemSize(reader.get2u());
+		pointIndex.setSize(reader.get4());
 
-		lineIndex.setPosition(reader.getInt());
-		lineIndex.setItemSize(reader.getChar());
-		lineIndex.setSize(reader.getInt());
+		lineIndex.setPosition(reader.get4());
+		lineIndex.setItemSize(reader.get2u());
+		lineIndex.setSize(reader.get4());
 
-		polygonIndex.setPosition(reader.getInt());
-		polygonIndex.setItemSize(reader.getChar());
-		polygonIndex.setSize(reader.getInt());
+		polygonIndex.setPosition(reader.get4());
+		polygonIndex.setItemSize(reader.get2u());
+		polygonIndex.setSize(reader.get4());
 
-		shapeStacking.setPosition(reader.getInt());
-		shapeStacking.setItemSize(reader.getChar());
-		shapeStacking.setSize(reader.getInt());
+		shapeStacking.setPosition(reader.get4());
+		shapeStacking.setItemSize(reader.get2u());
+		shapeStacking.setSize(reader.get4());
 	}
 
 	/**
@@ -103,14 +103,14 @@ public class TYPHeader extends CommonHeader {
 	 * @param writer The header is written here.
 	 */
 	protected void writeFileHeader(ImgFileWriter writer) {
-		writer.putChar(codePage);
+		writer.put2u(codePage);
 
 		pointData.writeSectionInfo(writer);
 		lineData.writeSectionInfo(writer);
 		polygonData.writeSectionInfo(writer);
 
-		writer.putChar(familyId);
-		writer.putChar(productId);
+		writer.put2u(familyId);
+		writer.put2u(productId);
 
 		// Can't use Section.writeSectionInfo here as there is an unusual layout.
 		writeSectionInfo(writer, pointIndex);
@@ -120,26 +120,26 @@ public class TYPHeader extends CommonHeader {
 
 		if (getHeaderLength() > 0x5b) {
 			writeSectionInfo(writer, iconIndex);
-			writer.put((byte) 0x13);
+			writer.put1u(0x13);
 			iconData.writeSectionInfo(writer);
-			writer.putInt(0);
+			writer.put4(0);
 		}
 
 		if (getHeaderLength() > 0x6e) {
 			labels.writeSectionInfo(writer);
 
 			// not known, guessing. Different layout to other files.
-			writer.putInt(stringIndex.getItemSize());
-			writer.putInt(0x1b);
-			writer.putInt(stringIndex.getPosition());
-			writer.putInt(stringIndex.getSize());
+			writer.put4(stringIndex.getItemSize());
+			writer.put4(0x1b);
+			writer.put4(stringIndex.getPosition());
+			writer.put4(stringIndex.getSize());
 
-			writer.putInt(typeIndex.getItemSize());
-			writer.putInt(0x1b);
-			writer.putInt(typeIndex.getPosition());
-			writer.putInt(typeIndex.getSize());
+			writer.put4(typeIndex.getItemSize());
+			writer.put4(0x1b);
+			writer.put4(typeIndex.getPosition());
+			writer.put4(typeIndex.getSize());
 
-			writer.putChar((char) 0);
+			writer.put2u(0);
 		}
 	}
 
@@ -148,9 +148,9 @@ public class TYPHeader extends CommonHeader {
 	 * that have an item size.
 	 */
 	private void writeSectionInfo(ImgFileWriter writer, Section section) {
-		writer.putInt(section.getPosition());
-		writer.putChar(section.getItemSize());
-		writer.putInt(section.getSize());
+		writer.put4(section.getPosition());
+		writer.put2u(section.getItemSize());
+		writer.put4(section.getSize());
 	}
 
 	void setCodePage(char codePage) {

@@ -104,7 +104,7 @@ public class TYPFile extends ImgFile {
 		Collections.sort(keys);
 
 		// Offset 0 is reserved to mean no label.
-		writer.put((byte) 0);
+		writer.put1u((byte) 0);
 
 		for (SortKey<TypIconSet> key : keys) {
 			int off = writer.position();
@@ -127,7 +127,7 @@ public class TYPFile extends ImgFile {
 					String name = encoder.charset().name();
 					throw new TypLabelException(name);
 				}
-				writer.put((byte) 0);
+				writer.put1u((byte) 0);
 			}
 		}
 		Utils.closeFile(writer);
@@ -139,8 +139,8 @@ public class TYPFile extends ImgFile {
 		header.getStringIndex().setItemSize((char) (3 + psize));
 
 		for (Map.Entry<Integer, Integer> ent : strToType.entrySet()) {
-			writer.putN(psize, ent.getKey());
-			writer.put3(ent.getValue());
+			writer.putNu(psize, ent.getKey());
+			writer.put3u(ent.getValue());
 		}
 		Utils.closeFile(writer);
 	}
@@ -151,8 +151,8 @@ public class TYPFile extends ImgFile {
 		header.getTypeIndex().setItemSize((char) (3 + psize));
 
 		for (Map.Entry<Integer, Integer> ent : typeToStr.entrySet()) {
-			writer.put3(ent.getKey());
-			writer.putN(psize, ent.getValue());
+			writer.put3u(ent.getKey());
+			writer.putNu(psize, ent.getValue());
 		}
 		Utils.closeFile(writer);
 	}
@@ -178,8 +178,8 @@ public class TYPFile extends ImgFile {
 		for (TypElement elem : elementData) {
 			int offset = elem.getOffset();
 			int type = elem.getTypeForFile();
-			subWriter.putN(typeSize, type);
-			subWriter.putN(psize, offset);
+			subWriter.putNu(typeSize, type);
+			subWriter.putNu(psize, offset);
 		}
 		Utils.closeFile(subWriter);
 

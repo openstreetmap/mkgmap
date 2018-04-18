@@ -101,7 +101,7 @@ public class Polyline extends MapObject {
 		}
 
 		// The type of feature, also contains a couple of flags hidden inside.
-		byte b1 = (byte) getType();
+		int b1 = getType();
 		if (direction)
 			b1 |= FLAG_DIR;  // Polylines only.
 
@@ -111,7 +111,7 @@ public class Polyline extends MapObject {
 		if (blen >= 0x100)
 			b1 |= FLAG_2BYTE_LEN;
 
-		file.put(b1);
+		file.put1u(b1);
 
 		// The label, contains a couple of flags within it.
 		int loff = getLabel().getOffset();
@@ -130,19 +130,16 @@ public class Polyline extends MapObject {
 					roaddef.addLabel(rl);
 		}
 
-		file.put3(loff);
+		file.put3u(loff);
 
 		// The delta of the longitude from the subdivision centre point
 		// note that this has already been calculated.
-		file.putChar((char) getDeltaLong());
-		file.putChar((char) getDeltaLat());
+		file.put2s(getDeltaLong());
+		file.put2s(getDeltaLat());
 		if(log.isDebugEnabled())
 			log.debug("out center", getDeltaLat(), getDeltaLong());
 
-		if (blen < 0x100)
-			file.put((byte) (blen & 0xff));
-		else
-			file.putChar((char) (blen & 0xffff));
+		file.putNu(blen < 0x100 ? 1 : 2, blen);
 
 		file.put(bw.getBytes(), 0, blen+1);
 	}

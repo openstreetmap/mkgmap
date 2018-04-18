@@ -49,7 +49,7 @@ public class FileBackedImgFileWriter implements ImgFileWriter, Sized {
 			tmpChannel = out.getChannel();
 			file = new BufferedOutputStream(out, 16*1024);
 		} catch (IOException e) {
-			throw new MapFailedException("Could not create mdr temporary file");
+			throw new MapFailedException("Could not create temporary file");
 		}
 
 		if (chan instanceof FileLink) {
@@ -70,7 +70,7 @@ public class FileBackedImgFileWriter implements ImgFileWriter, Sized {
 			channel.transferTo(0, channel.size(), outputChan);
 		} finally {
 			if (!tmpFile.delete())
-				System.err.println("Could not delete mdr img temporary file");
+				System.err.println("could not delete temporary file " + tmpFile.getPath());
 		}
 	}
 
@@ -99,13 +99,13 @@ public class FileBackedImgFileWriter implements ImgFileWriter, Sized {
 			file.flush();
 			tmpChannel.position(pos);
 		} catch (IOException e) {
-			throw new MapFailedException("Could not set position in mdr tmp file");
+			throw new MapFailedException("could not set position in temporary file " + tmpFile.getPath());
 		}
 	}
 
 	/**
 	 * Write out a single byte.
-	 *
+	 * %%% temporary
 	 * @param b The byte to write.
 	 */
 	public void put(byte b) {
@@ -117,101 +117,131 @@ public class FileBackedImgFileWriter implements ImgFileWriter, Sized {
 	}
 
 	/**
-	 * Write out two bytes. Can't use writeChar() since need to reverse the byte
-	 * order.
-	 *
-	 * @param c The value to write.
+	 * Write out int in range -128..127 as single byte.
+	 * @param val The byte to write.
 	 */
-	public void putChar(char c) {
+	public void put1s(int val) {
+		assert val >= -128 && val <= 127 : val;
 		try {
-			file.write(c);
-			file.write(c >> 8);
+			file.write(val);
 		} catch (IOException e) {
-			throw new MapFailedException("could not write char to mdr tmp file");
+			throw new MapFailedException("could not write to temporary file " + tmpFile.getPath());
+		}
+	}
+
+	/**
+	 * Write out int in range -32768..32767 as two bytes in little endian byte order.
+	 * @param val The value to write.
+	 */
+	public void put2s(int val) {
+		assert val >= -32768 && val <= 32767 : val;
+		try {
+			file.write(val);
+			file.write(val >> 8);
+		} catch (IOException e) {
+			throw new MapFailedException("could not write to temporary file " + tmpFile.getPath());
+		}
+	}
+
+	/**
+	 * Write out int in range -0x800000..0x7fffff in little endian byte order.
+	 * @param int The value to write.
+	 */
+	public void put3s(int val) {
+		assert val >= -0x800000 && val <= 0x7fffff : val;
+		try {
+			file.write(val);
+			file.write(val >> 8);
+			file.write(val >> 16);
+		} catch (IOException e) {
+			throw new MapFailedException("could not write to temporary file " + tmpFile.getPath());
 		}
 	}
 
 	/**
 	 * Write out int in range 0..255 as single byte.
-	 * Use instead of put() for unsigned for clarity.
 	 * @param val The value to write.
 	 */
-	public void put1(int val) {
+	public void put1u(int val) {
 		assert val >= 0 && val <= 255 : val;
  		try {
 			file.write(val);
 		} catch (IOException e) {
-			throw new MapFailedException("could not write byte to mdr tmp file");
+			throw new MapFailedException("could not write to temporary file " + tmpFile.getPath());
 		}
 	}
 
 	/**
-	 * Write out int in range 0..65535 as two bytes in correct byte order.
-	 * Use instead of putChar() for unsigned for clarity.
+	 * Write out int in range 0..65535 as two bytes in little endian byte order.
 	 * @param val The value to write.
 	 */
-	public void put2(int val) {
+	public void put2u(int val) {
 		assert val >= 0 && val <= 65535 : val;
  		try {
 			file.write(val);
 			file.write(val >> 8);
 		} catch (IOException e) {
-			throw new MapFailedException("could not write 2 bytes to mdr tmp file");
+			throw new MapFailedException("could not write to temporary file " + tmpFile.getPath());
 		}
-
 	}
 
 	/**
-	 * Write out three bytes.  Done in the little endian byte order.
-	 *
-	 * @param val The value to write, only the bottom three bytes will be written.
+	 * Write out int in range 0..0xffffff as three bytes in little endian byte order.
+	 * @param val The value to write.
 	 */
-	public void put3(int val) {
+	public void put3u(int val) {
+		assert val >= 0 && val <= 0xffffff : val;
 		try {
 			file.write(val);
 			file.write(val >> 8);
 			file.write(val >> 16);
 		} catch (IOException e) {
-			throw new MapFailedException("could not write3 to mdr tmp file");
+			throw new MapFailedException("could not write to temporary file " + tmpFile.getPath());
 		}
 	}
 
 	/**
-	 * Write out 1-4 bytes.  Done in the correct byte order.
+	 * Write out int as 1-4 bytes in little endian byte order.
 	 *
 	 * @param nBytes The number of bytes to write.
-	 * @param val The value to write.
+	 * @param val The value to write. Unsigned
 	 */
-	public void putN(int nBytes, int val) {
+	public void putNu(int nBytes, int val) {
 		try {
 			file.write(val);
-			if (nBytes <= 1)
+			if (nBytes <= 1) {
+				assert val >= 0 && val <= 255 : val;
 				return;
+			}
 			file.write(val >> 8);
-			if (nBytes <= 2)
+			if (nBytes <= 2) {
+				assert val >= 0 && val <= 65535 : val;
 				return;
+			}
 			file.write(val >> 16);
-			if (nBytes <= 3)
+			if (nBytes <= 3) {
+				assert val >= 0 && val <= 0xffffff : val;
 				return;
+			}
 			file.write(val >> 24);
 		} catch (IOException e) {
-			throw new MapFailedException("could not write put3 to mdr tmp file");
+			throw new MapFailedException("could not write to temporary file " + tmpFile.getPath());
 		}
 	}
 
 	/**
-	 * Write out 4 byte value.
+	 * Write out 4 byte (signed or unsigned) value.
 	 *
 	 * @param val The value to write.
 	 */
-	public void putInt(int val) {
+	public void put4(int val) {
 		try {
 			file.write(val);
 			file.write(val >> 8);
 			file.write(val >> 16);
 			file.write(val >> 24);
 		} catch (IOException e) {
-			throw new MapFailedException("could not write int to mdr tmp file");
+			throw new MapFailedException("could not write to temporary file " + tmpFile.getPath());
 		}
 	}
 
@@ -224,7 +254,7 @@ public class FileBackedImgFileWriter implements ImgFileWriter, Sized {
 		try {
 			file.write(val);
 		} catch (IOException e) {
-			throw new MapFailedException("could not write bytes to mdr tmp file");
+			throw new MapFailedException("could not write to temporary file " + tmpFile.getPath());
 		}
 	}
 
@@ -239,7 +269,7 @@ public class FileBackedImgFileWriter implements ImgFileWriter, Sized {
 		try {
 			file.write(src, start, length);
 		} catch (IOException e) {
-			throw new MapFailedException("could not write bytes to mdr tmp file");
+			throw new MapFailedException("could not write to temporary file " + tmpFile.getPath());
 		}
 	}
 
@@ -253,7 +283,7 @@ public class FileBackedImgFileWriter implements ImgFileWriter, Sized {
 			file.flush();
 			tmpChannel.write(src);
 		} catch (IOException e) {
-			throw new MapFailedException("could not write buffer to mdr tmp file");
+			throw new MapFailedException("could not write to temporary file " + tmpFile.getPath());
 		}
 	}
 
@@ -270,13 +300,13 @@ public class FileBackedImgFileWriter implements ImgFileWriter, Sized {
 			file.flush();
 			return tmpChannel.size();
 		} catch (IOException e) {
-			throw new MapFailedException("could not get size of mdr tmp file");
+			throw new MapFailedException("could not get size of temporary file " + tmpFile.getPath());
 		}
 	}
 
 	/**
-	 * Closes this stream and releases any system resources associated with it. If the stream is already closed then
-	 * invoking this method has no effect.
+	 * Closes this stream with the result that the contents of the temporary file are written to the
+	 * real output.
 	 *
 	 * @throws IOException if an I/O error occurs
 	 */

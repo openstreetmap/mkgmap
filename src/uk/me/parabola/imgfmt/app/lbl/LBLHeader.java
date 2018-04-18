@@ -68,19 +68,19 @@ public class LBLHeader extends CommonHeader {
 	 * @param reader The header is read from here.
 	 */
 	protected void readFileHeader(ImgFileReader reader) {
-		labelStart = reader.getInt();
-		labelSize = reader.getInt();
+		labelStart = reader.get4();
+		labelSize = reader.get4();
 		offsetMultiplier = 1 << reader.get();
 		encodingType = reader.get();
 
 		// Read the places part of the header.
 		placeHeader.readFileHeader(reader);
 
-		int codepage = reader.getChar();
-		int id1 = reader.getChar();
-		int id2 = reader.getChar();
-		int descOff = reader.getInt();
-		int descLen = reader.getInt();
+		int codepage = reader.get2u();
+		int id1 = reader.get2u();
+		int id2 = reader.get2u();
+		int descOff = reader.get4();
+		int descLen = reader.get4();
 
 		reader.position(descOff);
 		byte[] bytes = reader.get(descLen);
@@ -109,32 +109,32 @@ public class LBLHeader extends CommonHeader {
 	 */
 	protected void writeFileHeader(ImgFileWriter writer) {
 		// LBL1 section, these are regular labels
-		writer.putInt(HEADER_LEN + sortDescriptionLength);
-		writer.putInt(getLabelSize());
+		writer.put4(HEADER_LEN + sortDescriptionLength);
+		writer.put4(getLabelSize());
 
-		writer.put((byte) offsetMultiplier);
-		writer.put((byte) encodingType);
+		writer.put1u(offsetMultiplier);
+		writer.put1u(encodingType);
 
 		placeHeader.writeFileHeader(writer);
 
-		writer.putChar((char) getCodePage());
+		writer.put2u(getCodePage());
 
 		// Identifying the sort
-		char id1 = (char) sort.getId1();
-		writer.putChar(id1);
+		int id1 = sort.getId1();
+		writer.put2u(id1);
 		
-		char id2 = (char) sort.getId2();
+		int id2 = sort.getId2();
 		if (id1 != 0 && id2 != 0)
 			id2 |= 0x8000;
-		writer.putChar(id2);
+		writer.put2u(id2);
 
-		writer.putInt(HEADER_LEN);
-		writer.putInt(sortDescriptionLength);
+		writer.put4(HEADER_LEN);
+		writer.put4(sortDescriptionLength);
 
-		writer.putInt(placeHeader.getLastPos());
-		writer.putInt(0);
-		writer.putChar(UNK3_REC_LEN);
-		writer.putChar((char) 0);
+		writer.put4(placeHeader.getLastPos());
+		writer.put4(0);
+		writer.put2u(UNK3_REC_LEN);
+		writer.put2u(0);
 	}
 
 	protected int getEncodingType() {

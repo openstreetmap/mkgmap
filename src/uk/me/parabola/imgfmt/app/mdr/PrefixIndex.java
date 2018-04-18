@@ -118,9 +118,9 @@ public class PrefixIndex extends MdrSection {
 		int size = Utils.numberToPointerSize(maxIndex);
 		for (Mdr8Record s : index) {
 			for (int i = 0; i< prefixLength; i++) {
-				writer.put((byte) s.getPrefix()[i]);
+				writer.put1u(s.getPrefix()[i]);
 			}
-			writer.putN(size, s.getRecordNumber());
+			writer.putNu(size, s.getRecordNumber());
 		}
 	}
 

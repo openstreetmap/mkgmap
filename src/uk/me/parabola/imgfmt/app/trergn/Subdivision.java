@@ -127,9 +127,17 @@ public class Subdivision {
 			log.warn("Subdivision width is " + w + " at " + getCenter());
 			w = 0x7fff;
 		}
+		if (w <= 0) { // think can get this from empty/unbounded maps
+			log.error("Subdivision neg width ", w, "min=", area.getMinLong(), "mid=", longitude, "max=", area.getMaxLong(), "shift=", shift, "mask=", mask, "@", getCenter());
+			w = 0x7fff;
+		}
 
 		if (h > 0xffff) {
 			log.warn("Subdivision height is " + h + " at " + getCenter());
+			h = 0xffff;
+		}
+		if (h <= 0) { // think can get this from empty/unbounded maps
+			log.error("Subdivision neg height ", h, "min=", area.getMinLat(), "mid=", latitude, "max=", area.getMaxLat(), "shift=", shift, "mask=", mask, "@", getCenter());
 			h = 0xffff;
 		}
 
@@ -259,18 +267,18 @@ public class Subdivision {
 	 */
 	public void write(ImgFileWriter file) {
 		log.debug("write subdiv", latitude, longitude);
-		file.put3(startRgnPointer);
-		file.put(getType());
-		file.put3(longitude);
-		file.put3(latitude);
+		file.put3u(startRgnPointer);
+		file.put1u(getType());
+		file.put3s(longitude);
+		file.put3s(latitude);
 		
 		assert width <= 0x7fff;
 		assert height <= 0xffff;
-		file.putChar((char) (width | ((last) ? 0x8000 : 0)));
-		file.putChar((char) height);
+		file.put2u(width | ((last) ? 0x8000 : 0));
+		file.put2u(height);
 
 		if (!divisions.isEmpty()) {
-			file.putChar((char) getNextLevel());
+			file.put2u(getNextLevel());
 		}
 	}
 
@@ -441,8 +449,8 @@ public class Subdivision {
 	 *
 	 * @return A code showing what kinds of element are in this subdivision.
 	 */
-	private byte getType() {
-		byte b = 0;
+	private int getType() {
+		int b = 0;
 		if (hasPoints)
 			b |= 0x10;
 		if (hasIndPoints)
@@ -511,9 +519,9 @@ public class Subdivision {
 	}
 
 	public void writeExtTypeOffsetsRecord(ImgFileWriter file) {
-		file.putInt(extTypeAreasOffset);
-		file.putInt(extTypeLinesOffset);
-		file.putInt(extTypePointsOffset);
+		file.put4(extTypeAreasOffset);
+		file.put4(extTypeLinesOffset);
+		file.put4(extTypePointsOffset);
 		int kinds = 0;
 		if(extTypeAreasSize != 0)
 			++kinds;
@@ -521,14 +529,14 @@ public class Subdivision {
 			++kinds;
 		if(extTypePointsSize != 0)
 			++kinds;
-		file.put((byte)kinds);
+		file.put1u(kinds);
 	}
 
 	public void writeLastExtTypeOffsetsRecord(ImgFileWriter file) {
-		file.putInt(rgnFile.getExtTypeAreasSize());
-		file.putInt(rgnFile.getExtTypeLinesSize());
-		file.putInt(rgnFile.getExtTypePointsSize());
-		file.put((byte)0);
+		file.put4(rgnFile.getExtTypeAreasSize());
+		file.put4(rgnFile.getExtTypeLinesSize());
+		file.put4(rgnFile.getExtTypePointsSize());
+		file.put1u(0);
 	}
 
 	/**
@@ -539,11 +547,11 @@ public class Subdivision {
 	 */
 	public void readExtTypeOffsetsRecord(ImgFileReader reader,
 			Subdivision sdPrev, int size) {
-		extTypeAreasOffset = reader.getInt();
-		extTypeLinesOffset = reader.getInt();
-		extTypePointsOffset = reader.getInt();
+		extTypeAreasOffset = reader.get4();
+		extTypeLinesOffset = reader.get4();
+		extTypePointsOffset = reader.get4();
 		if (size > 12) {
-			int kinds = reader.get();
+			reader.get();  // kinds
 		}
 		if (size > 13)
 			reader.get(size-13);
@@ -564,9 +572,9 @@ public class Subdivision {
 	 * Set the sizes for the extended type data. See {@link #writeLastExtTypeOffsetsRecord(ImgFileWriter)} 
 	 */
 	public void readLastExtTypeOffsetsRecord(ImgFileReader reader, int size) {
-		extTypeAreasSize = reader.getInt() - extTypeAreasOffset;
-		extTypeLinesSize = reader.getInt() - extTypeLinesOffset;
-		extTypePointsSize = reader.getInt() - extTypePointsOffset;
+		extTypeAreasSize = reader.get4() - extTypeAreasOffset;
+		extTypeLinesSize = reader.get4() - extTypeLinesOffset;
+		extTypePointsSize = reader.get4() - extTypePointsOffset;
 		assert extTypeAreasSize >= 0;
 		assert extTypeLinesSize >= 0;
 		assert extTypePointsSize >= 0;

@@ -50,9 +50,9 @@ public class TableB {
          * be fit for writing, so at this point we check
          * it isn't too large.
          */
-	public byte getNumberOfItems() {
+	public int getNumberOfItems() {
 		assert nodes.size() < 0x100 : "Table B too large.";
-		return (byte) nodes.size();
+		return nodes.size();
 	}
 
 	/**
@@ -72,11 +72,11 @@ public class TableB {
 	/**
 	 * Retrieve a nodes index. Checked for correct bounds.
 	 */
-	public byte getIndex(RouteNode node) {
+	public int getIndex(RouteNode node) {
 		int i = nodes.indexOf(node);
 		assert i >= 0 : "Trying to read Table B index for non-registered node.";
 		assert i < 0x100 : "Table B index too large.";
-		return (byte) i;
+		return i;
 	}
 
 	/**
@@ -87,7 +87,7 @@ public class TableB {
 		offset = writer.position();
 		int size = nodes.size() * ITEM_SIZE;
 		for (int i = 0; i < size; i++)
-			writer.put((byte) 0);
+			writer.put1u(0);
 	}
 
 	/**
@@ -96,6 +96,6 @@ public class TableB {
 	public void writePost(ImgFileWriter writer) {
 		writer.position(offset);
 		for (RouteNode node : nodes)
-			writer.put3(node.getOffsetNod1());
+			writer.put3u(node.getOffsetNod1());
 	}
 }

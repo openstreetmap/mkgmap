@@ -139,7 +139,7 @@ public class LBLFileReader extends ImgFile {
 		reader.position(start);
 		int index = 1;
 		while (reader.position() < end) {
-			int offset = reader.getu3();
+			int offset = reader.get3u();
 			Label label = fetchLabel(offset);
 
 			if (label != null) {
@@ -167,8 +167,8 @@ public class LBLFileReader extends ImgFile {
 		reader.position(start);
 		int index = 1;
 		while (reader.position() < end) {
-			int country = reader.getChar();
-			int offset = reader.getu3();
+			int country = reader.get2u();
+			int offset = reader.get3u();
 			Label label = fetchLabel(offset);
 			if (label != null) {
 				Region region = new Region(countries.get(country));
@@ -200,8 +200,8 @@ public class LBLFileReader extends ImgFile {
 		while (reader.position() < end) {
 			// First is either a label offset or a point/subdiv combo, we
 			// don't know until we have read further
-			int label = reader.getu3();
-			int info = reader.getChar();
+			int label = reader.get3u();
+			int info = reader.get2u();
 
 			City city;
 			if ((info & 0x4000) == 0) {
@@ -221,7 +221,7 @@ public class LBLFileReader extends ImgFile {
 				// Has subdiv/point index
 				int pointIndex = label & 0xff;
 				int subdiv = (label >> 8) & 0xffff;
-				city.setPointIndex((byte) pointIndex);
+				city.setPointIndex(pointIndex);
 				city.setSubdivision(Subdivision.createEmptySubdivision(subdiv));
 			}
 			cities.add(city);
@@ -311,7 +311,7 @@ public class LBLFileReader extends ImgFile {
 
 		int zipIndex = 1;
 		while (reader.position() < end) {
-			int lblOffset = reader.get3();
+			int lblOffset = reader.get3u();
 			
 			Zip zip = new Zip();
 			zip.setLabel(fetchLabel(lblOffset));
@@ -344,7 +344,7 @@ public class LBLFileReader extends ImgFile {
 
 		while (reader.position() < end) {
 			int poiOffset = position() - start;
-			int val = reader.getu3();
+			int val = reader.get3u();
 			int labelOffset = val & 0x3fffff;
 
 
@@ -365,7 +365,7 @@ public class LBLFileReader extends ImgFile {
 			boolean hasTides;
 
 			if (override) {
-				flags = reader.get();
+				flags = reader.get1u();
 
 				hasStreetNum = (flags & localMask.streetNumMask) != 0;
 				hasStreet = (flags & localMask.streetMask) != 0;
@@ -390,7 +390,7 @@ public class LBLFileReader extends ImgFile {
 				byte b = reader.get();
 				if ((b & 0x80) == 0) {
 					int mpoffset = (b << 16) & 0xff0000;
-					mpoffset |= reader.getChar() & 0xffff;
+					mpoffset |= reader.get2u();
 
 					poi.setComplexStreetNumber(fetchLabel(mpoffset));
 				} else {
@@ -399,18 +399,18 @@ public class LBLFileReader extends ImgFile {
 			}
 
 			if (hasStreet) {
-				int streetNameOffset = reader.getu3();// label for street
+				int streetNameOffset = reader.get3u();// label for street
 				Label label = fetchLabel(streetNameOffset);
 				poi.setStreetName(label);
 			}
 
 			if (hasCity) {
-				int cityIndex = reader.getUint(Utils.numberToPointerSize(placeHeader.getNumCities()));
+				int cityIndex = reader.getNu(Utils.numberToPointerSize(placeHeader.getNumCities()));
 				poi.setCity(cities.get(cityIndex-1));
 			}
 
 			if (hasZip) {
-				int zipIndex = reader.getUint(Utils.numberToPointerSize(placeHeader.getNumZips()));
+				int zipIndex = reader.getNu(Utils.numberToPointerSize(placeHeader.getNumZips()));
 				poi.setZip(zips.get(zipIndex-1));
 			}
 			
@@ -419,7 +419,7 @@ public class LBLFileReader extends ImgFile {
 				if ((b & 0x80) == 0) {
 					// Yes this is a bit strange it is a byte followed by a char
 					int mpoffset = (b << 16) & 0xff0000;
-					mpoffset |= reader.getChar() & 0xffff;
+					mpoffset |= reader.get2u();
 
 					poi.setComplexPhoneNumber(fetchLabel(mpoffset));
 				} else {
@@ -428,14 +428,14 @@ public class LBLFileReader extends ImgFile {
 			}
 
 			if (hasHighwayExit) {
-				int lblinfo = reader.getu3();
+				int lblinfo = reader.get3u();
 				int highwayLabelOffset = lblinfo & 0x3FFFF;
 				boolean indexed = (lblinfo & 0x800000) != 0;
 				boolean overnightParking = (lblinfo & 0x400000) != 0;
 
-				int highwayIndex = reader.getUint(Utils.numberToPointerSize(placeHeader.getNumHighways()));
+				int highwayIndex = reader.getNu(Utils.numberToPointerSize(placeHeader.getNumHighways()));
 				if (indexed) {
-					int eidx = reader.getUint(Utils.numberToPointerSize(placeHeader.getNumExits()));
+					int eidx = reader.getNu(Utils.numberToPointerSize(placeHeader.getNumExits()));
 				}
 			}
 
@@ -457,7 +457,7 @@ public class LBLFileReader extends ImgFile {
 	private PoiMasks makeLocalMask(PlacesHeader placeHeader) {
 		int globalPoi = placeHeader.getPOIGlobalFlags();
 
-		char mask= 0x1;
+		int mask= 0x1;
 
 		boolean hasStreetNum = (globalPoi & POIRecord.HAS_STREET_NUM) != 0;
 		boolean hasStreet = (globalPoi & POIRecord.HAS_STREET) != 0;
@@ -524,13 +524,13 @@ public class LBLFileReader extends ImgFile {
 	}
 
 	private class PoiMasks {
-		private char streetNumMask;
-		private char streetMask;
-		private char cityMask;
-		private char zipMask;
-		private char phoneMask;
-		private char highwayExitMask;
-		private char tidesMask;
+		private int streetNumMask;
+		private int streetMask;
+		private int cityMask;
+		private int zipMask;
+		private int phoneMask;
+		private int highwayExitMask;
+		private int tidesMask;
 	}
 
 	public int getEncodingType() {

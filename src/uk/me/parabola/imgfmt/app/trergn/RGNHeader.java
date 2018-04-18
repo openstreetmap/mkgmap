@@ -57,27 +57,27 @@ public class RGNHeader extends CommonHeader {
 		data.readSectionInfo(reader, false);
 
 		if (getHeaderLength() > 29){
-			extTypeAreasOffset = reader.getInt();
-			extTypeAreasSize = reader.getInt();
-			reader.getInt();
-			reader.getInt();
-			reader.getInt();
-			reader.getInt();
-			reader.getInt();
-			extTypeLinesOffset = reader.getInt();
-			extTypeLinesSize = reader.getInt();
-			reader.getInt();
-			reader.getInt();
-			reader.getInt();
-			reader.getInt();
-			reader.getInt();
-			extTypePointsOffset = reader.getInt();
-			extTypePointsSize = reader.getInt();
-			reader.getInt();
-			reader.getInt();
-			reader.getInt();
-			reader.getInt();
-			reader.getInt();
+			extTypeAreasOffset = reader.get4();
+			extTypeAreasSize = reader.get4();
+			reader.get4();
+			reader.get4();
+			reader.get4();
+			reader.get4();
+			reader.get4();
+			extTypeLinesOffset = reader.get4();
+			extTypeLinesSize = reader.get4();
+			reader.get4();
+			reader.get4();
+			reader.get4();
+			reader.get4();
+			reader.get4();
+			extTypePointsOffset = reader.get4();
+			extTypePointsSize = reader.get4();
+			reader.get4();
+			reader.get4();
+			reader.get4();
+			reader.get4();
+			reader.get4();
 		}
 	}
 
@@ -91,32 +91,32 @@ public class RGNHeader extends CommonHeader {
 		data.writeSectionInfo(writer, false);
 
 		if (getHeaderLength() > 29) {
-			writer.putInt(extTypeAreasOffset);
-			writer.putInt(extTypeAreasSize);
-			writer.putInt(0);
-			writer.putInt(0);
-			writer.putInt(0);
-			writer.putInt(0);
-			writer.putInt(0);
+			writer.put4(extTypeAreasOffset);
+			writer.put4(extTypeAreasSize);
+			writer.put4(0);
+			writer.put4(0);
+			writer.put4(0);
+			writer.put4(0);
+			writer.put4(0);
 
-			writer.putInt(extTypeLinesOffset);
-			writer.putInt(extTypeLinesSize);
-			writer.putInt(0);
-			writer.putInt(0);
-			writer.putInt(0);
-			writer.putInt(0);
-			writer.putInt(0);
+			writer.put4(extTypeLinesOffset);
+			writer.put4(extTypeLinesSize);
+			writer.put4(0);
+			writer.put4(0);
+			writer.put4(0);
+			writer.put4(0);
+			writer.put4(0);
 
-			writer.putInt(extTypePointsOffset);
-			writer.putInt(extTypePointsSize);
-			writer.putInt(0);
-			writer.putInt(0);
-			writer.putInt(0);
-			writer.putInt(0);
-			writer.putInt(0);
-			writer.putInt(0);
-			writer.putInt(0);
-			writer.putInt(0);
+			writer.put4(extTypePointsOffset);
+			writer.put4(extTypePointsSize);
+			writer.put4(0);
+			writer.put4(0);
+			writer.put4(0);
+			writer.put4(0);
+			writer.put4(0);
+			writer.put4(0);
+			writer.put4(0);
+			writer.put4(0);
 		}
 	}
 

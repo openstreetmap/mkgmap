@@ -71,7 +71,7 @@ public class LBLFile extends ImgFile {
 		position(LBLHeader.HEADER_LEN + lblHeader.getSortDescriptionLength());
 
 		// The zero offset is for no label.
-		getWriter().put((byte) 0);
+		getWriter().put1u(0);
 		alignForNext();
 
 		places.init(this, lblHeader.getPlaceHeader());
@@ -91,7 +91,7 @@ public class LBLFile extends ImgFile {
 
 		// Text can be put between the header and the body of the file.
 		writer.put(Utils.toBytes(sort.getDescription()));
-		writer.put((byte) 0);
+		writer.put1u(0);
 		assert writer.position() == LBLHeader.HEADER_LEN + lblHeader.getSortDescriptionLength();
 	}
 
@@ -157,7 +157,7 @@ public class LBLFile extends ImgFile {
 	private void alignForNext() {
 		// Align ready for next label
 		while ((getCurrentLabelOffset() & ((1 << offsetMultiplier) - 1)) != 0)
-			getWriter().put((byte) 0);
+			getWriter().put1u(0);
 	}
 
 	private int getNextLabelOffset() {

@@ -53,9 +53,9 @@ public class Rgb {
 	public void write(ImgFileWriter writer, byte type) {
 		if (type != 0x10)
 			throw new FormatException("Invalid color deep");
-		writer.put((byte) b);
-		writer.put((byte) g);
-		writer.put((byte) r);
+		writer.put1u(b);
+		writer.put1u(g);
+		writer.put1u(r);
 	}
 
 	public boolean isTransparent() {

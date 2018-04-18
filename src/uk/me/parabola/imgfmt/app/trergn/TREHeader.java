@@ -72,7 +72,7 @@ public class TREHeader extends CommonHeader {
 	private int subdivPos;
 	private int subdivSize;
 
-	private byte poiDisplayFlags;
+	private int poiDisplayFlags;
 
 	private int displayPriority = DEFAULT_DISPLAY_PRIORITY;
 
@@ -104,10 +104,10 @@ public class TREHeader extends CommonHeader {
 	 */
 	protected void readFileHeader(ImgFileReader reader) throws ReadFailedException {
 		assert reader.position() == COMMON_HEADER_LEN;
-		int maxLat = reader.get3();
-		int maxLon = reader.get3();
-		int minLat = reader.get3();
-		int minLon = reader.get3();
+		int maxLat = reader.get3s();
+		int maxLon = reader.get3s();
+		int minLat = reader.get3s();
+		int minLon = reader.get3s();
 		// fix problem with value 0x800000 that is interpreted as a negative value
 		if (maxLon <  minLon && maxLon == -8388608 )
 			maxLon = 8388608; // its 180 degrees, not -180
@@ -116,26 +116,26 @@ public class TREHeader extends CommonHeader {
 		log.info("read area is", getBounds());
 
 		// more to do...
-		mapLevelPos = reader.getInt();
-		mapLevelsSize = reader.getInt();
-		subdivPos = reader.getInt();
-		subdivSize = reader.getInt();
+		mapLevelPos = reader.get4();
+		mapLevelsSize = reader.get4();
+		subdivPos = reader.get4();
+		subdivSize = reader.get4();
 
 		copyright.readSectionInfo(reader, true);
-		reader.getInt();
+		reader.get4();
 
-		poiDisplayFlags = reader.get();
-		displayPriority = reader.get3();
-		reader.getInt();
-		reader.getChar();
+		poiDisplayFlags = reader.get1u();
+		displayPriority = reader.get3u();
+		reader.get4();
+		reader.get2u();
 		reader.get();
 
 		polyline.readSectionInfo(reader, true);
-		reader.getInt();
+		reader.get4();
 		polygon.readSectionInfo(reader, true);
-		reader.getInt();
+		reader.get4();
 		points.readSectionInfo(reader, true);
-		reader.getInt();
+		reader.get4();
 
 		int mapInfoOff = mapLevelPos;
 		if (subdivPos < mapInfoOff)
@@ -146,10 +146,10 @@ public class TREHeader extends CommonHeader {
 		mapInfoSize = mapInfoOff - getHeaderLength();
 		if (getHeaderLength() > 116) {
 			reader.position(116);
-			mapId = reader.getInt();
+			mapId = reader.get4();
 		}
 		if (getHeaderLength() > 120) {
-			reader.getInt();
+			reader.get4();
 			extTypeOffsets.readSectionInfo(reader, true);
 		}
 	}
@@ -161,44 +161,44 @@ public class TREHeader extends CommonHeader {
 	 * @param writer The header is written here.
 	 */
 	protected void writeFileHeader(ImgFileWriter writer) {
-		writer.put3(area.getMaxLat());
-		writer.put3(area.getMaxLong());
-		writer.put3(area.getMinLat());
-		writer.put3(area.getMinLong());
+		writer.put3s(area.getMaxLat());
+		writer.put3s(area.getMaxLong());
+		writer.put3s(area.getMinLat());
+		writer.put3s(area.getMinLong());
 
-		writer.putInt(getMapLevelsPos());
-		writer.putInt(getMapLevelsSize());
+		writer.put4(getMapLevelsPos());
+		writer.put4(getMapLevelsSize());
 
-		writer.putInt(getSubdivPos());
-		writer.putInt(getSubdivSize());
+		writer.put4(getSubdivPos());
+		writer.put4(getSubdivSize());
 
 		copyright.writeSectionInfo(writer);
-		writer.putInt(0);
+		writer.put4(0);
 
-		writer.put(getPoiDisplayFlags());
+		writer.put1u(getPoiDisplayFlags());
 
-		writer.put3(displayPriority);
+		writer.put3u(displayPriority);
 		if (custom)
-			writer.putInt(0x170401);
+			writer.put4(0x170401);
 		else
-			writer.putInt(0x110301);
+			writer.put4(0x110301);
 		
-		writer.putChar((char) 1);
-		writer.put((byte) 0);
+		writer.put2u(1);
+		writer.put1u(0);
 
 		polyline.writeSectionInfo(writer);
-		writer.putInt(0);
+		writer.put4(0);
 		polygon.writeSectionInfo(writer);
-		writer.putInt(0);
+		writer.put4(0);
 		points.writeSectionInfo(writer);
-		writer.putInt(0);
+		writer.put4(0);
 
 		// There are a number of versions of the header with increasing lengths
 		if (getHeaderLength() > 116)
-			writer.putInt(getMapId());
+			writer.put4(getMapId());
 
 		if (getHeaderLength() > 120) {
-			writer.putInt(0);
+			writer.put4(0);
 
 			// The record size must be zero if the section is empty for compatibility
 			// with cpreview.
@@ -213,27 +213,27 @@ public class TREHeader extends CommonHeader {
 			// bottom byte could possibly be a bitmask to say which
 			// types are present (line, area, point) but this is just
 			// conjecture
-			writer.putInt(0x0607);
+			writer.put4(0x0607);
 
 			extTypeOverviews.writeSectionInfo(writer);
-			writer.putChar((char)numExtTypeLineTypes);
-			writer.putChar((char)numExtTypeAreaTypes);
-			writer.putChar((char)numExtTypePointTypes);
+			writer.put2u(numExtTypeLineTypes);
+			writer.put2u(numExtTypeAreaTypes);
+			writer.put2u(numExtTypePointTypes);
 		}
 
 		if (getHeaderLength() > 154) {
 			MapValues mv = new MapValues(mapId, getHeaderLength());
 			mv.calculate();
-			writer.putInt(mv.value(0));
-			writer.putInt(mv.value(1));
-			writer.putInt(mv.value(2));
-			writer.putInt(mv.value(3));
+			writer.put4(mv.value(0));
+			writer.put4(mv.value(1));
+			writer.put4(mv.value(2));
+			writer.put4(mv.value(3));
 
-			writer.putInt(0);
-			writer.putInt(0);
-			writer.putInt(0);
-			writer.putChar((char) 0);
-			writer.putInt(0);
+			writer.put4(0);
+			writer.put4(0);
+			writer.put4(0);
+			writer.put2u(0);
+			writer.put4(0);
 		}
 		
 		writer.position(getHeaderLength());
@@ -271,7 +271,7 @@ public class TREHeader extends CommonHeader {
 			this.poiDisplayFlags |= POI_FLAG_DRIVE_ON_LEFT; 
 	}
 
-	public void addPoiDisplayFlags(byte poiDisplayFlags) {
+	public void addPoiDisplayFlags(int poiDisplayFlags) {
 		this.poiDisplayFlags |= poiDisplayFlags;
 	}	
 
@@ -324,7 +324,7 @@ public class TREHeader extends CommonHeader {
 		copyright.inc();
 	}
 
-	protected byte getPoiDisplayFlags() {
+	protected int getPoiDisplayFlags() {
 		return poiDisplayFlags;
 	}
 

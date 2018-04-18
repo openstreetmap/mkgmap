@@ -212,12 +212,12 @@ public class Mdr5 extends MdrMapSection {
 			// Write out the record
 			putMapIndex(writer, mapIndex);
 			putLocalCityIndex(writer, city.getCityIndex());
-			writer.put3(flag | city.getLblOffset());
+			writer.put3u(flag | city.getLblOffset());
 			if (hasRegion)
-				writer.putChar((char) region);
+				writer.put2u(region);
 			if (hasString)
 				putStringOffset(writer, city.getStringOffset());
-			writer.putN(size20, city.getMdr20());
+			writer.putNu(size20, city.getMdr20());
 		}
 	}
 
@@ -226,7 +226,7 @@ public class Mdr5 extends MdrMapSection {
 	 * and not the global city index used in mdr11.
 	 */
 	private void putLocalCityIndex(ImgFileWriter writer, int cityIndex) {
-		writer.putN(localCitySize, cityIndex);
+		writer.putNu(localCitySize, cityIndex);
 	}
 
 	/**

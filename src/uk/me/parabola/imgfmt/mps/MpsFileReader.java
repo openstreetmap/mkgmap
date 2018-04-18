@@ -60,7 +60,7 @@ public class MpsFileReader implements Closeable {
 	private void readBlocks() {
 		byte type;
 		while ((type = reader.get()) > 0) {
-			int len = reader.getChar();
+			int len = reader.get2u();
 
 			switch (type) {
 			case 0x4c:
@@ -79,23 +79,23 @@ public class MpsFileReader implements Closeable {
 
 	private void readMapBlock() {
 		MapBlock block = new MapBlock(codePage);
-		int val = reader.getInt();
+		int val = reader.get4();
 		block.setIds(val >>> 16, val & 0xffff);
-		block.setMapNumber(reader.getInt());
+		block.setMapNumber(reader.get4());
 
 		byte[] zString = reader.getZString();
 		block.setSeriesName(decodeToString(zString));
 		block.setMapDescription(decodeToString(reader.getZString()));
 		block.setAreaName(decodeToString(reader.getZString()));
-		block.setHexNumber(reader.getInt());
-		reader.getInt();
+		block.setHexNumber(reader.get4());
+		reader.get4();
 		maps.add(block);
 	}
 
 	private void readProductBlock() {
 		ProductBlock block = new ProductBlock(codePage);
-		block.setProductId(reader.getChar());
-		block.setFamilyId(reader.getChar());
+		block.setProductId(reader.get2u());
+		block.setFamilyId(reader.get2u());
 		block.setDescription(decodeToString(reader.getZString()));
 		products.add(block);
 	}

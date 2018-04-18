@@ -61,8 +61,8 @@ public class RouteNode implements Comparable<RouteNode> {
 	private int flags;
 
 	private final CoordNode coord;
-	private char latOff;
-	private char lonOff;
+	private int latOff;
+	private int lonOff;
 	private List<RouteArc[]> throughRoutes;
 
 	// contains the maximum of roads this node is on, written with the flags
@@ -195,14 +195,14 @@ public class RouteNode implements Comparable<RouteNode> {
 
 		assert (flags & F_DISCARDED) == 0 : "attempt to write discarded node";
 
-		writer.put((byte) 0);  // will be overwritten later
+		writer.put1u(0);  // will be overwritten later
 		flags |= (nodeClass & MAX_DEST_CLASS_MASK); // max. road class of any outgoing road
-		writer.put((byte) flags);
+		writer.put1u(flags);
 
 		if (haveLargeOffsets()) {
-			writer.putInt((latOff << 16) | (lonOff & 0xffff));
+			writer.put4((latOff << 16) | (lonOff & 0xffff));
 		} else {
-			writer.put3((latOff << 12) | (lonOff & 0xfff));
+			writer.put3s((latOff << 12) | (lonOff & 0xfff));
 		}
 
 		if (!arcs.isEmpty()) {
@@ -253,9 +253,9 @@ public class RouteNode implements Comparable<RouteNode> {
 	public void writeNod3OrNod4(ImgFileWriter writer) {
 		assert isBoundary() : "trying to write nod3 for non-boundary node";
 
-		writer.put3(coord.getLongitude());
-		writer.put3(coord.getLatitude()); 
-		writer.put3(offsetNod1);
+		writer.put3s(coord.getLongitude());
+		writer.put3s(coord.getLatitude()); 
+		writer.put3u(offsetNod1);
 	}
 
 	public void discard() {
@@ -294,14 +294,14 @@ public class RouteNode implements Comparable<RouteNode> {
 	private void setLatOff(int latOff) {
 		if(log.isDebugEnabled())
 			log.debug("lat off", Integer.toHexString(latOff));
-		this.latOff = (char) latOff;
+		this.latOff = latOff;
 		checkOffSize(latOff);
 	}
 
 	private void setLonOff(int lonOff) {
 		if(log.isDebugEnabled())
 			log.debug("long off", Integer.toHexString(lonOff));
-		this.lonOff = (char) lonOff;
+		this.lonOff = lonOff;
 		checkOffSize(lonOff);
 	}
 

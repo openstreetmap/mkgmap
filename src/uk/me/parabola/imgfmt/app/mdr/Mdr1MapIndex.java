@@ -44,7 +44,7 @@ public class Mdr1MapIndex {
 	}
 
 	public void addPointer(int recordNumber) {
-		subWriter.putN(pointerSize, recordNumber);
+		subWriter.putNu(pointerSize, recordNumber);
 	}
 	
 	private int sectionToSubsection(int n) {

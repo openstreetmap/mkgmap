@@ -63,23 +63,23 @@ public class NODHeader extends CommonHeader {
 	 */
 	protected void readFileHeader(ImgFileReader reader) throws ReadFailedException {
         nodes.readSectionInfo(reader, false);
-        flags = reader.getChar();
-        reader.getChar();
-        align = reader.get();
-        mult1 = reader.get();
-        tableARecordLen = reader.getChar();
+        flags = reader.get2u();
+        reader.get2u();
+        align = reader.get1u();
+        mult1 = reader.get1u();
+        tableARecordLen = reader.get2u();
         roads.readSectionInfo(reader, false);
-        reader.getInt();
+        reader.get4();
         boundary.readSectionInfo(reader, true);
-		reader.getInt();
+		reader.get4();
 		if (getHeaderLength() > 0x3f) {
 			highClassBoundary.readSectionInfo(reader, false);
 
-			classBoundaries[0] = reader.getInt();
-			classBoundaries[1] = classBoundaries[0] + reader.getInt();
-			classBoundaries[2] = classBoundaries[1] + reader.getInt();
-			classBoundaries[3] = classBoundaries[2] + reader.getInt();
-			classBoundaries[4] = classBoundaries[3] + reader.getInt();
+			classBoundaries[0] = reader.get4();
+			classBoundaries[1] = classBoundaries[0] + reader.get4();
+			classBoundaries[2] = classBoundaries[1] + reader.get4();
+			classBoundaries[3] = classBoundaries[2] + reader.get4();
+			classBoundaries[4] = classBoundaries[3] + reader.get4();
 		}
 	}
 
@@ -109,23 +109,23 @@ public class NODHeader extends CommonHeader {
 		if(driveOnLeft)
 			flags |= 0x0100;
 		
-		writer.putInt(flags);
+		writer.put4(flags);
 
-		byte align = DEF_ALIGN;
-		writer.put(align);
-		writer.put((byte) 0); // pointer multiplier
-		writer.putChar((char) 5);
+		int align = DEF_ALIGN;
+		writer.put1u(align);
+		writer.put1u(0); // pointer multiplier
+		writer.put2u(5);
 
 		roads.writeSectionInfo(writer);
-		writer.putInt(0);
+		writer.put4(0);
 
 		boundary.writeSectionInfo(writer);
 		// new fields for header length > 0x3f
-		writer.putInt(2); // no other value spotted, meaning ?
+		writer.put4(2); // no other value spotted, meaning ?
 		highClassBoundary.writeSectionInfo(writer);
-		writer.putInt(classBoundaries[0]);
+		writer.put4(classBoundaries[0]);
 		for (int i = 1; i < classBoundaries.length; i++){
-			writer.putInt(classBoundaries[i] - classBoundaries[i-1]);
+			writer.put4(classBoundaries[i] - classBoundaries[i-1]);
 		}
 	}
 

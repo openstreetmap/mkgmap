@@ -60,17 +60,17 @@ public class TypLine extends TypElement {
 		ColourInfo colourInfo = xpm.getColourInfo();
 		int scheme = colourInfo.getColourScheme() & 0x7;
 
-		writer.put((byte) ((scheme & 0x7) | (height << 3)));
-		writer.put(flags);
+		writer.put1u((scheme & 0x7) | (height << 3));
+		writer.put1u(flags);
 
 		colourInfo.write(writer);
 		if (xpm.hasImage())
 			xpm.writeImage(writer);
 
 		if (height == 0) {
-			writer.put(lineWidth);
+			writer.put1u(lineWidth);
 			if ((scheme&~1) != 6)
-				writer.put((byte) (lineWidth + 2*borderWidth));
+				writer.put1u(lineWidth + 2*borderWidth);
 		}
 
 		// The labels have a length byte to show the number of bytes following. There is

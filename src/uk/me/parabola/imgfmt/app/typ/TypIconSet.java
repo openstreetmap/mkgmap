@@ -31,15 +31,15 @@ public class TypIconSet extends TypElement {
 		offset = writer.position();
 
 		// Start with the number of icons
-		writer.put((byte) icons.size());
+		writer.put1u(icons.size());
 
 		for (Xpm xpm : icons) {
 			ColourInfo colourInfo = xpm.getColourInfo();
 			int nbits = calcBits(colourInfo);
-			writer.putChar((char) (nbits/2));
-			writer.put((byte) 1);
-			writer.put((byte) colourInfo.getWidth());
-			writer.put((byte) colourInfo.getHeight());
+			writer.put2u(nbits/2);
+			writer.put1u(1);
+			writer.put1u(colourInfo.getWidth());
+			writer.put1u(colourInfo.getHeight());
 			writeImage(writer, xpm);
 		}
 	}

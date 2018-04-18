@@ -39,8 +39,8 @@ public class Mdr13 extends MdrSection implements HasHeaderFlags {
 
 		for (Mdr13Record region : regions) {
 			putMapIndex(writer, region.getMapIndex());
-			writer.putChar((char) region.getRegionIndex());
-			writer.putChar((char) region.getCountryIndex());
+			writer.put2u(region.getRegionIndex());
+			writer.put2u(region.getCountryIndex());
 			putStringOffset(writer, region.getStrOffset());
 		}
 	}

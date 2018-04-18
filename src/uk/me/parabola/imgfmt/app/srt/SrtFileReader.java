@@ -71,14 +71,14 @@ public class SrtFileReader extends ImgFile {
 	private void readTableHeader() {
 		ImgFileReader reader = getReader();
 		reader.position(tableHeader.getPosition());
-		int len = reader.getChar();
+		int len = reader.get2u();
 		sort.setHeader3Len(len);
-		sort.setId1(reader.getChar());
-		sort.setId2(reader.getChar());
-		sort.setCodepage(reader.getChar());
+		sort.setId1(reader.get2u());
+		sort.setId2(reader.get2u());
+		sort.setCodepage(reader.get2u());
 		if (sort.getCodepage() == 65001)
 			sort.setMulti(true);
-		reader.getInt(); //?
+		reader.get4(); //?
 		characterTable.readSectionInfo(reader, true);
 		reader.position(reader.position() + 6); // padding?
 		srt5.readSectionInfo(reader, true);
@@ -87,8 +87,8 @@ public class SrtFileReader extends ImgFile {
 			srt6.readSectionInfo(reader, false);
 		}
 		if (len > 0x34) {
-			reader.getInt();
-			int maxCodeBlock = reader.getInt();
+			reader.get4();
+			int maxCodeBlock = reader.get4();
 			sort.setMaxPage(maxCodeBlock);
 			srt7.readSectionInfo(reader, true);
 			reader.position(reader.position() + 6); // padding?
@@ -110,7 +110,7 @@ public class SrtFileReader extends ImgFile {
 
 		int block = 1;
 		for (int i = 0; i < srt7.getNumItems(); i++) {
-			int val = reader.getInt();
+			int val = reader.get4();
 			if (val >= 0)
 				offsetToBlock.put(val/srt8.getItemSize(), block);
 			block++;
@@ -127,7 +127,7 @@ public class SrtFileReader extends ImgFile {
 			Integer nblock = offsetToBlock.get(i);
 			if (nblock != null) 
 				block = nblock;
-			int flags = reader.get() & 0xff;
+			int flags = reader.get1u();
 			CodePosition cp = readCharPosition(reclen-1);
 			int ch = block*256 + (i % 256);
 			
@@ -149,7 +149,7 @@ public class SrtFileReader extends ImgFile {
 		long start = tableHeader.getPosition() + characterTable.getPosition();
 		reader.position(start);
 		for (int ch = 1; ch <= characterTable.getNumItems(); ch++) {
-			int flags = reader.get() & 0xff;
+			int flags = reader.get1u();
 			CodePosition cp = readCharPosition(rs-1);
 			if ((flags & 0xf0) != 0) { 
 				sort.add(ch, countExp + 1, 0, 0, flags);
@@ -172,18 +172,18 @@ public class SrtFileReader extends ImgFile {
 		CodePosition cp = new CodePosition();
 		int rec;
 		if (posLength == 2) {
-			rec = reader.getChar();
+			rec = reader.get2u();
 			cp.setPrimary((char) (rec & 0xff));
 			cp.setSecondary((byte) ((rec >> 8) & 0xf));
 			cp.setTertiary((byte) ((rec >> 12) & 0xf));
 			
 		} else if (posLength == 3) {
-			rec = reader.get3();
+			rec = reader.get3u();
 			cp.setPrimary((char) (rec & 0xff));
 			cp.setSecondary((byte) ((rec >> 8) & 0xf));
 			cp.setTertiary((byte) ((rec >> 12) & 0xf));
 		} else if (posLength == 4) {
-			rec = reader.getInt();
+			rec = reader.get4();
 			cp.setPrimary((char) (rec & 0xffff));
 			cp.setSecondary((byte) ((rec >> 16) & 0xff));
 			cp.setTertiary((byte) ((rec >> 24) & 0xff));

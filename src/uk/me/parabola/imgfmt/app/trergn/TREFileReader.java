@@ -94,7 +94,7 @@ public class TREFileReader extends ImgReader {
 		reader.position(start);
 
 		int subdivNum = 1;
-		int lastRgnOffset = reader.getu3();
+		int lastRgnOffset = reader.get3u();
 		for (int count = 0; count < levelDivs.length && reader.position() < end; count++) {
 
 			Subdivision[] divs = levelDivs[count];
@@ -103,19 +103,20 @@ public class TREFileReader extends ImgReader {
 				break;
 
 			for (int i = 0; i < divs.length; i++) {
-				int flags = reader.get();
-				int lon = reader.get3();
-				int lat = reader.get3();
-				int width = reader.getChar() & 0x7fff;
-				int height = reader.getChar() & 0xffff;
+				int flags = reader.get1u();
+				int lon = reader.get3s();
+				int lat = reader.get3s();
+				int width = reader.get2u() & 0x7fff;
+				int height = reader.get2u();
 
 				if (count < levelDivs.length-1)
-					reader.getChar();
+					reader.get2u();
 
-				int endRgnOffset = reader.getu3();
+				int endRgnOffset = reader.get3u();
 
 				SubdivData subdivData = new SubdivData(flags,
-						lat, lon, 2*width, 2*height,
+// why???					lat, lon, 2*width, 2*height,
+						lat, lon, width, height,
 						lastRgnOffset, endRgnOffset);
 
 				Subdivision subdiv = Subdivision.readSubdivision(mapLevels[count], subdivData);
@@ -174,9 +175,9 @@ public class TREFileReader extends ImgReader {
 		List<Zoom> mapLevels = new ArrayList<Zoom>();
 		int end = levelsPos + levelsSize;
 		while (reader.position() < end) {
-			int level = reader.get();
-			int nbits = reader.get();
-			int ndivs = reader.getChar();
+			int level = reader.get1u();
+			int nbits = reader.get1u();
+			int ndivs = reader.get2u();
 
 			Subdivision[] divs = new Subdivision[ndivs];
 			levelDivs.add(divs);
@@ -227,7 +228,7 @@ public class TREFileReader extends ImgReader {
 		long pos = sect.getPosition();
 		while (pos < sect.getEndPos()) {
 			reader.position(pos);
-			int offset = reader.get3();
+			int offset = reader.get3s();
 			Label label = lblReader.fetchLabel(offset);
 			if (label != null) {
 				msgs.add(label.getText());
