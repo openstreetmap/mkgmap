@@ -739,7 +739,6 @@ public class RouteNode implements Comparable<RouteNode> {
 	 * The initial bearing doesn't really matter as it is not written
 	 * for indirect arcs.  
 	 * @param road
-	 * @param maxRoadClass
 	 */
 	public void addArcsToMajorRoads(RoadDef road){
 		assert road.getNode() == this;

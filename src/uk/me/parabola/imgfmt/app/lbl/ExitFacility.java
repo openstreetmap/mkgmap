@@ -51,8 +51,6 @@ public class ExitFacility {
 		word |= type << 24;	 // 24:27 = 4 bit type
 		// 28 = unknown
 		word |= direction << 29; // 29:31 = 3 bit direction
-//		writer.put2u(word && 0xffff);
-//		writer.put2u(word >> 16);
 		writer.put4(word);
 		writer.put1u(facilities);
 	}

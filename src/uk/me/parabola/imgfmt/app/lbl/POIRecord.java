@@ -337,8 +337,6 @@ public class POIRecord {
 
 		public void write(ImgFileWriter writer)
 		{
-//			for(int i = 0; i < encodedSize; i++)
-//				writer.put1u(encodedNumber[i]);
 			writer.put(encodedNumber, 0, encodedSize);
 		}
 

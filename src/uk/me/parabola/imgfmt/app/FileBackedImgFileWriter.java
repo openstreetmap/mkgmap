@@ -105,7 +105,7 @@ public class FileBackedImgFileWriter implements ImgFileWriter, Sized {
 
 	/**
 	 * Write out a single byte.
-	 * %%% temporary
+	 *
 	 * @param b The byte to write.
 	 */
 	public void put(byte b) {
@@ -145,7 +145,7 @@ public class FileBackedImgFileWriter implements ImgFileWriter, Sized {
 
 	/**
 	 * Write out int in range -0x800000..0x7fffff in little endian byte order.
-	 * @param int The value to write.
+	 * @param val The value to write.
 	 */
 	public void put3s(int val) {
 		assert val >= -0x800000 && val <= 0x7fffff : val;

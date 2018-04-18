@@ -104,7 +104,7 @@ public class TYPFile extends ImgFile {
 		Collections.sort(keys);
 
 		// Offset 0 is reserved to mean no label.
-		writer.put1u((byte) 0);
+		writer.put1u(0);
 
 		for (SortKey<TypIconSet> key : keys) {
 			int off = writer.position();
@@ -127,7 +127,7 @@ public class TYPFile extends ImgFile {
 					String name = encoder.charset().name();
 					throw new TypLabelException(name);
 				}
-				writer.put1u((byte) 0);
+				writer.put1u(0);
 			}
 		}
 		Utils.closeFile(writer);
@@ -190,7 +190,7 @@ public class TYPFile extends ImgFile {
 		for (Section s : sect) {
 			if (s.getSize() == 0) {
 				s.setPosition(0);
-				s.setItemSize((char) 0);
+				s.setItemSize(0);
 			}
 		}
 	}

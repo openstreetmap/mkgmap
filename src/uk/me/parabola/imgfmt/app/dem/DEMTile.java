@@ -310,7 +310,7 @@ public class DEMTile {
 	 * Write an unsigned binary value with the given number of bits, MSB first. 
 	 * @param val
 	 * @param hunit
-	 * @param type 
+	 * @param maxZeroBits
 	 * @return 
 	 */
 	private boolean writeValHybrid(int val, int hunit, int maxZeroBits) {

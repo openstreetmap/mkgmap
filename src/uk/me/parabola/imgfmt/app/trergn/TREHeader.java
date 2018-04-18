@@ -203,7 +203,7 @@ public class TREHeader extends CommonHeader {
 			// The record size must be zero if the section is empty for compatibility
 			// with cpreview.
 			if (extTypeOffsets.getSize() == 0)
-				extTypeOffsets.setItemSize((char) 0);
+				extTypeOffsets.setItemSize(0);
 			extTypeOffsets.writeSectionInfo(writer, true);
 
 			// the second byte value of 6 appears to mean "extended

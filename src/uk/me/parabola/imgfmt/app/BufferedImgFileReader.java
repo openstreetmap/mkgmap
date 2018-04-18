@@ -104,7 +104,7 @@ public class BufferedImgFileReader implements ImgFileReader {
 	 * @return int sign-extended value that was read.
 	 */
 	public int get1s() throws ReadFailedException {
-		return (int)get();
+		return get();
 	}
 
 	/**

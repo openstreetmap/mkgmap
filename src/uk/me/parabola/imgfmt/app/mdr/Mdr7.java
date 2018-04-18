@@ -239,7 +239,6 @@ public class Mdr7 extends MdrMapSection {
 	/**
 	 * Group a list of roads with the same partial name.
 	 * @param samePartial
-	 * @param minorSorter
 	 */
 	private void groupByNameAndMap(List<Mdr7Record> samePartial) {
 		if (samePartial.isEmpty())

@@ -53,7 +53,7 @@ public interface ImgFileWriter extends Closeable {
 
 	/**
 	 * Write out a single byte.
-	 * %%% temporary
+	 *
 	 * @param b The byte to write.
 	 */
 	public void put(byte b);
@@ -72,7 +72,7 @@ public interface ImgFileWriter extends Closeable {
 
 	/**
 	 * Write out int in range -0x800000..0x7fffff in little endian byte order.
-	 * @param int The value to write.
+	 * @param val The value to write.
 	 */
 	public void put3s(int val);
 
@@ -111,10 +111,6 @@ public interface ImgFileWriter extends Closeable {
 	 * @param val The value to write.
 	 */
 	public void put4(int val);
-
-// 	public default void put4u(long val) {
-//		put4((int) val);
-//	}
 
 	/**
 	 * Write out an arbitrary length sequence of bytes.

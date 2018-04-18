@@ -67,18 +67,11 @@ public interface ImgFileReader extends Closeable {
 	 */
 	public int get3s() throws ReadFailedException;
 
-// don't think needed:
-//	public int getNs(int nBytes) throws ReadFailedException;
-
 	public int get1u() throws ReadFailedException;
 
 	public int get2u() throws ReadFailedException;
 
 	public int get3u() throws ReadFailedException;
-
-//	public default long get4u() throws ReadFailedException {
-//		return get4() & 0xffff_ffffL;
-//	}
 
 	/**
 	 * Read a variable sized integer.  The size is given.

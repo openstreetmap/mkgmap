@@ -39,10 +39,10 @@ public class SRTHeader extends CommonHeader {
 
 	private final Section desc = new Section(header2);
 	private final Section subheader = new Section(desc);
-	private final Section chartab = new Section((char) 3);
-	private final Section expansions = new Section(chartab, (char) 2);
-	private final Section srt8 = new Section(expansions, (char) 5);
-	private final Section srt7 = new Section(srt8, (char) 4);
+	private final Section chartab = new Section(3);
+	private final Section expansions = new Section(chartab, 2);
+	private final Section srt8 = new Section(expansions, 5);
+	private final Section srt7 = new Section(srt8, 4);
 	
 
 	private Sort sort;
@@ -163,8 +163,8 @@ public class SRTHeader extends CommonHeader {
 		this.sort = sort;
 		if (sort.isMulti()) {
 			chartab.setPosition(HEADER3_MULTI_LEN);
-			chartab.setItemSize((char) 5);
-			expansions.setItemSize((char) 4);
+			chartab.setItemSize(5);
+			expansions.setItemSize(4);
 		}
 	}
 
