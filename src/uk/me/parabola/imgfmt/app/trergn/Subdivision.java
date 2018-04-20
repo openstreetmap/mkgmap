@@ -124,20 +124,20 @@ public class Subdivision {
 		h = ((h + 1)/2 + mask) >> shift;
 		
 		if (w > 0x7fff) {
-			log.warn("Subdivision width is " + w + " at " + getCenter());
+			log.warn("Subdivision width is " + w + " at " + getCenter().toOSMURL());
 			w = 0x7fff;
 		}
 		if (w < 0) { // think can get this from empty/unbounded maps
-			log.error("Subdivision neg width ", w, "min=", area.getMinLong(), "mid=", longitude, "max=", area.getMaxLong(), "shift=", shift, "mask=", mask, "@", getCenter());
+			log.error("Subdivision neg width ", w, "min=", area.getMinLong(), "mid=", longitude, "max=", area.getMaxLong(), "shift=", shift, "mask=", mask, "@", getCenter().toOSMURL());
 			w = 0x7fff;
 		}
 
 		if (h > 0xffff) {
-			log.warn("Subdivision height is " + h + " at " + getCenter());
+			log.warn("Subdivision height is " + h + " at " + getCenter().toOSMURL());
 			h = 0xffff;
 		}
 		if (h < 0) { // think can get this from empty/unbounded maps
-			log.error("Subdivision neg height ", h, "min=", area.getMinLat(), "mid=", latitude, "max=", area.getMaxLat(), "shift=", shift, "mask=", mask, "@", getCenter());
+			log.error("Subdivision neg height ", h, "min=", area.getMinLat(), "mid=", latitude, "max=", area.getMaxLat(), "shift=", shift, "mask=", mask, "@", getCenter().toOSMURL());
 			h = 0xffff;
 		}
 
