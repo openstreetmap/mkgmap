@@ -234,7 +234,7 @@ public class RoadDef {
 			if (nodeCount + 2 != nnodes){
 				log.error("internal error? The nodeCount doesn't match value calculated by RoadNetWork:",this);
 			}
-			writer.put1u(nodeCount); // lo bits of node count
+			writer.put1u(nodeCount & 0xff); // lo bits of node count
 
 			int code = (nodeCount >> 8) & 0x3; // top bits of node count
 			int len, flag;
