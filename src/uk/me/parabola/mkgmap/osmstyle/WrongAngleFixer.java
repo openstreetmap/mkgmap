@@ -1434,6 +1434,8 @@ public class WrongAngleFixer {
 	 * @param modifiedRoads if ways are routable we add the modified ways to this map 
 	 */
 	private void prepWithDouglasPeucker(List<ConvertedWay> convertedWays, HashMap<Long, ConvertedWay> modifiedRoads) {
+		// we don't want to remove end points of ways
+		markEndPoints(convertedWays);
 		double maxErrorDistance = 0.05;
 		Way lastWay = null;
 		for (ConvertedWay cw : convertedWays) {
@@ -1469,6 +1471,22 @@ public class WrongAngleFixer {
 			}
 		}
 	}
+
+	private void markEndPoints(List<ConvertedWay> convertedWays) {
+		Way lastWay = null;
+		for (ConvertedWay cw : convertedWays) {
+			if (!cw.isValid() || cw.isOverlay())
+				continue;
+			Way way = cw.getWay();
+			if (way.equals(lastWay))
+				continue;
+			lastWay = way;
+			List<Coord> points = way.getPoints();
+			points.get(0).setEndOfWay(true);
+			points.get(points.size()-1).setEndOfWay(true);
+		}
+	}
+
 	
 	private static String getUsableId(Way w) {
 		return "Way " + (FakeIdGenerator.isFakeId(w.getId()) ? " generated from " : " ") + w.getOriginalId(); 
