@@ -1,7 +1,5 @@
 package uk.me.parabola.mkgmap.osmstyle.function;
 
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 
 import uk.me.parabola.imgfmt.app.Coord;
@@ -24,7 +22,6 @@ import uk.me.parabola.mkgmap.reader.osm.Way;
  */
 public class AreaSizeFunction extends CachedFunction {
 
-	private final DecimalFormat nf = new DecimalFormat("0.0#####################", DecimalFormatSymbols.getInstance(Locale.US));
 	private final boolean orderByDecreasingArea = true;
 
 	public AreaSizeFunction() {
@@ -48,7 +45,7 @@ public class AreaSizeFunction extends CachedFunction {
 				areaSize = Math.abs(areaSize);
 			} else
 				areaSize = MultiPolygonRelation.calcAreaSize(w.getPoints());
-			return nf.format(areaSize);
+			return String.format(Locale.US, "%.3f", areaSize);
 		}
 		return null;
 	}

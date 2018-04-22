@@ -26,6 +26,7 @@ import java.util.Set;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.osmstyle.NameFinder;
+import uk.me.parabola.mkgmap.osmstyle.function.AreaSizeFunction;
 import uk.me.parabola.util.EnhancedProperties;
 
 /**
@@ -69,6 +70,7 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 	private boolean poisToAreas = false;
 	private boolean poisToLines = false;
 	private NameFinder nameFinder;
+	private AreaSizeFunction areaSizeFunction = new AreaSizeFunction();
 	
 	/** Name of the bool tag that is set to true if a POI is created from an area */
 	public static final short AREA2POI_TAG = TagDict.getInstance().xlate("mkgmap:area2poi");
@@ -158,8 +160,8 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 	
 	public void end() {
 		log.info(getClass().getSimpleName(), "started");
-		addPOIsToWays();
-		addPOIsToMPs();
+		addPOIsForWays();
+		addPOIsForMPs();
 		log.info(getClass().getSimpleName(), "finished");
 	}
 	
@@ -177,7 +179,7 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 		return -1;
 	}
 	
-	private void addPOIsToWays() {
+	private void addPOIsForWays() {
 		Map<Coord, Integer> labelCoords = new IdentityHashMap<Coord, Integer>(); 
 		
 		// save all coords with one of the placement tags to a map
@@ -235,7 +237,7 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 		if (poisToAreas == false) {
 			return;
 		}
-
+		
 		// get the coord where the poi is placed
 		Coord poiCoord = null;
 		// do we have some labeling coords?
@@ -262,7 +264,8 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 			// use the common center point of the area
 			poiCoord = polygon.getCofG();
 		}
-		
+		// add tag mkgmap:cache_area_size to the original polygon so that it is copied to the POI
+		areaSizeFunction.value(polygon);
 		Node poi = createPOI(polygon, poiCoord, AREA2POI_TAG); 
 		saver.addNode(poi);
 	}
@@ -340,7 +343,7 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 		
 	}
 
-	private void addPOIsToMPs() {
+	private void addPOIsForMPs() {
 		int mps2POI = 0;
 		for (Relation r : saver.getRelations().values()) {
 			

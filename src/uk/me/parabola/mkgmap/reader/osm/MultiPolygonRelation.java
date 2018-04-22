@@ -17,8 +17,6 @@ import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.geom.Area;
 import java.awt.geom.Line2D;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collection;
@@ -1100,9 +1098,8 @@ public class MultiPolygonRelation extends Relation {
 		}
 		String mpAreaSizeStr = null;
 		if (isAreaSizeCalculated()) {
-			// assign the area size of the whole multipolygon to all outer polygons
-			mpAreaSizeStr = new DecimalFormat("0.0####################", 
-					DecimalFormatSymbols.getInstance(Locale.US)).format(mpAreaSize);
+			// calculate tag value for mkgmap:cache_area_size only once
+			mpAreaSizeStr = String.format(Locale.US, "%.3f", mpAreaSize);
 		}
 		// Go through all original outer ways, create a copy, tag them
 		// with the mp tags and mark them only to be used for polyline processing
@@ -1144,8 +1141,8 @@ public class MultiPolygonRelation extends Relation {
 		
 		if (isAreaSizeCalculated()) {
 			// assign the area size of the whole multipolygon to all outer polygons
-			String mpAreaSizeStr = new DecimalFormat("0.0####################", 
-					DecimalFormatSymbols.getInstance(Locale.US)).format(mpAreaSize);
+			String mpAreaSizeStr = String.format(Locale.US, "%.3f", mpAreaSize); 
+			addTag("mkgmap:cache_area_size", mpAreaSizeStr);
 			for (Way w : mpPolygons.values()) {
 				if ("outer".equals(w.getTag("mkgmap:mp_role"))) {
 					w.addTag("mkgmap:cache_area_size", mpAreaSizeStr);
