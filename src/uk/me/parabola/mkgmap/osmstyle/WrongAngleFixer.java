@@ -28,7 +28,9 @@ import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.filters.DouglasPeuckerFilter;
 import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
+import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.RestrictionRelation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
@@ -246,11 +248,15 @@ public class WrongAngleFixer {
 		HashSet<Way> waysWithBearingErrors = new HashSet<>();
 		HashSet<Long> waysThatMapToOnePoint = new HashSet<>();
 		
-		Way lastWay = null;
 		List<ConvertedWay> convertedWays = (roads != null) ? roads: lines;
-		
+
+		// filter with Douglas Peucker algo
+		prepWithDouglasPeucker(convertedWays, modifiedRoads);
+
+		Way lastWay = null;
 		boolean anotherPassRequired = true;
-		for (pass = 1; pass < 20; pass++) {
+		final int maxPass = 20;
+		for (pass = 1; pass < maxPass; pass++) {
 			if (!anotherPassRequired && !extraPass)
 				break;
 			anotherPassRequired = false;
@@ -442,6 +448,9 @@ public class WrongAngleFixer {
 				for (int i = points.size() - 1; i >= 0; i--) {
 					Coord p = points.get(i);
 					if (p.isToRemove()) {
+						if (pass >= maxPass - 1) {
+							log.warn("removed point in last pass. Way", getUsableId(way), p.toDegreeString());
+						}
 						points.remove(i);
 						anotherPassRequired = true;
 						lastWayModified = true;
@@ -464,6 +473,9 @@ public class WrongAngleFixer {
 						p.setViaNodeOfRestriction(false);
 					}
 					p = replacement;
+					if (pass >= maxPass - 1) {
+						log.warn("changed point in last pass. Way", getUsableId(way), p.toDegreeString());
+					}
 					// replace point in way
 					points.set(i, p);
 					if (p.getHighwayCount() >= 2)
@@ -587,8 +599,9 @@ public class WrongAngleFixer {
 					Utils.joinPath(DEBUG_PATH, (mode == MODE_ROADS ? "roads_" : "lines_") + "solved_badAngles"),
 					bbox.toCoords(), new ArrayList<>(changedPlaces));
 		}
-		if (anotherPassRequired)
-			log.error("Removing wrong angles - didn't finish in " + pass + " passes, giving up!");
+		if (anotherPassRequired) {
+			log.warn("Removing wrong angles - didn't finish in " + pass + " passes, giving up!");
+		}
 		else
 			log.info("Removing wrong angles - finished in", pass, "passes (", numNodesMerged, "nodes merged,", numWaysDeleted, "ways deleted)"); 		
 	}
@@ -1411,5 +1424,56 @@ public class WrongAngleFixer {
 		if (modifiedPoints.size() > 1 && modifiedPoints.get(0) != modifiedPoints.get(modifiedPoints.size()-1))
 			modifiedPoints.add(modifiedPoints.get(0));
 		return modifiedPoints;
+	}
+	
+	/**
+	 * Use Douglas-Peucker Filter with a very small allowed distance so obsolete points are removed before the 
+	 * complex angle calculations. This helps especially for heavily over-sampled ways where many points are used to build
+	 * circular ways. 
+	 * @param convertedWays list of ways to filter
+	 * @param modifiedRoads if ways are routable we add the modified ways to this map 
+	 */
+	private void prepWithDouglasPeucker(List<ConvertedWay> convertedWays, HashMap<Long, ConvertedWay> modifiedRoads) {
+		double maxErrorDistance = 0.05;
+		Way lastWay = null;
+		for (ConvertedWay cw : convertedWays) {
+			if (!cw.isValid() || cw.isOverlay())
+				continue;
+			Way way = cw.getWay();
+			if (way.equals(lastWay))
+				continue;
+			lastWay = way;
+			List<Coord> points = way.getPoints();
+			List<Coord> coords = new ArrayList<>(points);
+			// Loop runs downwards, as the list length gets modified while
+			// running
+			int endIndex = coords.size() - 1;
+			for (int i = endIndex - 1; i > 0; i--) {
+				Coord p = coords.get(i);
+				// If a point has to be kept in the line use the douglas peucker algorithm for
+				// upper segment
+				if (!allowedToRemove(p)) {
+					// point is "preserved", don't remove it
+					DouglasPeuckerFilter.douglasPeucker(coords, i, endIndex, maxErrorDistance);
+					endIndex = i;
+				}
+			}
+			// Simplify the rest
+			DouglasPeuckerFilter.douglasPeucker(coords, 0, endIndex, maxErrorDistance);
+			if (coords.size() != points.size()) {
+				if (mode == MODE_ROADS) {
+					modifiedRoads.put(way.getId(), cw);
+				}
+				if (points.size() - coords.size() > 10) {
+					log.error("Douglas Peucker preparation removed many points in way",getUsableId(way),points.size(),"->",coords.size());
+				}
+				points.clear();
+				points.addAll(coords);
+			}
+		}
+	}
+	
+	private static String getUsableId(Way w) {
+		return "Way " + (FakeIdGenerator.isFakeId(w.getId()) ? " generated from " : " ") + w.getOriginalId(); 
 	}
 }
