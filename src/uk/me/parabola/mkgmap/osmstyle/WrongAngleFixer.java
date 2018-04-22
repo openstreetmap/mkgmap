@@ -1464,9 +1464,6 @@ public class WrongAngleFixer {
 				if (mode == MODE_ROADS) {
 					modifiedRoads.put(way.getId(), cw);
 				}
-				if (points.size() - coords.size() > 10) {
-					log.error("Douglas Peucker preparation removed many points in way",getUsableId(way),points.size(),"->",coords.size());
-				}
 				points.clear();
 				points.addAll(coords);
 			}
