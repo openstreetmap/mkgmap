@@ -318,7 +318,7 @@ public class RGNFileReader extends ImgReader {
 		line.setType(type);
 		line.setDeltaLong(reader.get2s());
 		line.setDeltaLat(reader.get2s());
-		b1 = reader.get();
+		b1 = reader.get1u();
 		int len;
 		// one byte or two byte length field?
 		if ((b1 & 0x01) != 0){
