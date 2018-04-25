@@ -354,10 +354,6 @@ public class TREFile extends ImgFile implements Configurable {
 	}
 
 	public void setBounds(Area area) {
-		assert Math.abs(area.getMinLat())  <= 0x7fffff : "minlat=" + area.getMinLat();
-		assert Math.abs(area.getMaxLat())  <= 0x7fffff : "maxlat=" + area.getMaxLat();
-		assert Math.abs(area.getMinLong()) <= 0x7fffff : "minlong=" + area.getMinLong();
-		assert Math.abs(area.getMaxLong()) <= 0x7fffff : "maxlong=" + area.getMaxLong();
 		header.setBounds(area);
 	}
 
