@@ -338,6 +338,19 @@ public class RuleSetTest {
 		assertEquals("second element", 0x6, list.get(1).getType());
 	}
 
+	@Test
+	public void testSetWithTagValue() {
+		RuleSet rs = makeRuleSet("a=* {set b='${a}'}" +
+				"b=1 [0x10404 resolution 24]" 
+		);
+
+		Way el = new Way(1);
+		el.addTag("a", "1");
+
+		List<GType> list = resolveList(rs, el);
+		assertEquals("first element", 0x10404, list.get(0).getType());
+	}
+
 	private List<GType> resolveList(RuleSet rs, Way el) {
 		final List<GType> list = new ArrayList<GType>();
 		rs.resolveType(el, new TypeResult() {
