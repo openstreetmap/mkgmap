@@ -61,8 +61,9 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 
 	protected void preWriteImpl() {
 		if (!index.isEmpty()) {
-			Mdr29Record r = index.get(index.size() - 1);
-			this.max17 = r.getMdr17();
+			for (Mdr29Record r : index) {
+				this.max17 = Math.max(max17, r.getMdr17());
+			}
 		}
 	}
 	
