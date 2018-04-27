@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.imgfmt.app.trergn;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.ReadFailedException;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.CommonHeader;
@@ -162,7 +163,11 @@ public class TREHeader extends CommonHeader {
 	 */
 	protected void writeFileHeader(ImgFileWriter writer) {
 		writer.put3s(area.getMaxLat());
-		writer.put3s(area.getMaxLong());
+		// handle special case, write -180 instead of 180 to avoid assertion
+//		if (area.getMaxLong() == Utils.MAX_LON_MAP_UNITS)
+//			writer.put3s(Utils.MIN_LON_MAP_UNITS);
+//		else
+			writer.put3s(area.getMaxLong());
 		writer.put3s(area.getMinLat());
 		writer.put3s(area.getMinLong());
 
