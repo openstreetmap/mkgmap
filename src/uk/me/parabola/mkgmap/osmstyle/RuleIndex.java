@@ -27,6 +27,7 @@ import java.util.Set;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.TagDict;
+import uk.me.parabola.util.MultiHashMap;
 
 /**
  * An index to reduce the number of rules that have to be executed.
@@ -171,10 +172,18 @@ public class RuleIndex {
 		// Maps a rule number to the tags that might be changed by that rule
 		Map<Integer, List<String>> changeTags = new HashMap<Integer, List<String>>();
 		
+		// Collection of possibly changed or added tags were the new value is
+		// NOT known (e.g. set x=$y)
+		Set<String> modOrAddedTagKeys = new HashSet<>();
+
+		// Collection of possibly changed or added tags were the new value is
+		// known (e.g. set x=1)
+		MultiHashMap<String, String> modOrAddedTags = new MultiHashMap<>();
+
 		// remove unnecessary rules
 		filterRules();
-		
-		for (int i = 0; i < ruleDetails.size(); i++){
+
+		for (int i = 0; i < ruleDetails.size(); i++) {
 			int ruleNumber = i;
 			RuleDetails rd = ruleDetails.get(i);
 			String keystring = rd.getKeystring();
@@ -185,13 +194,29 @@ public class RuleIndex {
 				addNumberToMap(tagnames, key, ruleNumber);
 			} else {
 				addNumberToMap(tagVals, keystring, ruleNumber);
+				// check if any of the previous rules may have changed the tag
 				int ind = keystring.indexOf('=');
-				if (ind >= 0) {
-					String key = keystring.substring(0, ind);
+				assert ind >= 0 : "rule index: error in keystring " + keystring; 
+				String key = keystring.substring(0, ind);
+				boolean needed = (modOrAddedTagKeys.contains(key));
+				if (!needed) {
+					List<String> values = modOrAddedTags.get(key);
+					if (values.contains(keystring.substring(ind + 1)))
+						needed = true;
+				}
+				if (needed) {
 					addNumberToMap(tagnames, key, ruleNumber);
-				} 
+				}
 			}
 			addChangables(changeTags, changeableTags, ruleNumber);
+			for (String ent : changeableTags) {
+				int ind = ent.indexOf('=');
+				if (ind >= 0) {
+					modOrAddedTags.add(ent.substring(0, ind), ent.substring(ind + 1));
+				} else {
+					modOrAddedTagKeys.add(ent);
+				}
+			}
 		}
 		
 		for (Map.Entry<Integer, List<String>> ent : changeTags.entrySet()) {
@@ -358,6 +383,8 @@ public class RuleIndex {
 	 * @param ruleNumber The rule number.
 	 */
 	private static void addChangables(Map<Integer, List<String>> changeTags, Set<String> changeableTags, int ruleNumber) {
+		if(changeableTags.isEmpty())
+			return;
 		List<String> tags = changeTags.get(ruleNumber);
 		if (tags == null) {
 			tags = new ArrayList<String>();
