@@ -351,6 +351,22 @@ public class RuleSetTest {
 		assertEquals("first element", 0x10404, list.get(0).getType());
 	}
 
+	@Test
+	public void testSimulateIf() {
+		RuleSet rs = makeRuleSet(	"boundary=administrative { set mkgmap:if:0001=1 }" + 
+				"admin_level<3 & mkgmap:if:0001=1  [0x1e resolution 12]" + 
+				"mkgmap:if:0001!=1 & admin_level<3 [0x1f resolution 14]" 
+		);
+
+		Way el = new Way(1);
+		el.addTag("boundary", "xyz"); // anything but administrative
+		el.addTag("admin_level", "2");
+
+		List<GType> list = resolveList(rs, el);
+		assertEquals("number of elements", 1, list.size());
+		assertEquals("first element", 0x1f, list.get(0).getType());
+	}
+	
 	private List<GType> resolveList(RuleSet rs, Way el) {
 		final List<GType> list = new ArrayList<GType>();
 		rs.resolveType(el, new TypeResult() {
