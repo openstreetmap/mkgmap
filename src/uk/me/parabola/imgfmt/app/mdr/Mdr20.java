@@ -72,7 +72,7 @@ public class Mdr20 extends Mdr2x {
 			boolean citySameByName = lastCity != null && city.getMdr20SortPos() == lastCity.getMdr20SortPos();
 			int rr = street.checkRepeat(lastStreet, collator);
 			// Only save a single copy of each street name.
-			if (!citySameByName || rr != 3) {
+			if (!citySameByName || rr != 3 || lastStreet.getIndex() != street.getIndex()) {
 				record++;
 				streets.add(street);
 			}
