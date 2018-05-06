@@ -307,5 +307,20 @@ public class RuleSet implements Rule, Iterable<Rule> {
 		return false;
 	}
 
+	public BitSet getRules(Element el) {
+		if (!compiled || cacheId == Integer.MAX_VALUE)
+			compile();
+		// new element, invalidate all caches
+		cacheId++;
+
+		// Get all the rules that could match from the index.  
+		BitSet candidates = new BitSet();
+		for (Entry<Short, String> tagEntry : el.getFastTagEntryIterator()) {
+			BitSet rules = index.getRulesForTag(tagEntry.getKey(), tagEntry.getValue());
+			if (rules != null && !rules.isEmpty() )
+				candidates.or(rules);
+		}
+		return candidates;
+	}
 	
 } 

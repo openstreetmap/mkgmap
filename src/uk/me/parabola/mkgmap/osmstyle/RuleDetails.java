@@ -42,4 +42,9 @@ class RuleDetails {
 	public Set<String> getChangingTags() {
 		return changingTags;
 	}
+	
+	@Override
+	public String toString() {
+		return "keystring=\"" + keystring + "\" " + rule.toString();
+	}
 }

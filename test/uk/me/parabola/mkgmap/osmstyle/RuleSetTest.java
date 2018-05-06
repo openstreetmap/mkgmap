@@ -14,6 +14,7 @@
 package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
@@ -365,6 +366,33 @@ public class RuleSetTest {
 		List<GType> list = resolveList(rs, el);
 		assertEquals("number of elements", 1, list.size());
 		assertEquals("first element", 0x1f, list.get(0).getType());
+	}
+	
+	@Test
+	public void testIndexWithOddOrder() {
+		RuleSet rs = makeRuleSet("a=* {set b=1}" +
+				"b=1 {set c=1}" +
+				"d=2 {set c=2}" + 
+				"c=* {set a=2}" +
+				"c=1 {set d=2}" +
+				"c=2 {set d=1}" +
+				"d=1 [0x10401 resolution 24]" + 
+				"d=2 [0x10402 resolution 24]" 
+		);
+		
+		Way el = new Way(1);
+		el.addTag("a", "1");
+		
+		BitSet candidates = rs.getRules(el);
+		BitSet expected = new BitSet();
+		expected.flip(0,8);
+		expected.clear(2);
+		expected.clear(5);
+		expected.clear(6);
+		assertEquals("candidates", expected, candidates);
+		List<GType> list = resolveList(rs, el);
+		assertEquals("first element", 0x10402, list.get(0).getType());
+		
 	}
 	
 	private List<GType> resolveList(RuleSet rs, Way el) {
