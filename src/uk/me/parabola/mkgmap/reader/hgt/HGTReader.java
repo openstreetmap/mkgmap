@@ -171,12 +171,14 @@ public class HGTReader {
 	 * @param name wanted file
 	 */
 	private void checkZip(String fName, String name) {
-		try(ZipFile zipFile = new ZipFile(fName)){
+		File f = new File(fName);
+		if (!f.exists())
+			return;
+		try(ZipFile zipFile = new ZipFile(f)){
 			ZipEntry entry = findZipEntry(zipFile, name);
 			if (entry != null){
 				res = calcRes(entry.getSize(), entry.getName());
 			}
-		} catch (FileNotFoundException e) {
 		} catch (IOException exp) {
 			log.error("failed to get size for file", name, "from", fName);
 		}
