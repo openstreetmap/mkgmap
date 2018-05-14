@@ -228,7 +228,7 @@ public class TREFileReader extends ImgReader {
 		long pos = sect.getPosition();
 		while (pos < sect.getEndPos()) {
 			reader.position(pos);
-			int offset = reader.get3s();
+			int offset = reader.get3u();
 			Label label = lblReader.fetchLabel(offset);
 			if (label != null) {
 				msgs.add(label.getText());

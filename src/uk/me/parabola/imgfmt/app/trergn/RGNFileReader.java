@@ -152,8 +152,8 @@ public class RGNFileReader extends ImgReader {
 			Point p = new Point(sd);
 
 			int type = reader.get1u() << 8;
-			byte b = reader.get();
-			type |= 0x10000  +  (b & 0x1f);
+			int b = reader.get1u();
+			type |= 0x10000 + (b & 0x1f);
 			p.setType(type);
 			p.setDeltaLong(reader.get2s());
 			p.setDeltaLat(reader.get2s());
@@ -262,7 +262,7 @@ public class RGNFileReader extends ImgReader {
 	 * @param line The line or shape that is to be populated.
 	 */
 	private void readLineCommon(ImgFileReader reader, Subdivision div, Polyline line) {
-		byte type = reader.get();
+		int type = reader.get1u();
 		if (line instanceof Polygon)
 			line.setType(type & 0x7f);
 		else {
@@ -293,7 +293,7 @@ public class RGNFileReader extends ImgReader {
 		else
 			len = reader.get2u();
 
-		int base = reader.get();
+		int base = reader.get1u();
 
 		byte[] bitstream = reader.get(len);
 		BitReader br = new BitReader(bitstream);
@@ -309,12 +309,11 @@ public class RGNFileReader extends ImgReader {
 	 * @param line The line or shape that is to be populated.
 	 */
 	private void readLineCommonExtType(ImgFileReader reader, Subdivision div, Polyline line) {
-		int type = reader.get1u();
-		type <<= 8;
+		int type = reader.get1u() << 8;
 		int b1 = reader.get1u();
 		boolean hasExtraBytes = (b1 & 0x80) != 0;
 		boolean hasLabel = (b1 & 0x20) != 0;
-		type |= 0x10000  + (b1 & 0x1f);
+		type |= 0x10000 + (b1 & 0x1f);
 		line.setType(type);
 		line.setDeltaLong(reader.get2s());
 		line.setDeltaLat(reader.get2s());
