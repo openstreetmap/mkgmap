@@ -163,13 +163,9 @@ public class TREHeader extends CommonHeader {
 	 */
 	protected void writeFileHeader(ImgFileWriter writer) {
 		writer.put3s(area.getMaxLat());
-		// handle special case, write -180 instead of 180 to avoid assertion
-		if (area.getMaxLong() == Utils.MAX_LON_MAP_UNITS)
-			writer.put3s(Utils.MIN_LON_MAP_UNITS);
-		else
-			writer.put3s(area.getMaxLong());
+		Utils.put3sLongitude(writer, area.getMaxLong());
 		writer.put3s(area.getMinLat());
-		writer.put3s(area.getMinLong());
+		writer.put3s(area.getMinLong());  // minLong cant be +180
 
 		writer.put4(getMapLevelsPos());
 		writer.put4(getMapLevelsSize());

@@ -28,6 +28,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.zip.GZIPInputStream;
 
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Coord;
 /**
  * Some miscellaneous functions that are used within the .img code.
@@ -441,6 +442,14 @@ public class Utils {
 			return 3;
 		else
 			return 4;
+	}
+
+	public static void put3sLongitude(ImgFileWriter writer, int longitude) {
+		// handle special case, write -180/-8388608 instead of 180/8388608 to avoid assertion
+		if (longitude == Utils.MAX_LON_MAP_UNITS)
+			writer.put3s(Utils.MIN_LON_MAP_UNITS);
+		else
+			writer.put3s(longitude);
 	}
 
 }

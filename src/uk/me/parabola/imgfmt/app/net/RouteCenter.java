@@ -16,6 +16,7 @@ package uk.me.parabola.imgfmt.app.net;
 
 import java.util.List;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -134,7 +135,7 @@ public class RouteCenter {
 
 		// Write the tables header
 		writer.put1u(tabC.getFormat());
-		writer.put3s(centralPoint.getLongitude());
+		Utils.put3sLongitude(writer, centralPoint.getLongitude());
 		writer.put3s(centralPoint.getLatitude());
 		writer.put1u(tabA.getNumberOfItems());
 		writer.put1u(tabB.getNumberOfItems());

@@ -20,6 +20,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -253,7 +255,7 @@ public class RouteNode implements Comparable<RouteNode> {
 	public void writeNod3OrNod4(ImgFileWriter writer) {
 		assert isBoundary() : "trying to write nod3 for non-boundary node";
 
-		writer.put3s(coord.getLongitude());
+		Utils.put3sLongitude(writer, coord.getLongitude());
 		writer.put3s(coord.getLatitude()); 
 		writer.put3u(offsetNod1);
 	}

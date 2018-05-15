@@ -269,7 +269,7 @@ public class Subdivision {
 		log.debug("write subdiv", latitude, longitude);
 		file.put3u(startRgnPointer);
 		file.put1u(getType());
-		file.put3s(longitude);
+		Utils.put3sLongitude(file, longitude);
 		file.put3s(latitude);
 		
 		assert width <= 0x7fff;
