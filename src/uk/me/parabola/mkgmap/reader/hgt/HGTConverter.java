@@ -39,13 +39,14 @@ public class HGTConverter {
 	private int pointsDistanceLat;
 	private int pointsDistanceLon;
 	private boolean useComplexInterpolation;
-	private double[][] eleArray;  
+	private final double[][] eleArray = new double[4][4];
 	private int statPoints;
 	private int statBicubic;
 	private int statBilinear;
 	private int statVoid;
 	private int statRdrNull;
 	private int statRdrRes;
+	
 	private InterpolationMethod interpolationMethod = InterpolationMethod.Bicubic;
 
 	public enum InterpolationMethod {
@@ -146,8 +147,8 @@ public class HGTConverter {
 		statPoints++;
 		if (useComplexInterpolation) {
 			// bicubic (Catmull-Rom) interpolation with 16 points
-			eleArray = fillArray(rdr, row, col, xLeft, yBottom);
-			if (eleArray != null) {
+			boolean filled = fillArray(rdr, row, col, xLeft, yBottom);
+			if (filled) {
 				h = (short) Math.round(bicubicInterpolation(eleArray, qx, qy));
 				statBicubic++;
 			}
@@ -181,7 +182,7 @@ public class HGTConverter {
 	 * Fill 16 values of HGT near required coordinates
 	 * can use HGTreaders near the current one
 	 */
-	private double[][] fillArray(HGTReader rdr, int row, int col, int xLeft, int yBottom) {
+	private boolean fillArray(HGTReader rdr, int row, int col, int xLeft, int yBottom) {
 		int res = rdr.getRes();
 		int minX = 0;
 		int minY = 0;
@@ -192,62 +193,61 @@ public class HGTConverter {
 		// check borders
 		if (xLeft == 0) {
 			if (col <= 0)
-				return null;
+				return false;
 			minX = 1;
 			inside = false;
 		} else if (xLeft == res - 1) {
 			if (col + 1 >= readers[0].length)
-				return null;
+				return false;
 			maxX = 2;
 			inside = false;
 		}
 		if (yBottom == 0) {
 			if (row <= 0)
-				return null;
+				return false;
 			minY = 1;
 			inside = false;
 		} else if (yBottom == res - 1) {
 			if (row + 1 >= readers.length)
-				return null;
+				return false;
 			maxY = 2;
 			inside = false;
 		}
 
 		// fill data from current reader
-		double[][] eleArray = new double[4][4];
 		short h;
 		for (int x = minX; x <= maxX; x++) {
 			for (int y = minY; y <= maxY; y++) {
 				h = rdr.ele(xLeft + x - 1, yBottom + y - 1);
 				if (h == HGTReader.UNDEF)
-					return null;
+					return false;
 				eleArray[x][y] = h;
 			}
 		}
 
 		if (inside) // no need to check borders again
-			return eleArray;
+			return true;
 
 		// fill data from adjacent readers, down and up
 		if (xLeft > 0 && xLeft < res - 1) {
 			if (yBottom == 0) { // bottom edge
 				HGTReader rdrBB = prepReader(res, row - 1, col);
 				if (rdrBB == null)
-					return null;
+					return false;
 				for (int x = 0; x <= 3; x++) {
 					h = rdrBB.ele(xLeft + x - 1, res - 1);
 					if (h == HGTReader.UNDEF)
-						return null;
+						return false;
 					eleArray[x][0] = h;
 				}
 			} else if (yBottom == res - 1) { // top edge
 				HGTReader rdrTT = prepReader(res, row + 1, col);
 				if (rdrTT == null)
-					return null;
+					return false;
 				for (int x = 0; x <= 3; x++) {
 					h = rdrTT.ele(xLeft + x - 1, 1);
 					if (h == HGTReader.UNDEF)
-						return null;
+						return false;
 					eleArray[x][3] = h;
 				}
 			}
@@ -258,21 +258,21 @@ public class HGTConverter {
 			if (xLeft == 0) { // left edgge
 				HGTReader rdrLL = prepReader(res, row, col - 1);
 				if (rdrLL == null)
-					return null;
+					return false;
 				for (int y = 0; y <= 3; y++) {
 					h = rdrLL.ele(res - 1, yBottom + y - 1);
 					if (h == HGTReader.UNDEF)
-						return null;
+						return false;
 					eleArray[0][y] = h;
 				}
 			} else if (xLeft == res - 1) { // right edge
 				HGTReader rdrRR = prepReader(res, row, col + 1);
 				if (rdrRR == null)
-					return null;
+					return false;
 				for (int y = 0; y <= 3; y++) {
 					h = rdrRR.ele(1, yBottom + y - 1);
 					if (h == HGTReader.UNDEF)
-						return null;
+						return false;
 					eleArray[3][y] = h;
 				}
 			}
@@ -283,122 +283,122 @@ public class HGTConverter {
 			if (yBottom == 0) { // left bottom corner
 				HGTReader rdrLL = prepReader(res, row, col - 1);
 				if (rdrLL == null)
-					return null;
+					return false;
 				for (int y = 1; y <= 3; y++) {
 					h = rdrLL.ele(res - 1, yBottom + y - 1);
 					if (h == HGTReader.UNDEF)
-						return null;
+						return false;
 					eleArray[0][y] = h;
 				}
 
 				HGTReader rdrBB = prepReader(res, row - 1, col);
 				if (rdrBB == null)
-					return null;
+					return false;
 				for (int x = 1; x <= 3; x++) {
 					h = rdrBB.ele(xLeft + x - 1, res - 1);
 					if (h == HGTReader.UNDEF)
-						return null;
+						return false;
 					eleArray[x][0] = h;
 				}
 
 				HGTReader rdrLB = prepReader(res, row - 1, col - 1);
 				if (rdrLB == null)
-					return null;
+					return false;
 				h = rdrLB.ele(res - 1, res - 1);
 				if (h == HGTReader.UNDEF)
-					return null;
+					return false;
 				eleArray[0][0] = h;
 			} else if (yBottom == res - 1) { // left top corner
 				HGTReader rdrLL = prepReader(res, row, col - 1);
 				if (rdrLL == null)
-					return null;
+					return false;
 				for (int y = 0; y <= 2; y++) {
 					h = rdrLL.ele(res - 1, yBottom + y - 1);
 					if (h == HGTReader.UNDEF)
-						return null;
+						return false;
 					eleArray[0][y] = h;
 				}
 
 				HGTReader rdrTT = prepReader(res, row + 1, col);
 				if (rdrTT == null)
-					return null;
+					return false;
 				for (int x = 1; x <= 3; x++) {
 					h = rdrTT.ele(xLeft + x - 1, 1);
 					if (h == HGTReader.UNDEF)
-						return null;
+						return false;
 					eleArray[x][3] = h;
 				}
 
 				HGTReader rdrLT = prepReader(res, row + 1, col - 1);
 				if (rdrLT == null)
-					return null;
+					return false;
 				h = rdrLT.ele(res - 1, 1);
 				if (h == HGTReader.UNDEF)
-					return null;
+					return false;
 				eleArray[0][3] = h;
 			}
 		} else if (xLeft == res - 1) {
 			if (yBottom == 0) { // right bottom corner
 				HGTReader rdrRR = prepReader(res, row, col + 1);
 				if (rdrRR == null)
-					return null;
+					return false;
 				for (int y = 1; y <= 3; y++) {
 					h = rdrRR.ele(1, yBottom + y - 1);
 					if (h == HGTReader.UNDEF)
-						return null;
+						return false;
 					eleArray[3][y] = h;
 				}
 
 				HGTReader rdrBB = prepReader(res, row - 1, col);
 				if (rdrBB == null)
-					return null;
+					return false;
 				for (int x = 0; x <= 2; x++) {
 					h = rdrBB.ele(xLeft + x - 1, res - 1);
 					if (h == HGTReader.UNDEF)
-						return null;
+						return false;
 					eleArray[x][0] = h;
 				}
 
 				HGTReader rdrRB = prepReader(res, row - 1, col + 1);
 				if (rdrRB == null)
-					return null;
+					return false;
 				h = rdrRB.ele(1, res - 1);
 				if (h == HGTReader.UNDEF)
-					return null;
+					return false;
 				eleArray[3][0] = h;
 			} else if (yBottom == res - 1) { // right top corner
 				HGTReader rdrRR = prepReader(res, row, col + 1);
 				if (rdrRR == null)
-					return null;
+					return false;
 				for (int y = 0; y <= 2; y++) {
 					h = rdrRR.ele(1, yBottom + y - 1);
 					if (h == HGTReader.UNDEF)
-						return null;
+						return false;
 					eleArray[3][y] = h;
 				}
 
 				HGTReader rdrTT = prepReader(res, row + 1, col);
 				if (rdrTT == null)
-					return null;
+					return false;
 				for (int x = 0; x <= 2; x++) {
 					h = rdrTT.ele(xLeft + x - 1, 1);
 					if (h == HGTReader.UNDEF)
-						return null;
+						return false;
 					eleArray[x][3] = h;
 				}
 
 				HGTReader rdrRT = prepReader(res, row + 1, col + 1);
 				if (rdrRT == null)
-					return null;
+					return false;
 				h = rdrRT.ele(1, 1);
 				if (h == HGTReader.UNDEF)
-					return null;
+					return false;
 				eleArray[3][3] = h;
 			}
 		}
 
 		// all 16 values present
-		return eleArray;
+		return true;
 	}
 
 	/**
@@ -665,13 +665,13 @@ public class HGTConverter {
 	 * @param qy value from 0 .. 1 gives relative y position in matrix
 	 */
 	private static double bicubicInterpolation(double[][] p, double qx, double qy) {
-		double[] arr = new double[4];
+		final double[] arr = new double[4];
 
-			arr[0] = cubicInterpolation(p[0], qy);
-			arr[1] = cubicInterpolation(p[1], qy);
-			arr[2] = cubicInterpolation(p[2], qy);
-			arr[3] = cubicInterpolation(p[3], qy);
-			return cubicInterpolation(arr, qx);
+		arr[0] = cubicInterpolation(p[0], qy);
+		arr[1] = cubicInterpolation(p[1], qy);
+		arr[2] = cubicInterpolation(p[2], qy);
+		arr[3] = cubicInterpolation(p[3], qy);
+		return cubicInterpolation(arr, qx);
 	}
 
 }
