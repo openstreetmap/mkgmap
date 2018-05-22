@@ -70,7 +70,7 @@ public class LevelInfo implements Comparable<LevelInfo> {
 				if (key < 0 || key > 16)
 					throw new ExitException("Error: Level value out of range 0-16: " + s + " in levels specification " + levelSpec);
 				int value = Integer.parseInt(keyVal[1]);
-				if (value <= 0 || value > 24)
+				if (value < 0 || value > 24)
 					throw new ExitException("Error: Resolution value out of range 0-24: " + s + " in levels specification " + levelSpec);
 				levels[count] = new LevelInfo(key, value);
 			} catch (NumberFormatException e) {
