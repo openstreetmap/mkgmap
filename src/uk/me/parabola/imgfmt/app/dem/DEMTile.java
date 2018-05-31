@@ -411,39 +411,49 @@ public class DEMTile {
 		}
 	}
 	
-	/**
-	 * 
-	 * @param oldsum
-	 * @param elemcount
-	 * @param newdata
-	 * @return
-	 */
-	private static int evalSumSpec(int oldsum, int elemcount, int newdata) {
-        /*
-        D < -2 – (ls + 3*k)/2   -1 – ls – k	
-        D < 0 – (ls + k)/2      2*(d + k) + 3	
-        D < 2 – (ls – k)/2      2*d – 1	
-        D < 4 – (ls – 3*k)/2    2*(d – k) - 5	
-                                1 – ls + k	
-      */
-
-		int v = 0;
-
-		if (newdata < -2 - ((oldsum + 3 * elemcount) >> 1)) {
-			v = -1 - oldsum - elemcount;
-		} else if (newdata < -((oldsum + elemcount) >> 1)) {
-			v = 2 * (newdata + elemcount) + 3;
-		} else if (newdata < 2 - ((oldsum - elemcount) >> 1)) {
-			v = 2 * newdata - 1;
-		} else if (newdata < 4 - ((oldsum - 3 * elemcount) >> 1)) {
-			v = 2 * (newdata - elemcount) - 5;
-		} else {
-			v = 1 - oldsum + elemcount;
+	private static int evaluateData(int oldsum, int elemcount, int newdata, int region) {
+		switch (region) {
+		case 0:
+			return -1 - oldsum - elemcount;
+		case 1:
+			return 2 * (newdata + elemcount) + 3;
+		case 2:
+			return 2 * newdata - 1;
+		case 3:
+			return 2 * (newdata - elemcount) - 5;
+		default:
+			return 1 - oldsum + elemcount;
 		}
-//		System.out.println(oldsum + " " + elemcount + " " + newdata + " -> " + v);
-		return v;
 	}
 
+	private static int getEvaluateDataRegion(int oldsum, int elemcount, int newdata) {
+		if (elemcount < 63) {
+			if (newdata < -2 - ((oldsum + 3 * elemcount) >> 1)) {
+				return 0;
+			} else if (newdata < -((oldsum + elemcount) >> 1)) {
+				return 1;
+			} else if (newdata < 2 - ((oldsum - elemcount) >> 1)) {
+				return 2;
+			} else if (newdata < 4 - ((oldsum - 3 * elemcount) >> 1)) {
+				return 3;
+			} else {
+				return 4;
+			}
+		} else {
+			if (newdata < -2 - ((oldsum + 3 * elemcount) >> 1)) {
+				return 0;
+			} else if (newdata < -((oldsum + elemcount) >> 1) - 1) {
+				// special case in if !
+				return 1;
+			} else if (newdata < 2 - ((oldsum - elemcount) >> 1)) {
+				return 2;
+			} else if (newdata < 4 - ((oldsum - 3 * elemcount) >> 1)) {
+				return 3;
+			} else {
+				return 4;
+			}
+		}
+	}
 
 	/**
 	 * This class keeps statistics about the previously encoded values and tries to predict the next value.
@@ -584,36 +594,43 @@ public class DEMTile {
 		
 		private void processVal(int delta1) {
 			if (type == CalcType.CALC_STD) {
-					
 				// calculate threshold sum hybrid 
 				sumH += delta1 > 0 ? delta1 : -delta1;
 				if (sumH + unitDelta  + 1 >= 0xffff)
 					sumH -= 0x10000;
 
 				// calculate threshold sum for length encoding
+				int evalRegion = -1;
 				int workData = delta1;
 				if (elemCount == 63) {
-					// special case
-					if (sumL > 0) { // pos. SumL
-						if ((sumL + 1) % 4 == 0) {
-							if (workData % 2 != 0)
-								workData--;
-						} else {
-							if (workData % 2 == 0)
-								workData--;
-						}
+					evalRegion = getEvaluateDataRegion(sumL, elemCount, delta1);
+					boolean datagerade = delta1 % 2 == 0;
+					boolean sumL1 = (sumL - 1) % 4 == 0;
 
-					} else { // neg. SumL
-						if ((sumL - 1) % 4 == 0) {
-							if (workData % 2 != 0)
-								workData++;
-						} else {
-							if (workData % 2 == 0)
-								workData++;
+					switch (evalRegion) {
+					case 0:
+					case 2:
+					case 4:
+						if ((sumL1 && !datagerade) || (!sumL1 && datagerade)) {
+							workData++;
 						}
+						break;
+					case 1:
+						workData++;
+						if ((sumL1 && !datagerade) || (!sumL1 && datagerade)) {
+							workData++;
+						}
+						break;
+					case 3:
+						if ((sumL1 && datagerade) || (!sumL1 && !datagerade)) {
+							workData--;
+						}
+						break;
 					}
 				}
-				int eval = evalSumSpec(sumL, elemCount, workData);
+				if (evalRegion < 0)
+					evalRegion = getEvaluateDataRegion(sumL, elemCount, workData);
+				int eval = evaluateData(sumL, elemCount, workData, evalRegion);
 				sumL += eval;
 
 				// now update elem counter
@@ -624,9 +641,6 @@ public class DEMTile {
 					sumH = ((sumH - unitDelta) >> 1) - 1;
 					
 					sumL /= 2;
-					if (sumL % 2 != 0) {
-						sumL++;
-					}
 				}
 
 				// calculate new hunit
