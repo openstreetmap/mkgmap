@@ -180,7 +180,13 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 			Way way = (Way) elem;
 			// try the mid point of the way first
 			int middle = way.getPoints().size() / 2;
-			tags = search(way.getPoints().get(middle));
+			Coord midPoint;
+			if (middle <= 1) {
+				midPoint = way.getPoints().get(0).makeBetweenPoint(way.getPoints().get(1), 0.5);
+			} else {
+				midPoint = way.getPoints().get(middle);
+			}
+			tags = search(midPoint);
 			if (tags == null){
 				// try 1st point next
 				tags = search(way.getPoints().get(0));
