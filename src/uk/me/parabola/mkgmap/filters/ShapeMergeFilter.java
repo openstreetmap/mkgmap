@@ -529,7 +529,9 @@ public class ShapeMergeFilter{
 					* (c1.getHighPrecLat() - c2.getHighPrecLat());
 		}
 		if (Math.abs(signedAreaSize) < SINGLE_POINT_AREA){
-			log.debug("very small shape near", points.get(0).toOSMURL(), "signed area in high prec map units:", signedAreaSize );
+			if (log.isDebugEnabled()) {
+				log.debug("very small shape near", points.get(0).toOSMURL(), "signed area in high prec map units:", signedAreaSize );
+			}
 		}
 		return signedAreaSize;
 	}
