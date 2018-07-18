@@ -459,7 +459,7 @@ public class Utils {
     /**
      */
 	/**
-	 * Code taken from JOSM class Geometry
+	 * Code taken from JOSM class Geometry. TODO: Licence ?
      * Finds the intersection of two line segments.
      * @param p1_1 the coordinates of the start point of the first specified line segment
      * @param p1_2 the coordinates of the end point of the first specified line segment
