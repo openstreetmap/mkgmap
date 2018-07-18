@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.imgfmt;
 
+import java.awt.geom.Line2D;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,11 +25,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.util.GpxCreator;
 import uk.me.parabola.imgfmt.app.Coord;
 /**
  * Some miscellaneous functions that are used within the .img code.
@@ -452,4 +456,68 @@ public class Utils {
 			writer.put3s(longitude);
 	}
 
+    /**
+     */
+	/**
+	 * Code taken from JOSM class Geometry
+     * Finds the intersection of two line segments.
+     * @param p1_1 the coordinates of the start point of the first specified line segment
+     * @param p1_2 the coordinates of the end point of the first specified line segment
+     * @param p2_1 the coordinates of the start point of the second specified line segment
+     * @param p2_2 the coordinates of the end point of the second specified line segment
+     * @return null if no intersection was found, a new Coord instance with the coordinates of the intersection otherwise
+	 */
+	public static Coord getSegmentSegmentIntersection(Coord p1_1, Coord p1_2, Coord p2_1, Coord p2_2) {
+		
+		double x1 = p1_1.getHighPrecLon();
+		double y1 = p1_1.getHighPrecLat();
+		double x2 = p1_2.getHighPrecLon();
+		double y2 = p1_2.getHighPrecLat();
+		double x3 = p2_1.getHighPrecLon();
+		double y3 = p2_1.getHighPrecLat();
+		double x4 = p2_2.getHighPrecLon();
+		double y4 = p2_2.getHighPrecLat();
+
+		// TODO: do this locally.
+		// TODO: remove this check after careful testing
+		if (!Line2D.linesIntersect(x1, y1, x2, y2, x3, y3, x4, y4))
+			return null;
+
+		// solve line-line intersection in parametric form:
+		// (x1,y1) + (x2-x1,y2-y1)* u = (x3,y3) + (x4-x3,y4-y3)* v
+		// (x2-x1,y2-y1)*u - (x4-x3,y4-y3)*v = (x3-x1,y3-y1)
+		// if 0<= u,v <=1, intersection exists at ( x1+ (x2-x1)*u, y1 +
+		// (y2-y1)*u )
+
+		double a1 = x2 - x1;
+		double b1 = x3 - x4;
+		double c1 = x3 - x1;
+
+		double a2 = y2 - y1;
+		double b2 = y3 - y4;
+		double c2 = y3 - y1;
+
+		// Solve the equations
+		double det = a1 * b2 - a2 * b1;
+
+		double uu = b2 * c1 - b1 * c2;
+		double vv = a1 * c2 - a2 * c1;
+		double mag = Math.abs(uu) + Math.abs(vv);
+
+		if (Math.abs(det) > 1e-12 * mag) {
+			double u = uu / det, v = vv / det;
+			if (u > -1e-8 && u < 1 + 1e-8 && v > -1e-8 && v < 1 + 1e-8) {
+				if (u < 0)
+					u = 0;
+				if (u > 1)
+					u = 1.0;
+				return Coord.makeHighPrecCoord((int)Math.round(y1 + a2 * u), (int)Math.round(x1 + a1 * u));
+			} else {
+				return null;
+			}
+		} else {
+			// parallel lines
+			return null;
+		}
+	}
 }

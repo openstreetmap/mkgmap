@@ -50,6 +50,7 @@ public class Coord implements Comparable<Coord> {
 	private final static short END_OF_WAY = 0x0200; // use only in WrongAngleFixer
 	private final static short HOUSENUMBER_NODE = 0x0400; // start/end of house number interval
 	private final static short ADDED_HOUSENUMBER_NODE = 0x0800; // node was added for house numbers
+	private final static short ON_COUNTRY_BORDER = 0x1000; // node is on a country border
 	
 	private final static int HIGH_PREC_BITS = 30;
 	public final static int DELTA_SHIFT = HIGH_PREC_BITS - 24; 
@@ -340,7 +341,7 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	/**
-	 * @return if this is the beginning/end of a house number interval 
+	 * @return true if this is the beginning/end of a house number interval 
 	 */
 	public boolean isNumberNode(){
 		return (flags & HOUSENUMBER_NODE) != 0;
@@ -357,7 +358,7 @@ public class Coord implements Comparable<Coord> {
 	}
 	
 	/**
-	 * @return if this is the beginning/end of a house number interval 
+	 * @return true if this was added by the housenumber processing 
 	 */
 	public boolean isAddedNumberNode(){
 		return (flags & ADDED_HOUSENUMBER_NODE) != 0;
@@ -371,6 +372,24 @@ public class Coord implements Comparable<Coord> {
 			this.flags |= ADDED_HOUSENUMBER_NODE;
 		else 
 			this.flags &= ~ADDED_HOUSENUMBER_NODE; 
+	}
+	
+	/**
+	 * @return true if this was marked as place on country border.
+	 */
+	public boolean getOnCountryBorder() {
+		return (flags & ON_COUNTRY_BORDER) != 0;
+	}
+
+	/**
+	 * Mark as place on a country border
+	 * @param onCountryBorder
+	 */
+	public void setOnCountryBorder(boolean onCountryBorder) {
+		if (onCountryBorder) 
+			this.flags |= ON_COUNTRY_BORDER;
+		else 
+			this.flags &= ~ON_COUNTRY_BORDER; 
 	}
 	
 	public int hashCode() {
@@ -682,7 +701,7 @@ public class Coord implements Comparable<Coord> {
 	 * @return true if rounding error is large. 
 	 */
 	public boolean hasAlternativePos(){
-		if (getOnBoundary())
+		if (getOnBoundary() || getOnCountryBorder())
 			return false;
 		return (Math.abs(latDelta) > MAX_DELTA || Math.abs(lonDelta) > MAX_DELTA);
 	}
@@ -694,7 +713,7 @@ public class Coord implements Comparable<Coord> {
 	 */
 	public List<Coord> getAlternativePositions(){
 		ArrayList<Coord> list = new ArrayList<>();
-		if (getOnBoundary())
+		if (getOnBoundary() || getOnCountryBorder())
 			return list; 
 		int modLatDelta = 0;
 		int modLonDelta = 0;

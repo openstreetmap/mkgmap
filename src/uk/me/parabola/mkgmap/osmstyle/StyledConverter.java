@@ -1361,7 +1361,7 @@ public class StyledConverter implements OsmConverter {
 					nWay.copyTags(way);
 					for(Coord co : lco) {
 						nWay.addPoint(co);
-						if(co.getOnBoundary()) {
+						if(co.getOnBoundary() || co.getOnCountryBorder()) {
 							// this point lies on a boundary
 							// make sure it becomes a node
 							co.incHighwayCount();
@@ -1636,7 +1636,7 @@ public class StyledConverter implements OsmConverter {
 				CoordNode coordNode = nodeIdMap.get(p);
 				if(coordNode == null) {
 					// assign a node id
-					coordNode = new CoordNode(p, nextNodeId++, p.getOnBoundary());
+					coordNode = new CoordNode(p, nextNodeId++, p.getOnBoundary(), p.getOnCountryBorder());
 					nodeIdMap.put(p, coordNode);
 				}
 				
@@ -1751,7 +1751,7 @@ public class StyledConverter implements OsmConverter {
 				Coord coord = points.get(n);
 				CoordNode thisCoordNode = nodeIdMap.get(coord);
 				assert thisCoordNode != null : "Way " + debugWayName + " node " + i + " (point index " + n + ") at " + coord.toOSMURL() + " yields a null coord node";
-				boolean boundary = coord.getOnBoundary();
+				boolean boundary = coord.getOnBoundary() || coord.getOnCountryBorder();
 				if(boundary && log.isInfoEnabled()) {
 					log.info("Way", debugWayName + "'s point #" + n, "at", coord.toOSMURL(), "is a boundary node");
 				}

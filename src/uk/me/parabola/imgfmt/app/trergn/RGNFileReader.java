@@ -403,7 +403,7 @@ public class RGNFileReader extends ImgReader {
 				Utils.toDegrees(currLon)));
 		
 		if (extra)
-			line.addCoord(new CoordNode(currLat, currLon, 0/* XXX */, false));
+			line.addCoord(new CoordNode(currLat, currLon, 0/* XXX */, false, false));
 		else 
 			line.addCoord(new Coord(currLat, currLon));
 
@@ -478,7 +478,7 @@ public class RGNFileReader extends ImgReader {
 			currLon += dx << (24 - div.getResolution());
 			Coord coord;
 			if (isnode)
-				coord = new CoordNode(currLat, currLon, 0/* XXX */, false);
+				coord = new CoordNode(currLat, currLon, 0/* XXX */, false, false);
 			else
 				coord = new Coord(currLat, currLon);
 

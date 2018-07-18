@@ -150,7 +150,7 @@ class RoadHelper {
 			if (id == 0) {
 				CoordNode node = nodeCoords.get((long) ni.nodeId);
 				if (node == null) {
-					node = new CoordNode(coord, ni.nodeId, ni.boundary);
+					node = new CoordNode(coord, ni.nodeId, ni.boundary, false);
 					nodeCoords.put((long) ni.nodeId, node);
 				}
 				points.set(n, node);

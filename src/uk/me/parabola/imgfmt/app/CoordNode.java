@@ -32,19 +32,22 @@ public class CoordNode extends Coord {
 	 * @param longitude The longitude in map units.
 	 * @param id The ID of this routing node.
 	 * @param boundary This is a routing node on the boundary.
+	 * @param onCountryBorder This is a routing node on a country boundary.
 	 */
-	public CoordNode(int latitude, int longitude, int id, boolean boundary) {
+	public CoordNode(int latitude, int longitude, int id, boolean boundary, boolean onCountryBorder) {
 		super(latitude, longitude);
 		this.id = id;
 		setOnBoundary(boundary);
+		setOnCountryBorder(onCountryBorder);
 		setNumberNode(true);
 		preserved(true);
 	}
 
-	public CoordNode(Coord other, int id, boolean boundary){
+	public CoordNode(Coord other, int id, boolean boundary, boolean onCountryBorder) {
 		super(other);
 		this.id = id;
 		setOnBoundary(boundary);
+		setOnCountryBorder(onCountryBorder);
 		setNumberNode(true);
 		preserved(true);
 		

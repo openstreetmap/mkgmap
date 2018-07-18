@@ -149,6 +149,13 @@ public class WrongAngleFixer {
 			}
 			replacement.setOnBoundary(true);
 		}
+		if (toRepl.getOnCountryBorder()){
+			if (replacement.equals(toRepl) == false){
+				log.error("country boundary node is replaced by node with non-equal coordinates at", toRepl.toOSMURL());
+				assert false : "country boundary node is replaced" ;
+			}
+			replacement.setOnCountryBorder(true);
+		}
 		toRepl.setReplaced(true);
 		if (toRepl instanceof CoordPOI) {
 			CoordPOI cp = (CoordPOI) toRepl;
@@ -834,7 +841,7 @@ public class WrongAngleFixer {
 	 * @return true if remove is okay
 	 */
 	private boolean allowedToRemove(Coord p){
-		if (p.getOnBoundary())
+		if (p.getOnBoundary() || p.getOnCountryBorder())
 			return false;
 		if (mode == MODE_LINES && p.isEndOfWay())
 			return false;
@@ -1115,7 +1122,7 @@ public class WrongAngleFixer {
 				return false;
 			if (n instanceof CoordPOI && (c instanceof CoordPOI || c.getOnBoundary()))
 				return false;
-
+			//TODO: nodes on country borders?
 			Coord mergePoint;
 			if (c.getOnBoundary() || c instanceof CoordPOI)
 				mergePoint = c;
