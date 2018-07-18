@@ -394,6 +394,7 @@ public class Utils {
 	}
 	
 	/**
+	 * TODO: This code may return true when the segments don't intersect, probably some extra checks are done in the calling code 
 	 * Check if the line p1_1 to p1_2 cuts line p2_1 to p2_2 in two pieces and vice versa.
 	 * This is a form of intersection check where it is allowed that one line ends on the
 	 * other line or that the two lines overlap.
