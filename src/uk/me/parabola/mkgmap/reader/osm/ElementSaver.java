@@ -356,6 +356,7 @@ public class ElementSaver {
 									assert is.highPrecEquals(replacement);
 									is = replacement;
 								}
+								is.setOnCountryBorder(true);
 								way.getPoints().add(pos, is);
 //								GpxCreator.createGpx("e:/ld/way"+way.getId()+"_m", way.getPoints(), added);
 								changed = true;
