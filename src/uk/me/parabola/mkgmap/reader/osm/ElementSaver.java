@@ -334,9 +334,11 @@ public class ElementSaver {
 						Coord pb2 = b.get(i + 1);
 						Coord is = Utils.getSegmentSegmentIntersection(pw1, pw2, pb1, pb2);
 						if (is != null) {
-							if (is.distance(pw1) < 0.05)
+							double dist1 = is.distance(pw1);
+							double dist2 = is.distance(pw2);
+							if (dist1 < dist2 && dist1 < 1)
 								pw1.setOnCountryBorder(true);
-							else if (is.distance(pw2) < 0.05)
+							else if (dist2 < dist1 && dist2 < 1)
 								pw2.setOnCountryBorder(true);
 							else {
 //								List<Coord> added = new ArrayList<>();
