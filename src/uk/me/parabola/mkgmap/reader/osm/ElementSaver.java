@@ -15,6 +15,7 @@ package uk.me.parabola.mkgmap.reader.osm;
 import java.awt.geom.Path2D;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -30,6 +31,7 @@ import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LineClipper;
+import uk.me.parabola.util.ElementQuadTree;
 import uk.me.parabola.util.EnhancedProperties;
 import uk.me.parabola.util.Java2DConverter;
 
@@ -273,6 +275,8 @@ public class ElementSaver {
 				continue;
 			if (rel instanceof MultiPolygonRelation || "boundary".equals(rel.getTag("type"))) {
 				for (Entry<String, Element> e : rel.getElements()) {
+					if (FakeIdGenerator.isFakeId(e.getValue().getId()))
+						continue;
 					if (e.getValue() instanceof Way) 
 						borders.add((Way) e.getValue());
 				}
@@ -289,51 +293,41 @@ public class ElementSaver {
 		}
 		if (borders.isEmpty())
 			return;
-		Set<List<Coord>> clippedBorders = new LinkedHashSet<>();
+		List<Element> clippedBorders = new ArrayList<>();
 		for (Way b : borders) {
 			List<List<Coord>> clipped = LineClipper.clip(bbox, b.getPoints());
 			if (clipped == null) {
-				// segment is inside or crosses the tile bbox, use it as is
-				clippedBorders.add(b.getPoints());
+				splitBoundary(clippedBorders, b, b.getPoints());
 			} else {
 				for (List<Coord> lco : clipped) {
-					clippedBorders.add(lco);
+					splitBoundary(clippedBorders, b, lco);
 				}
 			}
 		}
 		
-		Path2D testPath = new Path2D.Double();
-		for (List<Coord> b : clippedBorders) {
-			Area borderBounds = Area.getBBox(b);
-			testPath.append(Java2DConverter.createPath2D(borderBounds.toCoords()), false);
-		}		
-		java.awt.geom.Area testArea = new java.awt.geom.Area(testPath);
-//		List<List<Coord>> x = Java2DConverter.areaToShapes(testArea);
-//		int segs = 0;
-//		for (List<Coord> points : x) {
-//			GpxCreator.createGpx("e:/ld/b_" + segs++, points);
-//		}
+		
+		ElementQuadTree qt = new ElementQuadTree(bbox, clippedBorders);
 		Long2ObjectOpenHashMap<Coord> commonCoordMap = new Long2ObjectOpenHashMap<>();
 		for (Way way : wayMap.values()) {
 			if (way.getTag("highway") == null) 
 				continue;
-			Area wayBounds = Area.getBBox(way.getPoints());
-			java.awt.geom.Area wayArea = Java2DConverter.createBoundsArea(wayBounds);
-			wayArea.intersect(testArea);
-			if (wayArea.isEmpty())
+			Area searchRect = Area.getBBox(way.getPoints());
+			Set<Element> boundaries = qt.get(searchRect);
+			if (boundaries.isEmpty())
 				continue;
-				
 			Coord pw1 = way.getPoints().get(0);
 			int pos = 1;
 			while (pos < way.getPoints().size()) {
 				boolean changed = false;
 				Coord pw2 = way.getPoints().get(pos);
-				for (List<Coord> b : clippedBorders) {
+				for (Element el : boundaries) {
+					List<Coord> b = ((Way) el).getPoints();
 					for (int i = 0; i < b.size() - 1; i++) {
 						Coord pb1 = b.get(i);
 						Coord pb2 = b.get(i + 1);
 						Coord is = Utils.getSegmentSegmentIntersection(pw1, pw2, pb1, pb2);
 						if (is != null) {
+//							log.error(pw1.toDegreeString(), pw2.toDegreeString(), pb1.toDegreeString(), pb2.toDegreeString(),is.toDegreeString());
 							double dist1 = is.distance(pw1);
 							double dist2 = is.distance(pw2);
 							if (dist1 < dist2 && dist1 < 1)
@@ -373,6 +367,26 @@ public class ElementSaver {
 		}
 	}
 	
+	/**
+	 * Split complex border ways into smaller portions.
+	 * @param clippedBorders
+	 * @param orig
+	 * @param points
+	 */
+	private void splitBoundary(List<Element> clippedBorders, Way orig, List<Coord> points) {
+		int pos = 0;
+		final int max = 20; // seems to be a good compromise
+		while (pos < points.size()) {
+			int right = Math.min(points.size(), pos + max);
+			Way w = new Way(orig.getId(), points.subList(pos, right));
+			w.setFakeId();
+			clippedBorders.add(w);
+			pos += max - 1;
+			if (pos + 1 == points.size())
+				pos--;
+		}
+	}
+
 	/**
 	 *
 	 * "soft clip" each way that crosses a boundary by adding a point
