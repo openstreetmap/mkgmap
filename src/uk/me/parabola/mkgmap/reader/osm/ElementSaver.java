@@ -12,28 +12,19 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.awt.geom.Path2D;
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LineClipper;
-import uk.me.parabola.util.ElementQuadTree;
 import uk.me.parabola.util.EnhancedProperties;
-import uk.me.parabola.util.Java2DConverter;
 
 /**
  * This is where we save the elements read from any of the file formats that
@@ -74,7 +65,6 @@ public class ElementSaver {
 
 	// Options
 	private final boolean ignoreTurnRestrictions;
-	private final boolean checkCountryBorders;
 
 	/** name of the tag that contains a ;-separated list of tagnames that should be removed after all elements have been processed */
 	public static final String MKGMAP_REMOVE_TAG = "mkgmap:removetags";
@@ -93,8 +83,6 @@ public class ElementSaver {
 		}
 
 		ignoreTurnRestrictions = args.getProperty("ignore-turn-restrictions", false);
-		boolean routable = args.getProperty("route", false);
-		checkCountryBorders = routable; // maybe add more logic later
 	}
 
 	/**
@@ -227,12 +215,6 @@ public class ElementSaver {
 		// We only do this if an explicit bounding box was given.
 		if (boundingBox != null)
 			makeBoundaryNodes();
-		if (checkCountryBorders) {
-			long t1 = System.currentTimeMillis();
-			AddRoutingNodesAtCountryBorders();
-			long t2 = System.currentTimeMillis() - t1;
-			log.error("adding country nodes took " + t2 + " ms");
-		}
 
 		converter.setBoundingBox(getBoundingBox());
 
@@ -264,129 +246,6 @@ public class ElementSaver {
 		deferredRelationMap.clear();
 	}
 
-	private void AddRoutingNodesAtCountryBorders() {
-		Set<Way> borders = new LinkedHashSet<>();
-		Area bbox = getBoundingBox();
-		
-		for (Relation rel : relationMap.values()) {
-			if (!"administrative".equals(rel.getTag("boundary")))
-				continue;
-			if (!"2".equals(rel.getTag("admin_level")))
-				continue;
-			if (rel instanceof MultiPolygonRelation || "boundary".equals(rel.getTag("type"))) {
-				for (Entry<String, Element> e : rel.getElements()) {
-					if (FakeIdGenerator.isFakeId(e.getValue().getId()))
-						continue;
-					if (e.getValue() instanceof Way) 
-						borders.add((Way) e.getValue());
-				}
-			}
-		}
-		for (Way way : wayMap.values()) {
-			if (FakeIdGenerator.isFakeId(way.getId()))
-				continue;
-			if (!"administrative".equals(way.getTag("boundary")))
-				continue;
-			if (!"2".equals(way.getTag("admin_level")))
-				continue;
-			borders.add(way);
-		}
-		if (borders.isEmpty())
-			return;
-		List<Element> clippedBorders = new ArrayList<>();
-		for (Way b : borders) {
-			List<List<Coord>> clipped = LineClipper.clip(bbox, b.getPoints());
-			if (clipped == null) {
-				splitBoundary(clippedBorders, b, b.getPoints());
-			} else {
-				for (List<Coord> lco : clipped) {
-					splitBoundary(clippedBorders, b, lco);
-				}
-			}
-		}
-		
-		
-		ElementQuadTree qt = new ElementQuadTree(bbox, clippedBorders);
-		Long2ObjectOpenHashMap<Coord> commonCoordMap = new Long2ObjectOpenHashMap<>();
-		for (Way way : wayMap.values()) {
-			if (way.getTag("highway") == null) 
-				continue;
-			Area searchRect = Area.getBBox(way.getPoints());
-			Set<Element> boundaries = qt.get(searchRect);
-			if (boundaries.isEmpty())
-				continue;
-			Coord pw1 = way.getPoints().get(0);
-			int pos = 1;
-			while (pos < way.getPoints().size()) {
-				boolean changed = false;
-				Coord pw2 = way.getPoints().get(pos);
-				for (Element el : boundaries) {
-					List<Coord> b = ((Way) el).getPoints();
-					for (int i = 0; i < b.size() - 1; i++) {
-						Coord pb1 = b.get(i);
-						Coord pb2 = b.get(i + 1);
-						Coord is = Utils.getSegmentSegmentIntersection(pw1, pw2, pb1, pb2);
-						if (is != null) {
-//							log.error(pw1.toDegreeString(), pw2.toDegreeString(), pb1.toDegreeString(), pb2.toDegreeString(),is.toDegreeString());
-							double dist1 = is.distance(pw1);
-							double dist2 = is.distance(pw2);
-							if (dist1 < dist2 && dist1 < 1)
-								pw1.setOnCountryBorder(true);
-							else if (dist2 < dist1 && dist2 < 1)
-								pw2.setOnCountryBorder(true);
-							else {
-//								List<Coord> added = new ArrayList<>();
-//								added.add(is);
-//								if (changed) {
-//									long dd = 4;
-//								} else {
-//									GpxCreator.createGpx("e:/ld/way"+way.getId(), way.getPoints(), added);
-//								}
-								long key = Utils.coord2Long(is);
-								Coord replacement = commonCoordMap.get(key);
-								if (replacement == null) {
-									commonCoordMap.put(key, is);
-								} else {
-									assert is.highPrecEquals(replacement);
-									is = replacement;
-								}
-								is.setOnCountryBorder(true);
-								way.getPoints().add(pos, is);
-//								GpxCreator.createGpx("e:/ld/way"+way.getId()+"_m", way.getPoints(), added);
-								changed = true;
-								pw2 = is;
-							}
-						}
-					}
-				}
-				if (!changed) {
-					++pos;
-					pw1 = pw2;
-				}
-			}
-		}
-	}
-	
-	/**
-	 * Split complex border ways into smaller portions.
-	 * @param clippedBorders
-	 * @param orig
-	 * @param points
-	 */
-	private void splitBoundary(List<Element> clippedBorders, Way orig, List<Coord> points) {
-		int pos = 0;
-		final int max = 20; // seems to be a good compromise
-		while (pos < points.size()) {
-			int right = Math.min(points.size(), pos + max);
-			Way w = new Way(orig.getId(), points.subList(pos, right));
-			w.setFakeId();
-			clippedBorders.add(w);
-			pos += max - 1;
-			if (pos + 1 == points.size())
-				pos--;
-		}
-	}
-
 	/**
 	 *
 	 * "soft clip" each way that crosses a boundary by adding a point
@@ -396,7 +255,6 @@ public class ElementSaver {
 		log.info("Making boundary nodes");
 		int numBoundaryNodesDetected = 0;
 		int numBoundaryNodesAdded = 0;
-		
 		for(Way way : wayMap.values()) {
 			List<Coord> points = way.getPoints();
 

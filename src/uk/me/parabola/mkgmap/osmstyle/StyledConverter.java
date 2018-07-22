@@ -25,12 +25,16 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import uk.me.parabola.imgfmt.ExitException;
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
@@ -60,6 +64,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 import uk.me.parabola.mkgmap.reader.osm.GType;
+import uk.me.parabola.mkgmap.reader.osm.MultiPolygonRelation;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
@@ -70,6 +75,7 @@ import uk.me.parabola.mkgmap.reader.osm.TagDict;
 import uk.me.parabola.mkgmap.reader.osm.Tags;
 import uk.me.parabola.mkgmap.reader.osm.TypeResult;
 import uk.me.parabola.mkgmap.reader.osm.Way;
+import uk.me.parabola.util.ElementQuadTree;
 import uk.me.parabola.util.EnhancedProperties;
 import uk.me.parabola.util.MultiHashMap;
 
@@ -112,7 +118,11 @@ public class StyledConverter implements OsmConverter {
 
 	public final static String WAY_POI_NODE_IDS = "mkgmap:way-poi-node-ids";
 	private final HashMap<Integer, Map<String,MapPoint>> pointMap;
-
+	
+	/** boundary ways with admin_level=2 */
+	private final Set<Way> borders = new LinkedHashSet<>();
+	private boolean extNodesAtCountryBorders;
+	
 	private List<ConvertedWay> roads = new ArrayList<>();
 	private List<ConvertedWay> lines = new ArrayList<>();
 	private HashMap<Long, ConvertedWay> modifiedRoads = new HashMap<>();
@@ -210,6 +220,8 @@ public class StyledConverter implements OsmConverter {
 		String styleOption= props.getProperty("style-option",null);
 		styleOptionTags = parseStyleOption(styleOption);
 		prefixSuffixFilter = new PrefixSuffixFilter(props);
+		
+		extNodesAtCountryBorders = routable /*&& props.getProperty("external-nodes-country-borders", false)*/;
 	}
 
 	/**
@@ -308,6 +320,13 @@ public class StyledConverter implements OsmConverter {
 			removeRestrictionsWithWay(Level.WARNING, way, "is ignored");
 			return;
 		}
+		if (extNodesAtCountryBorders) {
+			// is this a country border ? 
+			if (!FakeIdGenerator.isFakeId(way.getId()) && isBorder(way)) {
+				borders.add(way);
+			}
+		}
+
 		preConvertRules(way);
 
 		String styleFilterTag = way.getTag(styleFilterTagKey);
@@ -372,6 +391,10 @@ public class StyledConverter implements OsmConverter {
 		}
 	}
 
+	private boolean isBorder(Element el) {
+		return "administrative".equals(el.getTag("boundary")) && "2".equals(el.getTag("admin_level"));
+	}
+
 	private int lineIndex = 0;
 	private final static short onewayTagKey = TagDict.getInstance().xlate("oneway"); 
 	private void addConvertedWay(Way way, GType foundType) {
@@ -431,6 +454,7 @@ public class StyledConverter implements OsmConverter {
 
 	/** One type result for nodes to avoid recreating one for each node. */ 
 	private NodeTypeResult nodeTypeResult = new NodeTypeResult();
+	
 	private class NodeTypeResult implements TypeResult {
 		private Node node;
 		/** flag if the rule was fired */
@@ -583,6 +607,126 @@ public class StyledConverter implements OsmConverter {
 	}
 
 	/**
+	 * Find all intersections of roads with country borders.
+	 * If a node exists close to the intersection, use the existing node, else add one. The nodes will be 
+	 * written as external nodes to NOD file (NOD3 + NOD4)
+	 */
+	private void checkRoutingNodesAtCountryBorders() {
+		if (!extNodesAtCountryBorders || borders.isEmpty())
+			return;
+		long t1 = System.currentTimeMillis();
+
+		// prepare boundary ways so that we can search them
+		List<Element> clippedBorders = new ArrayList<>();
+		for (Way b : borders) {
+			List<List<Coord>> clipped = LineClipper.clip(bbox, b.getPoints());
+			if (clipped == null) {
+				splitBoundary(clippedBorders, b, b.getPoints());
+			} else {
+				for (List<Coord> lco : clipped) {
+					splitBoundary(clippedBorders, b, lco);
+				}
+			}
+		}
+		ElementQuadTree qt = new ElementQuadTree(bbox, clippedBorders);
+
+		long countChg = 0;
+		Long2ObjectOpenHashMap<Coord> commonCoordMap = new Long2ObjectOpenHashMap<>();
+		for (ConvertedWay r : roads) {
+			if (!r.isValid())
+				continue;
+			Way way = r.getWay();
+			Area searchRect = Area.getBBox(way.getPoints());
+			Set<Element> boundaries = qt.get(searchRect);
+			if (boundaries.isEmpty())
+				continue;
+			
+			// the bounding box of the road intersects with one or more bounding boxes of borders
+			Coord pw1 = way.getPoints().get(0);
+			int pos = 1;
+			while (pos < way.getPoints().size()) {
+				boolean changed = false;
+				Coord pw2 = way.getPoints().get(pos);
+				for (Element el : boundaries) {
+					List<Coord> b = ((Way) el).getPoints();
+					for (int i = 0; i < b.size() - 1; i++) {
+						Coord pb1 = b.get(i);
+						Coord pb2 = b.get(i + 1);
+						Coord is = Utils.getSegmentSegmentIntersection(pw1, pw2, pb1, pb2);
+						if (is != null) {
+							// intersection can be equal to given nodes on road or close to it
+//							log.error(pw1.toDegreeString(), pw2.toDegreeString(), pb1.toDegreeString(), pb2.toDegreeString(),is.toDegreeString());
+							double dist1 = is.distance(pw1);
+							double dist2 = is.distance(pw2);
+							if (dist1 < dist2 && dist1 < 1) {
+								if (!pw1.getOnCountryBorder()) {
+									++countChg;
+									if (!pw1.getOnBoundary())
+										log.info("road intersects country border, changing existing node to external routing node at",pw2.toDegreeString());
+								}
+								pw1.setOnCountryBorder(true);
+							} else if (dist2 < dist1 && dist2 < 1) {
+								if (!pw2.getOnCountryBorder()) {
+									++countChg;
+									if (!pw2.getOnBoundary())
+										log.info("road intersects country border, changing existing node to external routing node at",pw2.toDegreeString());
+								}
+								pw2.setOnCountryBorder(true);
+							} else {
+								long key = Utils.coord2Long(is);
+								Coord replacement = commonCoordMap.get(key);
+								if (replacement == null) {
+									commonCoordMap.put(key, is);
+								} else {
+									assert is.highPrecEquals(replacement);
+									is = replacement;
+								}
+								is.setOnCountryBorder(true);
+								log.info("road intersects country border, adding external routing node at",pw2.toDegreeString());
+								
+								way.getPoints().add(pos, is);
+//								GpxCreator.createGpx("e:/ld/way"+way.getId()+"_m", way.getPoints(), added);
+								changed = true;
+								pw2 = is;
+							}
+						}
+					}
+				}
+				if (!changed) {
+					++pos;
+					pw1 = pw2;
+				}
+			}
+		}
+		long t2 = System.currentTimeMillis() - t1;
+		log.info("added",commonCoordMap.size(),"new nodes at country borders");
+		log.info("marked",countChg,"existing nodes at country borders");
+		log.error("adding country border routing nodes took " + t2 + " ms");
+
+	}
+	
+	/**
+	 * Split complex border ways into smaller portions.
+	 * @param clippedBorders
+	 * @param orig
+	 * @param points
+	 */
+	private void splitBoundary(List<Element> clippedBorders, Way orig, List<Coord> points) {
+		int pos = 0;
+		final int max = 20; // seems to be a good compromise
+		while (pos < points.size()) {
+			int right = Math.min(points.size(), pos + max);
+			Way w = new Way(orig.getId(), points.subList(pos, right));
+			w.setFakeId();
+			clippedBorders.add(w);
+			pos += max - 1;
+			if (pos + 1 == points.size())
+				pos--;
+		}
+	}
+
+
+	/**
 	 * Merges roads with identical attributes (GType, OSM tags) to reduce the size of the 
 	 * road network.
 	 */
@@ -600,6 +744,9 @@ public class StyledConverter implements OsmConverter {
 		pointMap.clear();
 		style.reportStats();
 		driveOnLeft = calcDrivingSide();
+		
+		checkRoutingNodesAtCountryBorders();
+		borders.clear();
 		
 		setHighwayCounts();
 		findUnconnectedRoads();
@@ -636,7 +783,6 @@ public class StyledConverter implements OsmConverter {
 		}
 		deletedRoads = null;
 		modifiedRoads = null;
-
 		mergeRoads();
 		
 		resetHighwayCounts();
@@ -961,6 +1107,17 @@ public class StyledConverter implements OsmConverter {
 		}
 		else if("through_route".equals(relation.getTag("type"))) {
 			throughRouteRelations.add(relation);
+		} else if (extNodesAtCountryBorders) {
+			if (relation instanceof MultiPolygonRelation || "boundary".equals(relation.getTag("type"))) {
+				if (isBorder(relation)) {
+					for (Entry<String, Element> e : relation.getElements()) {
+						if (FakeIdGenerator.isFakeId(e.getValue().getId()))
+							continue;
+						if (e.getValue() instanceof Way)
+							borders.add((Way) e.getValue());
+					}
+				}
+			}
 		}
 	}
 	
