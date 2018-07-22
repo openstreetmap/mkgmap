@@ -15,11 +15,8 @@ package uk.me.parabola.mkgmap.reader.osm;
 
 import java.awt.Rectangle;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -28,7 +25,7 @@ import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * The hook removes all elements that will not be included in the map and can therefore
- * be safely removed. This improves the performance because the elements does not have
+ * be safely removed. This improves the performance because the elements do not have
  * to go through the style system. 
  * 
  * @author WanMil
@@ -39,8 +36,8 @@ public class UnusedElementsRemoverHook extends OsmReadingHooksAdaptor {
 	private ElementSaver saver;
 	
 	/** node with tags of this list must not be removed */
-	private Collection<String> nodeTagBlacklist;
-
+	private List<Entry<String,String>> areasToPoiNodeTags;
+	
 	public UnusedElementsRemoverHook() {
 	}
 
@@ -51,12 +48,10 @@ public class UnusedElementsRemoverHook extends OsmReadingHooksAdaptor {
 		// where the POI is placed in polygons. They must not be removed if the polygon
 		// is not removed. Checking if the polygon is not removed is too costly therefore
 		// all nodes with these tags are kept.
-		nodeTagBlacklist = new HashSet<String>();
-		List<Entry<String,String>> areasToPoiNodeTags = POIGeneratorHook.getPoiPlacementTags(props);
-		for (Entry<String,String> nodeTags : areasToPoiNodeTags) {
-			nodeTagBlacklist.add(nodeTags.getKey());
-		}
-		
+		if (props.containsKey("add-pois-to-areas"))
+			areasToPoiNodeTags = POIGeneratorHook.getPoiPlacementTags(props);
+		else 
+			areasToPoiNodeTags = new ArrayList<>();
 		return true;
 	}
 	
@@ -81,11 +76,13 @@ public class UnusedElementsRemoverHook extends OsmReadingHooksAdaptor {
 			if (bbox.contains(node.getLocation()) == false) {
 				boolean removeNode = true;
 				
-				// check if the node has no tag of the blacklist
-				if (nodeTagBlacklist.isEmpty() == false) {
-					for (String tag : nodeTagBlacklist ) {
-						if (node.getTag(tag) != null) {
-							// the node contains one tag that might be interesting for the POIGeneratorHook
+				for (Entry<String, String> tag : areasToPoiNodeTags) {
+					// check if the node has a tag used by the POIGeneratorHook
+					String val = node.getTag(tag.getKey());
+					if (val != null) {
+						if (tag.getValue() == null || val.equals(tag.getValue())) {
+							// the node contains one tag that might be
+							// interesting for the POIGeneratorHook
 							// do not remove it
 							removeNode = false;
 							break;
@@ -100,22 +97,7 @@ public class UnusedElementsRemoverHook extends OsmReadingHooksAdaptor {
 			}
 		}
 		
-		long tr1 = System.currentTimeMillis();
-		
-		// store all way ids that are referenced by a relation
-		// all tags without a tag must not be removed if they are referenced by a relation
-		Set<Long> relationWays = new HashSet<Long>();
-		for (Relation rel : saver.getRelations().values()) {
-			for (Entry<String, Element> relEntry : rel.getElements()) {
-				if (relEntry.getValue() instanceof Way) {
-					relationWays.add(relEntry.getValue().getId());
-				}
-			}
-		}
-		log.debug("Collecting way ids from relations took", (System.currentTimeMillis()-tr1), "ms");
-		
 		Rectangle bboxRect = new Rectangle(bbox.getMinLong(), bbox.getMinLat(), bbox.getWidth(), bbox.getHeight());
-		long relWays = 0;
 		long ways = saver.getWays().size();
 		for (Way way : new ArrayList<Way>(saver.getWays().values())) {
 			if (way.getPoints().isEmpty()) {
@@ -124,15 +106,11 @@ public class UnusedElementsRemoverHook extends OsmReadingHooksAdaptor {
 				continue;
 			}
 			
-			// check if a way has no tags and is not a member of a relation
-			// a relation might be used to add tags to the way using the style file
+			// check if a way has no tags
+			// it is presumed that the RelationStyleHook was already executed
 			if (way.getTagCount() == 0) {
-				if (relationWays.contains(way.getId())) {
-					relWays++;
-				} else {
-					saver.getWays().remove(way.getId());
-					continue;
-				}
+				saver.getWays().remove(way.getId());
+				continue;
 			}
 			
 			// check if the way is completely outside the tile bounding box
@@ -183,15 +161,14 @@ public class UnusedElementsRemoverHook extends OsmReadingHooksAdaptor {
 				// no coord of the way is within the bounding box
 				// check if the way possibly covers the bounding box completely
 				Area wayBbox = new Area(minLat, minLong, maxLat, maxLong);
-				if (wayBbox.intersects(saver.getBoundingBox())) {
-					log.debug(way, "possibly covers the bbox completely. Keep it.", way.toTagString());
+				if (wayBbox.contains(saver.getBoundingBox())) {
+					log.debug(way, "possibly covers the bbox completely. Keep it.");
 				} else {
 					saver.getWays().remove(way.getId());
 				}
 			} 
 		}
 		
-		log.info("Relation referenced ways:", relationWays.size(), "Used:", relWays);
 		log.info("Nodes: before:", nodes, "after:", saver.getNodes().size());	
 		log.info("Ways: before:", ways, "after:", saver.getWays().size());	
 		log.info("Removing unused elements took", (System.currentTimeMillis()-t1), "ms");

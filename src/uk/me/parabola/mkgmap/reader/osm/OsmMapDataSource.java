@@ -61,6 +61,8 @@ public class OsmMapDataSource extends MapperBasedMapDataSource implements Loadab
 	private static final Logger log = Logger.getLogger(OsmMapDataSource.class);
 
 	private Style style;
+	
+	// attention, the order of the hooks is important!
 	private final OsmReadingHooks[] POSSIBLE_HOOKS = {
 			new SeaGenerator(),
 			new MultiPolygonFinishHook(),
