@@ -713,7 +713,7 @@ public class StyledConverter implements OsmConverter {
 		long t2 = System.currentTimeMillis() - t1;
 		log.info("added",commonCoordMap.size(),"new nodes at country borders");
 		log.info("marked",countChg,"existing nodes at country borders");
-		log.error("adding country border routing nodes took " + t2 + " ms");
+		log.info("adding country border routing nodes took " + t2 + " ms");
 
 	}
 	
