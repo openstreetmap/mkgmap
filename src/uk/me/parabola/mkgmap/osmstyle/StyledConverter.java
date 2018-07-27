@@ -121,7 +121,9 @@ public class StyledConverter implements OsmConverter {
 	
 	/** boundary ways with admin_level=2 */
 	private final Set<Way> borders = new LinkedHashSet<>();
-	private boolean extNodesAtCountryBorders;
+	private boolean addBoundaryNodesAtAdminBoundaries;
+	private int admLevelNod3;
+	
 	
 	private List<ConvertedWay> roads = new ArrayList<>();
 	private List<ConvertedWay> lines = new ArrayList<>();
@@ -221,7 +223,9 @@ public class StyledConverter implements OsmConverter {
 		styleOptionTags = parseStyleOption(styleOption);
 		prefixSuffixFilter = new PrefixSuffixFilter(props);
 		
-		extNodesAtCountryBorders = routable /*&& props.getProperty("external-nodes-country-borders", false)*/;
+		// control calculation of extra nodes in NOD3 / NOD4
+		admLevelNod3 = props.getProperty("add-boundary-nodes-at-admin-boundaries", 2);
+		addBoundaryNodesAtAdminBoundaries = routable && admLevelNod3 > 0;
 	}
 
 	/**
@@ -320,9 +324,9 @@ public class StyledConverter implements OsmConverter {
 			removeRestrictionsWithWay(Level.WARNING, way, "is ignored");
 			return;
 		}
-		if (extNodesAtCountryBorders) {
+		if (addBoundaryNodesAtAdminBoundaries) {
 			// is this a country border ? 
-			if (!FakeIdGenerator.isFakeId(way.getId()) && isBorder(way)) {
+			if (!FakeIdGenerator.isFakeId(way.getId()) && isNod3Border(way)) {
 				borders.add(way);
 			}
 		}
@@ -391,8 +395,18 @@ public class StyledConverter implements OsmConverter {
 		}
 	}
 
-	private boolean isBorder(Element el) {
-		return "administrative".equals(el.getTag("boundary")) && "2".equals(el.getTag("admin_level"));
+	private boolean isNod3Border(Element el) {
+		if ("administrative".equals(el.getTag("boundary"))) {
+			String admLevelString = el.getTag("admin_level");
+			if (admLevelString != null) {
+				try {
+					int al = Integer.valueOf(admLevelString);
+					return al <= admLevelNod3;
+				} catch (NumberFormatException e) {
+				}
+			}
+		}
+		return false;
 	}
 
 	private int lineIndex = 0;
@@ -611,8 +625,8 @@ public class StyledConverter implements OsmConverter {
 	 * If a node exists close to the intersection, use the existing node, else add one. The nodes will be 
 	 * written as external nodes to NOD file (NOD3 + NOD4)
 	 */
-	private void checkRoutingNodesAtCountryBorders() {
-		if (!extNodesAtCountryBorders || borders.isEmpty())
+	private void checkRoutingNodesAtAdminBoundaries() {
+		if (!addBoundaryNodesAtAdminBoundaries || borders.isEmpty())
 			return;
 		long t1 = System.currentTimeMillis();
 
@@ -655,21 +669,20 @@ public class StyledConverter implements OsmConverter {
 						Coord is = Utils.getSegmentSegmentIntersection(pw1, pw2, pb1, pb2);
 						if (is != null) {
 							// intersection can be equal to given nodes on road or close to it
-//							log.error(pw1.toDegreeString(), pw2.toDegreeString(), pb1.toDegreeString(), pb2.toDegreeString(),is.toDegreeString());
 							double dist1 = is.distance(pw1);
 							double dist2 = is.distance(pw2);
 							if (dist1 < dist2 && dist1 < 1) {
 								if (!pw1.getOnCountryBorder()) {
 									++countChg;
 									if (!pw1.getOnBoundary())
-										log.info("road intersects country border, changing existing node to external routing node at",pw2.toDegreeString());
+										log.info("road intersects admin boundary, changing existing node to external routing node at",pw1.toDegreeString());
 								}
 								pw1.setOnCountryBorder(true);
 							} else if (dist2 < dist1 && dist2 < 1) {
 								if (!pw2.getOnCountryBorder()) {
 									++countChg;
 									if (!pw2.getOnBoundary())
-										log.info("road intersects country border, changing existing node to external routing node at",pw2.toDegreeString());
+										log.info("road intersects admin boundary, changing existing node to external routing node at",pw2.toDegreeString());
 								}
 								pw2.setOnCountryBorder(true);
 							} else {
@@ -682,10 +695,9 @@ public class StyledConverter implements OsmConverter {
 									is = replacement;
 								}
 								is.setOnCountryBorder(true);
-								log.info("road intersects country border, adding external routing node at",pw2.toDegreeString());
+								log.info("road intersects admin boundary, adding external routing node at",is.toDegreeString());
 								
 								way.getPoints().add(pos, is);
-//								GpxCreator.createGpx("e:/ld/way"+way.getId()+"_m", way.getPoints(), added);
 								changed = true;
 								pw2 = is;
 							}
@@ -745,7 +757,7 @@ public class StyledConverter implements OsmConverter {
 		style.reportStats();
 		driveOnLeft = calcDrivingSide();
 		
-		checkRoutingNodesAtCountryBorders();
+		checkRoutingNodesAtAdminBoundaries();
 		borders.clear();
 		
 		setHighwayCounts();
@@ -1107,9 +1119,9 @@ public class StyledConverter implements OsmConverter {
 		}
 		else if("through_route".equals(relation.getTag("type"))) {
 			throughRouteRelations.add(relation);
-		} else if (extNodesAtCountryBorders) {
+		} else if (addBoundaryNodesAtAdminBoundaries) {
 			if (relation instanceof MultiPolygonRelation || "boundary".equals(relation.getTag("type"))) {
-				if (isBorder(relation)) {
+				if (isNod3Border(relation)) {
 					for (Entry<String, Element> e : relation.getElements()) {
 						if (FakeIdGenerator.isFakeId(e.getValue().getId()))
 							continue;

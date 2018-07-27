@@ -63,6 +63,12 @@ public class RoutingHook extends OsmReadingHooksAdaptor {
 			usedTags.add("route");
 			usedTags.add("taxi");
 		}
+		int admLevelNod3 = props.getProperty("add-boundary-nodes-at-admin-boundaries", 2);
+		if (admLevelNod3 > 0) {
+			usedTags.add("boundary");
+			usedTags.add("admin_level");
+		}
+
 		
 		// only enabled if the route option is set
 		return props.containsKey("route");
