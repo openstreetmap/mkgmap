@@ -182,7 +182,6 @@ public final class ElementQuadTreeNode {
 
 		int halfLat = (bounds.getMinLat() + bounds.getMaxLat()) / 2;
 		int halfLong = (bounds.getMinLong() + bounds.getMaxLong()) / 2;
-		children = new ElementQuadTreeNode[4];
 		Area[] childBounds = new Area[4];
 		
 		childBounds[0] = new Area(bounds.getMinLat(), bounds.getMinLong(),
@@ -220,6 +219,7 @@ public final class ElementQuadTreeNode {
 			}
 		}
 		if (modified) {
+			children = new ElementQuadTreeNode[4];
 			for (int i = 0; i < 4; i++) {
 				children[i] = new ElementQuadTreeNode(childBounds[i], childElems.get(i));
 			}
