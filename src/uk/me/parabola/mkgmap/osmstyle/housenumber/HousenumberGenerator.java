@@ -962,22 +962,6 @@ public class HousenumberGenerator {
 		}
 	}	
 	
-
-	private static void checkSegment(HousenumberMatch house, MapRoad road, int seg){
-		Coord cx = house.getLocation();
-		Coord c0 = road.getPoints().get(seg);
-		Coord c1 = road.getPoints().get(seg + 1);
-		double frac = getFrac(c0, c1, cx);
-		double dist = distanceToSegment(c0,c1,cx,frac);
-		if (dist < house.getDistance()){
-			house.setDistance(dist);
-			house.setRoad(road);
-			house.setSegment(seg);
-			house.setSegmentFrac(frac);
-		}
-	}
-
-
 	/**
 	 * process option --x-name-service-roads=n
 	 * The program identifies unnamed roads which are only connected to one
@@ -1700,28 +1684,6 @@ public class HousenumberGenerator {
 	}
 	
 
-	private static class RoadPoint implements Locatable{
-		final Coord p;
-		final MapRoad r;
-		final int segment;
-		final int partOfSeg;
-		
-		public RoadPoint(MapRoad road, Coord co, int s, int part) {
-			this.p = co;
-			this.r = road;
-			this.segment = s;
-			this.partOfSeg = part;
-		}
-		@Override
-		public Coord getLocation() {
-			return p;
-		}
-		@Override
-		public String toString() {
-			return r + " " + segment + " " + partOfSeg;
-		}
-	}
-
 	/**
 	 * A performance critical part:
 	 * Index all road segments to be able to find all road segments within a given range
@@ -1729,12 +1691,34 @@ public class HousenumberGenerator {
 	 * @author Gerd Petermann
 	 *
 	 */
-	class RoadSegmentIndex {
+	private static class RoadSegmentIndex {
 		private final KdTree<RoadPoint> kdTree = new KdTree<>();
 		private final Int2ObjectOpenHashMap<Set<RoadPoint>> nodeId2RoadPointMap = new Int2ObjectOpenHashMap<>(); 
 		private final double range;
 		private final double maxSegmentLength;
 		private final double kdSearchRange;
+
+		private static class RoadPoint implements Locatable{
+			final Coord p;
+			final MapRoad r;
+			final int segment;
+			final int partOfSeg;
+			
+			public RoadPoint(MapRoad road, Coord co, int s, int part) {
+				this.p = co;
+				this.r = road;
+				this.segment = s;
+				this.partOfSeg = part;
+			}
+			@Override
+			public Coord getLocation() {
+				return p;
+			}
+			@Override
+			public String toString() {
+				return r + " " + segment + " " + partOfSeg;
+			}
+		}
 
 		public RoadSegmentIndex(List<MapRoad> roads, double rangeInMeter) {
 			this.range = rangeInMeter;
@@ -1931,6 +1915,20 @@ public class HousenumberGenerator {
 
 	}
 	
+	private static void checkSegment(HousenumberMatch house, MapRoad road, int seg){
+		Coord cx = house.getLocation();
+		Coord c0 = road.getPoints().get(seg);
+		Coord c1 = road.getPoints().get(seg + 1);
+		double frac = getFrac(c0, c1, cx);
+		double dist = distanceToSegment(c0,c1,cx,frac);
+		if (dist < house.getDistance()){
+			house.setDistance(dist);
+			house.setRoad(road);
+			house.setSegment(seg);
+			house.setSegmentFrac(frac);
+		}
+	}
+
 }
 
 

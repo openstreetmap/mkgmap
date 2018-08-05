@@ -100,6 +100,8 @@ public class UnusedElementsRemoverHook extends OsmReadingHooksAdaptor {
 		Rectangle bboxRect = new Rectangle(bbox.getMinLong(), bbox.getMinLat(), bbox.getWidth(), bbox.getHeight());
 		long ways = saver.getWays().size();
 		for (Way way : new ArrayList<Way>(saver.getWays().values())) {
+			if (way.isViaWay())
+				continue;
 			if (way.getPoints().isEmpty()) {
 				// empty way will not appear in the map => remove it
 				saver.getWays().remove(way.getId());

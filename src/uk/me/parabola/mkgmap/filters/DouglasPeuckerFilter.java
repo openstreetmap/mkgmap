@@ -68,10 +68,6 @@ public class DouglasPeuckerFilter implements MapFilter {
 		int endIndex = coords.size()-1;
 		for(int i = endIndex-1; i > 0; i--) {
 			Coord p = coords.get(i);
-			//int highwayCount = p.getHighwayCount();
-
-			// If a node in the line use the douglas peucker algorithm for upper segment
-			// TODO: Should consider only nodes connected to roads visible at current resolution.
 			if (p.preserved()) {
 				// point is "preserved", don't remove it
 				douglasPeucker(coords, i, endIndex, maxErrorDistance);
@@ -100,18 +96,17 @@ public class DouglasPeuckerFilter implements MapFilter {
 	 */
 	public static void douglasPeucker(List<Coord> points, int startIndex, int endIndex, double allowedError)
 	{
-		if (startIndex >= endIndex)
+		if (endIndex - startIndex <= 1) {
 			return;
-
+		}
+		
 		double maxDistance = 0;		//Highest distance	
 		int maxIndex = endIndex;	//Index of highest distance
 
 		Coord a = points.get(startIndex);
 		Coord b = points.get(endIndex);
-		
 
 		// Find point with highest distance to line between start- and end-point.
-		// handle also closed or nearly closed lines and spikes on straight lines
 		for(int i = endIndex-1; i > startIndex; i--) {
 			Coord p = points.get(i);
 			double distance = p.shortestDistToLineSegment(a, b);
@@ -127,19 +122,13 @@ public class DouglasPeuckerFilter implements MapFilter {
 		}
 		else {
 			// All points in tolerance, delete all of them.
-			// Remove the end-point if it is the same as the start point
-			if (a.highPrecEquals(b) && points.get(endIndex).preserved() == false)
-				endIndex++;
-
-			if (endIndex - startIndex > 4){
+			if (endIndex - startIndex > 4) {
 				// faster than many repeated remove actions
-				points.subList(startIndex+1, endIndex).clear();  
-				return;
-			}
-			
-			// Remove the points in between
-			for (int i = endIndex - 1; i > startIndex; i--) {
-				points.remove(i);
+				points.subList(startIndex + 1, endIndex).clear();
+			} else {
+				for (int i = endIndex - 1; i > startIndex; i--) {
+					points.remove(i);
+				}
 			}
 		}
 	}
