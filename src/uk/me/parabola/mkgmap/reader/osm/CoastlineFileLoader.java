@@ -152,26 +152,7 @@ public final class CoastlineFileLoader {
 			if (log.isDebugEnabled())
 				log.debug("Create coastline way", id, "with", points.size(),
 						"points");
-			Coord firstPoint = getPoints().get(0);
-
-			int minLat = firstPoint.getLatitude();
-			int maxLat = firstPoint.getLatitude();
-			int minLong = firstPoint.getLongitude();
-			int maxLong = firstPoint.getLongitude();
-
-			for (Coord c : getPoints()) {
-				if (c.getLatitude() < minLat) {
-					minLat = c.getLatitude();
-				} else if (c.getLatitude() > maxLat) {
-					maxLat = c.getLatitude();
-				}
-				if (c.getLongitude() < minLong) {
-					minLong = c.getLongitude();
-				} else if (c.getLongitude() > maxLong) {
-					maxLong = c.getLongitude();
-				}
-			}
-			bbox = new Area(minLat, minLong, maxLat, maxLong);
+			bbox = Area.getBBox(points);
 		}
 
 		@Override
