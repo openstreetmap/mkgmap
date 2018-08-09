@@ -66,10 +66,8 @@ public class ElementSaver {
 	// Options
 	private final boolean ignoreTurnRestrictions;
 
-	/** name of the tag that contains a ;-separated list of tagnames that should be removed after all elements have been processed */
-	public static final String MKGMAP_REMOVE_TAG = "mkgmap:removetags";
-	/** tagvalue of the {@link ElementSaver#MKGMAP_REMOVE_TAG} if all tags should be removed */
-	public static final String MKGMAP_REMOVE_TAG_ALL_KEY = "mkgmap:ALL";
+	/** name of the tag that contains a ;-separated list of tag names that should be removed after all elements have been processed */
+	public static final short MKGMAP_REMOVE_TAG_KEY = TagDict.getInstance().xlate("mkgmap:removetags");
 
 	public ElementSaver(EnhancedProperties args) {
 		if (args.getProperty("preserve-element-order", false)) {

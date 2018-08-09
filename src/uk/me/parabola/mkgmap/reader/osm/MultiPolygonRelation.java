@@ -18,6 +18,7 @@ import java.awt.Rectangle;
 import java.awt.geom.Area;
 import java.awt.geom.Line2D;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
@@ -1873,11 +1874,9 @@ public class MultiPolygonRelation extends Relation {
 	 * @param way
 	 *            a joined way
 	 * @param tagname
-	 *            the tag to be removed (<code>null</code> means remove all
-	 *            tags)
+	 *            the tag to be removed
 	 * @param tagvalue
-	 *            the value of the tag to be removed (<code>null</code> means
-	 *            don't check the value)
+	 *            the value of the tag to be removed
 	 */
 	private void removeTagInOrgWays(JoinedWay way, String tagname,
 			String tagvalue) {
@@ -1888,54 +1887,33 @@ public class MultiPolygonRelation extends Relation {
 				continue;
 			}
 
-			boolean remove = false;
-			if (tagname == null) {
-				// remove all tags
-				remove = true;
-			} else if (tagvalue == null) {
-				// remove the tag without comparing the value
-				remove = w.getTag(tagname) != null;
-			} else if (tagvalue.equals(w.getTag(tagname))) {
-				remove = true;
-			}
-
-			if (remove) {
-				if (tagname == null) {
-					// remove all tags
-					if (log.isDebugEnabled())
-						log.debug("Will remove all tags from", w.getId(), w
-								.toTagString());
-					removeTagsInOrgWays(w, tagname);
-				} else {
-					if (log.isDebugEnabled())
-						log.debug("Will remove", tagname + "="
-								+ w.getTag(tagname), "from way", w.getId(), w
-								.toTagString());
-					removeTagsInOrgWays(w, tagname);
+			if (tagvalue.equals(w.getTag(tagname))) {
+				if (log.isDebugEnabled()) {
+					log.debug("Will remove", tagname + "=" + w.getTag(tagname), "from way", w.getId(), w.toTagString());
 				}
+				removeTagsInOrgWays(w, tagname);
 			}
 		}
 	}
 	
 	protected void removeTagsInOrgWays(Way way, String tag) {
-		if (tag == null) {
-			way.addTag(ElementSaver.MKGMAP_REMOVE_TAG, ElementSaver.MKGMAP_REMOVE_TAG_ALL_KEY);
+		if (tag == null || tag.isEmpty()) {
 			return;
 		}
-		if (tag.isEmpty()) {
+		String tagsToRemove = way.getTag(ElementSaver.MKGMAP_REMOVE_TAG_KEY);
+		
+		if (tagsToRemove == null) {
+			tagsToRemove = tag;
+		} else if (tag.equals(tagsToRemove)) {
 			return;
-		}
-		String removedTagsTag = way.getTag(ElementSaver.MKGMAP_REMOVE_TAG);
-		if (ElementSaver.MKGMAP_REMOVE_TAG_ALL_KEY.equals(removedTagsTag)) {
-			// cannot add more tags to remove
-			return;
-		}
-
-		if (removedTagsTag == null) {
-			way.addTag(ElementSaver.MKGMAP_REMOVE_TAG, tag);
-		} else if (removedTagsTag.equals(tag) == false) {
-			way.addTag(ElementSaver.MKGMAP_REMOVE_TAG, removedTagsTag+";"+tag);
-		}
+		} else {
+			String[] keys = tagsToRemove.split(";");
+			if (Arrays.asList(keys).contains(tag)) {
+				return;
+			}
+			tagsToRemove += ";" + tag;
+		} 
+		way.addTag(ElementSaver.MKGMAP_REMOVE_TAG_KEY, tagsToRemove);
 	}
 	
 	/**
