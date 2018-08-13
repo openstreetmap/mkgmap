@@ -539,6 +539,24 @@ Miscellaneous options:
 	of drive-on-left roads with the rest.
 	Use the --bounds option to make sure that the detection 
 	finds the correct country. 
+
+--add-boundary-nodes-at-admin-boundaries=NUM	
+	This option controls how mkgmap calculates special routing nodes which
+	are needed by Garmin software to allow routing between different map tiles.
+	These nodes are written to section 3 and 4 in the NOD file.
+	When a road crosses the tile boundary (bbox), the road is split at this 
+	point and such a special node is written. This allows routing between
+	one set of tiles produced by splitter.jar. However, if you create a map
+	from different sets of tiles, those tiles are likely to overlap.
+	For the overlapping tiles, none of the entries in NOD3 match and thus
+	routing across tile border doesn't work when the route is not fully 
+	covered by one of the tiles. 
+	The option tells mkgmap to add special nodes whereever a road touches or
+	crosses an administratve boundary. The NUM parameter specifies a filter
+	for the admin_level. Boundaries with a higher admin_level value are ignored. 
+	The default value is 2 (country borders). Another reasonable value might 
+	be 4. A value less or equal to 0 tells mkgmap to ignore intersections at 
+	administrative boundaries.   
 	
 --check-roundabouts
 	Check that roundabouts have the expected direction (clockwise

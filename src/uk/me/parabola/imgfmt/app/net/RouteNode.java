@@ -76,7 +76,7 @@ public class RouteNode implements Comparable<RouteNode> {
 
 	public RouteNode(Coord coord) {
 		this.coord = (CoordNode) coord;
-		setBoundary(this.coord.getOnBoundary());
+		setBoundary(this.coord.getOnBoundary() || this.coord.getOnCountryBorder());
 	}
 
 	private boolean haveLargeOffsets() {

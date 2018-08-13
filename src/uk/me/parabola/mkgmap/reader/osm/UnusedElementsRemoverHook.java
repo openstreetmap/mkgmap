@@ -122,13 +122,6 @@ public class UnusedElementsRemoverHook extends OsmReadingHooksAdaptor {
 			// It is possible that the way is larger than the bounding box and therefore 
 			// contains the bbox completely. Especially this is true for the sea polygon
 			// when using --generate-sea=polygon
-			// So need the calc the bbox of the way
-			Coord firstC = way.getPoints().get(0);
-			int minLat = firstC.getLatitude();
-			int maxLat = firstC.getLatitude();
-			int minLong = firstC.getLongitude();
-			int maxLong = firstC.getLongitude();
-			
 			for (Coord c : way.getPoints()) {
 				if (bbox.contains(c)) {
 					coordInBbox = true;
@@ -146,23 +139,12 @@ public class UnusedElementsRemoverHook extends OsmReadingHooksAdaptor {
 					}
 				}
 				
-				if (minLat > c.getLatitude()) {
-					minLat = c.getLatitude();
-				} else if (maxLat < c.getLatitude()) {
-					maxLat = c.getLatitude();
-				}
-				if (minLong > c.getLongitude()) {
-					minLong = c.getLongitude();
-				} else if (maxLong < c.getLongitude()) {
-					maxLong = c.getLongitude();
-				}
-				
 				prevC = c;
 			}
 			if (coordInBbox==false) {
 				// no coord of the way is within the bounding box
 				// check if the way possibly covers the bounding box completely
-				Area wayBbox = new Area(minLat, minLong, maxLat, maxLong);
+				Area wayBbox = Area.getBBox(way.getPoints());
 				if (wayBbox.contains(saver.getBoundingBox())) {
 					log.debug(way, "possibly covers the bbox completely. Keep it.");
 				} else {

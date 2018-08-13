@@ -38,7 +38,6 @@ import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 
-import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.util.Java2DConverter;
@@ -1633,7 +1632,7 @@ public class MultiPolygonRelation extends Relation {
 						|| (prevLatField == 0 && prevLonField == 0);
 
 				boolean intersects = intersectionPossible
-					&& Utils.linesCutEachOther(p1_1, p1_2, p2_1, p2_2);
+					&& linesCutEachOther(p1_1, p1_2, p2_1, p2_2);
 				
 				if (intersects) {
 					if ((polygon1.getWay().isClosedArtificially() && !it1.hasNext())
@@ -1726,12 +1725,54 @@ public class MultiPolygonRelation extends Relation {
 		Coord sw = new Coord(tileBounds.getMinLat(), tileBounds.getMinLong());
 		Coord se = new Coord(tileBounds.getMinLat(), tileBounds.getMaxLong());
 		Coord ne = new Coord(tileBounds.getMaxLat(), tileBounds.getMaxLong());
-		return Utils.linesCutEachOther(nw, sw, p1_1, p1_2)
-				|| Utils.linesCutEachOther(sw, se, p1_1, p1_2)
-				|| Utils.linesCutEachOther(se, ne, p1_1, p1_2)
-				|| Utils.linesCutEachOther(ne, nw, p1_1, p1_2);
+		return linesCutEachOther(nw, sw, p1_1, p1_2)
+				|| linesCutEachOther(sw, se, p1_1, p1_2)
+				|| linesCutEachOther(se, ne, p1_1, p1_2)
+				|| linesCutEachOther(ne, nw, p1_1, p1_2);
 	}
 
+	/**
+	 * XXX: This code presumes that certain tests were already done!
+	 * Check if the line p1_1 to p1_2 cuts line p2_1 to p2_2 in two pieces and vice versa.
+	 * This is a form of intersection check where it is allowed that one line ends on the
+	 * other line or that the two lines overlap.
+	 * @param p1_1 first point of line 1
+	 * @param p1_2 second point of line 1
+	 * @param p2_1 first point of line 2
+	 * @param p2_2 second point of line 2
+	 * @return true if both lines intersect somewhere in the middle of each other
+	 */
+	private static boolean linesCutEachOther(Coord p1_1, Coord p1_2, Coord p2_1, Coord p2_2) {
+		long width1 = p1_2.getHighPrecLon() - p1_1.getHighPrecLon();
+		long width2 = p2_2.getHighPrecLon() - p2_1.getHighPrecLon();
+
+		long height1 = p1_2.getHighPrecLat() - p1_1.getHighPrecLat();
+		long height2 = p2_2.getHighPrecLat() - p2_1.getHighPrecLat();
+
+		long denominator = ((height2 * width1) - (width2 * height1));
+		if (denominator == 0) {
+			// the lines are parallel
+			// they might overlap but this is ok for this test
+			return false;
+		}
+		
+		long x1Mx3 = p1_1.getHighPrecLon() - p2_1.getHighPrecLon();
+		long y1My3 = p1_1.getHighPrecLat() - p2_1.getHighPrecLat();
+
+		double isx = (double)((width2 * y1My3) - (height2 * x1Mx3))
+				/ denominator;
+		if (isx <= 0 || isx >= 1) {
+			return false;
+		}
+		
+		double isy = (double)((width1 * y1My3) - (height1 * x1Mx3))
+				/ denominator;
+
+		if (isy <= 0 || isy >= 1) {
+			return false;
+		}
+		return true;
+	}
 
 	private List<JoinedWay> getWaysFromPolygonList(BitSet selection) {
 		if (selection.isEmpty()) {

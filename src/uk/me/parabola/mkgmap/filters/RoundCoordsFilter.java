@@ -55,7 +55,7 @@ public class RoundCoordsFilter implements MapFilter {
 				Coord newP;
 				
 				if(p instanceof CoordNode && checkRouting)
-					newP = new CoordNode(lat, lon, p.getId(), p.getOnBoundary());
+					newP = new CoordNode(lat, lon, p.getId(), p.getOnBoundary(), p.getOnCountryBorder());
 				else
 					newP = new Coord(lat, lon);
 				newP.preserved(p.preserved());

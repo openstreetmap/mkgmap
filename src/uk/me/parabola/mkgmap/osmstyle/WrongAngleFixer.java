@@ -149,6 +149,13 @@ public class WrongAngleFixer {
 			}
 			replacement.setOnBoundary(true);
 		}
+		if (toRepl.getOnCountryBorder()){
+			if (replacement.equals(toRepl) == false){
+				log.error("country boundary node is replaced by node with non-equal coordinates at", toRepl.toOSMURL());
+				assert false : "country boundary node is replaced" ;
+			}
+			replacement.setOnCountryBorder(true);
+		}
 		toRepl.setReplaced(true);
 		if (toRepl instanceof CoordPOI) {
 			CoordPOI cp = (CoordPOI) toRepl;
@@ -834,7 +841,7 @@ public class WrongAngleFixer {
 	 * @return true if remove is okay
 	 */
 	private boolean allowedToRemove(Coord p){
-		if (p.getOnBoundary())
+		if (p.getOnBoundary() || p.getOnCountryBorder())
 			return false;
 		if (mode == MODE_LINES && p.isEndOfWay())
 			return false;
@@ -1100,26 +1107,27 @@ public class WrongAngleFixer {
 			}
 			Coord c = getCurrentLocation(replacements);
 			Coord n = neighbour.getCurrentLocation(replacements);
-			
 			// check special cases: don't merge if
 			// 1) both points are via nodes 
 			// 2) both nodes are boundary nodes with non-equal coords
 			// 3) one point is via node and the other is a boundary node, the result could be that the restriction is ignored.
-			if (c.getOnBoundary()){
-				if (n.isViaNodeOfRestriction() || n.getOnBoundary() && c.equals(n) == false)
+			boolean cOnBoundary = c.getOnBoundary() || c.getOnCountryBorder();
+			boolean nOnBoundary = n.getOnBoundary() || n.getOnCountryBorder();
+			if (cOnBoundary){
+				if (n.isViaNodeOfRestriction() || nOnBoundary && c.equals(n) == false)
 					return false; 
 			}
-			if (c.isViaNodeOfRestriction() && (n.isViaNodeOfRestriction() || n.getOnBoundary()))
+			if (c.isViaNodeOfRestriction() && (n.isViaNodeOfRestriction() || nOnBoundary))
 				 return false;
-			if (c instanceof CoordPOI && (n instanceof CoordPOI || n.getOnBoundary()))
+			if (c instanceof CoordPOI && (n instanceof CoordPOI || nOnBoundary))
 				return false;
-			if (n instanceof CoordPOI && (c instanceof CoordPOI || c.getOnBoundary()))
+			if (n instanceof CoordPOI && (c instanceof CoordPOI || cOnBoundary))
 				return false;
-
+			//TODO: nodes on country borders?
 			Coord mergePoint;
-			if (c.getOnBoundary() || c instanceof CoordPOI)
+			if (cOnBoundary || c instanceof CoordPOI)
 				mergePoint = c;
-			else if (n.getOnBoundary() || n instanceof CoordPOI)
+			else if (nOnBoundary || n instanceof CoordPOI)
 				mergePoint = n;
 			else if (c.equals(n))
 				mergePoint = c;

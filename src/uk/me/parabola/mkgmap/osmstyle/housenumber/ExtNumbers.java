@@ -944,6 +944,7 @@ public class ExtNumbers {
 		Coord closePoint = getRoad().getPoints().get(index);
 		Coord toAdd = new Coord(closePoint);
 		toAdd.setOnBoundary(closePoint.getOnBoundary());
+		toAdd.setOnCountryBorder(closePoint.getOnCountryBorder());
 		toAdd.incHighwayCount();
 		// we have to make sure that the road starts and ends with a CoordNode!
 		this.endInRoad = addAsNumberNode(splitSegment, toAdd);

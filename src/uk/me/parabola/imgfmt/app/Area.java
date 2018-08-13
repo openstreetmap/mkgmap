@@ -69,6 +69,28 @@ public class Area {
 				, Utils.toMapUnit(maxLat), Utils.toMapUnit(maxLong));
 	}
 
+	public static Area getBBox(List<Coord> points) {
+		int tmpMinLat = Integer.MAX_VALUE;
+		int tmpMaxLat = Integer.MIN_VALUE;
+		int tmpMinLong = Integer.MAX_VALUE;
+		int tmpMaxLong = Integer.MIN_VALUE;
+		
+		for (Coord co : points) {
+			int lat = co.getLatitude();
+			if (lat < tmpMinLat)
+				tmpMinLat = lat;
+			if (lat > tmpMaxLat)
+				tmpMaxLat = lat;
+
+			int lon = co.getLongitude();
+			if (lon < tmpMinLong)
+				tmpMinLong = lon;
+			if (lon > tmpMaxLong)
+				tmpMaxLong = lon; 			
+		}
+		return new Area(tmpMinLat, tmpMinLong, tmpMaxLat, tmpMaxLong);
+	}
+	
 	public int getMinLat() {
 		return minLat;
 	}
