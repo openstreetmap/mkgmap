@@ -41,11 +41,6 @@ public abstract class ImgFile implements Closeable {
 	private boolean writable;
 
 	public void close() {
-		try {
-			sync();
-		} catch (IOException e) {
-			log.debug("could not sync file");
-		}
 		Utils.closeFile(writer);
 		Utils.closeFile(reader);
 	}
