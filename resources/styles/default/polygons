@@ -63,6 +63,9 @@ highway=* & (area=yes | mkgmap:mp_created=true) [0x05 resolution 22]
 historic=museum | historic=memorial [0x1e resolution 21]
 historic=archaeological_site | historic=ruins [0x1e resolution 21]
 
+include 'inc/water_polygons';
+include 'inc/landuse_polygons';
+
 # building tag should be last
 (building=* | amenity=*) & area!=no & amenity!=grave_yard [0x13 resolution 24]
 tourism=* & area!=no & waterway!=* [0x1f resolution 24]
@@ -76,9 +79,6 @@ man_made=* & area!=no
 
 man_made=* & area=yes
 [0x13 resolution 24]
-
-include 'inc/water_polygons';
-include 'inc/landuse_polygons';
 
 # render small named islands 
 place=island & name=* & area_size() < 1000000 [0x53 resolution 19]
