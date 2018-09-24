@@ -294,8 +294,18 @@ tourism=zoo [0x2c07 resolution 24]
 barrier=bollard | barrier=bus_trap | barrier=gate [0x660f resolution 24]
 barrier=block | barrier=cycle_barrier | barrier=stile | barrier=kissing_gate [0x660f resolution 24]
 
-include 'inc/water_points';
-include 'inc/landuse_points';
+landuse=basin|landuse=reservoir [0x650f resolution 24]
+
+natural=beach [0x6604 resolution 24]
+natural=glacier [0x650a resolution 24]
+natural=spring [0x6511 resolution 24]
+natural=stream [0x6512 resolution 24]
+natural=water & name=* [0x6603 resolution 24]
+natural=waterfall | waterway=waterfall [0x6508 resolution 24]
+natural=wetland & name=* [0x6513 resolution 24]
+
+landuse=cemetery|landuse=cemetary|amenity=grave_yard [0x6403 resolution 24]
+(landuse=wood|landuse=forest|natural=wood) & name=* [0x6618 resolution 24]
 
 <finalize>
 # The finalizer section is executed for each element when a rule with an element type matches
