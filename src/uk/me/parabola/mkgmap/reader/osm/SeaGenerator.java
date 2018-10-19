@@ -462,6 +462,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			// add a copy of this way to be able to draw it as a shape
 			Way shapeWay = new Way(way.getOriginalId(), way.getPoints());
 			shapeWay.setFakeId();
+			shapeWay.copyTags(way);
 			// change the tag so that only special rules looking for it are firing
 			shapeWay.deleteTag("natural"); 
 			shapeWay.addTag("mkgmap:removed_natural",naturalVal); 
