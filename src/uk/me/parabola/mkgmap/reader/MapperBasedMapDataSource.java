@@ -108,6 +108,7 @@ public abstract class MapperBasedMapDataSource implements MapDataSource, Configu
 		background.setPoints(mapper.getBounds().toCoords());
 		background.setType(0x4b); // background type
 		background.setMinResolution(0); // On all levels
+		background.setFullArea(Long.MAX_VALUE-1); // sea also SEA_SIZE in SeaGenerator
 
 		mapper.addShape(background);
 	}

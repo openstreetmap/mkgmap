@@ -104,7 +104,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 
 	/**
 	 * When order-by-decreasing-area we need all bit of sea to be output consistently.
-	 * Unless _draworder changes things, having seaSize as BIG causes polygons beyond the
+	 * Unless _draworder changes things, having SEA_SIZE as BIG causes polygons beyond the
 	 * coastline to be shown. To hide these and have the sea show up to the high-tide
 	 * coastline, can set this to be very small instead (or use _draworder).
 	 * <p>
@@ -112,7 +112,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	 * natural=sea { add mkgmap:skipSizeFilter=true; set mkgmap:drawLevel=2 } [0x32 resolution 10]
 	 * which is equivalent to Long.MAX_VALUE-2.
 	 */
-	private static final long seaSize = Long.MAX_VALUE-2; // sea is BIG
+	private static final long SEA_SIZE = Long.MAX_VALUE-2; // sea is BIG
 
 	/**
 	 * Sort out options from the command line.
@@ -670,7 +670,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				saver.addWay(w);
 			}
 			for (Way w : seaWays) {
-				w.setFullArea(seaSize);
+				w.setFullArea(SEA_SIZE);
 				saver.addWay(w);
 			}
 		} else {
@@ -680,7 +680,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			// first add the complete bounding box as sea
 			Way sea = new Way(FakeIdGenerator.makeFakeId(),bounds.toCoords());
 			sea.addTag("natural", "sea");
-			sea.setFullArea(seaSize);
+			sea.setFullArea(SEA_SIZE);
 			
 			for (Way w : landWays) {
 				saver.addWay(w);
@@ -954,7 +954,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 					ne.getLongitude() + 1));
 			sea.addPoint(sea.getPoints().get(0)); // close shape
 			sea.addTag("natural", "sea");
-			sea.setFullArea(seaSize);
+			sea.setFullArea(SEA_SIZE);
 
 			log.info("sea: ", sea);
 			saver.addWay(sea);

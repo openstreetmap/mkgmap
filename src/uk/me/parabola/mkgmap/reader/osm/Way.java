@@ -257,6 +257,11 @@ public class Way extends Element {
 		this.isViaWay = isViaWay;
 	}
 
+	/**
+	 * Allows to manipulate the area size which might be used to sort shapes when
+	 * option --order-by-decreasing-area is active. 
+	 * @param fullArea
+	 */
 	public void setFullArea(long fullArea) {
 		this.fullArea = fullArea;
 	}
