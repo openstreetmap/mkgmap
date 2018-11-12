@@ -294,9 +294,6 @@ public class MdrBuilder implements Combiner {
 		List<RoadDef> roads = mr.getRoads();
 
 		for (RoadDef road : roads) {
-			String name = road.getName();
-			if (name == null || name.isEmpty())
-				continue;
 			List<City> cities = road.getCities();
 			if (cities.isEmpty())
 				mdrFile.addStreet(road, null);
