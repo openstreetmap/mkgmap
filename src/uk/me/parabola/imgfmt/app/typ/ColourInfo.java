@@ -282,7 +282,7 @@ public class ColourInfo implements Writeable, AlphaAdder {
 			// in each of the day/night sections.
 
 			if (numberOfColours > 4)
-				return ("Too many colours for a line or polygon");
+				return "Too many colours for a line or polygon";
 			if (numberOfColours == 0)
 				return "Line or polygon cannot have zero colours";
 

@@ -369,6 +369,8 @@ public class CommonSection {
 	 */
 	protected Xpm readXpm(TokenScanner scanner, String header, boolean simple) {
 		ColourInfo colourInfo = readColourInfo(scanner, header);
+		xpmCheck(scanner, colourInfo);
+
 		String msg = colourInfo.analyseColours(simple);
 		if (msg != null)
 			throw new SyntaxException(scanner, msg);
@@ -403,5 +405,13 @@ public class CommonSection {
 	protected void validate(TokenScanner scanner) {
 		if (!hasXpm)
 			throw new SyntaxException(scanner, "No XPM tag in section");
+	}
+
+	/**
+	 * Check the colourInfo against any restrictions that apply to the element type.
+	 *
+	 * Subtypes make checks as appropriate, there are no common restrictions.
+	 */
+	protected void xpmCheck(TokenScanner scanner, ColourInfo colourInfo) {
 	}
 }
