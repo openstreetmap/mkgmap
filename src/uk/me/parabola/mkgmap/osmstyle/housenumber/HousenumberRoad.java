@@ -559,11 +559,17 @@ public class HousenumberRoad {
 					log.info("dropped label",droppedLabel,"for",road,"in preference to correct address search. Labels are now:",Arrays.toString(labels));
 			}
 		}
+		
 		if (furtherNames != null){
 			boolean changed = false;
 			for (String furtherName : furtherNames){
-				if (road.addLabel(furtherName))
-					changed = true;
+				if (road.getLabelPos(furtherName) == -1) {
+					if (road.addLabel(furtherName))
+						changed = true;
+					else {
+						log.warn("could not add further label",furtherName, "for",road);
+					}
+				}
 			}
 			if (changed){
 				log.info("added further labels for",road,"Labels are now:",Arrays.toString(labels));

@@ -312,6 +312,8 @@ public class HousenumberMatch extends HousenumberElem {
 			return false;
 		if (getSign().equals(other.getSign()) == false)
 			return false;
+		if (getPlace() != other.getPlace())
+			return false;
 		if (getZipCode() != null && other.getZipCode() != null){
 			if (getZipCode().equals(other.getZipCode()) == false)
 				return false;
