@@ -9,87 +9,85 @@
 # for more information.
 
 addr:housenumber=* {set mkgmap:execute_finalize_rules=true}
-barrier=* & bicycle=*    { set mkgmap:bicycle='${bicycle|subst:private=>no}' }
-barrier=* & foot=*       { set mkgmap:foot='${foot|subst:private=>no}' }                  
-barrier=* & hgv=*        { set mkgmap:truck='${hgv|subst:private=>no}' }                  
-barrier=* & motorcar=*   { set mkgmap:car='${motorcar|subst:private=>no}' }
-barrier=* & psv=*        { set mkgmap:bus='${psv|subst:private=>no}' }                  
-barrier=* & taxi=*       { set mkgmap:taxi='${taxi|subst:private=>no}' }                  
-barrier=* & emergency=*  { set mkgmap:emergency='${emergency|subst:private=>no}' }                  
-barrier=* & delivery=*   { set mkgmap:delivery='${delivery|subst:private=>no}' }                  
-barrier=* & access=*     { addaccess '${access|subst:private=>no}' }
 
-barrier=bollard | barrier=cycle_barrier 
-    { add mkgmap:bicycle=yes; 
-      add mkgmap:foot=yes; 
-      addaccess no;
-      set mkgmap:road-speed=1; }
-barrier=bus_trap  
-    { add mkgmap:bus=yes; 
-      add mkgmap:foot=yes; 
-      add mkgmap:bicycle=yes; 
-      addaccess no;
-      set mkgmap:road-speed=1; }
-barrier=gate
-    { add mkgmap:bicycle=yes; 
-      add mkgmap:foot=yes; 
-      addaccess no;
-      set mkgmap:road-speed=0; }
-barrier=kissing_gate | barrier=stile | barrier=block
-    { add mkgmap:foot=yes; 
-      addaccess no;
-      set mkgmap:road-speed=0; }
+barrier=* & bicycle=*   {set mkgmap:bicycle  =  '${bicycle|subst:private=>no}'}
+barrier=* & foot=*      {set mkgmap:foot     =     '${foot|subst:private=>no}'}
+barrier=* & hgv=*       {set mkgmap:truck    =      '${hgv|subst:private=>no}'}
+barrier=* & motorcar=*  {set mkgmap:car      = '${motorcar|subst:private=>no}'}
+barrier=* & psv=*       {set mkgmap:bus      =      '${psv|subst:private=>no}'}
+barrier=* & taxi=*      {set mkgmap:taxi     =     '${taxi|subst:private=>no}'}
+barrier=* & emergency=* {set mkgmap:emergency='${emergency|subst:private=>no}'}
+barrier=* & delivery=*  {set mkgmap:delivery = '${delivery|subst:private=>no}'}
+barrier=* & access=*    {addaccess               '${access|subst:private=>no}'}
 
-internet_access=yes { name 'Internet ${name}' | 'Internet' } [0x2f12 resolution 24 continue]
-internet_access=* & internet_access!=no & internet_access!=yes { name 'Internet(${internet_access}) ${name|def:}' } [0x2f12 resolution 24 continue]
+barrier=bollard | barrier=cycle_barrier {
+    add mkgmap:bicycle=yes;
+    add mkgmap:foot=yes;
+    addaccess no;
+    set mkgmap:road-speed=1;
+    }
+barrier=bus_trap {
+    add mkgmap:bus=yes;
+    add mkgmap:foot=yes;
+    add mkgmap:bicycle=yes;
+    addaccess no;
+    set mkgmap:road-speed=1;
+    }
+barrier=gate {
+    add mkgmap:bicycle=yes;
+    add mkgmap:foot=yes;
+    addaccess no;
+    set mkgmap:road-speed=0;
+    }
+barrier=kissing_gate | barrier=stile | barrier=block {
+    add mkgmap:foot=yes;
+    addaccess no;
+    set mkgmap:road-speed=0;
+    }
+
+internet_access=yes {name 'Internet ${name}' | 'Internet'} [0x2f12 resolution 24 continue]
+internet_access=* & internet_access!=no & internet_access!=yes {name 'Internet(${internet_access}) ${name|def:}'} [0x2f12 resolution 24 continue]
 
 (public_transport=platform | highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
-& (ref=* | route_ref=*) {
-  set ref='${ref|def:}(${route_ref})';
-}
+    & (ref=* | route_ref=*)
+    {set ref='${ref|def:}(${route_ref})'}
 (public_transport=platform | highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
-& lit=yes & (shelter=yes | covered=yes)
-{
-  set ref='${ref|def:}*';
-}
+    & lit=yes & (shelter=yes | covered=yes)
+    {set ref='${ref|def:}*'}
 (public_transport=platform | highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
-& lit!=yes & (shelter=yes | covered=yes)
-{
-  set ref='${ref|def:}+';
-}
+    & lit!=yes & (shelter=yes | covered=yes)
+    {set ref='${ref|def:}+'}
 (public_transport=platform | highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
-& (shelter=no | covered=no)
-{
-  set ref='${ref|def:}-';
-}
+    & (shelter=no | covered=no)
+    {set ref='${ref|def:}-'}
 
 include 'inc/name';
 
-place=city & population > 999999 & name=*  {set cityxx=yes} [0x0100 resolution 12 continue with_actions]
-place=city & population > 799999 & cityxx!=yes & name=*  {set cityxx=yes} [0x0200 resolution 14 continue with_actions]
-place=city & population > 399999 & cityxx!=yes & name=*  {set cityxx=yes} [0x0300 resolution 15 continue with_actions]
-place=city & population > 299999 & cityxx!=yes & name=*  {set cityxx=yes} [0x0400 resolution 16 continue with_actions]
-place=city & population > 199999 & cityxx!=yes & name=*  {set cityxx=yes} [0x0500 resolution 16 continue with_actions]
-place=city & population >  99999 & cityxx!=yes & name=*  {set cityxx=yes} [0x0600 resolution 17 continue with_actions]
-place=city & population >  49999 & cityxx!=yes & name=*  {set cityxx=yes} [0x0700 resolution 17 continue with_actions]
-place=city & population >   9999 & cityxx!=yes & name=*  {set cityxx=yes} [0x0800 resolution 18 continue with_actions]
+place=city & population > 999999 &               name=* {set cityxx=yes} [0x0100 resolution 12 continue with_actions]
+place=city & population > 799999 & cityxx!=yes & name=* {set cityxx=yes} [0x0200 resolution 14 continue with_actions]
+place=city & population > 399999 & cityxx!=yes & name=* {set cityxx=yes} [0x0300 resolution 15 continue with_actions]
+place=city & population > 299999 & cityxx!=yes & name=* {set cityxx=yes} [0x0400 resolution 16 continue with_actions]
+place=city & population > 199999 & cityxx!=yes & name=* {set cityxx=yes} [0x0500 resolution 16 continue with_actions]
+place=city & population >  99999 & cityxx!=yes & name=* {set cityxx=yes} [0x0600 resolution 17 continue with_actions]
+place=city & population >  49999 & cityxx!=yes & name=* {set cityxx=yes} [0x0700 resolution 17 continue with_actions]
+place=city & population >   9999 & cityxx!=yes & name=* {set cityxx=yes} [0x0800 resolution 18 continue with_actions]
 
-place=city & population >       0 & cityxx!=yes & name=*  {set cityxx=yes} [0x0800 resolution 18 continue with_actions]
-place=city                          & cityxx!=yes & name=*  {set cityxx=yes} [0x0700 resolution 18 continue with_actions]
+place=city & population >      0 & cityxx!=yes & name=* {set cityxx=yes} [0x0800 resolution 18 continue with_actions]
+place=city                       & cityxx!=yes & name=* {set cityxx=yes} [0x0700 resolution 18 continue with_actions]
 
-place=town   & population >  69999 & cityxx!=yes  & name=* {set cityxx=yes} [0x0600 resolution 17 continue with_actions]
-place=town   & population >  19999 & cityxx!=yes  & name=* {set cityxx=yes} [0x0700 resolution 18 continue with_actions]
-place=town   & population >   9999 & cityxx!=yes  & name=* {set cityxx=yes} [0x0800 resolution 19 continue with_actions]
-place=town   & population >   4999 & cityxx!=yes  & name=* {set cityxx=yes} [0x0900 resolution 19 continue with_actions]
-place=town   & population >    999 & cityxx!=yes  & name=* {set cityxx=yes} [0x0a00 resolution 19 continue with_actions]
-place=town   & population >         0 & cityxx!=yes  & name=* {set cityxx=yes} [0x0b00 resolution 20 continue with_actions]
-place=town                            & cityxx!=yes  & name=* {set cityxx=yes} [0x0800 resolution 19 continue with_actions]
+place=town & population >  69999 & cityxx!=yes & name=* {set cityxx=yes} [0x0600 resolution 17 continue with_actions]
+place=town & population >  19999 & cityxx!=yes & name=* {set cityxx=yes} [0x0700 resolution 18 continue with_actions]
+place=town & population >   9999 & cityxx!=yes & name=* {set cityxx=yes} [0x0800 resolution 19 continue with_actions]
+place=town & population >   4999 & cityxx!=yes & name=* {set cityxx=yes} [0x0900 resolution 19 continue with_actions]
+place=town & population >    999 & cityxx!=yes & name=* {set cityxx=yes} [0x0a00 resolution 19 continue with_actions]
+place=town & population >      0 & cityxx!=yes & name=* {set cityxx=yes} [0x0b00 resolution 20 continue with_actions]
+place=town                       & cityxx!=yes & name=* {set cityxx=yes} [0x0800 resolution 19 continue with_actions]
 
-place=island & cityxx!=yes  {set cityxx=yes}	[0x650c resolution 20 continue with_actions]
-place=islet & cityxx!=yes   {set cityxx=yes}	[0x650c resolution 22 continue with_actions]
-place=village & cityxx!=yes {set cityxx=yes} 	[0x0900 resolution 22 continue with_actions]
-place=suburb & cityxx!=yes  {set cityxx=yes}	[0x0a00 resolution 22 continue with_actions]
-place=hamlet & cityxx!=yes  {set cityxx=yes}	[0x0b00 resolution 24 continue with_actions]
+place=island                     & cityxx!=yes          {set cityxx=yes} [0x650c resolution 20 continue with_actions]
+place=islet                      & cityxx!=yes          {set cityxx=yes} [0x650c resolution 22 continue with_actions]
+place=village                    & cityxx!=yes          {set cityxx=yes} [0x0900 resolution 22 continue with_actions]
+place=suburb                     & cityxx!=yes          {set cityxx=yes} [0x0a00 resolution 22 continue with_actions]
+place=hamlet                     & cityxx!=yes          {set cityxx=yes} [0x0b00 resolution 24 continue with_actions]
 
 #aeroway=airport [0x5900 resolution 22]
 aeroway=airport [0x2f04 resolution 22]
@@ -119,7 +117,7 @@ amenity=community_centre [0x3005 resolution 24]
 amenity=community_center [0x3005 resolution 24]
 amenity=courthouse [0x3004 resolution 24]
 amenity=drinking_water [0x5000 resolution 24 default_name 'Water']
-amenity=embassy & country=* { set name='${country} ${name|def:}' } [0x3003 resolution 24]
+amenity=embassy & country=* {set name='${country} ${name|def:}'} [0x3003 resolution 24]
 amenity=embassy & country!=* [0x3003 resolution 24 default_name 'Embassy']
 amenity=emergency_phone [0x2f12 resolution 24 default_name 'Emergency Phone']
 amenity=ferry_terminal [0x2f08 resolution 22]
@@ -128,8 +126,8 @@ amenity=fast_food & cuisine ~ '.*pizza.*' [0x2a0a resolution 24]
 amenity=fast_food [0x2a07 resolution 24]
 amenity=fire_station [0x3008 resolution 24]
 amenity=food_court [0x2a13 resolution 24]
-amenity=fuel & fuel:HGV_diesel=yes [ 0x2f16 resolution 23]
-amenity=fuel & shop=convenience [ 0x2e06 resolution 24]
+amenity=fuel & fuel:HGV_diesel=yes [0x2f16 resolution 23]
+amenity=fuel & shop=convenience [0x2e06 resolution 24]
 amenity=fuel [0x2f01 resolution 24]
 amenity=kindergarten [0x2c05 resolution 24]
 amenity=library [0x2c03 resolution 24]
@@ -160,7 +158,7 @@ amenity=restaurant & cuisine=italian [0x2a08 resolution 24]
 amenity=restaurant & cuisine=japanese [0x2a02 resolution 24]
 amenity=restaurant & cuisine=korean [0x2a02 resolution 24]
 amenity=restaurant & cuisine=mexican [0x2a09 resolution 24]
-amenity=restaurant & cuisine ~ '.*pizza.*' [0x2a0a resolution 24]
+amenity=restaurant & cuisine~'.*pizza.*' [0x2a0a resolution 24]
 amenity=restaurant & cuisine=sea_food [0x2a0b resolution 24]
 amenity=restaurant & cuisine=spanish [0x2a09 resolution 24]
 amenity=restaurant & cuisine=speciality [0x2a12 resolution 24]
@@ -179,7 +177,7 @@ amenity=taxi [0x2f17 resolution 24]
 amenity=telephone [0x2f12 resolution 24 default_name 'Telephone']
 amenity=theatre [0x2d01 resolution 24]
 amenity=toilets & highway=rest_area [0x2f0c resolution 24]
-amenity=toilets [0x4e00 resolution 24 default_name 'Toilets' ]
+amenity=toilets [0x4e00 resolution 24 default_name 'Toilets']
 amenity=townhall [0x3003 resolution 24]
 amenity=university [0x2c05 resolution 24]
 # amenity=zoo is superceded by tourism=zoo
@@ -206,26 +204,26 @@ leisure=ice_rink [0x2d08 resolution 24]
 leisure=marina [0x4300 resolution 24]
 leisure=nature_reserve & name=* [0x6612 resolution 24]
 leisure=park [0x2c06 resolution 24]
-leisure=pitch { name '${name} (${sport})' | '${name}' } [0x2c08 resolution 24]
+leisure=pitch {name '${name} (${sport})' | '${name}'} [0x2c08 resolution 24]
 leisure=playground [0x2c06 resolution 24]
 leisure=recreation_ground [0x2c08 resolution 24]
-leisure=sports_center | leisure=sports_centre { name '${name} (${sport})' | '${name}' } [0x2d0a resolution 24]
-leisure=stadium { name '${name} (${sport})' | '${name}' } [0x2c08 resolution 24]
-leisure=track { name '${name} (${sport})' | '${name}' } [0x2c08 resolution 24]
+leisure=sports_center | leisure=sports_centre {name '${name} (${sport})' | '${name}'} [0x2d0a resolution 24]
+leisure=stadium {name '${name} (${sport})' | '${name}'} [0x2c08 resolution 24]
+leisure=track {name '${name} (${sport})' | '${name}'} [0x2c08 resolution 24]
 leisure=water_park [0x2d09 resolution 24]
 
-man_made=tower|man_made=mast|landmark=chimney [0x6411 resolution 24]
+man_made=tower | man_made=mast | landmark=chimney [0x6411 resolution 24]
 
 # Edge 705 displays 0x650a,0x6511,0x6512,0x6513,0x6603,0x6614 as hollow white circles, no menu
 natural=cave_entrance [0x6601 resolution 24]
 natural=cape [0x6606 resolution 24]
 natural=cliff [0x6607 resolution 24]
-natural=peak {name '${name|def:}${ele|height:m=>ft|def:}' } [0x6616 resolution 24]
+natural=peak {name '${name|def:}${ele|height:m=>ft|def:}'} [0x6616 resolution 24]
 natural=rock [0x6614 resolution 24]
 natural=volcano [0x2c0c resolution 24]
 
 railway=station [0x2f08 resolution 22]
-( public_transport=platform & rail=yes ) | railway=halt [0x2f08 resolution 23]
+(public_transport=platform & rail=yes) | railway=halt [0x2f08 resolution 23]
 public_transport=platform | highway=bus_stop | railway=tram_stop [0x2f17 resolution 24]
 
 shop=bakers [0x2e02 resolution 24]
@@ -304,10 +302,11 @@ natural=water & name=* [0x6603 resolution 24]
 natural=waterfall | waterway=waterfall [0x6508 resolution 24]
 natural=wetland & name=* [0x6513 resolution 24]
 
-landuse=cemetery|landuse=cemetary|amenity=grave_yard [0x6403 resolution 24]
-(landuse=wood|landuse=forest|natural=wood) & name=* [0x6618 resolution 24]
+landuse=cemetery | landuse=cemetary | amenity=grave_yard [0x6403 resolution 24]
+(landuse=wood | landuse=forest | natural=wood) & name=* [0x6618 resolution 24]
 
 <finalize>
 # The finalizer section is executed for each element when a rule with an element type matches
-name=* { name '${name}' }
+
+name=* {name '${name}'}
 include 'inc/address';

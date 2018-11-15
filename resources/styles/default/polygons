@@ -10,8 +10,8 @@
 
 addr:housenumber=* {set mkgmap:execute_finalize_rules=true}
 
-leisure=* & sport=* & name=* { set name='${name} (${sport})' }
-leisure=* & sport=* & name!=* { add name='${sport}' }
+leisure=* & sport=* & name=* {set name='${name} (${sport})'}
+leisure=* & sport=* & name!=* {add name='${sport}'}
 
 include 'inc/name';
 
@@ -34,8 +34,7 @@ amenity=supermarket [0x08 resolution 22]
 amenity=university [0x0a resolution 21]
 
 healthcare=hospital | amenity=hospital | amenity=clinic [0x0b resolution 22]
-healthcare=* | amenity=dentist | amenity=doctors | amenity=nursing_home
-[0x0b resolution 23]
+healthcare=* | amenity=dentist | amenity=doctors | amenity=nursing_home [0x0b resolution 23]
 
 leisure=common [0x17 resolution 21]
 leisure=garden [0x17 resolution 21]
@@ -73,7 +72,7 @@ natural=mud [0x51 resolution 20]
 natural=wetland [0x51 resolution 20]
 natural=water [0x3c resolution 18]
 natural=waterfall | waterway=waterfall [0x47 resolution 21]
-natural=sea { add mkgmap:skipSizeFilter=true; set mkgmap:drawLevel=2 } [0x32 resolution 10]
+natural=sea {add mkgmap:skipSizeFilter=true; set mkgmap:drawLevel=2} [0x32 resolution 10]
 
 waterway=riverbank [0x46 resolution 20]
 
@@ -109,17 +108,14 @@ natural=wood [0x50 resolution 20]
 (building=* | amenity=*) & area!=no & amenity!=grave_yard [0x13 resolution 24]
 tourism=* & area!=no & waterway!=* [0x1f resolution 24]
 # man_made can be used on areas or lines
-man_made=* & area!=no
-& (man_made!=door & man_made!=embankment & man_made!=breakwater
-   & man_made!=cable_line & man_made!=cutline & man_made!=cutting
-   & man_made!=levee & man_made!=trench
-   & man_made!=groyne & man_made!=reinforced_slope)
-[0x13 resolution 24]
+man_made=* & area!=no & (
+    man_made!=door & man_made!=embankment & man_made!=breakwater & man_made!=cable_line & man_made!=cutline &
+    man_made!=cutting & man_made!=levee & man_made!=trench & man_made!=groyne & man_made!=reinforced_slope)
+    [0x13 resolution 24]
 
-man_made=* & area=yes
-[0x13 resolution 24]
+man_made=* & area=yes [0x13 resolution 24]
 
-# render small named islands 
+# render small named islands
 place=island & name=* & area_size() < 1000000 [0x53 resolution 19]
 place=islet & name=* [0x53 resolution 20]
 
@@ -129,4 +125,4 @@ place=islet & name=* [0x53 resolution 20]
 # we need addrees info from buildings for the address search
 include 'inc/address';
 
-name=* { name '${name}' }
+name=* {name '${name}'}
