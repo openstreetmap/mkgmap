@@ -185,6 +185,19 @@ public class MapRoad extends MapLine {
 		return false;
 	}
 	
+	public int getLabelPos(String label){
+		if (label == null)
+			return -1;
+		for (int i = 0; i < labels.length; i++){
+			if (labels[i] == null){
+				return -1;
+			}
+			if (labels[i].equals(label))
+				return i;
+		}
+		return -1;
+	}
+	
 	public String toString(){
 		if ((getName() == null || getName().isEmpty()) && getStreet() != null)
 			return "id="+this.getRoadDef().getId() + ", (" + this.getStreet() + ")";
