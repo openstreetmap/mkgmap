@@ -18,7 +18,7 @@ include 'inc/name';
 aeroway=airport [0x07 resolution 20]
 aeroway=aerodrome [0x07 resolution 20]
 aeroway=runway {name '${ref}'} [0x0e resolution 20]
-(aeroway=taxiway | aeroway=taxilane) {name '${ref}'} [0x0e resolution 24]
+aeroway=taxiway | aeroway=taxilane {name '${ref}'} [0x0e resolution 24]
 aeroway=heliport [0x07 resolution 20]
 aeroway=helipad [0x0e resolution 22]
 
@@ -52,7 +52,7 @@ leisure=water_park [0x09 resolution 21]
 
 place=village [0x03 resolution 19]
 
-shop=* [0x08 resolution 22]
+shop=* {add name='${shop|subst:"_=> "}'} [0x08 resolution 22]
 
 # squares and plazas
 highway=pedestrian & (area=yes | mkgmap:mp_created=true) [0x17 resolution 22]
@@ -63,7 +63,7 @@ historic=museum | historic=memorial [0x1e resolution 21]
 historic=archaeological_site | historic=ruins [0x1e resolution 21]
 
 landuse=basin [0x3f resolution 20]
-(landuse=reservoir | (natural=water & water=reservoir)) [0x3f resolution 20]
+landuse=reservoir | (natural=water & water=reservoir) [0x3f resolution 20]
 
 natural=bay [0x3d resolution 18]
 natural=glacier [0x4d resolution 18]
@@ -77,21 +77,21 @@ natural=sea {add mkgmap:skipSizeFilter=true; set mkgmap:drawLevel=2} [0x32 resol
 waterway=riverbank [0x46 resolution 20]
 
 landuse=allotments [0x4e resolution 21]
-landuse=cemetery|landuse=cemetary|amenity=grave_yard [0x1a resolution 21]
+landuse=cemetery | landuse=cemetary | amenity=grave_yard [0x1a resolution 21]
 landuse=commercial [0x0c resolution 19]
 landuse=construction [0x0c resolution 21]
-landuse=farm |landuse=farmland [0x4e resolution 20]
+landuse=farm | landuse=farmland [0x4e resolution 20]
 landuse=farmyard [0x10 resolution 22]
-landuse=forest|landuse=wood [0x50 resolution 20]
+landuse=forest | landuse=wood [0x50 resolution 20]
 landuse=greenfield [0x17 resolution 20]
 landuse=meadow | landuse=grass [0x17 resolution 19]
 landuse=military [0x04 resolution 19]
 landuse=quarry [0x0c resolution 19]
 landuse=recreation_ground [0x19 resolution 19]
 # dedicate resolution 24 for building=* instead of related landuse=*
-landuse=industrial [0x0c resolution 23-19]
-landuse=residential [0x10 resolution 23-19]
-landuse=retail [0x08 resolution 23-20]
+landuse=industrial [0x0c resolution 19-23]
+landuse=residential [0x10 resolution 19-23]
+landuse=retail [0x08 resolution 20-23]
 landuse=village_green [0x17 resolution 20]
 landuse=vineyard [0x4e resolution 20]
 landuse=orchard [0x4e resolution 20]
@@ -105,15 +105,17 @@ natural=scrub [0x4f resolution 20]
 natural=wood [0x50 resolution 20]
 
 # building tag should be last
-(building=* | amenity=*) & area!=no & amenity!=grave_yard [0x13 resolution 24]
-tourism=* & area!=no & waterway!=* [0x1f resolution 24]
+amenity=* & area!=no & amenity!=grave_yard {add name='${amenity|subst:"_=> "}'} [0x13 resolution 24]
+building=* & building!=no [0x13 resolution 24]
+tourism=* & area!=no & waterway!=* {add name='${tourism|subst:"_=> "}'} [0x1f resolution 24]
+
 # man_made can be used on areas or lines
 man_made=* & area!=no & (
     man_made!=door & man_made!=embankment & man_made!=breakwater & man_made!=cable_line & man_made!=cutline &
     man_made!=cutting & man_made!=levee & man_made!=trench & man_made!=groyne & man_made!=reinforced_slope)
-    [0x13 resolution 24]
+    {add name='${man_made|subst:"_=> "}'} [0x13 resolution 24]
 
-man_made=* & area=yes [0x13 resolution 24]
+man_made=* & area=yes {add name='${man_made|subst:"_=> "}'} [0x13 resolution 24]
 
 # render small named islands
 place=island & name=* & area_size() < 1000000 [0x53 resolution 19]
@@ -122,7 +124,7 @@ place=islet & name=* [0x53 resolution 20]
 <finalize>
 # The finalizer section is executed for each element when a rule with an element type matches
 
-# we need addrees info from buildings for the address search
+# we need address info from buildings for the address search
 include 'inc/address';
 
 name=* {name '${name}'}

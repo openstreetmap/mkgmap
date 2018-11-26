@@ -17,21 +17,21 @@ aeroway=runway & highway!=* & is_closed()=false {name '${ref}'} [0x27 resolution
 highway=* & name=* {set mkgmap:street='${name}'}
 
 # Mark highways with the toll flag
-highway=* & (toll=yes|toll=true) {set mkgmap:toll=yes}
+highway=* & (toll=yes | toll=true) {set mkgmap:toll=yes}
 
 # mark multipolygons as area
 highway=* & mkgmap:mp_created=true {add area=yes}
 
 # Hide proposed ways
-(highway=proposed | highway=proposal | highway=planned | highway~'.*proposed.*') {delete highway; delete junction}
+highway=proposed | highway=proposal | highway=planned | highway~'.*proposed.*' {delete highway; delete junction}
 # Hide removed ways
-(highway=razed | highway=dismantled) {deletealltags}
+highway=razed | highway=dismantled {deletealltags}
 # Hide abandoned ways. Abandoned highways have some evidence of their former existence but are no longer used. These
 # abandoned highways could be useful in topographical maps.
 # https://wiki.openstreetmap.org/wiki/Key:abandoned:
-((abandoned:highway=* & highway!=*) | highway=abandoned) {deletealltags}
+(abandoned:highway=* & highway!=*) | highway=abandoned {deletealltags}
 # Hide other non-existent ways
-(highway=unbuilt | highway=neverbuilt | highway=rejected | highway~'x-.*') {delete highway; delete junction}
+highway=unbuilt | highway=neverbuilt | highway=rejected | highway~'x-.*' {delete highway; delete junction}
 # Remove highway tag from ways which are not suitable for routing
 highway=traffic_signals | highway=junction | highway=island | highway=centre_line | highway=traffic_island | highway=stopline
     {delete highway}
@@ -41,7 +41,7 @@ highway=no | highway=none {delete highway}
 # Hide unaccessible tunnels
 highway=* & tunnel=yes & (access=private | access=no) & foot!=* & bicycle!=* {delete highway; delete junction}
 # Disable dead-end-checks for unaccessible oneways
-highway=* & oneway=yes & (access=private|access=no) {add mkgmap:dead-end-check=false}
+highway=* & oneway=yes & (access=private | access=no) {add mkgmap:dead-end-check=false}
 # Validation-like checks (uncomment to enable)
 #highway=motorway_link & oneway!=yes & oneway!=no {echo "motorway_link lacks oneway"}
 highway=motorway | highway=motorway_link {add oneway=yes; add mkgmap:numbers=false}
@@ -51,21 +51,20 @@ highway=motorway | highway=motorway_link {add oneway=yes; add mkgmap:numbers=fal
 # motorway_link, trunk_link, primary_link, secondary_link, tertiary_link
 # build destination hint
 mkgmap:dest_hint=* {
-    set dest_hint='${destination:ref|subst: =>} ${mkgmap:dest_hint|subst:;=> |subst:/=> }' |
-                  '${ref|subst: =>} ${mkgmap:dest_hint|subst:;=> |subst:/=> }' |
-                  '${mkgmap:dest_hint|subst:;=> |subst:/=> }';
+    set tmp:dest_hint='${destination:ref|subst: =>} ${mkgmap:dest_hint|subst:;=> |subst:/=> }' |
+                      '${ref|subst: =>} ${mkgmap:dest_hint|subst:;=> |subst:/=> }' |
+                      '${mkgmap:dest_hint|subst:;=> |subst:/=> }';
     }
 # build exit hint
 mkgmap:exit_hint=true {
-    set exit_hint='Exit ${mkgmap:exit_hint_ref} ${mkgmap:exit_hint_name}' |
-                  'Exit ${mkgmap:exit_hint_ref} ${mkgmap:exit_hint_exit_to}' |
-                  'Exit ${mkgmap:exit_hint_exit_to}' |
-                  'Exit ${mkgmap:exit_hint_name}' |
-                  'Exit ${mkgmap:exit_hint_ref}';
+    set tmp:exit_hint='Exit ${mkgmap:exit_hint_ref} ${mkgmap:exit_hint_name}' |
+                      'Exit ${mkgmap:exit_hint_ref} ${mkgmap:exit_hint_exit_to}' |
+                      'Exit ${mkgmap:exit_hint_exit_to}' |
+                      'Exit ${mkgmap:exit_hint_name}' |
+                      'Exit ${mkgmap:exit_hint_ref}';
     }
-
 # use destination hint and/or exit hint to build name
-(mkgmap:exit_hint=true | mkgmap:dest_hint=*) {name '${exit_hint} ${dest_hint}' | '${dest_hint}' | '${exit_hint}'}
+mkgmap:exit_hint=true | mkgmap:dest_hint=* {name '${tmp:exit_hint} ${tmp:dest_hint}' | '${tmp:dest_hint}' | '${tmp:exit_hint}'}
 # end of rules for process-exits and process-destination options
 
 # Flag paved roads
@@ -100,11 +99,11 @@ highway=* & (access=hov | hov=designated | oneway=reversible)
     {set mkgmap:road-class=-2; set mkgmap:road-speed=-2; delete mkgmap:fast_road}
 
 # Convert generic path to most specific
-highway=footway & snowplowing!=no & (bicycle=yes|bicycle=designated|bicycle=permissive|bicycle=official)
+highway=footway & snowplowing!=no & (bicycle=yes | bicycle=designated | bicycle=permissive | bicycle=official)
     {set highway=cycleway; set bicycle=yes; set foot=yes}
-highway=path & snowplowing!=no & (bicycle=designated|bicycle=permissive|bicycle=official)
+highway=path & snowplowing!=no & (bicycle=designated | bicycle=permissive | bicycle=official)
     {set highway=cycleway; set bicycle=yes}
-highway=path & (horse=designated|horse=permissive|horse=official)
+highway=path & (horse=designated | horse=permissive | horse=official)
     {set highway=bridleway; set horse=yes}
 
 leisure=track & area!=yes {add highway=footway; name '${name} (${sport})' | '${name}'}
@@ -213,9 +212,10 @@ boundary=administrative [0x1c resolution 22]
 boundary=national [0x1e resolution 17]
 boundary=political [0x1c resolution 19]
 
-route=ferry {set mkgmap:numbers=false}
-route=ferry & (motorcar=no | motor_vehicle=no) {add mkgmap:ferry=1} [0x1b road_class=0 road_speed=0 resolution 23]
-route=ferry {add mkgmap:ferry=1} [0x1b road_class=3 road_speed=0 resolution 19]
+route=ferry & (toll=no | toll=false) {set mkgmap:toll=no}
+route=ferry {set mkgmap:numbers=false; set mkgmap:ferry=1; add mkgmap:toll=yes}
+route=ferry & (motorcar=no | motor_vehicle=no) [0x1b road_class=0 road_speed=0 resolution 23]
+route=ferry [0x1b road_class=3 road_speed=0 resolution 19]
 
 (waterway=river | waterway=canal) & intermittent=yes [0x26 resolution 20]
 (waterway=stream | waterway=drain) & intermittent=yes [0x10A02 resolution 22]
