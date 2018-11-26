@@ -12,6 +12,7 @@
  */
 package uk.me.parabola.mkgmap.typ;
 
+import uk.me.parabola.imgfmt.app.typ.ColourInfo;
 import uk.me.parabola.imgfmt.app.typ.TypData;
 import uk.me.parabola.imgfmt.app.typ.TypLine;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
@@ -61,5 +62,15 @@ class LineSection extends CommonSection implements ProcessSection {
 		validate(scanner);
 		current.finish();
 		data.addLine(current);
+	}
+
+	protected void xpmCheck(TokenScanner scanner, ColourInfo colourInfo) {
+		int width = colourInfo.getWidth();
+
+		if (width == 0)
+			return;
+
+		if (width != 32)
+			throw new SyntaxException(scanner, "Line bitmaps must be 32 bits wide");
 	}
 }

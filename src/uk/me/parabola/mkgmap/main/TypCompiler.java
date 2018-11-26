@@ -26,6 +26,7 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.StandardOpenOption;
 
 import uk.me.parabola.imgfmt.ExitException;
@@ -211,8 +212,13 @@ public class TypCompiler implements MapProcessor {
 		}
 
 		private void setCodePage(String codePage) {
-			this.codePage = codePage;
-			this.encoder = Charset.forName(codePage).newEncoder();
+			if ("cp65001".equalsIgnoreCase(codePage)) {
+				this.codePage = "utf-8";
+				this.encoder = StandardCharsets.UTF_8.newEncoder();
+			} else {
+				this.codePage = codePage;
+				this.encoder = Charset.forName(codePage).newEncoder();
+			}
 		}
 
 		private String probeCharset(String file) {
