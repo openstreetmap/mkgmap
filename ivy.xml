@@ -59,6 +59,8 @@
 		<dependency org="org.apache.ant" name="ant" rev="1.8.2"
 								conf="optional->master"/>
 
+		<dependency org="ant" name="ant-junit" rev="1.6.5" conf="optional->master"/>
+
 		<dependency org="javax.media.jai" name="com.springsource.javax.media.jai.codec" rev="1.1.3"
 								conf="optional->compile"/>
 		<dependency org="javax.media.jai" name="com.springsource.javax.media.jai.core" rev="1.1.3"
