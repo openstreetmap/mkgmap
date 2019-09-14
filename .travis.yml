@@ -1,10 +1,16 @@
 ---
+dist: xenial
+
+addons:
+  apt:
+    packages:
+      - ant
 
 jdk:
   - openjdk8
   - openjdk10
   - openjdk11
-  -
+
 install:
   - ant resolve
 
